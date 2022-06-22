@@ -1,2 +1,3 @@
 bot.log
+*.log
 config.json
