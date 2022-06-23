@@ -1,12 +1,13 @@
 # encoding: utf-8:
-
 import json
 import random
+import datetime
 
-from datetime import datetime, timedelta
+#from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
+from khl.command import Rule
 
 # 新建机器人，token 就是机器人的身份凭证
 # 用 json 读取 config.json，装载到 config 里
@@ -64,15 +65,99 @@ async def Ahri(msg: Message):
     cm = CardMessage()
 
     c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
-    #实现卡片的markdown文字
+    #实现卡片的markdown文本
     #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
-    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n'))
+    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
+    c3.append(Module.Divider())
+    c3.append(Module.Header('上号，瓦一把！'))
+    c3.append(Module.Section('「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n'))
+    c3.append(Module.Divider())
+    c3.append(Module.Header('和阿狸玩小游戏吧~ '))
+    c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n'))
     c3.append(Module.Divider())
     c3.append(Module.Section('游戏打累了？想来本狸的家坐坐吗~',
               Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
     cm.append(c3)
 
     await msg.reply(cm)
+
+
+# 当有人“/老婆 @机器人”的时候进行回复
+# register command and add a rule
+# invoke this via saying `/hello @{bot_name}` in channel
+@bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
+async def atAhri(msg: Message, mention_str: str):
+    await msg.reply(f'呀，听说有人想我了，是吗？')
+
+# 当有人输入“/yes @某一个用户”时这个语句被触发（感觉没用？）
+@bot.command(rules=[Rule.is_mention_all])
+async def yes(msg: Message, mention_str: str):
+    await msg.reply(f'yes! mentioned all with {mention_str}')
+    
+# besides built-in rules in Rule.*, you can define your own rules
+def my_rule(msg: Message) -> bool:
+    return msg.content.find('khl') != -1
+
+
+# this command can only be triggered with msg that contains 'khl' such as /test_mine khl-go
+@bot.command(name='test_mine', rules=[my_rule])
+async def test_mine(msg: Message, comment: str):
+    await msg.reply(f'yes! {comment} can trigger this command')
+  
+
+
+ 
+# 实现存储用户游戏ID
+@bot.command(name='saveid',rules=[Rule.is_bot_mentioned(bot)])
+async def saveid(msg: Message,game1:str,mention_str: str):
+     #gamerid = {'user_id':msg.author_id,'gameid':game1}
+     flag=0
+     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
+     with open("./log/idsave.txt", 'r') as fr1:
+        lines=fr1.readlines()   
+     #使用r+同时读写（有bug）
+     with open("./log/idsave.txt", 'w') as fw1: 
+        for line in lines:
+            v = line.strip().split(':')
+            if msg.author_id == v[0]:
+                fw1.write(msg.author_id+ ':' + game1 + '\n')
+                flag=1#修改完毕后，将flag置为1
+            else:
+                fw1.write(line)
+     fr1.close()
+     fw1.close()
+     await msg.reply(f'本狸已经修改好你的游戏id啦!')
+     #原有txt内没有该用户信息，进行追加操作
+     if flag==0:
+        fw2 = open("./log/idsave.txt",'a+')
+        #fw.write(str(gamerid))      #把字典转化为str
+        fw2.write(msg.author_id+':'+game1+'\n')  
+        await msg.reply(f'本狸已经记下你的游戏id啦!')
+        fw2.close()
+     
+     
+# 实现读取用户游戏ID并返回
+@bot.command(rules=[Rule.is_bot_mentioned(bot)])
+async def myid(msg: Message,mention_str: str):
+    flag=0
+    fr = open("./log/idsave.txt",'r')
+    for line in fr:
+        v = line.strip().split(':')
+        if msg.author_id in v[0]:
+           flag=1#找到了对应用户的id
+           await msg.reply(f'游戏id: '+v[1])
+    fr.close()
+    if flag==0:
+       await msg.reply('狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！')
+
+
+
+# # 正则表达式（实测无效）
+# @bot.command(regex = r'(.+)\\(met\\)ID\\(met\\)')
+# async def cmd(msg: Message, text: str, user_id: str):
+    # #pass 
+    # await msg.reply('who are u')
+
 
 
 # 查询游戏错误码
@@ -87,7 +172,7 @@ async def val(msg: Message, num: int):
     elif num == 1:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 4:
-        await msg.reply('名称无效，请重新注册账户')
+        await msg.reply('您的名称无效，请重新注册账户')
     elif num == 5:
         await msg.reply('1.账户在别处登录；\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 7:
@@ -127,9 +212,10 @@ async def val(msg: Message, num: int):
     elif num == 84:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 128:
-        await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.请查看本图进行操作：[错误128解决方法](https://s1.ax1x.com/2022/06/23/jCtu2F.png)，链接:`https://imgtu.com/i/jCtu2F` \n需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！')
+        await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！\n请查看本图进行操作:[https://s1.ax1x.com/2022/06/23/jCtu2F.png](https://s1.ax1x.com/2022/06/23/jCtu2F.png) ')
+        #这里要使用[URL](URL)的方式，让开黑啦实别出图片并直接显示
     elif num == 152:
-        await msg.reply('硬件实别封锁，这可不是一个好兆头。')
+        await msg.reply('您的硬件被识别封锁，这可不是一个好兆头。')
     elif num == 9001:
         await msg.reply('`VAN9001_This build of Vanguard requires TPM version 2.0 and secure boot to be enabled in order to play.`\n需要您进电脑主板的bios打开tmp2.0哦！')
     elif num == 9002:
@@ -141,6 +227,7 @@ async def val(msg: Message, num: int):
     else:
         await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
 
+#关于dx报错的解决方法
 @bot.command(name='DX')
 async def world(msg: Message):
     await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
