@@ -49,8 +49,8 @@ async def countdown(msg: Message,time: int = 60):
 
 # help命令
 @bot.command()
-async def help(msg: Message):
-    # msg 触发指令为 `/help`
+async def Ahri(msg: Message):
+    # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
     # await msg.reply(
     # CardMessage(
         # Card(
@@ -70,7 +70,7 @@ async def help(msg: Message):
     cm = CardMessage()
 
     c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
-    c3.append(Module.Section('「/help」帮助指令\n「/val 错误码」 游戏错误码的解决方法\n「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/contdown 秒数」倒计时，默认60秒\n'))
+    c3.append(Module.Section('「/Ahri」帮助指令\n「/val 错误码」 游戏错误码的解决方法\n「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/contdown 秒数」倒计时，默认60秒\n'))
     c3.append(Module.Divider())
     c3.append(Module.Section('游戏打累了？想来本狸的家坐坐吗~',
               Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
@@ -103,7 +103,7 @@ async def val(msg: Message, num: int):
 @bot.command()
 async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
     result = [random.randint(t_min, t_max) for i in range(n)]
-    await msg.reply(f'you got: {result}')
+    await msg.reply(f'掷出来啦: {result}')
 
 
 # 凭证传好了、机器人新建好了、指令也注册完了
