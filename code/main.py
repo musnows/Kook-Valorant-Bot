@@ -27,8 +27,8 @@ bot = Bot(token=config['token'])
 @bot.command(name='hello')
 async def world(msg: Message):
     # msg 指的是我们所发送的那句 `/hello`
-    # 所以 msg.reply() 就是回复我们那句话，回复的内容是 `world!`
-    await msg.reply('world!')
+    # 所以 msg.reply() 就是回复我们那句话
+    await msg.reply('你好呀~')
 
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
@@ -47,55 +47,6 @@ async def countdown(msg: Message,time: int = 60):
 
     await msg.reply(cm)
 
-# help命令
-@bot.command()
-async def Ahri(msg: Message):
-    # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
-    # await msg.reply(
-    # CardMessage(
-        # Card(
-            # Module.Header('你可以用下面这些指令调戏本狸哦！'),
-            # Module.Context('更多调戏方式上线中...'),
-            # # Module.ActionGroup(
-                # # # RETURN_VAL type(default): send an event when clicked, see print_btn_value() defined at L58
-                # # Element.Button('Truth', 'RED', theme=Types.Theme.DANGER),
-                # # Element.Button('Wonderland', 'BLUE', Types.Click.RETURN_VAL)),
-            # Module.Section('`/help` #帮助指令\n`/val 错误码` #游戏错误码的解决方法\n`/roll 1 100` 掷色子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个色子\n'),
-            # Module.Divider(),
-            # Module.Section(
-               # '想来本狸的家看看吗？',
-                # # LINK type: user will open the link in browser when clicked
-                # Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))))
-    
-    cm = CardMessage()
-
-    c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
-    c3.append(Module.Section('「/Ahri」帮助指令\n「/val 错误码」 游戏错误码的解决方法\n「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/contdown 秒数」倒计时，默认60秒\n'))
-    c3.append(Module.Divider())
-    c3.append(Module.Section('游戏打累了？想来本狸的家坐坐吗~',
-              Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
-    cm.append(c3)
-
-    await msg.reply(cm)
-
-# 查询错误码
-@bot.command()
-async def val(msg: Message, num: int):
-    # msg 触发指令为 '/val 错误码'
-    # msg.reply() 根据错误码回复对应解决方法
-    if num == 1067:
-      await msg.reply('1.请检查您的电脑是否有安装[完美对战平台]，可能有冲突；\n2.请在[控制面板]中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.卸载valorant，打开csgo/ow/r6。')
-    elif num == 5:
-      await msg.reply('网络链接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 29:
-        await msg.reply('网络链接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 10086:
-      await msg.reply('本狸才不给你的手机充话费呢！')
-    elif num == 10000:
-      await msg.reply('本狸提醒您：谨防电信诈骗哦~')
-    else:
-      await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
-
 # 掷骰子
 # register command
 # invoke this via saying `!roll 1 100` in channel
@@ -104,6 +55,61 @@ async def val(msg: Message, num: int):
 async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
     result = [random.randint(t_min, t_max) for i in range(n)]
     await msg.reply(f'掷出来啦: {result}')
+
+
+# help命令
+@bot.command()
+async def Ahri(msg: Message):
+    # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
+    cm = CardMessage()
+
+    c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
+    #实现卡片的markdown文字
+    #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
+    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n'))
+    c3.append(Module.Divider())
+    c3.append(Module.Section('游戏打累了？想来本狸的家坐坐吗~',
+              Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
+    cm.append(c3)
+
+    await msg.reply(cm)
+
+
+# 查询游戏错误码
+@bot.command()
+async def val(msg: Message, num: int):
+    # msg 触发指令为 '/val 错误码'
+    # msg.reply() 根据错误码回复对应解决方法
+    if num ==0:
+        await msg.reply('目前支持查询的错误信息有：\n「val 5,29,51,68,84,1067,9001,9002」')
+    elif num == 1067:
+        await msg.reply('1.请检查您的电脑是否有安装[完美对战平台]，可能有冲突；\n2.请在[控制面板]中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.可能和您的鼠标驱动有冲突，尝试关闭雷蛇/罗技的鼠标驱动软件;\n5.卸载valorant，打开csgo/ow/r6。')
+    elif num == 5:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 29:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 51:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 68:
+        await msg.reply('1.请尝试关闭valorant，右键图标以管理员身份运行游戏\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 84:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 9001:
+        await msg.reply('`VAN9001_This build of Vanguard requires TPM version 2.0 and secure boot to be enabled in order to play.`\n需要您进电脑主板的bios打开tmp2.0哦！')
+    elif num == 9002:
+        await msg.reply('`VAN9002—This build of Vanguard requires Control Flow Guard (CFG)to be enabled in system exploit protection settings.`\n设置页面搜索Exploit Protection ，[开启控制流保护（CFG）](https://www.bilibili.com/read/cv11536577)。')
+    elif num == 10086:
+        await msg.reply('本狸才不给你的手机充话费呢！')
+    elif num == 10000:
+        await msg.reply('本狸提醒您：谨防电信诈骗哦~')
+    else:
+        await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
+
+@bot.command(name='DX')
+async def world(msg: Message):
+    await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
+
+
 
 
 # 凭证传好了、机器人新建好了、指令也注册完了
