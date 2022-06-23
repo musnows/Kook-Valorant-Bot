@@ -81,19 +81,55 @@ async def val(msg: Message, num: int):
     # msg 触发指令为 '/val 错误码'
     # msg.reply() 根据错误码回复对应解决方法
     if num ==0:
-        await msg.reply('目前支持查询的错误信息有：\n「val 5,29,51,68,84,1067,9001,9002」')
+        await msg.reply('目前支持查询的错误信息有：\n「val 1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002」')
     elif num == 1067:
         await msg.reply('1.请检查您的电脑是否有安装[完美对战平台]，可能有冲突；\n2.请在[控制面板]中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.可能和您的鼠标驱动有冲突，尝试关闭雷蛇/罗技的鼠标驱动软件;\n5.卸载valorant，打开csgo/ow/r6。')
+    elif num == 1:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 4:
+        await msg.reply('名称无效，请重新注册账户')
     elif num == 5:
+        await msg.reply('1.账户在别处登录；\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 7:
+        await msg.reply('账户可能被冻结，请查看注册邮箱是否有相关邮件信息')
+    elif num > 7 and num <=11:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 12:
+        await msg.reply('客户端启动超时，检查网络后重启客户端，或重新下载游戏客户端')
+    elif num >= 13 and num <=21:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 29:
+        await msg.reply('1.防火墙问题，尝试关闭系统防火墙；\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 31:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 51:
+    elif num == 33:
+        await msg.reply('客户端启动超时，检查网络后重启客户端，或重新下载游戏客户端')
+    elif num == 38:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 43:
+        await msg.reply('客户端启动超时，检查网络后重启客户端，或重新下载游戏客户端')
+    elif num >= 44 and num <= 45:
+        await msg.reply('反作弊未初始化：重启拳头客户端,如果未恢复,先卸载Vanguard,重启电脑后再启动游戏')
+    elif num == 46:
+        await msg.reply('服务器维护中……')
+    elif num >= 49 and num <= 60:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 61:
+        await msg.reply('哎呀你干了啥，怎么被系统ban了？狸狸可不喜欢你这样哦~')
+    elif num >= 62 and num <= 67:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 68:
         await msg.reply('1.请尝试关闭valorant，右键图标以管理员身份运行游戏\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num >= 69 and num <= 70:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 81:
+        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 84:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+    elif num == 128:
+        await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.请查看本图进行操作：[错误128解决方法](https://s1.ax1x.com/2022/06/23/jCtu2F.png)，链接:`https://imgtu.com/i/jCtu2F` \n需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！')
+    elif num == 152:
+        await msg.reply('硬件实别封锁，这可不是一个好兆头。')
     elif num == 9001:
         await msg.reply('`VAN9001_This build of Vanguard requires TPM version 2.0 and secure boot to be enabled in order to play.`\n需要您进电脑主板的bios打开tmp2.0哦！')
     elif num == 9002:
