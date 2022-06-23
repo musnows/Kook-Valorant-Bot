@@ -31,6 +31,32 @@ async def world(msg: Message):
     # 所以 msg.reply() 就是回复我们那句话
     await msg.reply('你好呀~')
 
+# help命令
+@bot.command()
+async def Ahri(msg: Message):
+    # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
+    cm = CardMessage()
+
+    c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
+    #实现卡片的markdown文本
+    #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
+    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
+    c3.append(Module.Divider())
+    c3.append(Module.Header('上号，瓦一把！'))
+    c3.append(Module.Section('「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id @阿狸」 保存(修改)您的游戏id\n「/myid @阿狸」 让阿狸说出您的游戏id\n'))
+    c3.append(Module.Divider())
+    c3.append(Module.Header('和阿狸玩小游戏吧~ '))
+    c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n'))
+    c3.append(Module.Divider())
+    c3.append(Module.Section(' 游戏打累了？想来本狸的家坐坐吗~',
+              Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
+    cm.append(c3)
+
+    await msg.reply(cm)
+
+
+
+
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
 async def countdown(msg: Message,time: int = 60):
@@ -56,30 +82,6 @@ async def countdown(msg: Message,time: int = 60):
 async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
     result = [random.randint(t_min, t_max) for i in range(n)]
     await msg.reply(f'掷出来啦: {result}')
-
-
-# help命令
-@bot.command()
-async def Ahri(msg: Message):
-    # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
-    cm = CardMessage()
-
-    c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
-    #实现卡片的markdown文本
-    #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
-    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
-    c3.append(Module.Divider())
-    c3.append(Module.Header('上号，瓦一把！'))
-    c3.append(Module.Section('「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n'))
-    c3.append(Module.Divider())
-    c3.append(Module.Header('和阿狸玩小游戏吧~ '))
-    c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n'))
-    c3.append(Module.Divider())
-    c3.append(Module.Section('游戏打累了？想来本狸的家坐坐吗~',
-              Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
-    cm.append(c3)
-
-    await msg.reply(cm)
 
 
 # 当有人“/老婆 @机器人”的时候进行回复
@@ -121,12 +123,12 @@ async def saveid(msg: Message,game1:str,mention_str: str):
             v = line.strip().split(':')
             if msg.author_id == v[0]:
                 fw1.write(msg.author_id+ ':' + game1 + '\n')
+                await msg.reply(f'本狸已经修改好你的游戏id啦!')
                 flag=1#修改完毕后，将flag置为1
             else:
                 fw1.write(line)
      fr1.close()
      fw1.close()
-     await msg.reply(f'本狸已经修改好你的游戏id啦!')
      #原有txt内没有该用户信息，进行追加操作
      if flag==0:
         fw2 = open("./log/idsave.txt",'a+')
