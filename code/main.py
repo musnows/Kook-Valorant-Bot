@@ -3,7 +3,7 @@ import json
 import random
 import datetime
 
-#from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
@@ -43,10 +43,10 @@ async def Ahri(msg: Message):
     c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
     c3.append(Module.Divider())
     c3.append(Module.Header('上号，瓦一把！'))
-    c3.append(Module.Section('「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id @阿狸」 保存(修改)您的游戏id\n「/myid @阿狸」 让阿狸说出您的游戏id\n'))
+    c3.append(Module.Section("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n\n「/saveid '游戏id' @阿狸」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n"))
     c3.append(Module.Divider())
     c3.append(Module.Header('和阿狸玩小游戏吧~ '))
-    c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n'))
+    c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「更多…」 还有一些隐藏指令哦~\n'))
     c3.append(Module.Divider())
     c3.append(Module.Section(' 游戏打累了？想来本狸的家坐坐吗~',
               Element.Button('让我康康', 'https://github.com/Aewait/Valorant-kaiheila-bot', Types.Click.LINK)))
@@ -84,12 +84,6 @@ async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
     await msg.reply(f'掷出来啦: {result}')
 
 
-# 当有人“/老婆 @机器人”的时候进行回复
-# register command and add a rule
-# invoke this via saying `/hello @{bot_name}` in channel
-@bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
-async def atAhri(msg: Message, mention_str: str):
-    await msg.reply(f'呀，听说有人想我了，是吗？')
 
 # 当有人输入“/yes @某一个用户”时这个语句被触发（感觉没用？）
 @bot.command(rules=[Rule.is_mention_all])
@@ -100,12 +94,24 @@ async def yes(msg: Message, mention_str: str):
 def my_rule(msg: Message) -> bool:
     return msg.content.find('khl') != -1
 
-
 # this command can only be triggered with msg that contains 'khl' such as /test_mine khl-go
 @bot.command(name='test_mine', rules=[my_rule])
 async def test_mine(msg: Message, comment: str):
     await msg.reply(f'yes! {comment} can trigger this command')
   
+  
+# # a example to combine decorator and rule
+# def is_contains(keyword: str):
+    # def func(msg: Message):
+        # return msg.content.find(keyword) != -1
+
+    # return func
+
+# # Q: how to trigger this command?
+# # /test_decorator 2022-06-23
+# @bot.command(name='test_decorator', rules=[is_contains(str(datetime.date.today()))])
+# async def test_decorator(msg: Message, date: str):
+    # await msg.reply(f'yes! today is {date}')
 
 
  
@@ -136,11 +142,17 @@ async def saveid(msg: Message,game1:str,mention_str: str):
         fw2.write(msg.author_id+':'+game1+'\n')  
         await msg.reply(f'本狸已经记下你的游戏id啦!')
         fw2.close()
-     
+
+# 让阿狸记住游戏id的help指令
+@bot.command()
+async def saveid1(msg: Message):
+    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid 'KAB 3z#1314' @阿狸`\n[https://s1.ax1x.com/2022/06/24/jFGOnH.png](https://s1.ax1x.com/2022/06/24/jFGOnH.png)")
+
      
 # 实现读取用户游戏ID并返回
-@bot.command(rules=[Rule.is_bot_mentioned(bot)])
-async def myid(msg: Message,mention_str: str):
+#@bot.command(rules=[Rule.is_bot_mentioned(bot)])
+@bot.command() #/myid不需要at机器人
+async def myid(msg: Message):
     flag=0
     fr = open("./log/idsave.txt",'r')
     for line in fr:
@@ -150,7 +162,7 @@ async def myid(msg: Message,mention_str: str):
            await msg.reply(f'游戏id: '+v[1])
     fr.close()
     if flag==0:
-       await msg.reply('狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！')
+       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid 'KAB 3z#1314' @阿狸`\n[https://s1.ax1x.com/2022/06/24/jFGOnH.png](https://s1.ax1x.com/2022/06/24/jFGOnH.png)")
 
 
 
@@ -214,7 +226,7 @@ async def val(msg: Message, num: int):
     elif num == 84:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 128:
-        await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！\n请查看本图进行操作:[https://s1.ax1x.com/2022/06/23/jCtu2F.png](https://s1.ax1x.com/2022/06/23/jCtu2F.png) ')
+        await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！\n请查看本图进行操作:[https://s1.ax1x.com/2022/06/24/jFGXBd.png](https://s1.ax1x.com/2022/06/24/jFGXBd.png) ')
         #这里要使用[URL](URL)的方式，让开黑啦实别出图片并直接显示
     elif num == 152:
         await msg.reply('您的硬件被识别封锁，这可不是一个好兆头。')
@@ -235,6 +247,20 @@ async def world(msg: Message):
     await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
 
 
+# 当有人“/狸狸 @机器人”的时候进行回复
+# register command and add a rule
+# invoke this via saying `/hello @{bot_name}` in channel
+@bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
+async def atAhri(msg: Message, mention_str: str):
+    if msg.author_id == '1961572535':
+        await msg.reply(f'主人有何吩咐呀~')
+    else:
+        await msg.reply(f'呀，听说有人想我了，是吗？')
+
+
+@bot.command()
+async def uncle(msg: Message):
+    await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
 
 # 凭证传好了、机器人新建好了、指令也注册完了
