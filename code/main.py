@@ -12,7 +12,7 @@ from khl.command import Rule
 # 新建机器人，token 就是机器人的身份凭证
 # 用 json 读取 config.json，装载到 config 里
 # 注意文件路径，要是提示找不到文件的话，就 cd 一下工作目录/改一下这里
-with open('../config/config.json', 'r', encoding='utf-8') as f:
+with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 # 用读取来的 config 初始化 bot，字段对应即可
