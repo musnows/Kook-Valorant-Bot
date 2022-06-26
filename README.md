@@ -4,10 +4,13 @@
 <h1 align="center">Valorant-kaiheila-bot</h1>
 
 
+<h4 align="center">这是一个开黑啦的[Valorant]小机器人</h4>
+
+
 <div align="center">
-这是一个开黑啦的[Valorant]小机器人
-![python](https://img.shields.io/badge/Python-3.8%2B-green)![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot)![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
-[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg)![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+  
+![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 
 
 </div>
