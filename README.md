@@ -1,5 +1,16 @@
-## Valorant-kaiheila-bot
+
+
+
+<h1 align="center">Valorant-kaiheila-bot</h1>
+
+
+<div align="center">
 这是一个开黑啦的[Valorant]小机器人
+![python](https://img.shields.io/badge/Python-3.8%2B-green)![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot)![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg)![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+
+
+</div>
 
 ## 功能
 当前机器人处于极极极其早期版本，目前只支持回复valorant游戏错误码，和一些简单功能
@@ -20,14 +31,18 @@
 
 ## 如何使用？
 
-保证你的Linux中`python`版本高于3.6.8，执行下面的安装库命令
+保证你的Linux中`Python`版本高于`3.8`，执行下面的安装库命令
 
 ~~~
 pip install khl.py
 或者 pip3 install khl.py
 ~~~
 
-> 建议根据[khl.py](https://github.com/TWT233/khl.py)的`example`教程，学习开黑啦机器人的基本搭建（很简单的，相信我）
+> Q：为何`khl.py`只需要3.6.8以上版本，而本仓库需要3.8+？
+>
+> A：因为valorant的第三方`PythonApi`需要3.8+版本
+
+建议根据[khl.py](https://github.com/TWT233/khl.py)的`example`教程，学习开黑啦机器人的基本搭建（很简单的，相信我）
 
 如果你想直接使用本机器人，则继续往下看👇
 
