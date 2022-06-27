@@ -43,7 +43,7 @@ async def Ahri(msg: Message):
     c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
     c3.append(Module.Divider())
     c3.append(Module.Header('上号，瓦一把！'))
-    c3.append(Module.Section("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n\n「/saveid '游戏id' @阿狸」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n"))
+    c3.append(Module.Section("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n\n「/saveid '游戏id'」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n"))
     c3.append(Module.Divider())
     c3.append(Module.Header('和阿狸玩小游戏吧~ '))
     c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「更多…」 还有一些隐藏指令哦~\n'))
@@ -116,8 +116,10 @@ async def test_mine(msg: Message, comment: str):
 
  
 # 实现存储用户游戏ID
-@bot.command(name='saveid',rules=[Rule.is_bot_mentioned(bot)])
-async def saveid(msg: Message,game1:str,mention_str: str):
+# @bot.command(name='saveid',rules=[Rule.is_bot_mentioned(bot)])
+#async def saveid(msg: Message,game1:str,mention_str: str):
+@bot.command()
+async def saveid(msg: Message,game1:str):
      #gamerid = {'user_id':msg.author_id,'gameid':game1}
      flag=0
      # 需要先保证原有txt里面没有保存该用户的id，才进行追加
@@ -146,7 +148,7 @@ async def saveid(msg: Message,game1:str,mention_str: str):
 # 让阿狸记住游戏id的help指令
 @bot.command()
 async def saveid1(msg: Message):
-    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid 'KAB 3z#1314' @阿狸`\n[https://s1.ax1x.com/2022/06/24/jFGOnH.png](https://s1.ax1x.com/2022/06/24/jFGOnH.png)")
+    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)")
 
      
 # 实现读取用户游戏ID并返回
@@ -162,7 +164,7 @@ async def myid(msg: Message):
            await msg.reply(f'游戏id: '+v[1])
     fr.close()
     if flag==0:
-       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid 'KAB 3z#1314' @阿狸`\n[https://s1.ax1x.com/2022/06/24/jFGOnH.png](https://s1.ax1x.com/2022/06/24/jFGOnH.png)")
+       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)")
 
 
 
@@ -182,7 +184,7 @@ async def val(msg: Message, num: int):
     if num ==0:
         await msg.reply('目前支持查询的错误信息有：\n「val 1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002」')
     elif num == 1067:
-        await msg.reply('1.请检查您的电脑是否有安装[完美对战平台]，可能有冲突；\n2.请在[控制面板]中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.可能和您的鼠标驱动有冲突，尝试关闭雷蛇/罗技的鼠标驱动软件;\n5.卸载valorant，打开csgo/ow/r6。')
+        await msg.reply('1.请检查您的电脑是否有安装「完美对战平台」，可能有冲突；\n2.请在「控制面板-时钟和区域」中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.可能和您的鼠标驱动有冲突，尝试关闭雷蛇/罗技的鼠标驱动软件;\n5.卸载valorant，打开csgo/ow/r6。')
     elif num == 1:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 4:
