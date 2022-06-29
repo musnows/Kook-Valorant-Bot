@@ -1,7 +1,36 @@
-## Valorant-kaiheila-bot
-this is a valorant bot for kaiheila platform
+<h1 align="center">Valorant-kaiheila-bot</h1>
 
-* kaihela is a Chinese voice communication software.
+
+<h4 align="center">this is a valorant bot for kaiheila platform</h4>
+
+
+<div align="center">
+
+![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+
+</div>
+
+kaihela is a Chinese voice communication software.
+
 * Because this bot are only used in Chinese platform,so I didn't write a more detailed Readme in English.Sorry for that
 
 This robot is still at an extremely early stage, and many of the functions I want have not yet been realized.Such as `/store`and`/nightmarket`
+
+---
+
+## Command
+
+Here is the Command List for bot:
+
+* `/hello`：reply "world!"
+* `/Ahri`：help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is a hero in League of Legends）
+* `/val 错误码`：help with the err code of valorant
+* `/saveid`：save(change)user's game ID
+* `/myid`：show user's game ID
+* `/roll 1 100`：return a number in `1~100`
+* `/countdown 秒数`： show a countdown,which default is 60s
+
+You can find image examples for the functions in [screenshot](./screenshot) floder.
+
+> sorry for my poor English
