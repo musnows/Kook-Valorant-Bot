@@ -27,11 +27,11 @@ Here is the Command List for bot:
 
 * `/hello`：reply "world!"
 * `/Ahri`：help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is a hero in League of Legends）
-* `/val 错误码`：help with the err code of valorant
-* `/saveid`：save(change)user's game ID
+* `/val err_code`：help with the err_code of valorant
+* `/saveid`：save or change user's game ID
 * `/myid`：show user's game ID
 * `/roll 1 100`：return a number in `1~100`
-* `/countdown 秒数`： show a countdown,which default is 60s
+* `/countdown second`： show a countdown,which default is 60s
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
