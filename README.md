@@ -4,7 +4,7 @@
 <h1 align="center">Valorant-kaiheila-bot</h1>
 
 
-<h4 align="center">这是一个开黑啦的[Valorant]小机器人</h4>
+<h4 align="center">这是一个KOOK的「Valorant」小机器人</h4>
 
 
 

@@ -1,7 +1,7 @@
 <h1 align="center">Valorant-kaiheila-bot</h1>
 
 
-<h4 align="center">this is a valorant bot for kaiheila platform</h4>
+<h4 align="center">this is a Valorant bot for KOOK platform</h4>
 
 
 <div align="center">
