@@ -8,7 +8,8 @@
 
 
 <div align="center">
-  
+[English](./README_EN.md) | 简体中文
+
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
 [![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 
@@ -77,7 +78,7 @@ git clone https://github.com/Aewait/Valorant-kaiheila-bot.git
 
 * 直接运行机器人
 
-当你完成上面两部后，即可`cd`进入`code`目录，执行运行命令
+当你完成上面两步后，即可`cd`进入`code`目录，执行运行命令
 
 ~~~
 python3 main.py
