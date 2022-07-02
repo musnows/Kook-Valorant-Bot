@@ -145,10 +145,27 @@ async def saveid(msg: Message,game1:str):
         await msg.reply(f'本狸已经记下你的游戏id啦!')
         fw2.close()
 
+# 计算txt文件中有几行
+def countline(file_name):
+    with open(file_name,'rb') as f:
+        count = 0
+        last_data = '\n'
+        while True:
+            data = f.read(0x400000)
+            if not data:
+                break
+            count += data.count(b'\n')
+            last_data = data
+        if last_data[-1:] != b'\n':
+            count += 1
+            
+    return count
+
 # 让阿狸记住游戏id的help指令
 @bot.command()
 async def saveid1(msg: Message):
-    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)")
+    ret=countline("./log/idsave.txt")
+    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽"% (ret))
 
      
 # 实现读取用户游戏ID并返回
@@ -164,7 +181,8 @@ async def myid(msg: Message):
            await msg.reply(f'游戏id: '+v[1])
     fr.close()
     if flag==0:
-       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)")
+       ret=countline("./log/idsave.txt")
+       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽"% (ret))
 
 
 
@@ -249,7 +267,7 @@ async def world(msg: Message):
     await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
 
 
-# 当有人“/狸狸 @机器人”的时候进行回复
+# 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
 # register command and add a rule
 # invoke this via saying `/hello @{bot_name}` in channel
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
@@ -259,13 +277,13 @@ async def atAhri(msg: Message, mention_str: str):
     else:
         await msg.reply(f'呀，听说有人想我了，是吗？')
 
-
+# this command is for Bilibili up @uncle艾登
 @bot.command()
 async def uncle(msg: Message):
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
 
+
 # 凭证传好了、机器人新建好了、指令也注册完了
 # 接下来就是运行我们的机器人了，bot.run() 就是机器人的起跑线
-
 bot.run()
