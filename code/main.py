@@ -75,7 +75,6 @@ async def countdown(msg: Message,time: int = 60):
     await msg.reply(cm)
 
 # 掷骰子
-# register command
 # invoke this via saying `!roll 1 100` in channel
 # or `/roll 1 100 5` to dice 5 times once
 @bot.command()
@@ -100,24 +99,11 @@ async def test_mine(msg: Message, comment: str):
     await msg.reply(f'yes! {comment} can trigger this command')
   
   
-# # a example to combine decorator and rule
-# def is_contains(keyword: str):
-    # def func(msg: Message):
-        # return msg.content.find(keyword) != -1
-
-    # return func
-
-# # Q: how to trigger this command?
-# # /test_decorator 2022-06-23
-# @bot.command(name='test_decorator', rules=[is_contains(str(datetime.date.today()))])
-# async def test_decorator(msg: Message, date: str):
-    # await msg.reply(f'yes! today is {date}')
-
-
  
 # 实现存储用户游戏ID
 # @bot.command(name='saveid',rules=[Rule.is_bot_mentioned(bot)])
 #async def saveid(msg: Message,game1:str,mention_str: str):
+# 之前的版本需要@机器人，但因为很多人都忘记加空格，于是取消了这一要求
 @bot.command()
 async def saveid(msg: Message,game1:str):
      #gamerid = {'user_id':msg.author_id,'gameid':game1}
@@ -247,7 +233,7 @@ async def val(msg: Message, num: int):
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 128:
         await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！\n请查看本图进行操作:[https://s1.ax1x.com/2022/06/24/jFGXBd.png](https://s1.ax1x.com/2022/06/24/jFGXBd.png) ')
-        #这里要使用[URL](URL)的方式，让开黑啦实别出图片并直接显示
+        #这里要使用[URL](URL)的方式，让开黑啦实别出图片url并直接显示
     elif num == 152:
         await msg.reply('您的硬件被识别封锁，这可不是一个好兆头。')
     elif num == 9001:
@@ -268,8 +254,6 @@ async def world(msg: Message):
 
 
 # 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
-# register command and add a rule
-# invoke this via saying `/hello @{bot_name}` in channel
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
 async def atAhri(msg: Message, mention_str: str):
     if msg.author_id == '1961572535':
@@ -277,7 +261,7 @@ async def atAhri(msg: Message, mention_str: str):
     else:
         await msg.reply(f'呀，听说有人想我了，是吗？')
 
-# this command is for Bilibili up @uncle艾登
+# for Bilibili Up @uncle艾登
 @bot.command()
 async def uncle(msg: Message):
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
@@ -285,5 +269,5 @@ async def uncle(msg: Message):
 
 
 # 凭证传好了、机器人新建好了、指令也注册完了
-# 接下来就是运行我们的机器人了，bot.run() 就是机器人的起跑线
+# 下面运行机器人，bot.run()是机器人的起跑线
 bot.run()
