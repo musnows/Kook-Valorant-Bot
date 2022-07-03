@@ -3,6 +3,8 @@ import json
 import random
 import datetime
 
+import valorant
+
 from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event
@@ -17,6 +19,14 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
 
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
+
+
+# 读取valorant api的key
+with open('./config/valorant.json', 'r', encoding='utf-8') as f:
+    config = json.load(f)
+
+KEY = config['token']
+
 
 
 # 注册指令
@@ -67,11 +77,6 @@ async def countdown(msg: Message,time: int = 60):
     c1.append(Module.Countdown(datetime.now() + timedelta( seconds=time), mode=Types.CountdownMode.SECOND))
     cm.append(c1)
 
-    # c2 = Card(theme=Types.Theme.DANGER)  # priority: color > theme, default: Type.Theme.PRIMARY
-    # c2.append(Module.Section('the DAY style countdown'))
-    # c2.append(Module.Countdown(datetime.now() + timedelta(seconds=time), mode=Types.CountdownMode.DAY))
-    # cm.append(c2)  # A CardMessage can contain up to 5 Cards
-
     await msg.reply(cm)
 
 # 掷骰子
@@ -98,8 +103,42 @@ def my_rule(msg: Message) -> bool:
 async def test_mine(msg: Message, comment: str):
     await msg.reply(f'yes! {comment} can trigger this command')
   
-  
+
+
+###########################################################################################
+####################################以下是游戏相关代码区#####################################
+###########################################################################################
+
+
+# # 查询皮肤！只支持English name
+# @bot.command()
+# async def skin(msg: Message,name:str):
+#     client = valorant.Client(KEY, locale=None)
+#     skins = client.get_skins()
+#     results = skins.find_all(name=lambda x: name.lower() in x.lower())
+
+#     cm = CardMessage()
+#     c1 = Card(Module.Header('查询到你想看的皮肤了！'),Module.Context('还想查其他皮肤吗...'))
+#     c1.append(Module.Divider())
+#     for skin in results:
+#         c1.append(Module.Section(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"))
+#         #await msg.reply(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
+
+#     cm.append(c1)
+#     await msg.reply(cm)
+
+from val import skin123,kda123
+
+@bot.command(name='kda')
+async def kda(msg: Message):
+    await kda123(msg)
+
+@bot.command()
+async def skin(msg: Message,name:str):
+    await skin123(msg,name)
  
+
+
 # 实现存储用户游戏ID
 # @bot.command(name='saveid',rules=[Rule.is_bot_mentioned(bot)])
 #async def saveid(msg: Message,game1:str,mention_str: str):
@@ -109,10 +148,10 @@ async def saveid(msg: Message,game1:str):
      #gamerid = {'user_id':msg.author_id,'gameid':game1}
      flag=0
      # 需要先保证原有txt里面没有保存该用户的id，才进行追加
-     with open("./log/idsave.txt", 'r') as fr1:
+     with open("./log/idsave.txt", 'r',encoding='utf-8') as fr1:
         lines=fr1.readlines()   
      #使用r+同时读写（有bug）
-     with open("./log/idsave.txt", 'w') as fw1: 
+     with open("./log/idsave.txt", 'w',encoding='utf-8') as fw1: 
         for line in lines:
             v = line.strip().split(':')
             if msg.author_id == v[0]:
@@ -125,7 +164,7 @@ async def saveid(msg: Message,game1:str):
      fw1.close()
      #原有txt内没有该用户信息，进行追加操作
      if flag==0:
-        fw2 = open("./log/idsave.txt",'a+')
+        fw2 = open("./log/idsave.txt",'a+',encoding='utf-8')
         #fw.write(str(gamerid))      #把字典转化为str
         fw2.write(msg.author_id+':'+game1+'\n')  
         await msg.reply(f'本狸已经记下你的游戏id啦!')
@@ -151,15 +190,22 @@ def countline(file_name):
 @bot.command()
 async def saveid1(msg: Message):
     ret=countline("./log/idsave.txt")
-    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽"% (ret))
+    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽！"% (ret))
+
+# 显示已有id的个数
+@bot.command()
+async def saveid2(msg: Message):
+    ret=countline("./log/idsave.txt")
+    await msg.reply("目前狸狸已经记下了%d个小伙伴的id喽~"% (ret))
 
      
 # 实现读取用户游戏ID并返回
-#@bot.command(rules=[Rule.is_bot_mentioned(bot)])
-@bot.command() #/myid不需要at机器人
+#@bot.command(rules=[Rule.is_bot_mentioned(bot)])#/myid不需要at机器人
+# 这里的aliases是别名
+@bot.command(name="myid",aliases=['MYID']) 
 async def myid(msg: Message):
     flag=0
-    fr = open("./log/idsave.txt",'r')
+    fr = open("./log/idsave.txt",'r',encoding='utf-8')
     for line in fr:
         v = line.strip().split(':')
         if msg.author_id in v[0]:
@@ -168,8 +214,7 @@ async def myid(msg: Message):
     fr.close()
     if flag==0:
        ret=countline("./log/idsave.txt")
-       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽"% (ret))
-
+       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽！"% (ret))
 
 
 # # 正则表达式（实测无效）
@@ -177,7 +222,6 @@ async def myid(msg: Message):
 # async def cmd(msg: Message, text: str, user_id: str):
     # #pass 
     # await msg.reply('who are u')
-
 
 
 # 查询游戏错误码
@@ -233,7 +277,7 @@ async def val(msg: Message, num: int):
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 128:
         await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！\n请查看本图进行操作:[https://s1.ax1x.com/2022/06/24/jFGXBd.png](https://s1.ax1x.com/2022/06/24/jFGXBd.png) ')
-        #这里要使用[URL](URL)的方式，让开黑啦实别出图片url并直接显示
+        #这里要使用[URL](URL)的方式，让开黑啦识别出图片url并直接显示
     elif num == 152:
         await msg.reply('您的硬件被识别封锁，这可不是一个好兆头。')
     elif num == 9001:
@@ -248,7 +292,7 @@ async def val(msg: Message, num: int):
         await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
 
 #关于dx报错的解决方法
-@bot.command(name='DX')
+@bot.command(name='DX',aliases=['dx'])#新增别名dx
 async def world(msg: Message):
     await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
 
@@ -261,7 +305,7 @@ async def atAhri(msg: Message, mention_str: str):
     else:
         await msg.reply(f'呀，听说有人想我了，是吗？')
 
-# for Bilibili Up @uncle艾登
+# # for Bilibili Up @uncle艾登
 @bot.command()
 async def uncle(msg: Message):
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
