@@ -30,9 +30,18 @@ Here is the Command List for bot:
 * `/val err_code`：help with the err_code of valorant
 * `/saveid`：save or change user's game ID
 * `/myid`：show user's game ID
+* `/skin name`：search for skins
 * `/roll 1 100`：return a number in `1~100`
 * `/countdown second`： show a countdown,which default is 60s
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
+
+
+## About
+Since I have not studied python, many codes in this repo are modified and used according to others' tutorials
+* KOOK_api base on [khl.py](https://github.com/TWT233/khl.py)
+* ValorantGameApi base on @frissyn  [valorant.py](https://github.com/frissyn/valorant.py/)
+
+If you like this project,please hit a star!
 
 > sorry for my poor English
