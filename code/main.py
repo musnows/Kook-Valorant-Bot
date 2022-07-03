@@ -16,20 +16,14 @@ from khl.command import Rule
 # 注意文件路径，要是提示找不到文件的话，就 cd 一下工作目录/改一下这里
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
-
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
 
 
-# 读取valorant api的key
-with open('./config/valorant.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
-
-KEY = config['token']
+##########################################################################################
+##########################################################################################
 
 
-
-# 注册指令
 # @ 是「装饰器」语法，大家可以网上搜搜教程，我们这里直接用就行
 # bot 是我们刚刚新建的机器人，声明这个指令是要注册到 bot 中的
 # name 标示了指令的名字，名字也被用于触发指令，所以我们 /hello 才会让机器人有反应
@@ -37,8 +31,6 @@ KEY = config['token']
 # world 是函数名，可以自选；函数第一个参数的类型固定为 Message
 @bot.command(name='hello')
 async def world(msg: Message):
-    # msg 指的是我们所发送的那句 `/hello`
-    # 所以 msg.reply() 就是回复我们那句话
     await msg.reply('你好呀~')
 
 # help命令
@@ -65,7 +57,8 @@ async def Ahri(msg: Message):
     await msg.reply(cm)
 
 
-
+#################################################################################################
+#################################################################################################
 
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
@@ -80,141 +73,26 @@ async def countdown(msg: Message,time: int = 60):
     await msg.reply(cm)
 
 # 掷骰子
-# invoke this via saying `!roll 1 100` in channel
-# or `/roll 1 100 5` to dice 5 times once
+# invoke this via saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
 async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
     result = [random.randint(t_min, t_max) for i in range(n)]
     await msg.reply(f'掷出来啦: {result}')
 
 
-
 # 当有人输入“/yes @某一个用户”时这个语句被触发（感觉没用？）
 @bot.command(rules=[Rule.is_mention_all])
 async def yes(msg: Message, mention_str: str):
     await msg.reply(f'yes! mentioned all with {mention_str}')
+
     
-# besides built-in rules in Rule.*, you can define your own rules
+# 设定自己的规则
 def my_rule(msg: Message) -> bool:
     return msg.content.find('khl') != -1
-
-# this command can only be triggered with msg that contains 'khl' such as /test_mine khl-go
+# 只有包含 'khl'的语句才能出发，比如 "/test_mine khl-go"
 @bot.command(name='test_mine', rules=[my_rule])
 async def test_mine(msg: Message, comment: str):
     await msg.reply(f'yes! {comment} can trigger this command')
-  
-
-
-###########################################################################################
-####################################以下是游戏相关代码区#####################################
-###########################################################################################
-
-
-# # 查询皮肤！只支持English name
-# @bot.command()
-# async def skin(msg: Message,name:str):
-#     client = valorant.Client(KEY, locale=None)
-#     skins = client.get_skins()
-#     results = skins.find_all(name=lambda x: name.lower() in x.lower())
-
-#     cm = CardMessage()
-#     c1 = Card(Module.Header('查询到你想看的皮肤了！'),Module.Context('还想查其他皮肤吗...'))
-#     c1.append(Module.Divider())
-#     for skin in results:
-#         c1.append(Module.Section(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"))
-#         #await msg.reply(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
-
-#     cm.append(c1)
-#     await msg.reply(cm)
-
-from val import skin123,kda123
-
-@bot.command(name='kda')
-async def kda(msg: Message):
-    await kda123(msg)
-
-@bot.command()
-async def skin(msg: Message,name:str):
-    await skin123(msg,name)
- 
-
-
-# 实现存储用户游戏ID
-# @bot.command(name='saveid',rules=[Rule.is_bot_mentioned(bot)])
-#async def saveid(msg: Message,game1:str,mention_str: str):
-# 之前的版本需要@机器人，但因为很多人都忘记加空格，于是取消了这一要求
-@bot.command()
-async def saveid(msg: Message,game1:str):
-     #gamerid = {'user_id':msg.author_id,'gameid':game1}
-     flag=0
-     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
-     with open("./log/idsave.txt", 'r',encoding='utf-8') as fr1:
-        lines=fr1.readlines()   
-     #使用r+同时读写（有bug）
-     with open("./log/idsave.txt", 'w',encoding='utf-8') as fw1: 
-        for line in lines:
-            v = line.strip().split(':')
-            if msg.author_id == v[0]:
-                fw1.write(msg.author_id+ ':' + game1 + '\n')
-                await msg.reply(f'本狸已经修改好你的游戏id啦!')
-                flag=1#修改完毕后，将flag置为1
-            else:
-                fw1.write(line)
-     fr1.close()
-     fw1.close()
-     #原有txt内没有该用户信息，进行追加操作
-     if flag==0:
-        fw2 = open("./log/idsave.txt",'a+',encoding='utf-8')
-        #fw.write(str(gamerid))      #把字典转化为str
-        fw2.write(msg.author_id+':'+game1+'\n')  
-        await msg.reply(f'本狸已经记下你的游戏id啦!')
-        fw2.close()
-
-# 计算txt文件中有几行
-def countline(file_name):
-    with open(file_name,'rb') as f:
-        count = 0
-        last_data = '\n'
-        while True:
-            data = f.read(0x400000)
-            if not data:
-                break
-            count += data.count(b'\n')
-            last_data = data
-        if last_data[-1:] != b'\n':
-            count += 1
-            
-    return count
-
-# 让阿狸记住游戏id的help指令
-@bot.command()
-async def saveid1(msg: Message):
-    ret=countline("./log/idsave.txt")
-    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽！"% (ret))
-
-# 显示已有id的个数
-@bot.command()
-async def saveid2(msg: Message):
-    ret=countline("./log/idsave.txt")
-    await msg.reply("目前狸狸已经记下了%d个小伙伴的id喽~"% (ret))
-
-     
-# 实现读取用户游戏ID并返回
-#@bot.command(rules=[Rule.is_bot_mentioned(bot)])#/myid不需要at机器人
-# 这里的aliases是别名
-@bot.command(name="myid",aliases=['MYID']) 
-async def myid(msg: Message):
-    flag=0
-    fr = open("./log/idsave.txt",'r',encoding='utf-8')
-    for line in fr:
-        v = line.strip().split(':')
-        if msg.author_id in v[0]:
-           flag=1#找到了对应用户的id
-           await msg.reply(f'游戏id: '+v[1])
-    fr.close()
-    if flag==0:
-       ret=countline("./log/idsave.txt")
-       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽！"% (ret))
 
 
 # # 正则表达式（实测无效）
@@ -222,80 +100,6 @@ async def myid(msg: Message):
 # async def cmd(msg: Message, text: str, user_id: str):
     # #pass 
     # await msg.reply('who are u')
-
-
-# 查询游戏错误码
-@bot.command()
-async def val(msg: Message, num: int):
-    # msg 触发指令为 '/val 错误码'
-    # msg.reply() 根据错误码回复对应解决方法
-    if num ==0:
-        await msg.reply('目前支持查询的错误信息有：\n「val 1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002」')
-    elif num == 1067:
-        await msg.reply('1.请检查您的电脑是否有安装「完美对战平台」，可能有冲突；\n2.请在「控制面板-时钟和区域」中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.可能和您的鼠标驱动有冲突，尝试关闭雷蛇/罗技的鼠标驱动软件;\n5.卸载valorant，打开csgo/ow/r6。')
-    elif num == 1:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 4:
-        await msg.reply('您的名称无效，请重新注册账户')
-    elif num == 5:
-        await msg.reply('1.账户在别处登录；\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 7:
-        await msg.reply('账户可能被冻结，请查看注册邮箱是否有相关邮件信息')
-    elif num > 7 and num <=11:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 12:
-        await msg.reply('客户端启动超时，检查网络后重启客户端，或重新下载游戏客户端')
-    elif num >= 13 and num <=21:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 29:
-        await msg.reply('1.防火墙问题，尝试关闭系统防火墙；\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 31:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 33:
-        await msg.reply('客户端启动超时，检查网络后重启客户端，或重新下载游戏客户端')
-    elif num == 38:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 43:
-        await msg.reply('客户端启动超时，检查网络后重启客户端，或重新下载游戏客户端')
-    elif num >= 44 and num <= 45:
-        await msg.reply('反作弊未初始化：重启拳头客户端,如果未恢复,先卸载Vanguard,重启电脑后再启动游戏')
-    elif num == 46:
-        await msg.reply('服务器维护中……')
-    elif num >= 49 and num <= 60:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 61:
-        await msg.reply('哎呀你干了啥，怎么被系统ban了？狸狸可不喜欢你这样哦~')
-    elif num >= 62 and num <= 67:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 68:
-        await msg.reply('1.请尝试关闭valorant，右键图标以管理员身份运行游戏\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num >= 69 and num <= 70:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 81:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 84:
-        await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
-    elif num == 128:
-        await msg.reply('1.重启电脑和游戏客户端，卸载Vanguard、卸载游戏进行重装；\n2.需要提醒您，修改系统配置是一项有风险的操作，请确认您需要这么做！\n请查看本图进行操作:[https://s1.ax1x.com/2022/06/24/jFGXBd.png](https://s1.ax1x.com/2022/06/24/jFGXBd.png) ')
-        #这里要使用[URL](URL)的方式，让开黑啦识别出图片url并直接显示
-    elif num == 152:
-        await msg.reply('您的硬件被识别封锁，这可不是一个好兆头。')
-    elif num == 9001:
-        await msg.reply('`VAN9001_This build of Vanguard requires TPM version 2.0 and secure boot to be enabled in order to play.`\n需要您进电脑主板的bios打开tmp2.0哦！')
-    elif num == 9002:
-        await msg.reply('`VAN9002—This build of Vanguard requires Control Flow Guard (CFG)to be enabled in system exploit protection settings.`\n设置页面搜索Exploit Protection ，[开启控制流保护（CFG）](https://www.bilibili.com/read/cv11536577)。')
-    elif num == 10086:
-        await msg.reply('本狸才不给你的手机充话费呢！')
-    elif num == 10000:
-        await msg.reply('本狸提醒您：谨防电信诈骗哦~')
-    else:
-        await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
-
-#关于dx报错的解决方法
-@bot.command(name='DX',aliases=['dx'])#新增别名dx
-async def world(msg: Message):
-    await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
-
 
 # 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
@@ -305,11 +109,58 @@ async def atAhri(msg: Message, mention_str: str):
     else:
         await msg.reply(f'呀，听说有人想我了，是吗？')
 
-# # for Bilibili Up @uncle艾登
+
+# for Bilibili Up @uncle艾登
 @bot.command()
 async def uncle(msg: Message):
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
+
+###########################################################################################
+####################################以下是游戏相关代码区#####################################
+###########################################################################################
+
+from val import kda123,skin123,saveid123,saveid1,saveid2,myid123,val123,dx123
+
+# 中二病
+@bot.command(name='kda')
+async def kda(msg: Message):
+    await kda123(msg)
+
+# 查询皮肤系列
+@bot.command()
+async def skin(msg: Message,name:str):
+    await skin123(msg,name)
+ 
+# 存储用户游戏id
+@bot.command()
+async def saveid(msg: Message,game1:str):
+    await saveid123(msg,game1)
+
+# 存储id的help命令 
+@bot.command(name='saveid1')
+async def saveid(msg: Message):
+    await saveid1(msg)
+# 已保存id总数
+@bot.command(name='saveid2')
+async def saveid(msg: Message):
+    await saveid2(msg)
+
+# 实现读取用户游戏ID并返回
+#@bot.command(rules=[Rule.is_bot_mentioned(bot)])# myid不需要at机器人
+@bot.command(name="myid",aliases=['MYID']) # 这里的aliases是别名
+async def myid(msg: Message):
+    await myid123(msg)
+
+# 查询游戏错误码
+@bot.command()
+async def val(msg: Message, num: int):
+    await val123(msg,num)
+
+#关于dx报错的解决方法
+@bot.command(name='DX',aliases=['dx'])# 新增别名dx
+async def dx(msg: Message):
+    await dx123(msg)
 
 
 # 凭证传好了、机器人新建好了、指令也注册完了
