@@ -29,7 +29,6 @@ KEY = config['token']
 async def kda123(msg: Message):
     await msg.reply('本狸就是女王！\n[https://s1.ax1x.com/2022/07/03/jGFl0U.jpg](https://s1.ax1x.com/2022/07/03/jGFl0U.jpg)')
 
-
 # 查询皮肤！只支持English皮肤名
 async def skin123(msg: Message,name:str):
     client = valorant.Client(KEY, locale=None)
@@ -44,6 +43,21 @@ async def skin123(msg: Message,name:str):
         #print(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
     cm.append(c1)
     await msg.reply(cm)
+
+# 获取排行榜上的玩家，默认获取前15位胜场超过10的玩家
+async def lead123(msg: Message,sz:int,num:int):
+    client = valorant.Client(KEY, locale=None,region='ap',route='asia')
+    lb = client.get_leaderboard(size=sz)
+    players = lb.players.get_all(numberOfWins=num)# 筛选出胜场超过num的
+    cm = CardMessage()
+    c1 = Card(Module.Header('查询到你想看的排行榜了！'),Module.Context('什么？你也上榜了嘛...'))
+    c1.append(Module.Divider())
+    for p in lb.players:
+        c1.append(Module.Section(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)"))
+        #print(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)")
+    cm.append(c1)
+    await msg.reply(cm)
+
 
 
 #保存用户id

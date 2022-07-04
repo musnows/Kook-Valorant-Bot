@@ -38,14 +38,13 @@ async def world(msg: Message):
 async def Ahri(msg: Message):
     # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
     cm = CardMessage()
-
     c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
     #实现卡片的markdown文本
     #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
     c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
     c3.append(Module.Divider())
     c3.append(Module.Header('上号，瓦一把！'))
-    c3.append(Module.Section("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n\n「/saveid '游戏id'」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n"))
+    c3.append(Module.Section(Element.Text("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/DX」 关于DirectX Runtime报错的解决方案\n\n「/saveid '游戏id'」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「/skin '皮肤名'」 查询皮肤系列包含什么枪械，仅支持英文名\n「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家",Types.Text.KMD)))
     c3.append(Module.Divider())
     c3.append(Module.Header('和阿狸玩小游戏吧~ '))
     c3.append(Module.Section('「/roll 1 100」 掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「更多…」 还有一些隐藏指令哦~\n'))
@@ -120,7 +119,7 @@ async def uncle(msg: Message):
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
-from val import kda123,skin123,saveid123,saveid1,saveid2,myid123,val123,dx123
+from val import kda123,skin123,lead123,saveid123,saveid1,saveid2,myid123,val123,dx123
 
 # 中二病
 @bot.command(name='kda')
@@ -131,6 +130,11 @@ async def kda(msg: Message):
 @bot.command()
 async def skin(msg: Message,name:str):
     await skin123(msg,name)
+    
+# 查询排行榜
+@bot.command()
+async def lead(msg: Message,sz=15,num=10):
+    await lead123(msg,sz,num)
  
 # 存储用户游戏id
 @bot.command()
