@@ -25,15 +25,19 @@ This robot is still at an extremely early stage, and many of the functions I wan
 
 Here is the Command List for bot:
 
-* `/hello`：reply "world!"
-* `/Ahri`：help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is a hero in League of Legends）
-* `/val err_code`：help with the err_code of valorant
-* `/saveid`：save or change user's game ID
-* `/myid`：show user's game ID
-* `/skin name`：search for skins
-* `/roll 1 100`：return a number in `1~100`
-* `/countdown second`： show a countdown,which default is 60s
 
+| command             | function                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| `/hello`            | reply "world!"                                               |
+| `/Ahri`             | help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is an hero in League of Legends） |
+| `/val err_code`     | help with the err_code of valorant                           |
+| `/saveid`           | save or change user's game ID                                |
+| `/myid`             | show user's game ID                                          |
+| `/skin name`        | search for skins                                             |
+| `/lead 30 20`       | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
+| `/roll 1 100`       | return a number in `1~100`                                   |
+| `/countdown second` | show a countdown,which default is 60s                        |
+|                     |                                                              |
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
 

@@ -9,7 +9,6 @@
 
 
 <div align="center">
-
 [English](./README_EN.md) | 简体中文
 
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
@@ -21,14 +20,18 @@
 
 下面是目前支持的功能列表：
 
-* `/hello`：回复 world！
-* `/Ahri`：回复使用帮助（因`/help`和其他机器人冲突，故用阿狸的英文名`Ahri`替代）
-* `/val 错误码`：回复解决方法
-* `/saveid`：保存（修改）用户的游戏id
-* `/myid`：显示用户的游戏id
-* `/skin name`：搜索已有皮肤系列包含什么枪械
-* `/roll 1 100`：掷色子1-100，范围可自行调节
-* `/countdown 秒数`： 倒计时，默认60秒
+| 命令              | 功能                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| `/hello`          | 回复 world！                                                 |
+| `/Ahri`           | 回复使用帮助（因`/help`和其他机器人冲突，故用阿狸的英文名`Ahri`替代） |
+| `/val 错误码`     | 回复游戏错误码解决方法                                       |
+| `/saveid`         | 保存（修改）用户的游戏id                                     |
+| `/myid`           | 显示用户的游戏id                                             |
+| `/skin name`      | 搜索已有皮肤系列包含什么枪械                                 |
+| `/lead 30 20`     | 显示出亚服(ap)排行榜前30名胜场超过20的玩家                   |
+| `/roll 1 100`     | 掷色子1-100，范围可自行调节                                  |
+| `/countdown 秒数` | 倒计时，默认60秒                                             |
+|                   |                                                              |
 
 你可以在[screenshot](./screenshot)文件夹中找到对应的截图示例
 
@@ -41,13 +44,14 @@
 ~~~
 pip install khl.py
 pip install valorant
+pip install requests
 ~~~
 
 > Q：为何`khl.py`只需要3.6.8以上版本，而本仓库需要3.8+？
 >
 > A：因为valorant的第三方`Python Api`需要3.8+版本
 
-建议根据[khl.py](https://github.com/TWT233/khl.py)的`example`教程，学习开黑啦机器人的基本搭建（很简单的，相信我）
+建议根据[khl.py](https://github.com/TWT233/khl.py)的`example`教程，学习KOOK机器人的基本搭建（很简单的，相信我）
 
 如果你想直接使用本机器人，则继续往下看👇
 
@@ -61,7 +65,7 @@ git clone https://github.com/Aewait/Valorant-kaiheila-bot.git
 
 ### 2.配置config文件
 
-光光克隆还不够，你需要在[开黑啦开发者页面](https://developer.kaiheila.cn/doc/intro)申请一个机器人内测资格，并获得你的`token`
+光光克隆还不够，你需要在[KOOK开发者页面](https://developer.kaiheila.cn/doc/intro)申请一个机器人内测资格，并获得你的`token`
 
 在`code`路径下创建`config`文件夹，并在其中创建`config.json`，将你的`token`写入其中
 
@@ -96,7 +100,7 @@ python main.py
 ```
 nohup python -u main.py>./log/bot.log 2>&1&
 ```
-执行后，Linux会给你返回一个进程编号
+执行后，Linux会给你返回一个进程编号（建议先用`python main.py`直接运行，确认无bug后再执行上面的命令）
 
 * 找到后台运行的机器人并让其下岗
 
