@@ -36,8 +36,8 @@ Here is the Command List for bot:
 | `/skin name`        | search for skins                                             |
 | `/lead 30 20`       | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
 | `/roll 1 100`       | return a number in `1~100`                                   |
-| `/countdown second` | show a countdown,which default is 60s                        |
-|                     |                                                              |
+| `/countdown 30`     | set a countdown for 30s,which default is 60s                 |
+
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
 
