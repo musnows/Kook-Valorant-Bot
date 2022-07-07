@@ -17,7 +17,9 @@ KOOK(once called kaiheila) is a Chinese voice communication software.
 
 >Because this bot are only used in Chinese platform,so I didn't write a more detailed Readme in English.Sorry for that
 
-This robot is still at an extremely early stage, and many of the functions I want have not yet been realized.Such as `/store`and`/nightmarket`
+This robot is still at an extremely early stage, and many of the functions I want have not yet been realized.
+
+For safety reason, the development of `/store`and`/nightmarket` has been canceled
 
 ---
 
@@ -37,6 +39,8 @@ Here is the Command List for bot:
 | `/lead 30 20`       | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
 | `/roll 1 100`       | return a number in `1~100`                                   |
 | `/countdown 30`     | set a countdown for 30s,which default is 60s                 |
+|                     | Automatically grant roles to users                           |
+
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
