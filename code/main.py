@@ -112,16 +112,17 @@ def save_userid_color(userid:str,emoji:str):
             v = line.strip().split(':')
             if userid == v[0]:
                 flag=1 #因为用户已经回复过表情，将flag置为1
+                fr1.close()
                 return flag
-            else:
-                flag=0
+                
      fr1.close()
      #原有txt内没有该用户信息，进行追加操作
      if flag==0:
         fw2 = open("./log/color_idsave.txt",'a+',encoding='utf-8')
         fw2.write(userid + ':' + emoji + '\n')
         fw2.close()
-        return flag
+     
+     return flag
 
 #确认用户回复的emoji是列表里面存在的，如果不是，那就不做任何操作
 def check_userid_color(emoji:str):
@@ -143,13 +144,13 @@ def check_userid_color(emoji:str):
 # 判断消息的emoji回应，并给予不同角色
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
-    g = await b.fetch_guild('5134217138075250')# 填入服务器id
+    g = await b.fetch_guild('3566823018281801')# 填入服务器id
     # s = await b.fetch_user('1961572535') # 填入用户id
     #print(event.body)# 这里的打印eventbody的完整内容
     #print(event.body["emoji"]['id'])#这里是获取回应表情的id，方便下面进行比较
 
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
-    if event.body['msg_id'] == '5054e0f9-15cb-46f8-96a8-4726f2f0e984':
+    if event.body['msg_id'] == 'd1d1c8cb-42db-4e17-94e3-11518cd08dee':
         channel = await b.fetch_public_channel(event.body['channel_id']) #获取事件频道
         s = await b.fetch_user(event.body['user_id'])#通过event获取用户id(对象)
         
@@ -166,25 +167,25 @@ async def update_reminder(b: Bot, event: Event):
             else:
                 # 这里的emoji顺序和下面colorset的顺序是一样的 
                 if event.body["emoji"]['id'] == '[#128055;]':
-                    #await g.grant_role(s,2881825)
+                    await g.grant_role(s,2881825)
                     await b.send(channel, '阿狸已经给你上了粉色啦~',temp_target_id=event.body['user_id'])
                 elif event.body["emoji"]['id'] == '❤':
-                    #await g.grant_role(s,4469565)
+                    await g.grant_role(s,3970687)
                     await b.send(channel, '阿狸已经给你上了红色啦~',temp_target_id=event.body['user_id'])
                 elif event.body["emoji"]['id'] == '[#128420;]':
-                    #await g.grant_role(s,4196071)
+                    await g.grant_role(s,4196071)
                     await b.send(channel, '阿狸已经给你上了黑色啦~',temp_target_id=event.body['user_id'])
                 elif event.body["emoji"]['id'] == '[#128155;]':
-                    #await g.grant_role(s,2882418)
+                    await g.grant_role(s,2882418)
                     await b.send(channel, '阿狸已经给你上了黄色啦~',temp_target_id=event.body['user_id'])
                 elif event.body["emoji"]['id'] == '[#128153;]':
-                    #await g.grant_role(s,2928540)
+                    await g.grant_role(s,2928540)
                     await b.send(channel, '阿狸已经给你上了蓝色啦~',temp_target_id=event.body['user_id'])
                 elif event.body["emoji"]['id'] == '[#128156;]':
-                    #await g.grant_role(s,2907567)
+                    await g.grant_role(s,2907567)
                     await b.send(channel, '阿狸已经给你上了紫色啦~',temp_target_id=event.body['user_id'])
                 elif event.body["emoji"]['id'] == '[#128154;]':
-                    #await g.grant_role(s,2904370)
+                    await g.grant_role(s,2904370)
                     await b.send(channel, '阿狸已经给你上了绿色啦~',temp_target_id=event.body['user_id'])
                 else:
                     await b.send(channel, '你选择了默认颜色，这也挺不错的！',temp_target_id=event.body['user_id'])
