@@ -1,15 +1,17 @@
 # encoding: utf-8:
+from ctypes.wintypes import MSG
 import json
 import random
 import datetime
-
-import valorant
+import traceback
 
 from datetime import datetime, timedelta
 
-from khl import Bot, Message, EventTypes, Event
+from khl import Bot, Message, EventTypes, Event,Client,PublicChannel
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from khl.command import Rule
+#import khl.role,khl.guild
+from khl.guild import Guild,GuildUser
 
 # 新建机器人，token 就是机器人的身份凭证
 # 用 json 读取 config.json，装载到 config 里
@@ -22,7 +24,6 @@ bot = Bot(token=config['token'])
 
 ##########################################################################################
 ##########################################################################################
-
 
 # @ 是「装饰器」语法，大家可以网上搜搜教程，我们这里直接用就行
 # bot 是我们刚刚新建的机器人，声明这个指令是要注册到 bot 中的
@@ -88,17 +89,107 @@ async def yes(msg: Message, mention_str: str):
 # 设定自己的规则
 def my_rule(msg: Message) -> bool:
     return msg.content.find('khl') != -1
-# 只有包含 'khl'的语句才能出发，比如 "/test_mine khl-go"
+# 只有包含 'khl'的语句才能触发，比如 "/test_mine khl-go"
 @bot.command(name='test_mine', rules=[my_rule])
 async def test_mine(msg: Message, comment: str):
     await msg.reply(f'yes! {comment} can trigger this command')
-
 
 # # 正则表达式（实测无效）
 # @bot.command(regex = r'(.+)\\(met\\)ID\\(met\\)')
 # async def cmd(msg: Message, text: str, user_id: str):
     # #pass 
     # await msg.reply('who are u')
+
+
+# 用于记录使用表情回应获取ID颜色的用户
+def save_userid_color(userid:str,emoji:str):
+     flag=0
+     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
+     with open("./log/color_idsave.txt", 'r',encoding='utf-8') as fr1:
+        lines=fr1.readlines()   
+     #使用r+同时读写（有bug）
+        for line in lines:
+            v = line.strip().split(':')
+            if userid == v[0]:
+                flag=1 #因为用户已经回复过表情，将flag置为1
+                return flag
+            else:
+                flag=0
+     fr1.close()
+     #原有txt内没有该用户信息，进行追加操作
+     if flag==0:
+        fw2 = open("./log/color_idsave.txt",'a+',encoding='utf-8')
+        fw2.write(userid + ':' + emoji + '\n')
+        fw2.close()
+        return flag
+
+# 判断消息的emoji回应，并给予不同角色
+@bot.on_event(EventTypes.ADDED_REACTION)
+async def update_reminder(b: Bot, event: Event):
+    g = await b.fetch_guild('3566823018281801')# 填入服务器id
+    # s = await b.fetch_user('1961572535') # 填入用户id
+    #print(event.body)# 这里的打印eventbody的完整内容
+    #print(event.body["emoji"]['id'])#这里是获取回应表情的id，方便下面进行比较
+
+    #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
+    if event.body['msg_id'] == 'fbee2865-dbb5-4a8b-9f18-fd41f30b7a99':
+        channel = await b.fetch_public_channel(event.body['channel_id']) #获取事件频道
+        s = await b.fetch_user(event.body['user_id'])#通过event获取用户id(对象)
+        
+        # 判断该用户是否已经对这个消息做出过回应
+        ret = save_userid_color(event.body['user_id'],event.body["emoji"]['id'])
+        if ret == 1:
+            await b.send(channel,f'你已经设置过你的ID颜色啦！修改要去找管理员哦~',temp_target_id=event.body['user_id'])
+            return
+        else:
+            # 这里的emoji顺序和下面colorset的顺序是一样的 
+            if event.body["emoji"]['id'] == '[#128055;]':
+                await g.grant_role(s,2881825)
+                await b.send(channel, '阿狸已经给你上了粉色啦~',temp_target_id=event.body['user_id'])
+            elif event.body["emoji"]['id'] == '❤':
+                await g.grant_role(s,4469565)
+                await b.send(channel, '阿狸已经给你上了红色啦~',temp_target_id=event.body['user_id'])
+            elif event.body["emoji"]['id'] == '[#128420;]':
+                await g.grant_role(s,4196071)
+                await b.send(channel, '阿狸已经给你上了黑色啦~',temp_target_id=event.body['user_id'])
+            elif event.body["emoji"]['id'] == '[#128155;]':
+                await g.grant_role(s,2882418)
+                await b.send(channel, '阿狸已经给你上了黄色啦~',temp_target_id=event.body['user_id'])
+            elif event.body["emoji"]['id'] == '[#128153;]':
+                await g.grant_role(s,2928540)
+                await b.send(channel, '阿狸已经给你上了蓝色啦~',temp_target_id=event.body['user_id'])
+            elif event.body["emoji"]['id'] == '[#128156;]':
+                await g.grant_role(s,2907567)
+                await b.send(channel, '阿狸已经给你上了紫色啦~',temp_target_id=event.body['user_id'])
+            elif event.body["emoji"]['id'] == '[#128154;]':
+                await g.grant_role(s,2904370)
+                await b.send(channel, '阿狸已经给你上了绿色啦~',temp_target_id=event.body['user_id'])
+            else:
+                await b.send(channel, '你选择了默认颜色，这也挺不错的！',temp_target_id=event.body['user_id'])
+
+        
+# 给用户上色
+@bot.command()
+async def Color_Set(msg: Message):
+    cm = CardMessage()
+    c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
+    c1.append(Module.Divider())
+    c1.append(Module.Section('「:pig:」粉色 「:heart:」红色\n「:black_heart:」黑色 「:yellow_heart:」黄色\n'))
+    c1.append(Module.Section('「:blue_heart:」蓝色 「:purple_heart:」紫色\n「:green_heart:」绿色 「:+1:」默认就行\n'))
+    cm.append(c1)
+    await msg.ctx.channel.send(cm)
+
+# 设置段位角色
+@bot.command()
+async def rankset(msg: Message):
+    cm = CardMessage()
+    c1 = Card(Module.Header('在下面添加回应，来设置你的段位吧！'), Module.Context('段位更改功能等待上线...'))
+    c1.append(Module.Section('「:question:」黑铁 「:eyes:」青铜\n「:sweat_drops:」白银 「:yellow_heart:」黄金\n'))
+    c1.append(Module.Section('「:blue_heart:」铂金 「:purple_heart:」钻石\n「:green_heart:」翡翠 「:heart:」神话\n'))
+    #c1.append(Module.Section(Element.Text('「(emj)FW摆烂(emj)[5134217138075250/D1K4o7mYAm0p80p8]」铂金',Types.Text.KMD)))
+    cm.append(c1)
+    await msg.ctx.channel.send(cm)
+
 
 # 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
@@ -113,7 +204,6 @@ async def atAhri(msg: Message, mention_str: str):
 @bot.command()
 async def uncle(msg: Message):
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
-
 
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
