@@ -4,13 +4,14 @@ import json
 import random
 import datetime
 import traceback
+import requests
 
 from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event,Client,PublicChannel
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from khl.command import Rule
-#import khl.role,khl.guild
+import khl.task
 from khl.guild import Guild,GuildUser
 
 # 新建机器人，token 就是机器人的身份凭证
@@ -21,6 +22,12 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
 
+# 向botmarket通信
+@bot.task.add_interval(minutes=30)
+def botmarket():
+    api ="http://bot.gekj.net/api/v1/online.bot"
+    headers = {'uuid':'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
+    r = requests.post(api,headers=headers)
 
 ##########################################################################################
 ##########################################################################################
