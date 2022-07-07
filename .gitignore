@@ -2,5 +2,6 @@ bot.log
 *.log
 config.json
 idsave.txt
+color_idsave.txt
 valorant.json
 code/__pycache__/
