@@ -8,7 +8,7 @@ import requests
 
 from datetime import datetime, timedelta
 
-from khl import Bot, Message, EventTypes, Event,Client,PublicChannel
+from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from khl.command import Rule
 import khl.task
@@ -28,6 +28,9 @@ def botmarket():
     api ="http://bot.gekj.net/api/v1/online.bot"
     headers = {'uuid':'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
     r = requests.post(api,headers=headers)
+
+# 设置全局变量：机器人开发者id
+master_id = '1961572535'
 
 ##########################################################################################
 ##########################################################################################
@@ -92,7 +95,6 @@ async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
 async def yes(msg: Message, mention_str: str):
     await msg.reply(f'yes! mentioned all with {mention_str}')
 
-    
 # 设定自己的规则
 def my_rule(msg: Message) -> bool:
     return msg.content.find('khl') != -1
@@ -107,6 +109,8 @@ async def test_mine(msg: Message, comment: str):
     # #pass 
     # await msg.reply('who are u')
 
+
+####################################以下是给用户上色功能的内容############################################
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid:str,emoji:str):
@@ -148,16 +152,26 @@ def check_userid_color(emoji:str):
      fr1.close()
      return flag #没找到，不合法，返回0
 
+# 设置下面这个event的服务器id和消息id
+Guild_ID = '5134217138075250'
+Msg_ID = '918d27bc-f5c5-4082-a1f9-5428fba303a5'
+
+# # 在不修改代码的前提下设置上色功能的服务器和监听消息
+# @bot.command()
+# async def Color_Set_CM(msg: Message,Card_Msg_id:str):
+#     Guild_ID = msg.ctx.guild.id
+#     Msg_ID = Card_Msg_id
+#     await msg.reply(f'颜色监听服务器更新为{Guild_ID}\n监听消息更新为{Msg_ID}\n')
+
 # 判断消息的emoji回应，并给予不同角色
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
-    g = await b.fetch_guild('3566823018281801')# 填入服务器id
+    g = await b.fetch_guild(Guild_ID)# 填入服务器id
     # s = await b.fetch_user('1961572535') # 填入用户id
-    #print(event.body)# 这里的打印eventbody的完整内容
-    #print(event.body["emoji"]['id'])#这里是获取回应表情的id，方便下面进行比较
+    print(event.body)# 这里的打印eventbody的完整内容，包含emoji_id
 
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
-    if event.body['msg_id'] == 'd1d1c8cb-42db-4e17-94e3-11518cd08dee':
+    if event.body['msg_id'] == Msg_ID:
         channel = await b.fetch_public_channel(event.body['channel_id']) #获取事件频道
         s = await b.fetch_user(event.body['user_id'])#通过event获取用户id(对象)
         
@@ -197,19 +211,37 @@ async def update_reminder(b: Bot, event: Event):
                 else:
                     await b.send(channel, '你选择了默认颜色，这也挺不错的！',temp_target_id=event.body['user_id'])
 
-        
-# 给用户上色
+
+# 给用户上色（在发出消息后，机器人自动添加回应）
 @bot.command()
-async def Color_Set(msg: Message):
+async def Color_Set1(msg: Message):
     cm = CardMessage()
     c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
     c1.append(Module.Divider())
     c1.append(Module.Section('「:pig:」粉色  「:heart:」红色\n「:black_heart:」黑色  「:yellow_heart:」黄色\n'))
     c1.append(Module.Section('「:blue_heart:」蓝色  「:purple_heart:」紫色\n「:green_heart:」绿色  「:+1:」默认\n'))
     cm.append(c1)
-    await msg.ctx.channel.send(cm)
+    sent = await msg.ctx.channel.send(cm) #接受send的返回值
+    # 自己new一个msg对象    
+    setMSG=PublicMessage(
+        msg_id= sent['msg_id'],
+        _gate_ = msg.gate,
+        extra={'guild_id': msg.ctx.guild.id,
+            'channel_name': msg.ctx.channel,
+            'author':{'id': bot.me.id}}) #extra部分留空也行
+    
+    # 让bot给卡片消息添加对应emoji回应
+    with open("./log/color_emoji.txt", 'r',encoding='utf-8') as fr1:
+        lines = fr1.readlines()   
+        for line in lines:
+            v = line.strip().split(':')
+            await setMSG.add_reaction(v[0])
+    fr1.close()
+    
 
-# 设置段位角色
+
+
+# 设置段位角色（暂时没有启用）
 @bot.command()
 async def rankset(msg: Message):
     cm = CardMessage()
@@ -220,11 +252,10 @@ async def rankset(msg: Message):
     cm.append(c1)
     await msg.ctx.channel.send(cm)
 
-
 # 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
 async def atAhri(msg: Message, mention_str: str):
-    if msg.author_id == '1961572535':
+    if msg.author_id == master_id:
         await msg.reply(f'主人有何吩咐呀~')
     else:
         await msg.reply(f'呀，听说有人想我了，是吗？')
@@ -234,6 +265,11 @@ async def atAhri(msg: Message, mention_str: str):
 @bot.command()
 async def uncle(msg: Message):
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
+
+@bot.command()
+async def test01(msg: Message):
+    print(msg.ctx.guild.id)
+    await msg.ctx.channel.send('正在进行测试！')
 
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
