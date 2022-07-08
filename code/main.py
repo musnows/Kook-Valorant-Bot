@@ -167,6 +167,7 @@ Msg_ID = '5553f709-75e8-4fd9-bd2e-2eaa37f068cb'
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
     g = await b.fetch_guild(Guild_ID)# 填入服务器id
+    
     # s = await b.fetch_user('1961572535') # 填入用户id
     #print(event.body)# 这里的打印eventbody的完整内容，包含emoji_id
 
@@ -238,7 +239,48 @@ async def Color_Set1(msg: Message):
             await setMSG.add_reaction(v[0])
     fr1.close()
     
+###########################################################################################
 
+# 检查文件中是否有这个助力者的id
+def check(it:dict):
+    flag=0
+    # 需要先保证原有txt里面没有保存该用户的id，才进行追加
+    with open("./log/sponsor_roles.txt", 'r',encoding='utf-8') as fr1:
+        lines=fr1.readlines()   
+        for line in lines:
+            v = line.strip().split(':')
+            if it['id'] == v[0]:
+                flag=1
+                fr1.close()
+                return flag
+
+    fr1.close()
+    #原有txt内没有该用户信息，进行追加操作
+    if flag==0:
+        fw2 = open("./log/sponsor_roles.txt",'a+',encoding='utf-8')
+        fw2.write(it['id']+ ':' + it['nickname'] + '\n')
+        fw2.close()
+
+    return flag
+
+# 感谢助力者
+@bot.task.add_interval(minutes=1)
+async def thanks_sonser():
+    api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
+    headers={f'Authorization': f"Bot {config['token']}"}
+    r1 = requests.get(api, headers=headers)#写入token
+    json_dict = json.loads(r1.text)
+    #print(r1.text)
+    for its in json_dict['data']['items']:
+        print(f"{its['id']}:{its['nickname']}")
+        if check(its) == 1:
+            channel = await bot.fetch_public_channel("6677681741712306") #发送感谢信息的文字频道
+            #print(f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
+            await bot.send(channel,f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
+
+
+
+################################################################################################
 
 
 # 设置段位角色（暂时没有启用）
