@@ -263,8 +263,8 @@ def check(it:dict):
 
     return flag
 
-# 感谢助力者
-@bot.task.add_interval(minutes=1)
+# 感谢助力者（每20分钟检查一次）
+@bot.task.add_interval(minutes=20)
 async def thanks_sonser():
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
     headers={f'Authorization': f"Bot {config['token']}"}
@@ -272,9 +272,9 @@ async def thanks_sonser():
     json_dict = json.loads(r1.text)
     #print(r1.text)
     for its in json_dict['data']['items']:
-        print(f"{its['id']}:{its['nickname']}")
-        if check(its) == 1:
-            channel = await bot.fetch_public_channel("6677681741712306") #发送感谢信息的文字频道
+        #print(f"{its['id']}:{its['nickname']}")
+        if check(its) == 0:
+            channel = await bot.fetch_public_channel("8342620158040885") #发送感谢信息的文字频道
             #print(f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
             await bot.send(channel,f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
 
