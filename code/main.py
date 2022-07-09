@@ -239,7 +239,7 @@ async def Color_Set1(msg: Message):
             await setMSG.add_reaction(v[0])
     fr1.close()
     
-###########################################################################################
+##################################感谢助力者########################################
 
 # 检查文件中是否有这个助力者的id
 def check(it:dict):
@@ -279,9 +279,16 @@ async def thanks_sonser():
             await bot.send(channel,f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
 
 
+######################################## Other ################################################
 
-################################################################################################
-
+from youdao import youdao_translate
+# 调用有道翻译（简单版本，无法翻译长文）
+@bot.command(name='TL',aliases=['tl'])
+async def translate(msg: Message,*arg):
+    cm = CardMessage()
+    c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自有道翻译。极其早期版本，随时可能失效...'))
+    cm.append(c1)
+    await msg.ctx.channel.send(cm)
 
 # 设置段位角色（暂时没有启用）
 @bot.command()
