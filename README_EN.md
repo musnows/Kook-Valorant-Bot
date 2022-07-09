@@ -28,18 +28,19 @@ For safety reason, the development of `/store`and`/nightmarket` has been cancele
 Here is the Command List for bot:
 
 
-| command             | function                                                     |
-| ------------------- | ------------------------------------------------------------ |
-| `/hello`            | reply "world!"                                               |
-| `/Ahri`             | help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is an hero in League of Legends） |
-| `/val err_code`     | help with the err_code of valorant                           |
-| `/saveid`           | save or change user's game ID                                |
-| `/myid`             | show user's game ID                                          |
-| `/skin name`        | search for skins                                             |
-| `/lead 30 20`       | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
-| `/roll 1 100`       | return a number in `1~100`                                   |
-| `/countdown 30`     | set a countdown for 30s,which default is 60s                 |
-|                     | Automatically grant roles to users                           |
+| command         | function                                                     |
+| --------------- | ------------------------------------------------------------ |
+| `/hello`        | reply "world!"                                               |
+| `/Ahri`         | help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is an hero in League of Legends） |
+| `/val err_code` | help with the err_code of valorant                           |
+| `/saveid`       | save or change user's game ID                                |
+| `/myid`         | show user's game ID                                          |
+| `/skin name`    | search for skins                                             |
+| `/lead 30 20`   | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
+| `/roll 1 100`   | return a number in `1~100`                                   |
+| `/countdown 30` | set a countdown for 30s,which default is 60s                 |
+|                 | Automatically grant roles to users                           |
+|                 | When someone sponsor the server, send a thanks message on the notification channel |
 
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.

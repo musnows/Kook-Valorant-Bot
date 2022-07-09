@@ -9,10 +9,10 @@
 
 
 <div align="center">
-  
+
 [English](./README_EN.md) | 简体中文
 
-  
+
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
 [![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 </div>
@@ -34,6 +34,7 @@
 | `/roll 1 100`     | 掷色子1-100，范围可自行调节                                  |
 | `/countdown 秒数` | 倒计时，默认60秒                                             |
 |         `无`         | 自动给新用户上对应角色（可自主修改）                           |
+| `无` | 当有人助力服务器的时候，在通知频道发送感谢信息 |
 
 你可以在[screenshot](./screenshot)文件夹中找到对应的截图示例
 
@@ -136,6 +137,7 @@ kill -9 进程号
 - [x] 添加自动给新用户上色功能
 - [ ] 学习python
 - [x] 学习接入官方的`valorant api`库
+- [ ] 实现查询游戏战绩（需要roit授权）
 - [ ] ~~实现玩家商店刷枪的查询~~
 - [ ] ~~实现当商店刷新某一把枪的时候提醒玩家~~
 - [ ] ~~查看玩家的夜市~~
