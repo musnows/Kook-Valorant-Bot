@@ -1,6 +1,8 @@
 ## 一次瞎升级python导致的错误记录
 
-本README和这个文件夹没有任何关系，只是写出来给自己留档做个记录
+本`README`和这个文件夹没有任何关系，只是写出来给自己留档做个记录
+
+This `REAMDE` has nothing to do with this folder and screenshot, just write it out for myself to keep in mind.
 
 ### 1.不要瞎改配置文件
 

@@ -312,6 +312,8 @@ async def uncle(msg: Message):
 async def test01(msg: Message):
     print(msg.ctx.guild.id)
     await msg.ctx.channel.send('正在进行测试！')
+    channel = await bot.fetch_public_channel("8342620158040885")
+    
 
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
