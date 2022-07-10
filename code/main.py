@@ -142,7 +142,7 @@ def save_userid_color(userid:str,emoji:str):
 #确认用户回复的emoji是列表里面存在的，如果不是，那就不做任何操作
 def check_userid_color(emoji:str):
      flag=0
-     with open("./log/color_emoji.txt", 'r',encoding='utf-8') as fr1:
+     with open("./config/color_emoji.txt", 'r',encoding='utf-8') as fr1:
         lines=fr1.readlines()   
 
         for line in lines:
@@ -219,7 +219,7 @@ async def update_reminder(b: Bot, event: Event):
 
 # 给用户上色（在发出消息后，机器人自动添加回应）
 @bot.command()
-async def Color_Set1(msg: Message):
+async def Color_Set(msg: Message):
     cm = CardMessage()
     c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
     c1.append(Module.Divider())
@@ -236,7 +236,7 @@ async def Color_Set1(msg: Message):
             'author':{'id': bot.me.id}}) #extra部分留空也行
     
     # 让bot给卡片消息添加对应emoji回应
-    with open("./log/color_emoji.txt", 'r',encoding='utf-8') as fr1:
+    with open("./config/color_emoji.txt", 'r',encoding='utf-8') as fr1:
         lines = fr1.readlines()   
         for line in lines:
             v = line.strip().split(':')
