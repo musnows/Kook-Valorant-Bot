@@ -2,16 +2,17 @@
 import json
 import random
 import datetime
-import traceback
+# import traceback
 import requests
+import aiohttp
 
 from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from khl.command import Rule
-import khl.task
-from khl.guild import Guild,GuildUser
+# import khl.task
+# from khl.guild import Guild,GuildUser
 
 
 # 新建机器人，token 就是机器人的身份凭证
@@ -24,10 +25,13 @@ bot = Bot(token=config['token'])
 
 # 向botmarket通信
 @bot.task.add_interval(minutes=30)
-def botmarket():
+async def botmarket():
     api ="http://bot.gekj.net/api/v1/online.bot"
     headers = {'uuid':'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
-    r = requests.post(api,headers=headers)
+    # r = requests.post(api,headers=headers)
+    async with aiohttp.ClientSession() as session:
+        await session.post(api, headers=headers)
+    
 
 # 设置全局变量：机器人开发者id
 master_id = '1961572535'
@@ -242,7 +246,7 @@ async def Color_Set1(msg: Message):
 ##################################感谢助力者########################################
 
 # 检查文件中是否有这个助力者的id
-def check(it:dict):
+def check_sponsor(it:dict):
     flag=0
     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
     with open("./log/sponsor_roles.txt", 'r',encoding='utf-8') as fr1:
@@ -267,16 +271,24 @@ def check(it:dict):
 @bot.task.add_interval(minutes=20)
 async def thanks_sonser():
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
+    #api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=5134217138075250&role_id=4465168"
     headers={f'Authorization': f"Bot {config['token']}"}
-    r1 = requests.get(api, headers=headers)#写入token
-    json_dict = json.loads(r1.text)
-    #print(r1.text)
+
+    # r1 = requests.get(api, headers=headers)#写入token
+    # json_dict = json.loads(r1.text)
+    # print(r1.text)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(api, headers=headers) as response:
+            #json_dict=json.loads(await response.text())
+            json_dict = await response.json()
+
     for its in json_dict['data']['items']:
         #print(f"{its['id']}:{its['nickname']}")
-        if check(its) == 0:
+        if check_sponsor(its) == 0:
             channel = await bot.fetch_public_channel("8342620158040885") #发送感谢信息的文字频道
-            #print(f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
             await bot.send(channel,f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
+            #print(f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
 
 
 ######################################## Other ################################################
@@ -289,17 +301,18 @@ async def translate(msg: Message,*arg):
         cm = CardMessage()
         c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自: 有道翻译'))
         cm.append(c1)
-        await msg.ctx.channel.send(cm)
+        #await msg.ctx.channel.send(cm)
+        await msg.reply(cm)
     except:
         word = " ".join(arg)
         cm = CardMessage()
         if is_CN(word):
-            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2en')}",Types.Text.KMD)), Module.Context('来自: 彩云小译'))
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2en')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，中译英'))
         else:
-            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2zh')}",Types.Text.KMD)), Module.Context('来自: 彩云小译'))
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2zh')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，英译中'))
             
         cm.append(c1)
-        await msg.ctx.channel.send(cm)
+        await msg.reply(cm)
    
 
 # 设置段位角色（暂时没有启用）

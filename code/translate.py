@@ -52,7 +52,6 @@ async def caiyun_translate(source, direction):
                 return json.loads(await response.text())["target"]
 
 
-
 # 由于彩云不支持输入中文自动翻译成英文（目前只支持其他语种自动转中文）
 # 所以需要判断来源是否是中文，如果是中文自动翻译成English
 def is_CN(word):
