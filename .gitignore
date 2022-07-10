@@ -1,8 +1,9 @@
 bot.log
 *.log
 config.json
+valorant.json
+caiyun.json
 idsave.txt
 color_idsave.txt
-valorant.json
-code/__pycache__/
 sponsor_roles.txt
+code/__pycache__/

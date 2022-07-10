@@ -1,5 +1,4 @@
 # encoding: utf-8:
-from ctypes.wintypes import MSG
 import json
 import random
 import datetime
@@ -13,6 +12,7 @@ from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from khl.command import Rule
 import khl.task
 from khl.guild import Guild,GuildUser
+
 
 # 新建机器人，token 就是机器人的身份凭证
 # 用 json 读取 config.json，装载到 config 里
@@ -281,14 +281,26 @@ async def thanks_sonser():
 
 ######################################## Other ################################################
 
-from youdao import youdao_translate
-# 调用有道翻译（简单版本，无法翻译长文）
+from translate import youdao_translate,caiyun_translate,is_CN
+# 调用翻译,有道和彩云两种引擎（有道寄了就用彩云）
 @bot.command(name='TL',aliases=['tl'])
 async def translate(msg: Message,*arg):
-    cm = CardMessage()
-    c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自有道翻译。极其早期版本，随时可能失效...'))
-    cm.append(c1)
-    await msg.ctx.channel.send(cm)
+    try:
+        cm = CardMessage()
+        c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自: 有道翻译'))
+        cm.append(c1)
+        await msg.ctx.channel.send(cm)
+    except:
+        word = " ".join(arg)
+        cm = CardMessage()
+        if is_CN(word):
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2en')}",Types.Text.KMD)), Module.Context('来自: 彩云小译'))
+        else:
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2zh')}",Types.Text.KMD)), Module.Context('来自: 彩云小译'))
+            
+        cm.append(c1)
+        await msg.ctx.channel.send(cm)
+   
 
 # 设置段位角色（暂时没有启用）
 @bot.command()

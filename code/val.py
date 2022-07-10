@@ -1,10 +1,6 @@
 # encoding: utf-8:
 import json
-import random
-import datetime
 import valorant
-
-from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
