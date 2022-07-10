@@ -27,33 +27,38 @@ async def kda123(msg: Message):
 
 # 查询皮肤！只支持English皮肤名
 async def skin123(msg: Message,name:str):
-    client = valorant.Client(KEY, locale=None)
-    skins = client.get_skins()
-    #name = input("Search a Valorant Skin Collection: ")
-    results = skins.find_all(name=lambda x: name.lower() in x.lower())
-    cm = CardMessage()
-    c1 = Card(Module.Header('查询到你想看的皮肤了！'),Module.Context('还想查其他皮肤吗...'))
-    c1.append(Module.Divider())
-    for skin in results:
-        c1.append(Module.Section(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"))
-        #print(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
-    cm.append(c1)
-    await msg.reply(cm)
+    try:
+        client = valorant.Client(KEY, locale=None)
+        skins = client.get_skins()
+        #name = input("Search a Valorant Skin Collection: ")
+        results = skins.find_all(name=lambda x: name.lower() in x.lower())
+        cm = CardMessage()
+        c1 = Card(Module.Header('查询到你想看的皮肤了！'),Module.Context('还想查其他皮肤吗...'))
+        c1.append(Module.Divider())
+        for skin in results:
+            c1.append(Module.Section(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"))
+            #print(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
+        cm.append(c1)
+        await msg.reply(cm)
+    except Exception as result:
+        await msg.reply("未知错误 %s" % result)
 
 # 获取排行榜上的玩家，默认获取前15位胜场超过10的玩家
 async def lead123(msg: Message,sz:int,num:int):
-    client = valorant.Client(KEY, locale=None,region='ap',route='asia')
-    lb = client.get_leaderboard(size=sz)
-    players = lb.players.get_all(numberOfWins=num)# 筛选出胜场超过num的
-    cm = CardMessage()
-    c1 = Card(Module.Header('查询到你想看的排行榜了！'),Module.Context('什么？你也上榜了嘛...'))
-    c1.append(Module.Divider())
-    for p in lb.players:
-        c1.append(Module.Section(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)"))
-        #print(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)")
-    cm.append(c1)
-    await msg.reply(cm)
-
+    try:
+        client = valorant.Client(KEY, locale=None,region='ap',route='asia')
+        lb = client.get_leaderboard(size=sz)
+        players = lb.players.get_all(numberOfWins=num)# 筛选出胜场超过num的
+        cm = CardMessage()
+        c1 = Card(Module.Header('查询到你想看的排行榜了！'),Module.Context('什么？你也上榜了嘛...'))
+        c1.append(Module.Divider())
+        for p in lb.players:
+            c1.append(Module.Section(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)"))
+            #print(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)")
+        cm.append(c1)
+        await msg.reply(cm)
+    except Exception as result:
+        await msg.reply("未知错误 %s" % result)
 
 
 #保存用户id
