@@ -39,11 +39,13 @@ Here is the Command List for bot:
 | `/lead 30 20`   | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
 | `/roll 1 100`   | return a number in `1~100`                                   |
 | `/countdown 30` | set a countdown for 30s,which default is 60s                 |
-|                 | Automatically grant roles to users                           |
-|                 | When someone sponsor the server, send a thanks message on the notification channel |
-
+| `/TL context`   | traslate context. from `zh to en ` & `other languages to zh` |
+| -               | Automatically grant roles to users                           |
+| -               | When someone sponsor the server, send a thanks message on the notification channel |
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
+
+for more guild and information,check out [wiki pages](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)
 
 
 ## About
