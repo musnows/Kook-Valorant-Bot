@@ -114,7 +114,7 @@ async def test_mine(msg: Message, comment: str):
     # await msg.reply('who are u')
 
 
-####################################以下是给用户上色功能的内容############################################
+################################以下是给用户上色功能的内容########################################
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid:str,emoji:str):
@@ -256,11 +256,11 @@ async def thanks_sonser():
             #print(f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
 
 
-######################################## Other ################################################
+######################################## Translate ################################################
 
 from translate import youdao_translate,caiyun_translate,is_CN
+
 # 调用翻译,有道和彩云两种引擎（有道寄了就用彩云）
-@bot.command(name='TL',aliases=['tl'])
 async def translate(msg: Message,*arg):
     try:
         cm = CardMessage()
@@ -279,6 +279,85 @@ async def translate(msg: Message,*arg):
         cm.append(c1)
         await msg.reply(cm)
    
+# 普通翻译指令
+@bot.command(name='TL',aliases=['tl'])
+async def translate1(msg: Message,*arg):
+    await translate(msg,' '.join(arg))   
+
+# 实时翻译栏位
+ListTL = ['0','0','0','0']
+
+# 查看目前已经占用的容量
+def checkTL():
+    sum=0
+    for i in ListTL:
+        if i !='0':
+            sum+=1
+    return sum
+
+@bot.command()
+async def CheckTL(msg:Message):
+    global ListTL
+    await msg.reply(f"目前已使用栏位:{checkTL()}/{len(ListTL)}")
+
+# 关闭所有栏位的实时翻译（避免有些人用完不关）
+@bot.command()
+async def ShutdownTL(msg:Message):
+    if msg.author.id != master_id:
+        return#这条命令只有bot的作者可以调用
+    global ListTL
+    i=0
+    while i< len(ListTL):
+        channel = await bot.fetch_public_channel(ListTL[i]) 
+        await bot.send(channel,"不好意思，阿狸的主人已经清空了实时翻译的栏位！")
+        ListTL[i] = '0'
+        i+=1
+    await msg.reply(f"实时翻译栏位已清空！目前为:{checkTL()}/{len(ListTL)}")
+
+# 通过频道id判断是否实时翻译本频道内容
+@bot.command(regex=r'(.+)')
+async def TL_Realtime(msg:Message,*arg):
+    word = " ".join(arg)
+    # 不翻译关闭实时翻译的指令
+    if word == "/TLOFF" or word == "/tloff":
+        return
+    global ListTL
+    if msg.ctx.channel.id in ListTL:
+        await translate(msg,' '.join(arg))
+        return
+
+# 开启实时翻译功能
+@bot.command(name='TLON',aliases=['tlon'])
+async def TLON(msg: Message):
+    #print(msg.ctx.channel.id)
+    global ListTL
+    if checkTL() == len(ListTL):
+        await msg.reply(f"目前栏位{checkTL()}/{len(ListTL)}，已满！")
+        return
+    i=0
+    while i< len(ListTL):
+        if ListTL[i] == '0':
+            ListTL[i] = msg.ctx.channel.id
+            break
+        i+=1
+    ret = checkTL()
+    await msg.reply(f"阿狸现在会实时翻译本频道的对话啦！\n目前栏位:{ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
+
+# 关闭实时翻译功能
+@bot.command(name='TLOFF',aliases=['tloff'])
+async def TLOFF(msg: Message):
+    global ListTL
+    i=0
+    while i< len(ListTL):
+        if ListTL[i] == msg.ctx.channel.id:
+            ListTL[i] = '0'
+            await msg.reply(f"实时翻译功能已关闭！目前栏位:{checkTL()}/{len(ListTL)}")
+            return
+        i+=1
+    await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位:{checkTL()}/{len(ListTL)}")
+    
+
+######################################## Other ################################################
 
 # 设置段位角色（暂时没有启用）
 @bot.command()
