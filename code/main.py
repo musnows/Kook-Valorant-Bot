@@ -306,13 +306,17 @@ async def ShutdownTL(msg:Message):
     if msg.author.id != master_id:
         return#这条命令只有bot的作者可以调用
     global ListTL
+    if checkTL()==0:
+        await msg.reply(f"实时翻译栏位为空: {checkTL()}/{len(ListTL)}")
+        return
     i=0
     while i< len(ListTL):
-        channel = await bot.fetch_public_channel(ListTL[i]) 
-        await bot.send(channel,"不好意思，阿狸的主人已经清空了实时翻译的栏位！")
-        ListTL[i] = '0'
+        if(ListTL[i])!='0': #不能对0的频道进行操作
+            channel = await bot.fetch_public_channel(ListTL[i]) 
+            await bot.send(channel,"不好意思，阿狸的主人已经清空了实时翻译的栏位！")
+            ListTL[i] = '0'
         i+=1
-    await msg.reply(f"实时翻译栏位已清空！目前为:{checkTL()}/{len(ListTL)}")
+    await msg.reply(f"实时翻译栏位已清空！目前为: {checkTL()}/{len(ListTL)}")
 
 # 通过频道id判断是否实时翻译本频道内容
 @bot.command(regex=r'(.+)')
@@ -332,7 +336,7 @@ async def TLON(msg: Message):
     #print(msg.ctx.channel.id)
     global ListTL
     if checkTL() == len(ListTL):
-        await msg.reply(f"目前栏位{checkTL()}/{len(ListTL)}，已满！")
+        await msg.reply(f"目前栏位: {checkTL()}/{len(ListTL)}，已满！")
         return
     i=0
     while i< len(ListTL):
@@ -341,7 +345,7 @@ async def TLON(msg: Message):
             break
         i+=1
     ret = checkTL()
-    await msg.reply(f"阿狸现在会实时翻译本频道的对话啦！\n目前栏位:{ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
+    await msg.reply(f"阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
 
 # 关闭实时翻译功能
 @bot.command(name='TLOFF',aliases=['tloff'])
@@ -351,10 +355,10 @@ async def TLOFF(msg: Message):
     while i< len(ListTL):
         if ListTL[i] == msg.ctx.channel.id:
             ListTL[i] = '0'
-            await msg.reply(f"实时翻译功能已关闭！目前栏位:{checkTL()}/{len(ListTL)}")
+            await msg.reply(f"实时翻译功能已关闭！目前栏位: {checkTL()}/{len(ListTL)}")
             return
         i+=1
-    await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位:{checkTL()}/{len(ListTL)}")
+    await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位: {checkTL()}/{len(ListTL)}")
     
 
 ######################################## Other ################################################
