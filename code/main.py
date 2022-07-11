@@ -141,7 +141,7 @@ def save_userid_color(userid:str,emoji:str):
 
 # 设置自动上色event的服务器id和消息id
 Guild_ID = '3566823018281801'
-Msg_ID = '2ab1d445-d090-4aa1-9263-3f99925019db'
+Msg_ID = '6fec1aeb-9d5c-4642-aa95-862e3db8aa61'
 
 # # 在不修改代码的前提下设置上色功能的服务器和监听消息
 @bot.command()
