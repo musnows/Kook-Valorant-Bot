@@ -40,6 +40,8 @@ Here is the Command List for bot:
 | `/roll 1 100`   | return a number in `1~100`                                   |
 | `/countdown 30` | set a countdown for 30s,which default is 60s                 |
 | `/TL context`   | traslate context. from `zh to en ` & `other languages to zh` |
+| `/TLON`         | turn on real time translation at current channel             |
+| `/TLOFF`        | turn off real time translation                               |
 | -               | Automatically grant roles to users                           |
 | -               | When someone sponsor the server, send a thanks message on the notification channel |
 
