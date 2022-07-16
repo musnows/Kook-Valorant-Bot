@@ -264,7 +264,7 @@ from translate import youdao_translate,caiyun_translate,is_CN
 async def translate(msg: Message,*arg):
     try:
         cm = CardMessage()
-        c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自: 有道翻译'))
+        c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自: 有道翻译'))
         cm.append(c1)
         #await msg.ctx.channel.send(cm)
         await msg.reply(cm)
@@ -272,9 +272,9 @@ async def translate(msg: Message,*arg):
         word = " ".join(arg)
         cm = CardMessage()
         if is_CN(word):
-            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2en')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，中译英'))
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，中译英'))
         else:
-            c1 = Card(Module.Section(Element.Text(f"**翻译结果(result):**  {await caiyun_translate(word,'auto2zh')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，英译中'))
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，英译中'))
             
         cm.append(c1)
         await msg.reply(cm)
@@ -323,7 +323,7 @@ async def ShutdownTL(msg:Message):
 async def TL_Realtime(msg:Message,*arg):
     word = " ".join(arg)
     # 不翻译关闭实时翻译的指令
-    if word == "/TLOFF" or word == "/tloff":
+    if word == "/TLOFF" or word == "/tloff" or word=='/tlon' or word =='/TLON':
         return
     global ListTL
     if msg.ctx.channel.id in ListTL:
@@ -338,6 +338,10 @@ async def TLON(msg: Message):
     if checkTL() == len(ListTL):
         await msg.reply(f"目前栏位: {checkTL()}/{len(ListTL)}，已满！")
         return
+    #发现bug，同一个频道可以开启两次实时翻译，需要加一个判断
+    if msg.ctx.channel.id in ListTL:
+         await msg.reply(f"本频道已经开启了实时翻译功能，请勿重复操作!")
+         return
     i=0
     while i< len(ListTL):
         if ListTL[i] == '0':
@@ -345,7 +349,7 @@ async def TLON(msg: Message):
             break
         i+=1
     ret = checkTL()
-    await msg.reply(f"阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
+    await msg.reply(f"Real-Time Translation ON\n阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
 
 # 关闭实时翻译功能
 @bot.command(name='TLOFF',aliases=['tloff'])
@@ -355,7 +359,7 @@ async def TLOFF(msg: Message):
     while i< len(ListTL):
         if ListTL[i] == msg.ctx.channel.id:
             ListTL[i] = '0'
-            await msg.reply(f"实时翻译功能已关闭！目前栏位: {checkTL()}/{len(ListTL)}")
+            await msg.reply(f"Real-Time Translation OFF！目前栏位: {checkTL()}/{len(ListTL)}")
             return
         i+=1
     await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位: {checkTL()}/{len(ListTL)}")
@@ -412,6 +416,7 @@ async def kda(msg: Message):
 # 查询皮肤系列
 @bot.command()
 async def skin(msg: Message,name:str):
+    #name=" ".join(arg)
     await skin123(msg,name)
     
 # 查询排行榜
