@@ -407,6 +407,20 @@ async def test01(msg: Message):
 ###########################################################################################
 
 from val import kda123,skin123,lead123,saveid123,saveid1,saveid2,myid123,val123,dx123
+from status import status_active,status_delete
+
+# 开始打游戏
+@bot.command(name='gaming')
+async def gaming(msg: Message):
+    ret = await status_active()
+    await msg.reply(f"{ret['message']}，阿狸上号啦！")
+
+# 停止打游戏
+@bot.command(name='sleeping')
+async def sleeping(msg: Message):
+    ret = await status_delete()
+    await msg.reply(f"{ret['message']}，阿狸下号休息啦!")
+
 
 # 中二病
 @bot.command(name='kda')
