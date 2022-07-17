@@ -407,20 +407,41 @@ async def test01(msg: Message):
 ###########################################################################################
 
 from val import kda123,skin123,lead123,saveid123,saveid1,saveid2,myid123,val123,dx123
-from status import status_active,status_delete
+from status import status_active_game,status_active_music,status_delete
 
 # 开始打游戏
-@bot.command(name='gaming')
-async def gaming(msg: Message):
-    ret = await status_active()
-    await msg.reply(f"{ret['message']}，阿狸上号啦！")
+@bot.command()
+async def gaming(msg: Message,game:int):
+    #await bot.client.update_playing_game(3,1)# 英雄联盟
+    if game ==1:    
+        ret = await status_active_game(453027) # 瓦洛兰特
+        await msg.reply(f"{ret['message']}，阿狸上号valorant啦！")
+    elif game ==2:
+        ret = await status_active_game(3)      # 英雄联盟
+        await msg.reply(f"{ret['message']}，阿狸上号LOL啦！")
 
-# 停止打游戏
+# 开始听歌
+@bot.command()
+async def singing(msg: Message,music:str,singer:str):
+        ret = await status_active_music(music,singer) # 瓦洛兰特
+        await msg.reply(f"{ret['message']}，阿狸开始听歌啦！")
+    
+# 停止打游戏1/听歌2
 @bot.command(name='sleeping')
-async def sleeping(msg: Message):
-    ret = await status_delete()
-    await msg.reply(f"{ret['message']}，阿狸下号休息啦!")
+async def sleeping(msg: Message,d:int):
+    ret = await status_delete(d)
+    if d ==1:
+        await msg.reply(f"{ret['message']}，阿狸下号休息啦!")
+    elif d==2:
+        await msg.reply(f"{ret['message']}，阿狸摘下了耳机~")
+    #await bot.client.stop_playing_game()
 
+# 更新游戏信息
+@bot.command()
+async def update_game(msg: Message,id:int,name:str,icon:str):
+    ret= await bot.client.update_game(id,name,icon)
+    await msg.reply(f"{ret['message']}，游戏信息更新成功!")
+    
 
 # 中二病
 @bot.command(name='kda')
