@@ -78,7 +78,7 @@ pip install requests
 
 由于很多人在使用类似商店查询软件后被ban，我决定正式停止相关功能的开发
 
-![ban](https://s1.ax1x.com/2022/07/07/jwNGMF.png)
+<img src="https://s1.ax1x.com/2022/07/07/jwNGMF.png" width="510px" height="360px"/>
 
 ---
 
