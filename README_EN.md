@@ -42,6 +42,8 @@ Here is the Command List for bot:
 | `/TL context`   | traslate context. from `zh to en ` & `other languages to zh` |
 | `/TLON`         | turn on real time translation at current channel             |
 | `/TLOFF`        | turn off real time translation                               |
+| `/we city`      | weather of the `city`                                        |
+| `/hs`           | history of today                                             |
 | -               | Automatically grant roles to users                           |
 | -               | When someone sponsor the server, send a thanks message on the notification channel |
 
