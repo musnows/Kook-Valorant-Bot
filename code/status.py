@@ -8,8 +8,6 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
 #bot = Bot(token=config['token'])
 Botoken=config['token']
 
-#好吧，其实这个功能在khl.py里面已经包含了
-#但是不知道什么原因，无法正常删除bot动态（库里面的代码比我自己写的慢很多）
 
 # 让机器人开始打游戏
 async def status_active_game(game:int):
