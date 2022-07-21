@@ -491,7 +491,7 @@ async def myid(msg: Message):
     await myid123(msg)
 
 # 查询游戏错误码
-@bot.command()
+@bot.command(name='val',aliases=['van'])
 async def val(msg: Message, num: int):
     await val123(msg,num)
 
