@@ -1,10 +1,11 @@
 # encoding: utf-8:
 import json
 import random
+import time
 import datetime
-# import traceback
-import requests
 import aiohttp
+# import traceback
+# import requests
 
 from datetime import datetime, timedelta
 
@@ -39,6 +40,11 @@ master_id = '1961572535'
 ##########################################################################################
 ##########################################################################################
 
+# 在控制台打印msg内容，用作日志
+def logging(msg: Message):
+    now_time = time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
+    print(f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} - content:{msg.content}")
+
 # @ 是「装饰器」语法，大家可以网上搜搜教程，我们这里直接用就行
 # bot 是我们刚刚新建的机器人，声明这个指令是要注册到 bot 中的
 # name 标示了指令的名字，名字也被用于触发指令，所以我们 /hello 才会让机器人有反应
@@ -46,11 +52,13 @@ master_id = '1961572535'
 # world 是函数名，可以自选；函数第一个参数的类型固定为 Message
 @bot.command(name='hello')
 async def world(msg: Message):
+    logging(msg)
     await msg.reply('你好呀~')
 
 # help命令
 @bot.command()
 async def Ahri(msg: Message):
+    logging(msg)
     # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
     cm = CardMessage()
     c3 = Card(Module.Header('你可以用下面这些指令调戏本狸哦！'), Module.Context('更多调戏方式上线中...'))
@@ -77,8 +85,8 @@ async def Ahri(msg: Message):
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
 async def countdown(msg: Message,time: int = 60):
+    logging(msg)
     cm = CardMessage()
-
     c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55)) # color=(90,59,215) is another available form
     c1.append(Module.Divider())
     c1.append(Module.Countdown(datetime.now() + timedelta( seconds=time), mode=Types.CountdownMode.SECOND))
@@ -90,6 +98,7 @@ async def countdown(msg: Message,time: int = 60):
 # invoke this via saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
 async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
+    logging(msg)
     result = [random.randint(t_min, t_max) for i in range(n)]
     await msg.reply(f'掷出来啦: {result}')
 
@@ -97,6 +106,7 @@ async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
 # 当有人输入“/yes @某一个用户”时这个语句被触发（感觉没用？）
 @bot.command(rules=[Rule.is_mention_all])
 async def yes(msg: Message, mention_str: str):
+    logging(msg)
     await msg.reply(f'yes! mentioned all with {mention_str}')
 
 # 设定自己的规则
@@ -109,10 +119,6 @@ async def test_mine(msg: Message, comment: str):
 
 # # 正则表达式（实测无效）
 # @bot.command(regex = r'(.+)\\(met\\)ID\\(met\\)')
-# async def cmd(msg: Message, text: str, user_id: str):
-    # #pass 
-    # await msg.reply('who are u')
-
 
 ################################以下是给用户上色功能的内容########################################
 
@@ -146,6 +152,7 @@ Msg_ID = '6fec1aeb-9d5c-4642-aa95-862e3db8aa61'
 # # 在不修改代码的前提下设置上色功能的服务器和监听消息
 @bot.command()
 async def Color_Set_GM(msg: Message,Card_Msg_id:str):
+    logging(msg)
     global Guild_ID,Msg_ID #需要声明全局变量
     Guild_ID = msg.ctx.guild.id
     Msg_ID = Card_Msg_id
@@ -155,8 +162,7 @@ async def Color_Set_GM(msg: Message,Card_Msg_id:str):
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
     g = await b.fetch_guild(Guild_ID)# 填入服务器id
-    #print(event.body)# 这里的打印eventbody的完整内容，包含emoji_id
-
+    print(f"recation:{event.body}")# 这里的打印eventbody的完整内容，包含emoji_id
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == Msg_ID:
         channel = await b.fetch_public_channel(event.body['channel_id']) #获取事件频道
@@ -187,6 +193,7 @@ async def update_reminder(b: Bot, event: Event):
 # 给用户上色（在发出消息后，机器人自动添加回应）
 @bot.command()
 async def Color_Set(msg: Message):
+    logging(msg)
     cm = CardMessage()
     c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
     c1.append(Module.Divider())
@@ -282,6 +289,7 @@ async def translate(msg: Message,*arg):
 # 普通翻译指令
 @bot.command(name='TL',aliases=['tl'])
 async def translate1(msg: Message,*arg):
+    logging(msg)
     await translate(msg,' '.join(arg))   
 
 # 实时翻译栏位
@@ -297,12 +305,14 @@ def checkTL():
 
 @bot.command()
 async def CheckTL(msg:Message):
+    logging(msg)
     global ListTL
     await msg.reply(f"目前已使用栏位:{checkTL()}/{len(ListTL)}")
 
 # 关闭所有栏位的实时翻译（避免有些人用完不关）
 @bot.command()
 async def ShutdownTL(msg:Message):
+    logging(msg)
     if msg.author.id != master_id:
         return#这条命令只有bot的作者可以调用
     global ListTL
@@ -327,6 +337,7 @@ async def TL_Realtime(msg:Message,*arg):
         return
     global ListTL
     if msg.ctx.channel.id in ListTL:
+        logging(msg)
         await translate(msg,' '.join(arg))
         return
 
@@ -334,6 +345,7 @@ async def TL_Realtime(msg:Message,*arg):
 @bot.command(name='TLON',aliases=['tlon'])
 async def TLON(msg: Message):
     #print(msg.ctx.channel.id)
+    logging(msg)
     global ListTL
     if checkTL() == len(ListTL):
         await msg.reply(f"目前栏位: {checkTL()}/{len(ListTL)}，已满！")
@@ -354,6 +366,7 @@ async def TLON(msg: Message):
 # 关闭实时翻译功能
 @bot.command(name='TLOFF',aliases=['tloff'])
 async def TLOFF(msg: Message):
+    logging(msg)
     global ListTL
     i=0
     while i< len(ListTL):
@@ -372,16 +385,19 @@ from other import history,weather
 # 返回历史上的今天
 @bot.command(name='hs')
 async def History(msg: Message):
+    logging(msg)
     await history(msg)
 
 # 返回天气
 @bot.command(name='we')
 async def Weather(msg: Message,ciry:str):
+    logging(msg)
     await weather(msg,ciry)
 
 # 设置段位角色（暂时没有启用）
 @bot.command()
 async def rankset(msg: Message):
+    logging(msg)
     cm = CardMessage()
     c1 = Card(Module.Header('在下面添加回应，来设置你的段位吧！'), Module.Context('段位更改功能等待上线...'))
     c1.append(Module.Section('「:question:」黑铁 「:eyes:」青铜\n「:sweat_drops:」白银 「:yellow_heart:」黄金\n'))
@@ -393,6 +409,7 @@ async def rankset(msg: Message):
 # 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
 async def atAhri(msg: Message, mention_str: str):
+    logging(msg)
     if msg.author_id == master_id:
         await msg.reply(f'主人有何吩咐呀~')
     else:
@@ -402,6 +419,7 @@ async def atAhri(msg: Message, mention_str: str):
 # for Bilibili Up @uncle艾登
 @bot.command()
 async def uncle(msg: Message):
+    logging(msg)
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
 @bot.command()
@@ -423,6 +441,7 @@ from status import status_active_game,status_active_music,status_delete
 # 开始打游戏
 @bot.command()
 async def gaming(msg: Message,game:int):
+    logging(msg)
     #await bot.client.update_playing_game(3,1)# 英雄联盟
     if game ==1:    
         ret = await status_active_game(453027) # 瓦洛兰特
@@ -434,12 +453,14 @@ async def gaming(msg: Message,game:int):
 # 开始听歌
 @bot.command()
 async def singing(msg: Message,music:str,singer:str):
-        ret = await status_active_music(music,singer) # 瓦洛兰特
-        await msg.reply(f"{ret['message']}，阿狸开始听歌啦！")
+    logging(msg)
+    ret = await status_active_music(music,singer) 
+    await msg.reply(f"{ret['message']}，阿狸开始听歌啦！")
     
 # 停止打游戏1/听歌2
 @bot.command(name='sleeping')
 async def sleeping(msg: Message,d:int):
+    logging(msg)
     ret = await status_delete(d)
     if d ==1:
         await msg.reply(f"{ret['message']}，阿狸下号休息啦!")
@@ -450,6 +471,7 @@ async def sleeping(msg: Message,d:int):
 # 更新游戏信息
 @bot.command()
 async def update_game(msg: Message,id:int,name:str,icon:str):
+    logging(msg)
     ret= await bot.client.update_game(id,name,icon)
     await msg.reply(f"{ret['message']}，游戏信息更新成功!")
     
@@ -457,47 +479,56 @@ async def update_game(msg: Message,id:int,name:str,icon:str):
 # 中二病
 @bot.command(name='kda')
 async def kda(msg: Message):
+    logging(msg)
     await kda123(msg)
 
 # 查询皮肤系列
 @bot.command()
 async def skin(msg: Message,name:str):
+    logging(msg)
     #name=" ".join(arg)
     await skin123(msg,name)
     
 # 查询排行榜
 @bot.command()
 async def lead(msg: Message,sz=15,num=10):
+    logging(msg)
     await lead123(msg,sz,num)
  
 # 存储用户游戏id
 @bot.command()
 async def saveid(msg: Message,game1:str):
+    logging(msg)
     await saveid123(msg,game1)
 
 # 存储id的help命令 
 @bot.command(name='saveid1')
 async def saveid(msg: Message):
+    logging(msg)
     await saveid1(msg)
 # 已保存id总数
 @bot.command(name='saveid2')
 async def saveid(msg: Message):
+    logging(msg)
     await saveid2(msg)
 
 # 实现读取用户游戏ID并返回
 #@bot.command(rules=[Rule.is_bot_mentioned(bot)])# myid不需要at机器人
 @bot.command(name="myid",aliases=['MYID']) # 这里的aliases是别名
 async def myid(msg: Message):
+    logging(msg)
     await myid123(msg)
 
 # 查询游戏错误码
 @bot.command(name='val',aliases=['van'])
 async def val(msg: Message, num: int):
+    logging(msg)
     await val123(msg,num)
 
 #关于dx报错的解决方法
 @bot.command(name='DX',aliases=['dx'])# 新增别名dx
 async def dx(msg: Message):
+    logging(msg)
     await dx123(msg)
 
 
