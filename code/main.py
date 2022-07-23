@@ -162,7 +162,8 @@ async def Color_Set_GM(msg: Message,Card_Msg_id:str):
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
     g = await b.fetch_guild(Guild_ID)# 填入服务器id
-    print(f"recation:{event.body}")# 这里的打印eventbody的完整内容，包含emoji_id
+    now_time = time.strftime("%y-%m-%d %H:%M:%S", time.localtime())#记录时间
+    print(f"[{now_time}] React:{event.body}")# 这里的打印eventbody的完整内容，包含emoji_id
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == Msg_ID:
         channel = await b.fetch_public_channel(event.body['channel_id']) #获取事件频道
