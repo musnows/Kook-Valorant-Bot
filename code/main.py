@@ -56,12 +56,12 @@ async def world(msg: Message):
     await msg.reply('你好呀~')
 
 # help命令
-@bot.command()
+@bot.command(name='Ahri',aliases=['阿狸'])
 async def Ahri(msg: Message):
     logging(msg)
     # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
     cm = CardMessage()
-    c3 = Card(Module.Header('你可以用下面这些指令呼叫本狸哦！'), Module.Context('更多嬉闹方式上线中...'))
+    c3 = Card(Module.Header('你可以用下面这些指令呼叫本狸哦！'), Module.Context('更多玩耍方式上线中...'))
     #实现卡片的markdown文本
     #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
     c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
