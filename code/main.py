@@ -40,16 +40,18 @@ master_id = '1961572535'
 ##########################################################################################
 ##########################################################################################
 
+def GetTime(): #将获取当前时间封装成函数方便使用
+    return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
+
+# 开机的时候打印一次时间，记录重启时间
+print(f"Start at: [%s]"%GetTime())
+
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
-    now_time = time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
+    now_time = GetTime()
     print(f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
 
-# @ 是「装饰器」语法，大家可以网上搜搜教程，我们这里直接用就行
-# bot 是我们刚刚新建的机器人，声明这个指令是要注册到 bot 中的
-# name 标示了指令的名字，名字也被用于触发指令，所以我们 /hello 才会让机器人有反应
-# async def 说明这是一个异步函数，khl.py 是异步框架，所以指令也需要是异步的
-# world 是函数名，可以自选；函数第一个参数的类型固定为 Message
+
 @bot.command(name='hello')
 async def world(msg: Message):
     logging(msg)
@@ -59,25 +61,35 @@ async def world(msg: Message):
 @bot.command(name='Ahri',aliases=['阿狸'])
 async def Ahri(msg: Message):
     logging(msg)
-    # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
-    cm = CardMessage()
-    c3 = Card(Module.Header('你可以用下面这些指令呼叫本狸哦！'), Module.Context('更多玩耍方式上线中...'))
-    #实现卡片的markdown文本
-    #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD)))
-    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
-    c3.append(Module.Divider())
-    c3.append(Module.Header('上号，瓦一把！'))
-    c3.append(Module.Section(Element.Text("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「/skin 皮肤名」 查询皮肤系列包含什么枪械，仅支持英文名\n「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家",Types.Text.KMD)))
-    c3.append(Module.Divider())
-    c3.append(Module.Header('和阿狸玩小游戏吧~ '))
-    c3.append(Module.Section('「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「/TL 内容」翻译内容，支持多语译中和中译英\n「/TLON」 在本频道打开实时翻译\n「/TLOFF」在本频道关闭实时翻译\n「/we 城市」查询城市未来3天的天气情况\n「更多…」还有一些隐藏指令哦~\n'))
-    c3.append(Module.Divider())
-    c3.append(Module.Section(' 游戏打累了？想来本狸的家坐坐吗~',
-              Element.Button('让我康康', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-    cm.append(c3)
+    try:
+        # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
+        cm = CardMessage()
+        c3 = Card(Module.Header('你可以用下面这些指令呼叫本狸哦！'), Module.Context('更多玩耍方式上线中...'))
+        #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD))) #实现卡片的markdown文本
+        c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
+        c3.append(Module.Divider())
+        c3.append(Module.Header('上号，瓦一把！'))
+        c3.append(Module.Section(Element.Text("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「/skin 皮肤名」 查询皮肤系列包含什么枪械，仅支持英文名\n「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家",Types.Text.KMD)))
+        c3.append(Module.Divider())
+        c3.append(Module.Header('和阿狸玩小游戏吧~ '))
+        c3.append(Module.Section('「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「/TL 内容」翻译内容，支持多语译中和中译英\n「/TLON」 在本频道打开实时翻译\n「/TLOFF」在本频道关闭实时翻译\n「/we 城市」查询城市未来3天的天气情况\n「更多…」还有一些隐藏指令哦~\n'))
+        c3.append(Module.Divider())
+        c3.append(Module.Section(' 游戏打累了？想来本狸的家坐坐吗~',
+                Element.Button('让我康康', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm.append(c3)
 
-    await msg.reply(cm)
+        await msg.reply(cm)
 
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 #################################################################################################
 #################################################################################################
@@ -97,25 +109,11 @@ async def countdown(msg: Message,time: int = 60):
 # 掷骰子
 # invoke this via saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
-async def roll(msg: Message, t_min: int, t_max: int, n: int = 1):
+async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
     logging(msg)
     result = [random.randint(t_min, t_max) for i in range(n)]
     await msg.reply(f'掷出来啦: {result}')
 
-
-# 当有人输入“/yes @某一个用户”时这个语句被触发（感觉没用？）
-@bot.command(rules=[Rule.is_mention_all])
-async def yes(msg: Message, mention_str: str):
-    logging(msg)
-    await msg.reply(f'yes! mentioned all with {mention_str}')
-
-# 设定自己的规则
-def my_rule(msg: Message) -> bool:
-    return msg.content.find('khl') != -1
-# 只有包含 'khl'的语句才能触发，比如 "/test_mine khl-go"
-@bot.command(name='test_mine', rules=[my_rule])
-async def test_mine(msg: Message, comment: str):
-    await msg.reply(f'yes! {comment} can trigger this command')
 
 # # 正则表达式（实测无效）
 # @bot.command(regex = r'(.+)\\(met\\)ID\\(met\\)')
@@ -164,7 +162,7 @@ async def update_reminder(b: Bot, event: Event):
     g = await b.fetch_guild(Guild_ID)# 填入服务器id
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == Msg_ID:
-        now_time = time.strftime("%y-%m-%d %H:%M:%S", time.localtime())#记录时间
+        now_time = GetTime()#记录时间
         print(f"[{now_time}] React:{event.body}")# 这里的打印eventbody的完整内容，包含emoji_id
 
         channel = await b.fetch_public_channel(event.body['channel_id']) #获取事件频道
@@ -245,8 +243,8 @@ def check_sponsor(it:dict):
 # 感谢助力者（每20分钟检查一次）
 @bot.task.add_interval(minutes=20)
 async def thanks_sonser():
+    #在api链接重需要设置服务器id和助力者角色的id
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
-    #api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=5134217138075250&role_id=4465168"
     headers={f'Authorization': f"Bot {config['token']}"}
 
     # r1 = requests.get(api, headers=headers)#写入token
@@ -263,7 +261,7 @@ async def thanks_sonser():
         if check_sponsor(its) == 0:
             channel = await bot.fetch_public_channel("8342620158040885") #发送感谢信息的文字频道
             await bot.send(channel,f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
-            #print(f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
+            print(f"[%s] 感谢{its['nickname']}对本服务器的助力"%GetTime())
 
 
 ######################################## Translate ################################################
@@ -394,9 +392,24 @@ async def History(msg: Message):
 
 # 返回天气
 @bot.command(name='we')
-async def Weather(msg: Message,ciry:str):
+async def Weather(msg: Message,city:str="err"):
     logging(msg)
-    await weather(msg,ciry)
+    if city=="err":
+        await msg.reply(f"函数参数错误，城市: `{city}`\n")
+        return
+
+    try:
+        await weather(msg,city)
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 # 设置段位角色（暂时没有启用）
 @bot.command()
@@ -409,6 +422,7 @@ async def rankset(msg: Message):
     #c1.append(Module.Section(Element.Text('「(emj)FW摆烂(emj)[5134217138075250/D1K4o7mYAm0p80p8]」铂金',Types.Text.KMD)))
     cm.append(c1)
     await msg.ctx.channel.send(cm)
+
 
 # 当有人“/狸狸 @机器人”的时候进行回复，可识别出是否为机器人作者
 @bot.command(name='狸狸', rules=[Rule.is_bot_mentioned(bot)])
@@ -444,7 +458,7 @@ from status import status_active_game,status_active_music,status_delete
 
 # 开始打游戏
 @bot.command()
-async def gaming(msg: Message,game:int):
+async def gaming(msg: Message,game:int=1):
     logging(msg)
     #await bot.client.update_playing_game(3,1)# 英雄联盟
     if game ==1:    
@@ -456,14 +470,18 @@ async def gaming(msg: Message,game:int):
 
 # 开始听歌
 @bot.command()
-async def singing(msg: Message,music:str,singer:str):
+async def singing(msg: Message,music:str="err",singer:str="err"):
     logging(msg)
+    if music=="err" or singer=="err":
+        await msg.reply(f"函数参数错误，music: `{music}` singer: `{singer}`")
+        return 
+
     ret = await status_active_music(music,singer) 
     await msg.reply(f"{ret['message']}，阿狸开始听歌啦！")
     
 # 停止打游戏1/听歌2
 @bot.command(name='sleeping')
-async def sleeping(msg: Message,d:int):
+async def sleeping(msg: Message,d:int=1):
     logging(msg)
     ret = await status_delete(d)
     if d ==1:
@@ -476,8 +494,9 @@ async def sleeping(msg: Message,d:int):
 @bot.command()
 async def update_game(msg: Message,id:int,name:str,icon:str):
     logging(msg)
-    ret= await bot.client.update_game(id,name,icon)
-    await msg.reply(f"{ret['message']}，游戏信息更新成功!")
+    if msg.author_id=="1961572535":
+        ret= await bot.client.update_game(id,name,icon)
+        await msg.reply(f"{ret['message']}，游戏信息更新成功!")
     
 
 # 中二病
@@ -488,14 +507,17 @@ async def kda(msg: Message):
 
 # 查询皮肤系列
 @bot.command()
-async def skin(msg: Message,name:str):
+async def skin(msg: Message,name:str="err"):
     logging(msg)
+    if name =="err":
+        await msg.reply(f"函数参数错误，name: `{name}`\n")
+        return
     #name=" ".join(arg)
     await skin123(msg,name)
     
 # 查询排行榜
 @bot.command()
-async def lead(msg: Message,sz=15,num=10):
+async def lead(msg: Message,sz:int=15,num:int=10):
     logging(msg)
     await lead123(msg,sz,num)
  
@@ -503,32 +525,78 @@ async def lead(msg: Message,sz=15,num=10):
 @bot.command()
 async def saveid(msg: Message,*args):
     logging(msg)
-    game_id = " ".join(args)#避免用户需要输入双引号
-    await saveid123(msg, game_id)
+    try:
+        game_id = " ".join(args)#避免用户需要输入双引号
+        await saveid123(msg, game_id)
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 # 存储id的help命令 
 @bot.command(name='saveid1')
 async def saveid(msg: Message):
     logging(msg)
     await saveid1(msg)
+
 # 已保存id总数
 @bot.command(name='saveid2')
 async def saveid(msg: Message):
     logging(msg)
-    await saveid2(msg)
+    try:
+        await saveid2(msg)
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 # 实现读取用户游戏ID并返回
 #@bot.command(rules=[Rule.is_bot_mentioned(bot)])# myid不需要at机器人
 @bot.command(name="myid",aliases=['MYID']) # 这里的aliases是别名
 async def myid(msg: Message):
     logging(msg)
-    await myid123(msg)
+    try:
+        await myid123(msg)
+
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
+from functools import reduce
+def str2int(s):
+     return reduce(lambda x,y:x*10+y, map(lambda s:{'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s], s))
 
 # 查询游戏错误码
 @bot.command(name='val',aliases=['van'])
-async def val(msg: Message, num: int):
+async def val(msg: Message, numS:str="err"):
     logging(msg)
-    await val123(msg,num)
+    if numS=="err":
+        await msg.reply(f"函数参数错误，请提供正确范围的错误码")
+        return
+    try:
+        num=str2int(numS) 
+        await val123(msg,num)
+    except Exception as result:
+        await msg.reply(f"您输入的错误码格式不正确！请提供`数字`,而非`{numS}`")
 
 #关于dx报错的解决方法
 @bot.command(name='DX',aliases=['dx'])# 新增别名dx
