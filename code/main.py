@@ -419,7 +419,6 @@ async def rankset(msg: Message):
     c1 = Card(Module.Header('在下面添加回应，来设置你的段位吧！'), Module.Context('段位更改功能等待上线...'))
     c1.append(Module.Section('「:question:」黑铁 「:eyes:」青铜\n「:sweat_drops:」白银 「:yellow_heart:」黄金\n'))
     c1.append(Module.Section('「:blue_heart:」铂金 「:purple_heart:」钻石\n「:green_heart:」翡翠 「:heart:」神话\n'))
-    #c1.append(Module.Section(Element.Text('「(emj)FW摆烂(emj)[5134217138075250/D1K4o7mYAm0p80p8]」铂金',Types.Text.KMD)))
     cm.append(c1)
     await msg.ctx.channel.send(cm)
 
@@ -440,21 +439,27 @@ async def uncle(msg: Message):
     logging(msg)
     await msg.reply('本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
-@bot.command()
-async def test01(msg: Message):
-    print(msg.ctx.guild.id)
-    await msg.ctx.channel.send('正在进行测试！')
-    channel = await bot.fetch_public_channel("7118977539286297")
-    res = await bot.send(channel,"这是一个测试")
-    #await channel.gate.exec_req(api.Message.)
-
     
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
 from val import kda123,skin123,lead123,saveid123,saveid1,saveid2,myid123,val123,dx123
-from status import status_active_game,status_active_music,status_delete
+from status import status_active_game,status_active_music,status_delete,server_status
+
+# 定时更新服务器的在线用户/总用户状态
+@bot.task.add_interval(minutes=20)
+async def server_user_status_update():
+    now_time=time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
+    try:
+        ret=await server_status()
+        total=ret['data']['user_count']
+        online=ret['data']['online_count']
+        await bot.update_channel('1356562957537031',name=f"📊：频道在线 {online}/{total}")
+        print(f"[{now_time}] update server_user_status")
+    except Exception as result:
+        print(f"ERR! [{now_time}] update server_user_status: {result}")
+
 
 # 开始打游戏
 @bot.command()
@@ -497,7 +502,6 @@ async def update_game(msg: Message,id:int,name:str,icon:str):
     if msg.author_id=="1961572535":
         ret= await bot.client.update_game(id,name,icon)
         await msg.reply(f"{ret['message']}，游戏信息更新成功!")
-    
 
 # 中二病
 @bot.command(name='kda')
@@ -538,6 +542,7 @@ async def saveid(msg: Message,*args):
             Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
+
 
 # 存储id的help命令 
 @bot.command(name='saveid1')
@@ -581,6 +586,7 @@ async def myid(msg: Message):
         cm2.append(c)
         await msg.reply(cm2)
 
+# str转int
 from functools import reduce
 def str2int(s):
      return reduce(lambda x,y:x*10+y, map(lambda s:{'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s], s))
