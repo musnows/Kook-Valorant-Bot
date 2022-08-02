@@ -24,6 +24,10 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
 
+Botoken=config['token']
+kook="https://www.kookapp.cn"
+headers={f'Authorization': f"Bot {Botoken}"}
+
 # 向botmarket通信
 @bot.task.add_interval(minutes=30)
 async def botmarket():
@@ -245,11 +249,7 @@ def check_sponsor(it:dict):
 async def thanks_sonser():
     #在api链接重需要设置服务器id和助力者角色的id
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
-    headers={f'Authorization': f"Bot {config['token']}"}
-
-    # r1 = requests.get(api, headers=headers)#写入token
-    # json_dict = json.loads(r1.text)
-    # print(r1.text)
+    #headers={f'Authorization': f"Bot {config['token']}"}
 
     async with aiohttp.ClientSession() as session:
         async with session.post(api, headers=headers) as response:
@@ -452,11 +452,17 @@ from status import status_active_game,status_active_music,status_delete,server_s
 async def server_user_status_update():
     now_time=time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
     try:
-        ret=await server_status()
+        ret = await server_status()
         total=ret['data']['user_count']
         online=ret['data']['online_count']
-        await bot.update_channel('1356562957537031',name=f"📊：频道在线 {online}/{total}")
-        print(f"[{now_time}] update server_user_status")
+        #await bot.update_channel('1356562957537031',name=f"📊：频道在线 {online}/{total}")#这个只能更新普通频道
+        url=kook+"/api/v3/channel/update"
+        params = {"channel_id":"5510449873980729","name":f"---- 频道在线 {online}/{total} ---"}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=params,headers=headers) as response:
+                    ret1= json.loads(await response.text())
+        
+        print(f"[{now_time}] update server_user_status {ret1['message']}")
     except Exception as result:
         print(f"ERR! [{now_time}] update server_user_status: {result}")
 
