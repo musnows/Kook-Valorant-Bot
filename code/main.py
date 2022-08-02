@@ -546,13 +546,13 @@ async def saveid(msg: Message,*args):
 
 # 存储id的help命令 
 @bot.command(name='saveid1')
-async def saveid(msg: Message):
+async def saveid_1(msg: Message):
     logging(msg)
     await saveid1(msg)
 
 # 已保存id总数
 @bot.command(name='saveid2')
-async def saveid(msg: Message):
+async def saveid_2(msg: Message):
     logging(msg)
     try:
         await saveid2(msg)
