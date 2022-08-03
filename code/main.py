@@ -457,12 +457,12 @@ async def server_user_status_update():
         online=ret['data']['online_count']
         #await bot.update_channel('1356562957537031',name=f"📊：频道在线 {online}/{total}")#这个只能更新普通频道
         url=kook+"/api/v3/channel/update"
-        params = {"channel_id":"5510449873980729","name":f"---- 频道在线 {online}/{total} ---"}
+        params = {"channel_id":"5510449873980729","name":f"----📊 频道在线 {online}/{total} ---"}
         async with aiohttp.ClientSession() as session:
             async with session.post(url, data=params,headers=headers) as response:
                     ret1= json.loads(await response.text())
         
-        print(f"[{now_time}] update server_user_status {ret1['message']}")
+        #print(f"[{now_time}] update server_user_status {ret1['message']}")
     except Exception as result:
         print(f"ERR! [{now_time}] update server_user_status: {result}")
 
