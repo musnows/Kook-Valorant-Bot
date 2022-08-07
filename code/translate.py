@@ -5,8 +5,7 @@ import urllib.request
 import urllib.parse
 
 # youdao code is from https://github.com/Chinese-boy/Many-Translaters
-def youdao_translate(*args):
-        txt = " ".join(args)
+def youdao_translate(txt:str):
         #print(txt)
         url = 'http://fanyi.youdao.com/translate?smartresult=dict&smartresult=rule&sessionFrom=https://www.baidu.com/link'
         data = {'from': 'AUTO', 'to': 'AUTO', 'smartresult': 'dict', 'client': 'fanyideskweb', 'salt': '1500092479607',
@@ -44,9 +43,7 @@ async def caiyun_translate(source, direction):
         "x-authorization": "token " + token,
     }
 
-#     response = requests.request("POST", url, data=json.dumps(payload), headers=headers)
-#     return json.loads(response.text)["target"]
-        #用这个效率更高
+    #用aiohttp效率更高
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=json.dumps(payload), headers=headers) as response:
                 return json.loads(await response.text())["target"]

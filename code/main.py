@@ -268,16 +268,38 @@ async def thanks_sonser():
 
 from translate import youdao_translate,caiyun_translate,is_CN
 
+# 单独处理met和rol消息，不翻译这部分内容
+def deleteByStartAndEnd(s, start, end):
+    # 找出两个字符串在原始字符串中的位置
+    # 开始位置是：开始始字符串的最左边第一个位置；
+    # 结束位置是：结束字符串的最右边的第一个位置
+    x1 = s.index(start)
+    x2 = s.index(end,x1+5) + len(end)  # s.index()函数算出来的是字符串的最左边的第一个位置，所以需要加上长度找到末尾
+    # 找出两个字符串之间的内容
+    x3 = s[x1:x2]
+    # 将内容替换为空字符串
+    result = s.replace(x3, "")
+    print(f'Handel{start}: {result}')
+    return result
+
+
 # 调用翻译,有道和彩云两种引擎（有道寄了就用彩云）
 async def translate(msg: Message,*arg):
+    word = " ".join(arg)
+    ret = word
+    if '(met)' in word:
+        ret = deleteByStartAndEnd(word,'(met)','(met)')
+    elif '(rol)' in word:
+        ret = deleteByStartAndEnd(word,'(rol)','(rol)')
+    #重新赋值
+    word = ret
     try:
         cm = CardMessage()
-        c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(' '.join(arg))}",Types.Text.KMD)), Module.Context('来自: 有道翻译'))
+        c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}",Types.Text.KMD)), Module.Context('来自: 有道翻译'))
         cm.append(c1)
         #await msg.ctx.channel.send(cm)
         await msg.reply(cm)
     except:
-        word = " ".join(arg)
         cm = CardMessage()
         if is_CN(word):
             c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}",Types.Text.KMD)), Module.Context('来自: 彩云小译，中译英'))
@@ -457,7 +479,7 @@ async def server_user_status_update():
         online=ret['data']['online_count']
         #await bot.update_channel('1356562957537031',name=f"📊：频道在线 {online}/{total}")#这个只能更新普通频道
         url=kook+"/api/v3/channel/update"
-        params = {"channel_id":"5510449873980729","name":f"----📊 频道在线 {online}/{total} ---"}
+        params = {"channel_id":"5510449873980729","name":f"--- 📊频道在线 {online}/{total} ---"}
         async with aiohttp.ClientSession() as session:
             async with session.post(url, data=params,headers=headers) as response:
                     ret1= json.loads(await response.text())
