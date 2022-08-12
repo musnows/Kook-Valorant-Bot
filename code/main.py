@@ -4,21 +4,16 @@ import random
 import time
 import datetime
 import aiohttp
-# import traceback
 # import requests
 
 from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage
-from khl.card import CardMessage, Card, Module, Element, Types, Struct
+from khl.card import CardMessage, Card, Module, Element, Types
 from khl.command import Rule
-# import khl.task
-# from khl.guild import Guild,GuildUser
 
 
-# 新建机器人，token 就是机器人的身份凭证
-# 用 json 读取 config.json，装载到 config 里
-# 注意文件路径，要是提示找不到文件的话，就 cd 一下工作目录/改一下这里
+
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 # 用读取来的 config 初始化 bot，字段对应即可
@@ -27,6 +22,10 @@ bot = Bot(token=config['token'])
 Botoken=config['token']
 kook="https://www.kookapp.cn"
 headers={f'Authorization': f"Bot {Botoken}"}
+
+# 设置全局变量：机器人开发者id
+master_id = '1961572535'
+
 
 # 向botmarket通信
 @bot.task.add_interval(minutes=30)
@@ -37,10 +36,6 @@ async def botmarket():
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
     
-
-# 设置全局变量：机器人开发者id
-master_id = '1961572535'
-
 ##########################################################################################
 ##########################################################################################
 
@@ -309,6 +304,7 @@ async def translate(msg: Message,*arg):
         cm.append(c1)
         await msg.reply(cm)
    
+
 # 普通翻译指令
 @bot.command(name='TL',aliases=['tl'])
 async def translate1(msg: Message,*arg):
@@ -326,6 +322,7 @@ def checkTL():
             sum+=1
     return sum
 
+#查看当前占用的实时翻译栏位
 @bot.command()
 async def CheckTL(msg:Message):
     logging(msg)
@@ -469,25 +466,6 @@ async def uncle(msg: Message):
 from val import kda123,skin123,lead123,saveid123,saveid1,saveid2,myid123,val123,dx123
 from status import status_active_game,status_active_music,status_delete,server_status
 
-# 定时更新服务器的在线用户/总用户状态
-@bot.task.add_interval(minutes=20)
-async def server_user_status_update():
-    now_time=time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
-    try:
-        ret = await server_status()
-        total=ret['data']['user_count']
-        online=ret['data']['online_count']
-        #await bot.update_channel('1356562957537031',name=f"📊：频道在线 {online}/{total}")#这个只能更新普通频道
-        url=kook+"/api/v3/channel/update"
-        params = {"channel_id":"5510449873980729","name":f"--- 📊频道在线 {online}/{total} ---"}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, data=params,headers=headers) as response:
-                    ret1= json.loads(await response.text())
-        
-        #print(f"[{now_time}] update server_user_status {ret1['message']}")
-    except Exception as result:
-        print(f"ERR! [{now_time}] update server_user_status: {result}")
-
 
 # 开始打游戏
 @bot.command()
@@ -512,6 +490,7 @@ async def singing(msg: Message,music:str="err",singer:str="err"):
     ret = await status_active_music(music,singer) 
     await msg.reply(f"{ret['message']}，阿狸开始听歌啦！")
     
+
 # 停止打游戏1/听歌2
 @bot.command(name='sleeping')
 async def sleeping(msg: Message,d:int=1):
@@ -522,14 +501,6 @@ async def sleeping(msg: Message,d:int=1):
     elif d==2:
         await msg.reply(f"{ret['message']}，阿狸摘下了耳机~")
     #await bot.client.stop_playing_game()
-
-# 更新游戏信息
-@bot.command()
-async def update_game(msg: Message,id:int,name:str,icon:str):
-    logging(msg)
-    if msg.author_id=="1961572535":
-        ret= await bot.client.update_game(id,name,icon)
-        await msg.reply(f"{ret['message']}，游戏信息更新成功!")
 
 # 中二病
 @bot.command(name='kda')
@@ -596,7 +567,6 @@ async def saveid_2(msg: Message):
         await msg.reply(cm2)
 
 # 实现读取用户游戏ID并返回
-#@bot.command(rules=[Rule.is_bot_mentioned(bot)])# myid不需要at机器人
 @bot.command(name="myid",aliases=['MYID']) # 这里的aliases是别名
 async def myid(msg: Message):
     logging(msg)
@@ -630,7 +600,7 @@ async def val(msg: Message, numS:str="err"):
         num=str2int(numS) 
         await val123(msg,num)
     except Exception as result:
-        await msg.reply(f"您输入的错误码格式不正确！请提供`数字`,而非`{numS}`")
+        await msg.reply(f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
 
 #关于dx报错的解决方法
 @bot.command(name='DX',aliases=['dx'])# 新增别名dx
@@ -639,6 +609,6 @@ async def dx(msg: Message):
     await dx123(msg)
 
 
-# 凭证传好了、机器人新建好了、指令也注册完了
-# 下面运行机器人，bot.run()是机器人的起跑线
+
+#bot.run()是机器人的起跑线
 bot.run()

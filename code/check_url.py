@@ -1,10 +1,23 @@
 import json
 import aiohttp
 
-from khl import Bot, Message
-from main import master_id,bot
-
 # 本部分暂时没有启用！
+from khl import Bot, Message
+
+
+
+with open('./config/config.json', 'r', encoding='utf-8') as f:
+    config = json.load(f)
+# 用读取来的 config 初始化 bot，字段对应即可
+bot = Bot(token=config['token'])
+
+Botoken=config['token']
+kook="https://www.kookapp.cn"
+headers={f'Authorization': f"Bot {Botoken}"}
+
+# 设置全局变量：机器人开发者id
+master_id = '1961572535'
+
 
 
 # 监看邀请链接
