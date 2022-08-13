@@ -570,8 +570,12 @@ async def saveid_2(msg: Message):
 
 # 实现读取用户游戏ID并返回
 @bot.command(name="myid",aliases=['MYID']) # 这里的aliases是别名
-async def myid(msg: Message):
+async def myid(msg: Message,*args):
     logging(msg)
+    if args !=():
+        await msg.reply(f"`/myid`命令不需要参数！")
+        return
+
     try:
         await myid123(msg)
 
