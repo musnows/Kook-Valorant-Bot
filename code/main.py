@@ -151,15 +151,12 @@ def save_userid_color(userid:str,emoji:str):
             v = line.strip().split(':')
             if userid == v[0]:
                 flag=1 #因为用户已经回复过表情，将flag置为1
-                fr1.close()
                 return flag
-     fr1.close()
      #原有txt内没有该用户信息，进行追加操作
      if flag==0:
-        fw2 = open("./log/color_idsave.txt",'a+',encoding='utf-8')
-        fw2.write(userid + ':' + emoji + '\n')
-        fw2.close()
-     
+        with open("./log/color_idsave.txt",'a+',encoding='utf-8') as fw2:
+            fw2.write(userid + ':' + emoji + '\n')
+        
      return flag
 
 
@@ -248,15 +245,12 @@ def check_sponsor(it:dict):
             v = line.strip().split(':')
             if it['id'] == v[0]:
                 flag=1
-                fr1.close()
                 return flag
-
-    fr1.close()
     #原有txt内没有该用户信息，进行追加操作
     if flag==0:
-        fw2 = open("./log/sponsor_roles.txt",'a+',encoding='utf-8')
-        fw2.write(it['id']+ ':' + it['nickname'] + '\n')
-        fw2.close()
+        with open("./log/sponsor_roles.txt",'a+',encoding='utf-8') as fw2:
+            fw2.write(it['id']+ ':' + it['nickname'] + '\n')
+            # with方法打开文件不需要close
 
     return flag
 
