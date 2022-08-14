@@ -617,7 +617,7 @@ def str2int(s):
      return reduce(lambda x,y:x*10+y, map(lambda s:{'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s], s))
 
 # 查询游戏错误码
-@bot.command(name='val',aliases=['van'])
+@bot.command(name='val',aliases=['van','VAN','VAL'])
 async def val(msg: Message, numS:str="err"):
     logging(msg)
     if numS=="err":
