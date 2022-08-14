@@ -86,7 +86,7 @@ async def Ahri(msg: Message):
         c.append(Module.Section(f"【报错】  {result}\n\n"))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
@@ -97,22 +97,43 @@ async def Ahri(msg: Message):
 @bot.command()
 async def countdown(msg: Message,time: int = 60):
     logging(msg)
-    cm = CardMessage()
-    c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55)) # color=(90,59,215) is another available form
-    c1.append(Module.Divider())
-    c1.append(Module.Countdown(datetime.now() + timedelta( seconds=time), mode=Types.CountdownMode.SECOND))
-    cm.append(c1)
+    try:
+        cm = CardMessage()
+        c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55)) # color=(90,59,215) is another available form
+        c1.append(Module.Divider())
+        c1.append(Module.Countdown(datetime.now() + timedelta( seconds=time), mode=Types.CountdownMode.SECOND))
+        cm.append(c1)
+        await msg.reply(cm)
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
-    await msg.reply(cm)
 
 # 掷骰子
 # invoke this via saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
 async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
     logging(msg)
-    result = [random.randint(t_min, t_max) for i in range(n)]
-    await msg.reply(f'掷出来啦: {result}')
-
+    try:
+        result = [random.randint(t_min, t_max) for i in range(n)]
+        await msg.reply(f'掷出来啦: {result}')
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 # # 正则表达式（实测无效）
 # @bot.command(regex = r'(.+)\\(met\\)ID\\(met\\)')
@@ -428,7 +449,7 @@ async def Weather(msg: Message,city:str="err"):
         c.append(Module.Section(f"【报错】  {result}\n\n"))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
@@ -540,7 +561,7 @@ async def saveid(msg: Message,*args):
         c.append(Module.Section(f"【报错】  {result}\n\n"))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
@@ -564,7 +585,7 @@ async def saveid_2(msg: Message):
         c.append(Module.Section(f"【报错】  {result}\n\n"))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
@@ -586,7 +607,7 @@ async def myid(msg: Message,*args):
         c.append(Module.Section(f"【报错】  {result}\n\n"))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/Lsv21o', Types.Click.LINK)))
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
