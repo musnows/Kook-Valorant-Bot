@@ -116,8 +116,7 @@ async def countdown(msg: Message,time: int = 60):
         await msg.reply(cm2)
 
 
-# 掷骰子
-# invoke this via saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
+# 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
 async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
     logging(msg)
@@ -135,8 +134,6 @@ async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
         cm2.append(c)
         await msg.reply(cm2)
 
-# # 正则表达式（实测无效）
-# @bot.command(regex = r'(.+)\\(met\\)ID\\(met\\)')
 
 ################################以下是给用户上色功能的内容########################################
 
