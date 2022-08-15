@@ -1,9 +1,8 @@
-bot.log
 *.log
+code/log
+
 config.json
 valorant.json
 caiyun.json
-idsave.txt
-color_idsave.txt
-sponsor_roles.txt
+
 code/__pycache__/
