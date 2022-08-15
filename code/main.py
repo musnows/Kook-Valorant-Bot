@@ -232,22 +232,23 @@ async def Color_Set(msg: Message):
 
 #########################################感谢助力者###############################################
 
+# 预加载文件
+with open("./log/sponsor_roles.json", 'r',encoding='utf-8') as frsp:
+    SponsorDict = json.load(frsp)
+
 # 检查文件中是否有这个助力者的id
 def check_sponsor(it:dict):
+    global SponsorDict
     flag=0
     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
-    with open("./log/sponsor_roles.txt", 'r',encoding='utf-8') as fr1:
-        lines=fr1.readlines()   
-        for line in lines:
-            v = line.strip().split(':')
-            if it['id'] == v[0]:
-                flag=1
-                return flag
+    if it['id'] in SponsorDict.keys():
+        flag=1
+        return flag
+
     #原有txt内没有该用户信息，进行追加操作
-    if flag==0:
-        with open("./log/sponsor_roles.txt",'a+',encoding='utf-8') as fw2:
-            fw2.write(it['id']+ ':' + it['nickname'] + '\n')
-            # with方法打开文件不需要close
+    SponsorDict[it['id']]=it['nickname']
+    with open("./log/sponsor_roles.json",'w',encoding='utf-8') as fw2:
+        json.dump(SponsorDict,fw2,indent=2,sort_keys=True, ensure_ascii=False)        
 
     return flag
 
@@ -256,18 +257,16 @@ def check_sponsor(it:dict):
 async def thanks_sonser():
     #在api链接重需要设置服务器id和助力者角色的id
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
-    #headers={f'Authorization': f"Bot {config['token']}"}
 
     async with aiohttp.ClientSession() as session:
         async with session.post(api, headers=headers) as response:
-            #json_dict=json.loads(await response.text())
             json_dict = await response.json()
 
     for its in json_dict['data']['items']:
         #print(f"{its['id']}:{its['nickname']}")
         if check_sponsor(its) == 0:
-            channel = await bot.fetch_public_channel("8342620158040885") #发送感谢信息的文字频道
-            await bot.send(channel,f"(met){its['id']}(met) 感谢{its['nickname']}对本服务器的助力")
+            channel = await bot.fetch_public_channel("3322015730024399") #发送感谢信息的文字频道
+            await bot.send(channel,f"感谢 (met){its['id']}(met) 对本服务器的助力")
             print(f"[%s] 感谢{its['nickname']}对本服务器的助力"%GetTime())
 
 
