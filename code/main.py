@@ -137,24 +137,28 @@ async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
 
 ################################以下是给用户上色功能的内容########################################
 
+# 预加载文件
+with open("./log/color_idsave.json", 'r',encoding='utf-8') as frcl:
+    ColorIdDict = json.load(frcl)
+
+with open("./config/color_emoji.txt", 'r',encoding='utf-8') as fremoji:
+    EmojiLines=fremoji.readlines()   
+
+
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid:str,emoji:str):
-     flag=0
-     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
-     with open("./log/color_idsave.txt", 'r',encoding='utf-8') as fr1:
-        lines=fr1.readlines()   
-     #使用r+同时读写（有bug）
-        for line in lines:
-            v = line.strip().split(':')
-            if userid == v[0]:
-                flag=1 #因为用户已经回复过表情，将flag置为1
-                return flag
-     #原有txt内没有该用户信息，进行追加操作
-     if flag==0:
-        with open("./log/color_idsave.txt",'a+',encoding='utf-8') as fw2:
-            fw2.write(userid + ':' + emoji + '\n')
+    global ColorIdDict
+    flag=0
+    # 需要先保证原有txt里面没有保存该用户的id，才进行追加
+    if userid in ColorIdDict.keys():
+        flag=1 #因为用户已经回复过表情，将flag置为1
+        return flag
+    #原有txt内没有该用户信息，进行追加操作
+    ColorIdDict[userid]=emoji
+    with open("./log/color_idsave.json",'w',encoding='utf-8') as fw2:
+        json.dump(ColorIdDict,fw2,indent=2,sort_keys=True, ensure_ascii=False)
         
-     return flag
+    return flag
 
 
 # 设置自动上色event的服务器id和消息id
@@ -170,6 +174,7 @@ async def Color_Set_GM(msg: Message,Card_Msg_id:str):
     Msg_ID = Card_Msg_id
     await msg.reply(f'颜色监听服务器更新为 {Guild_ID}\n监听消息更新为 {Msg_ID}\n')
 
+
 # 判断消息的emoji回应，并给予不同角色
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
@@ -184,22 +189,19 @@ async def update_reminder(b: Bot, event: Event):
         # 判断用户回复的emoji是否合法
         emoji=event.body["emoji"]['id']
         flag=0
-        with open("./config/color_emoji.txt", 'r',encoding='utf-8') as fr1:
-            lines=fr1.readlines()   
-            for line in lines:
-                v = line.strip().split(':')
-                if emoji == v[0]:
-                    flag=1 #确认用户回复的emoji合法 
-                    ret = save_userid_color(event.body['user_id'],event.body["emoji"]['id'])# 判断用户之前是否已经获取过角色
-                    if ret ==1: #已经获取过角色
-                        await b.send(channel,f'你已经设置过你的ID颜色啦！修改要去找管理员哦~',temp_target_id=event.body['user_id'])
-                        fr1.close()
-                        return
-                    else:
-                        role=int(v[1])
-                        await g.grant_role(s,role)
-                        await b.send(channel, f'阿狸已经给你上了 {emoji} 对应的颜色啦~',temp_target_id=event.body['user_id'])
-        fr1.close()
+        for line in EmojiLines:
+            v = line.strip().split(':')
+            if emoji == v[0]:
+                flag=1 #确认用户回复的emoji合法 
+                ret = save_userid_color(event.body['user_id'],event.body["emoji"]['id'])# 判断用户之前是否已经获取过角色
+                if ret ==1: #已经获取过角色
+                    await b.send(channel,f'你已经设置过你的ID颜色啦！修改要去找管理员哦~',temp_target_id=event.body['user_id'])
+                    return
+                else:
+                    role=int(v[1])
+                    await g.grant_role(s,role)
+                    await b.send(channel, f'阿狸已经给你上了 {emoji} 对应的颜色啦~',temp_target_id=event.body['user_id'])
+
         if flag == 0: #回复的表情不合法
             await b.send(channel,f'你回应的表情不在列表中哦~再试一次吧！',temp_target_id=event.body['user_id'])
 
@@ -222,12 +224,9 @@ async def Color_Set(msg: Message):
         extra={'guild_id': msg.ctx.guild.id,'channel_name': msg.ctx.channel,'author':{'id': bot.me.id}}) 
         # extra部分留空也行
     # 让bot给卡片消息添加对应emoji回应
-    with open("./config/color_emoji.txt", 'r',encoding='utf-8') as fr1:
-        lines = fr1.readlines()   
-        for line in lines:
-            v = line.strip().split(':')
-            await setMSG.add_reaction(v[0])
-    fr1.close()
+    for line in EmojiLines:
+        v = line.strip().split(':')
+        await setMSG.add_reaction(v[0])
     
 
 #########################################感谢助力者###############################################
@@ -265,7 +264,7 @@ async def thanks_sonser():
     for its in json_dict['data']['items']:
         #print(f"{its['id']}:{its['nickname']}")
         if check_sponsor(its) == 0:
-            channel = await bot.fetch_public_channel("3322015730024399") #发送感谢信息的文字频道
+            channel = await bot.fetch_public_channel("8342620158040885") #发送感谢信息的文字频道
             await bot.send(channel,f"感谢 (met){its['id']}(met) 对本服务器的助力")
             print(f"[%s] 感谢{its['nickname']}对本服务器的助力"%GetTime())
 
