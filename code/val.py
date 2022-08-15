@@ -2,9 +2,8 @@
 import json
 import valorant
 
-from khl import Bot, Message, EventTypes, Event
-from khl.card import CardMessage, Card, Module, Element, Types, Struct
-from khl.command import Rule
+from khl import Bot, Message
+from khl.card import CardMessage, Card, Module
 
 # 用读取来的 config 初始化 bot，字段对应即可
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -61,74 +60,54 @@ async def lead123(msg: Message,sz:int,num:int):
         await msg.reply("未知错误 %s" % result)
 
 
+####################################保存用户的游戏ID操作#######################################
+
+# 预加载文件
+with open("./log/game_idsave.json", 'r',encoding='utf-8') as frgm:
+    GameIdDict = json.load(frgm)
+
 #保存用户id
-async def saveid123(msg: Message,game1:str):
-     flag=0
-     # 需要先保证原有txt里面没有保存该用户的id，才进行追加
-     with open("./log/idsave.txt", 'r',encoding='utf-8') as fr1:
-        lines=fr1.readlines()   
-     #使用r+同时读写（有bug）
-     with open("./log/idsave.txt", 'w',encoding='utf-8') as fw1: 
-        for line in lines:
-            v = line.strip().split(':')
-            if msg.author_id == v[0]:
-                fw1.write(msg.author_id+ ':' + game1 + '\n')
-                await msg.reply(f'本狸已经修改好你的游戏id啦!')
-                flag=1#修改完毕后，将flag置为1
-            else:
-                fw1.write(line)
-     fr1.close()
-     fw1.close()
-     #原有txt内没有该用户信息，进行追加操作
-     if flag==0:
-        fw2 = open("./log/idsave.txt",'a+',encoding='utf-8')
-        #fw.write(str(gamerid))      #把字典转化为str
-        fw2.write(msg.author_id+':'+game1+'\n')  
-        await msg.reply(f'本狸已经记下你的游戏id啦!')
-        fw2.close()
+async def saveid123(msg: Message,game_id:str):
+    global GameIdDict
+    flag=0
+    # 如果用户id已有，则进行修改
+    if msg.author_id in GameIdDict.keys():
+        GameIdDict[msg.author_id]=game_id
+        await msg.reply(f'本狸已经修改好你的游戏id啦!')
+        flag=1#修改完毕后，将flag置为1
 
-
-# 计算txt文件中有几行
-def countline(file_name):
-    with open(file_name,'rb') as f:
-        count = 0
-        last_data = '\n'
-        while True:
-            data = f.read(0x400000)
-            if not data:
-                break
-            count += data.count(b'\n')
-            last_data = data
-        if last_data[-1:] != b'\n':
-            count += 1
-            
-    return count
+    #没有该用户信息，进行追加操作
+    if flag==0:
+        GameIdDict[msg.author_id]=game_id
+        await msg.reply(f"本狸已经记下你的游戏id喽~")
+    # 修改/新增都需要写入文件
+    with open("./log/game_idsave.json",'w',encoding='utf-8') as fw2:
+        json.dump(GameIdDict,fw2,indent=2,sort_keys=True, ensure_ascii=False)
+      
 
 # 让阿狸记住游戏id的help指令
-async def saveid1(msg: Message):
-    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n")
+async def saveid_1(msg: Message):
+    await msg.reply("基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n注：阿狸升级以后已经不需要用单引号括起来了")
 
 # 显示已有id的个数
-async def saveid2(msg: Message):
-    ret=countline("./log/idsave.txt")
-    await msg.reply("目前狸狸已经记下了%d个小伙伴的id喽~"% (ret))
+async def saveid_2(msg: Message):
+    countD = len(GameIdDict)
+    await msg.reply("目前狸狸已经记下了%d个小伙伴的id喽~"% (countD))
 
      
 # 实现读取用户游戏ID并返回
 async def myid123(msg: Message):
     flag=0
-    fr = open("./log/idsave.txt",'r',encoding='utf-8')
-    for line in fr:
-        v = line.strip().split(':')
-        if msg.author_id in v[0]:
+    if msg.author_id in GameIdDict.keys():
            flag=1#找到了对应用户的id
-           await msg.reply(f'游戏id: '+v[1])
-    fr.close()
+           await msg.reply(f'游戏id: '+GameIdDict[msg.author_id])
+
     if flag==0:
-       ret=countline("./log/idsave.txt")
-       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n基本方式看图就行啦！如果你的id之中有空格，需要用英文的单引号括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n目前狸狸已经记下了%d个小伙伴的id喽！"% (ret))
+       countD= len(GameIdDict)
+       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n```\n/saveid 你的游戏id```\n目前狸狸已经记下了%d个小伙伴的id喽！"% (countD))
 
 
+##########################################################################################
 
 # 查询游戏错误码
 async def val123(msg: Message, num: int):

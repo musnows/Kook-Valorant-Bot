@@ -475,7 +475,7 @@ async def uncle(msg: Message):
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
-from val import kda123,skin123,lead123,saveid123,saveid1,saveid2,myid123,val123,dx123
+from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
 from status import status_active_game,status_active_music,status_delete,server_status
 
 
@@ -536,6 +536,7 @@ async def lead(msg: Message,sz:int=15,num:int=10):
     logging(msg)
     await lead123(msg,sz,num)
  
+
 # 存储用户游戏id
 @bot.command()
 async def saveid(msg: Message,*args):
@@ -557,26 +558,21 @@ async def saveid(msg: Message,*args):
 
 # 存储id的help命令 
 @bot.command(name='saveid1')
-async def saveid_1(msg: Message):
+async def saveid1(msg: Message):
     logging(msg)
-    await saveid1(msg)
+    await saveid_1(msg)
 
 # 已保存id总数
 @bot.command(name='saveid2')
-async def saveid_2(msg: Message):
+async def saveid2(msg: Message):
     logging(msg)
     try:
-        await saveid2(msg)
+        await saveid_2(msg)
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        err_str=f"ERR! [{GetTime()}] check_server_user_status: {result}"
+        print(err_str)
+        await msg.reply(err_str)
+
 
 # 实现读取用户游戏ID并返回
 @bot.command(name="myid",aliases=['MYID']) # 这里的aliases是别名
@@ -588,17 +584,10 @@ async def myid(msg: Message,*args):
 
     try:
         await myid123(msg)
-
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        err_str=f"ERR! [{GetTime()}] check_server_user_status: {result}"
+        print(err_str)
+        await msg.reply(err_str)
 
 # str转int
 from functools import reduce
