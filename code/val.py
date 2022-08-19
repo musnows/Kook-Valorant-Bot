@@ -1,9 +1,12 @@
 # encoding: utf-8:
 import json
 import valorant
+import aiohttp
+import requests
+import time
 
 from khl import Bot, Message
-from khl.card import CardMessage, Card, Module
+from khl.card import CardMessage, Card, Module, Element, Types
 
 # 用读取来的 config 初始化 bot，字段对应即可
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -179,3 +182,66 @@ async def val123(msg: Message, num: int):
 async def dx123(msg: Message):
     await msg.reply('报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~')
 
+
+####################################################################################################
+###################https://github.com/HeyM1ke/ValorantClientAPI#####################################
+####################################################################################################
+
+import riot_auth
+
+# 获取拳头的token
+# 此部分代码来自 https://github.com/floxay/python-riot-auth
+async def authflow(user: str, passwd: str):
+    CREDS = user, passwd
+    auth = riot_auth.RiotAuth()
+    await auth.authorize(*CREDS)
+    await auth.reauthorize()
+    # Reauth using cookies. Returns a bool indicating whether the reauth attempt was successful.
+    await auth.reauthorize()
+    # print(f"Access Token Type: {auth.token_type}\n")
+    # print(f"Access Token: {auth.access_token}\n")
+    # print(f"Entitlements Token: {auth.entitlements_token}\n")
+    # print(f"User ID: {auth.user_id}")
+    return auth
+
+#获取用户游戏id
+async def fetch_user_gameID(auth):
+    url = "https://pd.AP.a.pvp.net/name-service/v2/players"
+    payload = json.dumps([
+        auth.user_id
+    ])
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": auth.entitlements_token,
+        "Authorization": "Bearer " + auth.access_token
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.put(url, headers=headers,data=payload) as response:
+            res = json.loads(await response.text())
+    return res
+
+# 获取每日商店
+async def fetch_daily_shop(u):
+    url = "https://pd.ap.a.pvp.net/store/v2/storefront/" + u['auth_user_id']
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": u['entitlements_token'],
+        "Authorization": "Bearer " + u['access_token']
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            res = json.loads(await response.text())
+    return res
+
+# 获取vp和r点
+async def fetch_valorant_point(u):
+    url = "https://pd.ap.a.pvp.net/store/v1/wallet/" + u['auth_user_id']
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": u['entitlements_token'],
+        "Authorization": "Bearer " + u['access_token']
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            res = json.loads(await response.text())
+    return res

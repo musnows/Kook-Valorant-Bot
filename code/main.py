@@ -4,7 +4,7 @@ import random
 import time
 import datetime
 import aiohttp
-# import requests
+import requests
 
 from datetime import datetime, timedelta
 
@@ -47,8 +47,12 @@ print(f"Start at: [%s]"%GetTime())
 
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
+    #print(type(msg))
     now_time = GetTime()
-    print(f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
+    if f"{type(msg)}"=="<class 'khl.message.PrivateMessage'>":
+        print(f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
+    else:
+        print(f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
 
 
 @bot.command(name='hello')
@@ -612,6 +616,275 @@ async def val(msg: Message, numS:str="err"):
 async def dx(msg: Message):
     logging(msg)
     await dx123(msg)
+
+
+#多出来的import
+import copy
+import riot_auth
+import aiofiles
+import io  #用于将 图片url 转换成可被打开的二进制
+from PIL import Image, ImageDraw, ImageFont  #用于合成图片
+import zhconv  #用于繁体转简体（因为部分字体不支持繁体
+import math  #用于小数取整
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point
+
+standard_length = 1000  #图片默认边长
+# 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
+# 所有的数都  * standard_length / 1000 是为了当标准边长变动时这些参数会按照比例缩放
+standard_length_sm = math.floor(standard_length / 2)  # 组成四宫格小图的边长
+stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
+stardard_icon_resize_ratio = 0.59 * standard_length / 1000  #枪的默认缩放
+standard_icon_top_blank = math.floor(180 * standard_length /
+                                     1000)  # 枪距离图片顶部的像素
+standard_text_position = (math.floor(130 * standard_length / 1000),
+                          math.floor(314 * standard_length / 1000))  #默认文字位置
+
+resp = {}  #没有那个resp数据 为了防止报错
+
+font_color = '#ffffff'  #文字颜色：白色
+bg_main = Image.open(
+    io.BytesIO(
+        requests.get(
+            'https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').
+        content))  #背景
+
+def sm_comp(icon, name):
+    bg = Image.new(mode='RGBA',
+                   size=(standard_length_sm, standard_length_sm))  #新建一个画布
+    layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
+    w, h = layer_icon.size  #读取武器图片长宽
+    new_w = math.floor(w * stardard_icon_resize_ratio)  #按比例缩放的长
+    new_h = math.floor(h * stardard_icon_resize_ratio)  #按比例缩放的宽
+
+    layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS) # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
+    left_position = math.floor((standard_length_sm - new_w) /2)  # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
+    bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)
+    #bg.paste代表向bg粘贴一张图片 第一个参数是图像layer_icon ， 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
+
+    name = zhconv.convert(name, 'zh-cn')  #将名字简体化
+    name_list = name.split(' ')  #将武器名字分割换行
+    text = ' '.join(name_list[0]) + '\n'  #向武器名字添加空格增加字间距
+    interval = len(name_list[0])
+    #print(len(name_list))
+    if len(name_list) > 2:
+        i = 1
+        while i <= len(name_list) - 2:
+            name_list[0] = name_list[0] + ' ' + name_list[i]
+            #print(name_list[0])
+            i += 1
+        interval = len(name_list[0])
+        name_list[1] = name_list[len(name_list) - 1]
+        text = name_list[0] + '\n'
+    if len(name_list[1]) > 3:
+        interval = interval - len(name_list[1]) - 2
+    for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
+        text += '　'
+    text += ' '.join(name_list[1])  #插入第二行字符
+    draw = ImageDraw.Draw(bg)  # emmm大概就是让bg这个图层能被写字
+    #第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
+    draw.text(standard_text_position,
+              text,
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              fill=font_color)
+    #bg.show() #测试用途，展示图片
+    return bg
+
+def bg_comp(bg, img, x, y):
+    position = (x, y)
+    bg.paste(img, position, img)  #如sm—comp中一样，向bg粘贴img
+    return bg
+
+
+##############################################################################
+
+# 预加载
+with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
+    UserAuthDict = json.load(frau)
+
+
+# 登录，保存用户的token
+@bot.command(name='login')
+async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
+    if passwd == 'err' or user == 'err':
+        await msg.reply(f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`")
+        return
+
+    elif arg!=():
+        await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
+        return
+
+    try:
+        global UserAuthDict
+
+        if msg.author_id in UserAuthDict: #用in判断dict种是否存在这个键
+            # 如果用户id已有，则不进行操作
+            await msg.reply(f'您今日已经登陆过，无需重复操作')
+            return
+
+        # 不在其中才进行获取token的操作（耗时)
+        res_auth = await authflow(user, passwd)
+        res_gameid=await fetch_user_gameID(res_auth) # 获取用户玩家id
+        UserAuthDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id,'GameName':res_gameid[0]['GameName'],'TagLine':res_gameid[0]['TagLine']}
+        #dict[键] = 值
+        await msg.reply(f"登陆成功！\n在明日的`03:00`之前，您可以使用和valorant对接的功能\n在`03:00`之后，您需要重新登录")
+        # 修改/新增都需要写入文件
+        with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
+            json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
+# 退出登录
+@bot.command(name='logout')
+async def logout_authtoekn(msg:Message,*arg):
+    logging(msg)
+    if arg!=():
+        await msg.reply(f"您给予了多余的参数！`{arg}`")
+        return
+
+    global UserAuthDict
+    if msg.author_id not in UserAuthDict: #使用not in判断是否不存在
+        await msg.reply(f"你还没有登陆呢！")
+        return
+    #如果id存在， 删除id
+    print(f"Logout: {msg.author_id}")
+    del UserAuthDict[msg.author_id]
+    await msg.reply(f"已成功取消登录")
+
+    #最后重新执行写入
+    with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
+        json.dump(UserAuthDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
+    fw1.close()
+
+
+# 定时任务，每天凌晨3点清空token保存
+@bot.task.add_cron(hour=3, minute=0)
+async def clear_authtoekn():
+    global UserAuthDict
+    UserAuthDict= {}  #置空
+    # 写入文件
+    with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
+        json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+
+
+# 获取每日商店的命令
+@bot.command(name='shop',aliases=['SHOP'])
+async def get_daily_shop(msg: Message,*arg):
+    logging(msg)
+    if arg !=():
+        await msg.reply(f"`/shop`命令不需要参数。您是否想`/login`？")
+        return
+
+    try:
+        flag_au = 0
+        if msg.author_id in UserAuthDict:
+            # 如果用户id已有，则不需要再次获取token
+            flag_au = 1
+            userdict=UserAuthDict[msg.author_id]
+            resp = await fetch_daily_shop(userdict)
+            list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]
+            timeout = resp["SkinsPanelLayout"][
+                "SingleItemOffersRemainingDurationInSeconds"]
+            timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
+            x = 0
+            y = 0
+            bg = copy.deepcopy(bg_main)
+            for skinuuid in list_shop:
+                url = f"https://valorant-api.com/v1/weapons/skinlevels/{skinuuid}"
+                headers = {'Connection': 'close'}
+                params = {"language": "zh-TW"}
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, headers=headers,
+                                        params=params) as response:
+                        res_item = json.loads(await response.text())
+
+                img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"])
+                bg = bg_comp(bg, img, x, y)
+
+                if x == 0:
+                    x += standard_length_sm
+                elif x == standard_length_sm:
+                    x = 0
+                    y += standard_length_sm
+
+            #bg.save(f"test.png")  #保存到本地
+            imgByteArr = io.BytesIO()
+            bg.save(imgByteArr, format='PNG')
+            imgByte = imgByteArr.getvalue()
+            dailyshop_img_src = await bot.client.create_asset(imgByte)
+
+            cm = CardMessage()
+            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的每日商店！"),
+                    Module.Context(f"失效时间剩余：{timeout}"),
+                    Module.Container(Element.Image(src=dailyshop_img_src)))
+            cm.append(c)
+            await msg.reply(cm)
+
+        if flag_au != 1:
+            await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            return
+    
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
+
+# 获取vp和r点剩余的命令
+@bot.command(name='point',aliases=['POINT'])
+async def get_user_vp(msg: Message,*arg):
+    logging(msg)
+    if arg !=():
+        await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
+        return
+
+    try:
+        flag_au = 0
+        if msg.author_id in UserAuthDict:
+            # 如果用户id已有，则不需要再次获取token
+            flag_au = 1
+            userdict=UserAuthDict[msg.author_id]
+            resp = await fetch_valorant_point(userdict)
+            vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
+            rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
+
+            cm = CardMessage()
+            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的点数剩余"),
+                    Module.Divider(),
+                    Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k]  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k]  {vp}\n",Types.Text.KMD)))
+            cm.append(c)
+            await msg.reply(cm)
+
+        if flag_au != 1:
+            await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            return
+    
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
 
 
 
