@@ -630,7 +630,7 @@ import io  #用于将 图片url 转换成可被打开的二进制
 from PIL import Image, ImageDraw, ImageFont  #用于合成图片
 import zhconv  #用于繁体转简体（因为部分字体不支持繁体
 import math  #用于小数取整
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price,fetch_item_iters
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price,fetch_item_iters,fetch_skins_all
 
 standard_length = 1000  #图片默认边长
 # 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
@@ -774,13 +774,24 @@ async def logout_authtoekn(msg:Message,*arg):
 
 # 定时任务，每天凌晨3点清空token保存
 @bot.task.add_cron(hour=3, minute=0)
-async def clear_authtoekn():
+async def clear_authtoken():
     global UserAuthDict
     UserAuthDict= {}  #置空
     # 写入文件
     with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
         json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    print(f"[{GetTime()}] task_clear_authtoken")
 
+# 定时任务，每3天获取一次皮肤（避免因为关闭bot导致时间不够，没法更新）
+@bot.task.add_interval(minutes=1)
+async def update_skins():
+    global ValSkinList
+    skins=await fetch_skins_all()
+    ValSkinList=skins
+    # 写入文件
+    with open("./config/ValSkin.json", 'w', encoding='utf-8') as fw2:
+        json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    print(f"[{GetTime()}] task_update_skins")
 
 # 获取每日商店的命令
 @bot.command(name='shop',aliases=['SHOP'])

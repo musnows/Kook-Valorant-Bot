@@ -277,5 +277,15 @@ async def fetch_item_iters(iters_id:str):
 
     return res_iters
     
+# 获取所有皮肤
+async def fetch_skins_all():
+    url="https://valorant-api.com/v1/weapons/skins"
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_skin = json.loads(await response.text())
 
+    return res_skin
+    
 
