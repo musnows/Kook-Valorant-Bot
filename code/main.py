@@ -626,7 +626,7 @@ import io  #用于将 图片url 转换成可被打开的二进制
 from PIL import Image, ImageDraw, ImageFont  #用于合成图片
 import zhconv  #用于繁体转简体（因为部分字体不支持繁体
 import math  #用于小数取整
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price,fetch_item_iters
 
 standard_length = 1000  #图片默认边长
 # 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
@@ -700,7 +700,9 @@ def bg_comp(bg, img, x, y):
 # 预加载
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
     UserAuthDict = json.load(frau)
-
+# 所有皮肤
+with open("./config/ValSkin.json", 'r', encoding='utf-8') as frsk:
+    ValSkinList = json.load(frsk)
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -807,6 +809,13 @@ async def get_daily_shop(msg: Message,*arg):
                                         params=params) as response:
                         res_item = json.loads(await response.text())
 
+                res_price=await fetch_item_price(userdict,skinuuid)
+                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                for it in ValSkinList['data']:
+                    if it['levels'][0]['uuid'] == skinuuid:
+                        res_iters = await fetch_item_iters(it['contentTierUuid'])
+                        break
+                #print(price,' ',res_iters['data']['displayName'])
                 img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"])
                 bg = bg_comp(bg, img, x, y)
 

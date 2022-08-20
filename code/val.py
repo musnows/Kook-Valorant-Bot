@@ -245,3 +245,37 @@ async def fetch_valorant_point(u):
         async with session.get(url, headers=headers) as response:
             res = json.loads(await response.text())
     return res
+
+
+# 获取商品价格
+async def fetch_item_price(u,item_id:str):
+    url="https://pd.ap.a.pvp.net/store/v1/offers/"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": u['entitlements_token'],
+        "Authorization": "Bearer " + u['access_token']
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            res = json.loads(await response.text())
+
+    for item in res['Offers']:
+        if item_id == item['OfferID']:
+            return item
+
+    return "0"
+
+
+# 获取皮肤等级（史诗/传说）
+async def fetch_item_iters(iters_id:str):
+    url="https://valorant-api.com/v1/contenttiers/"+iters_id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_iters = json.loads(await response.text())
+
+    return res_iters
+    
+
+
