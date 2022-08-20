@@ -12,6 +12,10 @@ from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessa
 from khl.card import CardMessage, Card, Module, Element, Types
 from khl.command import Rule
 
+#忽略PytzUsageWarning相关警告(由bot task引发的报错)
+from warnings import filterwarnings
+from pytz_deprecation_shim import PytzUsageWarning
+filterwarnings('ignore', category=PytzUsageWarning)
 
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
