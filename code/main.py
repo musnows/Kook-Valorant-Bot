@@ -783,7 +783,7 @@ async def clear_authtoken():
     print(f"[{GetTime()}] task_clear_authtoken")
 
 # 定时任务，每3天获取一次皮肤（避免因为关闭bot导致时间不够，没法更新）
-@bot.task.add_interval(minutes=1)
+@bot.task.add_interval(days=3)
 async def update_skins():
     global ValSkinList
     skins=await fetch_skins_all()
