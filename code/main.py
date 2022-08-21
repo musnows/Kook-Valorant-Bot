@@ -685,7 +685,10 @@ def sm_comp(icon, name,price,level_icon):
 
     name = zhconv.convert(name, 'zh-cn')  #将名字简体化
     name_list = name.split(' ')  #将武器名字分割换行
-    text = ' '.join(name_list[0]) + '\n'  #向武器名字添加空格增加字间距
+    if len(name_list[0])>5:
+        text = ''.join(name_list[0]) + '\n'  #如果武器名很长就不用加
+    else:
+        text = ' '.join(name_list[0]) + '\n'  #向武器名字添加空格增加字间距
     interval = len(name_list[0])
     #print(len(name_list))
     if len(name_list) > 2:
@@ -698,8 +701,9 @@ def sm_comp(icon, name,price,level_icon):
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
     if len(name_list) > 1: #有些刀皮肤只有一个元素
-        if len(name_list[1]) > 3:
-            interval = interval - len(name_list[1]) - 2
+        # if len(name_list[1]) > 3:
+        #     interval = interval - len(name_list[1]) - 2
+        interval = interval - interval//3
         for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
             text += '　'
         text += ' '.join(name_list[1])  #插入第二行字符
