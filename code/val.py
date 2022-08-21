@@ -289,3 +289,30 @@ async def fetch_skins_all():
     return res_skin
     
 
+# 获取获取玩家当前装备的卡面和称号
+async def fetch_player_card(u,item_id:str):
+    url=f"https://pd.na.a.pvp.net/personalization/v2/players/{u['auth_user_id']}/playerloadout"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": u['entitlements_token'],
+        "Authorization": "Bearer " + u['access_token']
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            res = json.loads(await response.text())
+
+    return res
+
+# 获取合约（任务）进度
+async def fetch_contract(u):
+    url="https://pd.ap.a.pvp.net/contract-definitions/v2/definitions/story"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": u['entitlements_token'],
+        "Authorization": "Bearer " + u['access_token']
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            res = json.loads(await response.text())
+
+    return res
