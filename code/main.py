@@ -641,7 +641,12 @@ stardard_icon_resize_ratio = 0.59 * standard_length / 1000  #枪的默认缩放
 standard_icon_top_blank = math.floor(180 * standard_length /
                                      1000)  # 枪距离图片顶部的像素
 standard_text_position = (math.floor(130 * standard_length / 1000),
-                          math.floor(314 * standard_length / 1000))  #默认文字位置
+                          math.floor(317 * standard_length / 1000))  #默认文字位置
+standard_price_position = (math.floor(280 * standard_length / 1000),
+                           math.floor(120 * standard_length / 1000))  #皮肤价格文字位置
+standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  #等级icon图标的缩放
+standard_level_icon_position = (math.floor(350 * standard_length /1000),
+                                math.floor(120 * standard_length /1000))  # 等级icon图标的坐标
 
 resp = {}  #没有那个resp数据 为了防止报错
 
@@ -652,18 +657,31 @@ bg_main = Image.open(
             'https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').
         content))  #背景
 
-def sm_comp(icon, name):
+def sm_comp(icon, name,price,level_icon):
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  #新建一个画布
+    # 处理武器图片
     layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
     w, h = layer_icon.size  #读取武器图片长宽
     new_w = math.floor(w * stardard_icon_resize_ratio)  #按比例缩放的长
     new_h = math.floor(h * stardard_icon_resize_ratio)  #按比例缩放的宽
-
-    layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS) # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
-    left_position = math.floor((standard_length_sm - new_w) /2)  # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
+    layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS) 
+    # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
+    left_position = math.floor((standard_length_sm - new_w) /2) 
+    # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
     bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)
-    #bg.paste代表向bg粘贴一张图片 第一个参数是图像layer_icon ， 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
+    # bg.paste代表向bg粘贴一张图片
+    # 第一个参数是图像layer_icon 
+    # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
+
+    # 处理武器level的图片
+    Level_icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
+    w, h = Level_icon.size  #读取武器图片长宽
+    new_w = math.floor(w * standard_level_icon_reszie_ratio )  #按比例缩放的长
+    new_h = math.floor(h * standard_level_icon_reszie_ratio )  #按比例缩放的宽
+    Level_icon = Level_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    bg.paste(Level_icon, standard_level_icon_position, Level_icon)
+
 
     name = zhconv.convert(name, 'zh-cn')  #将名字简体化
     name_list = name.split(' ')  #将武器名字分割换行
@@ -691,7 +709,12 @@ def sm_comp(icon, name):
               text,
               font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
               fill=font_color)
-    #bg.show() #测试用途，展示图片
+    text=f"{price}"#价格
+    draw.text(standard_price_position,
+            text,
+            font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+            fill=font_color)
+    #bg.show() #测试用途，展示图片(linux貌似不可用)
     return bg
 
 def bg_comp(bg, img, x, y):
@@ -836,7 +859,7 @@ async def get_daily_shop(msg: Message,*arg):
                         res_iters = await fetch_item_iters(it['contentTierUuid'])
                         break
                 #print(price,' ',res_iters['data']['displayName'])
-                img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"])
+                img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
                 bg = bg_comp(bg, img, x, y)
 
                 if x == 0:
