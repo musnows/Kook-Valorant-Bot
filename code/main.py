@@ -749,7 +749,7 @@ async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*ar
 
         if msg.author_id in UserAuthDict: #用in判断dict种是否存在这个键
             # 如果用户id已有，则不进行操作
-            await msg.reply(f'您今日已经登陆过，无需重复操作')
+            await msg.reply(f'您今日已经登陆过，无需重复操作\n如需重新登录，请先使用`/logout`命令退出当前登录')
             return
 
         # 不在其中才进行获取token的操作（耗时)
@@ -757,7 +757,15 @@ async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         res_gameid=await fetch_user_gameID(res_auth) # 获取用户玩家id
         UserAuthDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id,'GameName':res_gameid[0]['GameName'],'TagLine':res_gameid[0]['TagLine']}
         #dict[键] = 值
-        await msg.reply(f"登陆成功！\n在明日的`03:00`之前，您可以使用和valorant对接的功能\n在`03:00`之后，您需要重新登录")
+        cm=CardMessage()
+        c=Card(Module.Header("登陆成功！"),
+                Module.Divider(),
+                Module.Section(Element.Text("在明日的`03:00`之前，您可以使用和valorant对接的功能\n在`03:00`之后，您需要重新登录\n",Types.Text.KMD)),
+                Module.Divider(),
+                Module.Section("注：登陆游戏，多次使用查询命令等操作会使token失效\n   您需要logout之后再login以重新登录您的账户")
+                )
+        cm.append(c)
+        await msg.reply(cm)
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
             json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
