@@ -679,11 +679,12 @@ def sm_comp(icon, name):
         interval = len(name_list[0])
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
-    if len(name_list[1]) > 3:
-        interval = interval - len(name_list[1]) - 2
-    for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
-        text += '　'
-    text += ' '.join(name_list[1])  #插入第二行字符
+    if len(name_list) > 1: #有些刀皮肤只有一个元素
+        if len(name_list[1]) > 3:
+            interval = interval - len(name_list[1]) - 2
+        for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
+            text += '　'
+        text += ' '.join(name_list[1])  #插入第二行字符
     draw = ImageDraw.Draw(bg)  # emmm大概就是让bg这个图层能被写字
     #第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
     draw.text(standard_text_position,
@@ -808,6 +809,10 @@ async def get_daily_shop(msg: Message,*arg):
             flag_au = 1
             userdict=UserAuthDict[msg.author_id]
             resp = await fetch_daily_shop(userdict)
+            if "SkinsPanelLayout" not in resp:#这个键值不存在代表没有正常返回结果
+                await msg.reply(f"访问商店失败！请尝试重新登录\n```\n{resp}\n```")
+                return
+            
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]
             timeout = resp["SkinsPanelLayout"][
                 "SingleItemOffersRemainingDurationInSeconds"]
@@ -823,7 +828,7 @@ async def get_daily_shop(msg: Message,*arg):
                     async with session.get(url, headers=headers,
                                         params=params) as response:
                         res_item = json.loads(await response.text())
-
+                        #print(res_item)
                 res_price=await fetch_item_price(userdict,skinuuid)
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 for it in ValSkinList['data']:
@@ -856,7 +861,7 @@ async def get_daily_shop(msg: Message,*arg):
         if flag_au != 1:
             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
             return
-    
+
     except Exception as result:
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
