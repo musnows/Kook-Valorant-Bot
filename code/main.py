@@ -27,9 +27,9 @@ Botoken=config['token']
 kook="https://www.kookapp.cn"
 headers={f'Authorization': f"Bot {Botoken}"}
 
-# 设置全局变量：机器人开发者id
+# 设置全局变量：机器人开发者id/报错频道
 master_id = '1961572535'
-
+Debug_ch  = '6248953582412867'
 
 # 向botmarket通信
 @bot.task.add_interval(minutes=30)
@@ -66,7 +66,7 @@ async def world(msg: Message):
 
 # help命令
 @bot.command(name='Ahri',aliases=['阿狸'])
-async def Ahri(msg: Message):
+async def Ahri(msg: Message,*arg):
     logging(msg)
     try:
         # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
@@ -88,15 +88,11 @@ async def Ahri(msg: Message):
         await msg.reply(cm)
 
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        err_str=f"ERR! [{GetTime()}] Ahri - {result}"
+        print(err_str)
+        #发送错误信息到指定频道
+        debug_channel= await bot.fetch_public_channel(Debug_ch)
+        await bot.send(debug_channel,err_str)
 
 #################################################################################################
 #################################################################################################
@@ -113,15 +109,11 @@ async def countdown(msg: Message,time: int = 60):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        err_str=f"ERR! [{GetTime()}] countdown- {result}"
+        print(err_str)
+        #发送错误信息到指定频道
+        debug_channel= await bot.fetch_public_channel(Debug_ch)
+        await bot.send(debug_channel,err_str)
 
 
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
@@ -132,16 +124,11 @@ async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
-
+        err_str=f"ERR! [{GetTime()}] roll - {result}"
+        print(err_str)
+        #发送错误信息到指定频道
+        debug_channel= await bot.fetch_public_channel(Debug_ch)
+        await bot.send(debug_channel,err_str)
 
 ################################以下是给用户上色功能的内容########################################
 
