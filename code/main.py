@@ -762,7 +762,7 @@ async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*ar
                 Module.Divider(),
                 Module.Section(Element.Text("在明日的`03:00`之前，您可以使用和valorant对接的功能\n在`03:00`之后，您需要重新登录\n",Types.Text.KMD)),
                 Module.Divider(),
-                Module.Section("注：登陆游戏，多次使用查询命令等操作会使token失效\n   您需要logout之后再login以重新登录您的账户")
+                Module.Section("登陆游戏、多次使用查询命令等操作会使token失效\n您需要logout之后再login以重新登录您的账户")
                 )
         cm.append(c)
         await msg.reply(cm)
