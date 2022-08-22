@@ -71,12 +71,12 @@ async def Ahri(msg: Message,*arg):
     try:
         # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
         cm = CardMessage()
-        c3 = Card(Module.Header('你可以用下面这些指令呼叫本狸哦！'), Module.Context('更多玩耍方式上线中...'))
+        c3 = Card(Module.Header('你可以用下面这些指令呼叫本狸哦！'), Module.Context(Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多玩耍方式上线中...",Types.Text.KMD)))
         #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD))) #实现卡片的markdown文本
         c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
         c3.append(Module.Divider())
         c3.append(Module.Header('上号，瓦一把！'))
-        c3.append(Module.Section(Element.Text("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「/skin 皮肤名」 查询皮肤系列包含什么枪械，仅支持英文名\n「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家",Types.Text.KMD)))
+        c3.append(Module.Section(Element.Text("「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「`/Vhelp`」瓦洛兰特游戏查询相关功能的帮助",Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header('和阿狸玩小游戏吧~ '))
         c3.append(Module.Section('「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「/TL 内容」翻译内容，支持多语译中和中译英\n「/TLON」 在本频道打开实时翻译\n「/TLOFF」在本频道关闭实时翻译\n「/we 城市」查询城市未来3天的天气情况\n「更多…」还有一些隐藏指令哦~\n'))
@@ -93,6 +93,38 @@ async def Ahri(msg: Message,*arg):
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
         await bot.send(debug_channel,err_str)
+
+
+# help命令(瓦洛兰特相关)
+@bot.command(name='Vhelp',aliases=['vhelp'])
+async def Vhelp(msg: Message,*arg):
+    logging(msg)
+    try:
+        # msg 触发指令为 `/Ahri`,因为help指令和其他机器人冲突
+        cm = CardMessage()
+        c3 = Card(Module.Header('目前阿狸支持查询的valorant信息如下'), Module.Context(Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...",Types.Text.KMD)))
+        c3.append(Module.Section(Element.Text("使用前，请确认您知晓相关功能可能有风险：\n1.阿狸的后台不会做任何`打印/保存`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n2.目前查询功能稳定性未知，可能有`封号`风险，建议使用小号测试;\n若担心相关风险，请不要使用如下功能\n",Types.Text.KMD)))
+        c3.append(Module.Divider())
+        help_1 ="「/skin 皮肤名」 查询皮肤系列包含什么枪械，仅支持英文名\n"
+        help_1+="「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
+        help_1+="「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
+        help_1+="「/shop」 查询您的每日商店\n"
+        help_1+="「/point」查询您剩余的vp和r点\n"
+        help_1+="「/logout」取消登录\n"
+        c3.append(Module.Section(Element.Text(help_1,Types.Text.KMD)))
+        c3.append(Module.Divider())
+        c3.append(Module.Section('若有任何问题，欢迎加入帮助频道',
+                Element.Button('来哩', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm.append(c3)
+        await msg.reply(cm)
+
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] Ahri - {result}"
+        print(err_str)
+        #发送错误信息到指定频道
+        debug_channel= await bot.fetch_public_channel(Debug_ch)
+        await bot.send(debug_channel,err_str)
+
 
 #################################################################################################
 #################################################################################################
