@@ -1012,12 +1012,12 @@ async def get_user_card(msg: Message,*arg):
             player_card=await fetch_player_card(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_player_title(resp['Identity']['PlayerTitleID'])#玩家称号id
             cm = CardMessage()
-            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的个人信息"),Module.Divider())
+            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))#将图片插入进去
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c)
-
+            await msg.reply(cm)
 
         if flag_au != 1:
             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
