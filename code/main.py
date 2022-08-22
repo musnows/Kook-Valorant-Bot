@@ -45,8 +45,6 @@ async def botmarket():
 def GetTime(): #将获取当前时间封装成函数方便使用
     return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
-# 开机的时候打印一次时间，记录重启时间
-print(f"Start at: [%s]"%GetTime())
 
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
