@@ -1,4 +1,5 @@
-<h1 align="center">Valorant-kaiheila-bot</h1>
+<h1 align="center">
+Kook-Valorant-Bot</h1>
 
 
 <h4 align="center">this is a Valorant bot for KOOK platform</h4>
