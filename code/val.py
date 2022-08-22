@@ -316,3 +316,15 @@ async def fetch_contract(u):
             res = json.loads(await response.text())
 
     return res
+
+# 用名字查询捆绑包
+async def fetch_bundle_byname(name):
+    # 所有皮肤
+    with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
+        ValSkinList = json.load(frsk)
+    text=""
+    for skin in ValSkinList['data']:
+        if name in skin['displayName']:
+            text+= skin['displayName'] +'\n'
+    
+    return text
