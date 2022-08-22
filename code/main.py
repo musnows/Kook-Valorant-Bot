@@ -102,11 +102,12 @@ async def Vhelp(msg: Message,*arg):
         c3 = Card(Module.Header('目前阿狸支持查询的valorant信息如下'), Module.Context(Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...",Types.Text.KMD)))
         c3.append(Module.Section(Element.Text("使用前，请确认您知晓相关功能可能有风险：\n1.阿狸的后台不会做任何`打印/保存`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n2.目前查询功能稳定性未知，可能有`封号`风险，建议使用小号测试;\n若担心相关风险，请不要使用如下功能\n",Types.Text.KMD)))
         c3.append(Module.Divider())
-        help_1 ="「/skin 皮肤名」 查询皮肤系列包含什么枪械，仅支持英文名\n"
+        help_1 ="「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
         help_1+="「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
         help_1+="「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1+="「/shop」 查询您的每日商店\n"
         help_1+="「/point」查询您剩余的vp和r点\n"
+        help_1+="「/uinfo」查询您当前装备的卡面和称号\n"
         help_1+="「/logout」取消登录\n"
         c3.append(Module.Section(Element.Text(help_1,Types.Text.KMD)))
         c3.append(Module.Divider())
