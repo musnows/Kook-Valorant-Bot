@@ -752,7 +752,7 @@ def bg_comp(bg, img, x, y):
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
     UserAuthDict = json.load(frau)
 # 所有皮肤
-with open("./config/ValSkin.json", 'r', encoding='utf-8') as frsk:
+with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
     ValSkinList = json.load(frsk)
 
 # 登录，保存用户的token
@@ -844,7 +844,7 @@ async def update_skins():
     skins=await fetch_skins_all()
     ValSkinList=skins
     # 写入文件
-    with open("./config/ValSkin.json", 'w', encoding='utf-8') as fw2:
+    with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
         json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
     print(f"[{GetTime()}] task_update_skins")
 
