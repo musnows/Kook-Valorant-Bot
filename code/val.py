@@ -247,8 +247,8 @@ async def fetch_valorant_point(u):
     return res
 
 
-# 获取商品价格
-async def fetch_item_price(u,item_id:str):
+# 获取商品价格（所有）
+async def fetch_item_price_all(u):
     url="https://pd.ap.a.pvp.net/store/v1/offers/"
     headers = {
         "Content-Type": "application/json",
@@ -259,11 +259,18 @@ async def fetch_item_price(u,item_id:str):
         async with session.get(url, headers=headers) as response:
             res = json.loads(await response.text())
 
-    for item in res['Offers']:
+    return res
+
+
+# 获取商品价格（用uuid获取单个价格）
+async def fetch_item_price_uuid(u,item_id:str):
+    res= fetch_item_price_all(u)#获取所有价格
+
+    for item in res['Offers']:#遍历查找指定uuid
         if item_id == item['OfferID']:
             return item
 
-    return "0"
+    return "0"#没有找到
 
 
 # 获取皮肤等级（史诗/传说）
@@ -288,14 +295,25 @@ async def fetch_skins_all():
 
     return res_skin
     
+# 获取所有皮肤捆绑包
+async def fetch_bundles_all():
+    url="https://valorant-api.com/v1/bundles"
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_bundle = json.loads(await response.text())
+
+    return res_bundle
 
 # 获取获取玩家当前装备的卡面和称号
-async def fetch_player_card(u,item_id:str):
-    url=f"https://pd.na.a.pvp.net/personalization/v2/players/{u['auth_user_id']}/playerloadout"
+async def fetch_player_card(u):
+    url=f"https://pd.ap.a.pvp.net/personalization/v2/players/{u['auth_user_id']}/playerloadout"
     headers = {
         "Content-Type": "application/json",
         "X-Riot-Entitlements-JWT": u['entitlements_token'],
-        "Authorization": "Bearer " + u['access_token']
+        "Authorization": "Bearer " + u['access_token'],
+        'Connection': 'close'
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
@@ -305,7 +323,8 @@ async def fetch_player_card(u,item_id:str):
 
 # 获取合约（任务）进度
 async def fetch_contract(u):
-    url="https://pd.ap.a.pvp.net/contract-definitions/v2/definitions/story"
+    #url="https://pd.ap.a.pvp.net/contract-definitions/v2/definitions/story"
+    url=f"https://pd.ap.a.pvp.net/contracts/v1/contracts/"+u['auth_user_id']
     headers = {
         "Content-Type": "application/json",
         "X-Riot-Entitlements-JWT": u['entitlements_token'],
@@ -317,14 +336,17 @@ async def fetch_contract(u):
 
     return res
 
-# 用名字查询捆绑包
+# 用名字查询捆绑包包含什么枪
 async def fetch_bundle_byname(name):
     # 所有皮肤
     with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
         ValSkinList = json.load(frsk)
-    text=""
+
+    WeapenList=list()
     for skin in ValSkinList['data']:
         if name in skin['displayName']:
-            text+= skin['displayName'] +'\n'
+            # 为了方便查询价格，在这里直接把skin的lv0-uuid也给插入进去
+            data={'weapen':skin['displayName'],'lv_uuid':skin['levels'][0]['uuid']}
+            WeapenList.append(data)
     
-    return text
+    return WeapenList

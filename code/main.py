@@ -2,7 +2,6 @@
 import json
 import random
 import time
-import datetime
 import aiohttp
 import requests
 
@@ -141,7 +140,7 @@ async def countdown(msg: Message,time: int = 60):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] countdown- {result}"
+        err_str=f"ERR! [{GetTime()}] countdown - {result}"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -502,9 +501,10 @@ async def uncle(msg: Message):
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
-from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
 from status import status_active_game,status_active_music,status_delete,server_status
-
+# from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
+# from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_contract,fetch_bundle_byname,fetch_player_card,fetch_bundles_all,fetch_item_price_all
+from val import *
 
 # 开始打游戏
 @bot.command()
@@ -548,15 +548,15 @@ async def kda(msg: Message):
     await kda123(msg)
 
 # 查询皮肤系列
-@bot.command()
-async def skin(msg: Message,name:str="err"):
-    logging(msg)
-    if name =="err":
-        await msg.reply(f"函数参数错误，name: `{name}`\n")
-        return
-    #name=" ".join(arg)
-    await skin123(msg,name)
-    
+# @bot.command()
+# async def skin(msg: Message,*arg):
+#     logging(msg)
+#     if arg ==():
+#         await msg.reply(f"函数参数错误，name: `{arg}`\n")
+#         return
+#     name=" ".join(arg)
+#     await skin123(msg,name)
+
 # 查询排行榜
 @bot.command()
 async def lead(msg: Message,sz:int=15,num:int=10):
@@ -623,7 +623,7 @@ def str2int(s):
 
 # 查询游戏错误码
 @bot.command(name='val',aliases=['van','VAN','VAL'])
-async def val(msg: Message, numS:str="err"):
+async def val_err(msg: Message, numS:str="err"):
     logging(msg)
     if numS=="err":
         await msg.reply(f"函数参数错误，请提供正确范围的错误码")
@@ -643,13 +643,11 @@ async def dx(msg: Message):
 
 #多出来的import
 import copy
-import riot_auth
-import aiofiles
 import io  #用于将 图片url 转换成可被打开的二进制
 from PIL import Image, ImageDraw, ImageFont  #用于合成图片
 import zhconv  #用于繁体转简体（因为部分字体不支持繁体
 import math  #用于小数取整
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price,fetch_item_iters,fetch_skins_all
+
 
 standard_length = 1000  #图片默认边长
 # 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
@@ -758,12 +756,22 @@ def bg_comp(bg, img, x, y):
 
 ##############################################################################
 
-# 预加载
+# 预加载用户token
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
     UserAuthDict = json.load(frau)
 # 所有皮肤
 with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
     ValSkinList = json.load(frsk)
+# 所有商品价格
+with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
+    ValPriceList = json.load(frpr)
+
+#从list中获取价格，不管其他的
+def fetch_item_price_bylist(item_id):
+    for item in ValPriceList['Offers']:#遍历查找指定uuid
+        if item_id == item['OfferID']:
+            return item
+
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -834,6 +842,7 @@ async def logout_authtoken(msg:Message,*arg):
     fw1.close()
 
 
+
 # 定时任务，每天凌晨3点清空token保存
 @bot.task.add_cron(hour=3, minute=0)
 async def clear_authtoken():
@@ -854,6 +863,18 @@ async def update_skins():
     with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
         json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
     print(f"[{GetTime()}] task_update_skins")
+
+# 定时任务，每3天获取一次商品价格
+@bot.task.add_interval(days=3)
+async def update_skins():
+    global ValPriceList
+    prices=await fetch_item_price_all(UserAuthDict['1961572535'])
+    ValPriceList=prices
+    # 写入文件
+    with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
+        json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    print(f"[{GetTime()}] task_update_item_price")
+
 
 # 获取每日商店的命令
 @bot.command(name='shop',aliases=['SHOP'])
@@ -890,7 +911,7 @@ async def get_daily_shop(msg: Message,*arg):
                                         params=params) as response:
                         res_item = json.loads(await response.text())
                         #print(res_item)
-                res_price=await fetch_item_price(userdict,skinuuid)
+                res_price=await fetch_item_price_uuid(userdict,skinuuid)
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 for it in ValSkinList['data']:
                     if it['levels'][0]['uuid'] == skinuuid:
@@ -976,8 +997,70 @@ async def get_user_vp(msg: Message,*arg):
         cm2.append(c)
         await msg.reply(cm2)
 
+# # 获取玩家卡面
+# @bot.command(name='uinfo')
+# async def get_user_card(msg: Message,*arg):
+#     logging(msg)
+#     if arg !=():
+#         await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
+#         return
+
+#     try:
+#         flag_au = 0
+#         if msg.author_id in UserAuthDict:
+#             # 如果用户id已有，则不需要再次获取token
+#             flag_au = 1
+#             userdict=UserAuthDict[msg.author_id]
+#             resp = await fetch_player_card(userdict)
+#             print(resp)
+
+#         if flag_au != 1:
+#             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+#             return
+    
+#     except Exception as result:
+#         cm2 = CardMessage()
+#         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
+#         c.append(Module.Divider())
+#         c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+#         c.append(Module.Divider())
+#         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+#             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+#         cm2.append(c)
+#         await msg.reply(cm2)
 
 
+# @bot.command(name='bundle')
+# async def get_bundle(msg: Message,*arg):
+#     logging(msg)
+#     if arg ==():
+#         await msg.reply(f"函数参数错误，name: `{arg}`\n")
+#         return
+
+#     name=" ".join(arg)
+#     userdict=UserAuthDict[msg.author_id]
+#     weapenlist= await fetch_bundle_byname(name)
+#     # 不为空说明找到了
+#     if weapenlist!=[]:
+#         bundlelist = await fetch_bundles_all()
+#         cm = CardMessage()
+#         c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
+#         for b in bundlelist["data"]:
+#             if name in b['displayName']:
+#                 c.append(Module.Container(Element.Image(src=b['displayIcon'])))#将图片插入进去
+
+#         text="```\n"
+#         for w in weapenlist:
+#             res_price=fetch_item_price_bylist(w['lv_uuid'])
+#             price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+#             text+=f"{w['weapen']}   - vp {price}\n"
+        
+#         text+="```\n"
+#         c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
+#         cm.append(c)
+#         await msg.reply(cm)
+#     else:
+#         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
 
 #bot.run()是机器人的起跑线
 bot.run()
