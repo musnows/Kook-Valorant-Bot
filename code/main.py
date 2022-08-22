@@ -502,9 +502,8 @@ async def uncle(msg: Message):
 ###########################################################################################
 
 from status import status_active_game,status_active_music,status_delete,server_status
-# from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
-# from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_contract,fetch_bundle_byname,fetch_player_card,fetch_bundles_all,fetch_item_price_all
-from val import *
+from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_player_title,fetch_player_card
 
 # 开始打游戏
 @bot.command()
@@ -997,70 +996,91 @@ async def get_user_vp(msg: Message,*arg):
         cm2.append(c)
         await msg.reply(cm2)
 
-# # 获取玩家卡面
-# @bot.command(name='uinfo')
-# async def get_user_card(msg: Message,*arg):
-#     logging(msg)
-#     if arg !=():
-#         await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
-#         return
+# 获取玩家卡面
+@bot.command(name='uinfo')
+async def get_user_card(msg: Message,*arg):
+    logging(msg)
+    if arg !=():
+        await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
+        return
 
-#     try:
-#         flag_au = 0
-#         if msg.author_id in UserAuthDict:
-#             # 如果用户id已有，则不需要再次获取token
-#             flag_au = 1
-#             userdict=UserAuthDict[msg.author_id]
-#             resp = await fetch_player_card(userdict)
-#             print(resp)
+    try:
+        flag_au = 0
+        if msg.author_id in UserAuthDict:
+            # 如果用户id已有，则不需要再次获取token
+            flag_au = 1
+            userdict=UserAuthDict[msg.author_id]
+            resp = await fetch_player_loadout(userdict)#获取玩家装备栏
+            player_card=await fetch_player_card(resp['Identity']['PlayerCardID'])#玩家卡面id
+            player_title=await fetch_player_title(resp['Identity']['PlayerTitleID'])#玩家称号id
+            cm = CardMessage()
+            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的个人信息"),Module.Divider())
+            c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))#将图片插入进去
+            text=f"玩家称号："+player_title['data']['displayName']+"\n"
+            c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+            cm.append(c)
 
-#         if flag_au != 1:
-#             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
-#             return
+
+        if flag_au != 1:
+            await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            return
     
-#     except Exception as result:
-#         cm2 = CardMessage()
-#         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-#         c.append(Module.Divider())
-#         c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
-#         c.append(Module.Divider())
-#         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-#             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-#         cm2.append(c)
-#         await msg.reply(cm2)
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 
-# @bot.command(name='bundle')
-# async def get_bundle(msg: Message,*arg):
-#     logging(msg)
-#     if arg ==():
-#         await msg.reply(f"函数参数错误，name: `{arg}`\n")
-#         return
+@bot.command(name='bundle')
+async def get_bundle(msg: Message,*arg):
+    logging(msg)
+    if arg ==():
+        await msg.reply(f"函数参数错误，name: `{arg}`\n")
+        return
+    try:
+        name=" ".join(arg)
+        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
+        weapenlist= await fetch_bundle_byname(name)
+        # 不为空说明找到了
+        if weapenlist!=[]:
+            bundlelist = await fetch_bundles_all()
+            cm = CardMessage()
+            c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
+            for b in bundlelist["data"]:
+                if name in b['displayName']:
+                    c.append(Module.Container(Element.Image(src=b['displayIcon'])))#将图片插入进去
 
-#     name=" ".join(arg)
-#     userdict=UserAuthDict[msg.author_id]
-#     weapenlist= await fetch_bundle_byname(name)
-#     # 不为空说明找到了
-#     if weapenlist!=[]:
-#         bundlelist = await fetch_bundles_all()
-#         cm = CardMessage()
-#         c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
-#         for b in bundlelist["data"]:
-#             if name in b['displayName']:
-#                 c.append(Module.Container(Element.Image(src=b['displayIcon'])))#将图片插入进去
+            text="```\n"
+            for w in weapenlist:
+                res_price=fetch_item_price_bylist(w['lv_uuid'])
+                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                text+=f"{w['weapen']}   - vp {price}\n"
+            
+            text+="```\n"
+            c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
+            cm.append(c)
+            await msg.reply(cm)
+        else:
+            await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
 
-#         text="```\n"
-#         for w in weapenlist:
-#             res_price=fetch_item_price_bylist(w['lv_uuid'])
-#             price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-#             text+=f"{w['weapen']}   - vp {price}\n"
-        
-#         text+="```\n"
-#         c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
-#         cm.append(c)
-#         await msg.reply(cm)
-#     else:
-#         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
+    except Exception as result:
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
+
 
 #bot.run()是机器人的起跑线
 bot.run()

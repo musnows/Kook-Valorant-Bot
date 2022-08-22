@@ -307,7 +307,7 @@ async def fetch_bundles_all():
     return res_bundle
 
 # 获取获取玩家当前装备的卡面和称号
-async def fetch_player_card(u):
+async def fetch_player_loadout(u):
     url=f"https://pd.ap.a.pvp.net/personalization/v2/players/{u['auth_user_id']}/playerloadout"
     headers = {
         "Content-Type": "application/json",
@@ -350,3 +350,26 @@ async def fetch_bundle_byname(name):
             WeapenList.append(data)
     
     return WeapenList
+
+
+# 获取玩家卡面，uuid
+async def fetch_player_card(id):
+    url="https://valorant-api.com/v1/playercards/"+id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_card = json.loads(await response.text())
+
+    return res_card
+
+# 获取玩家称号，uuid
+async def fetch_player_title(id):
+    url="https://valorant-api.com/v1/playertitles/"+id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_ptitle = json.loads(await response.text())
+
+    return res_ptitle
