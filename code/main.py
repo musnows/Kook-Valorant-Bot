@@ -1080,5 +1080,8 @@ async def get_bundle(msg: Message,*arg):
 
 
 
+# 开机的时候打印一次时间，记录重启时间
+print(f"Start at: [%s]"%GetTime())
+
 #bot.run()是机器人的起跑线
 bot.run()
