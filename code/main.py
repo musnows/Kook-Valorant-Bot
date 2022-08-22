@@ -659,7 +659,7 @@ stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
 stardard_icon_resize_ratio = 0.59 * standard_length / 1000  #枪的默认缩放
 standard_icon_top_blank = math.floor(180 * standard_length /
                                      1000)  # 枪距离图片顶部的像素
-standard_text_position = (math.floor(130 * standard_length / 1000),
+standard_text_position = (math.floor(128 * standard_length / 1000),
                           math.floor(317 * standard_length / 1000))  #默认文字位置
 standard_price_position = (math.floor(280 * standard_length / 1000),
                            math.floor(120 * standard_length / 1000))  #皮肤价格文字位置
@@ -704,11 +704,16 @@ def sm_comp(icon, name,price,level_icon):
 
     name = zhconv.convert(name, 'zh-cn')  #将名字简体化
     name_list = name.split(' ')  #将武器名字分割换行
+    #print(name_list)
+    if '' in name_list:#避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
+        name_list.remove('')
+    
+    text=""
     if len(name_list[0])>5:
-        text = ''.join(name_list[0]) + '\n'  #如果武器名很长就不用加
+        text = name_list[0] + '\n'  #如果皮肤名很长就不用加空格
     else:
-        text = ' '.join(name_list[0]) + '\n'  #向武器名字添加空格增加字间距
-    interval = len(name_list[0])
+        text = ' '.join(name_list[0]) + '\n'  #向皮肤名字添加空格增加字间距
+    #interval = len(name_list[0])
     #print(len(name_list))
     if len(name_list) > 2:
         i = 1
@@ -722,11 +727,16 @@ def sm_comp(icon, name,price,level_icon):
     if len(name_list) > 1: #有些刀皮肤只有一个元素
         # if len(name_list[1]) > 3:
         #     interval = interval - len(name_list[1]) - 2
-        interval = interval - interval//3
-        for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
-            text += '　'
-        text += ' '.join(name_list[1])  #插入第二行字符
-    draw = ImageDraw.Draw(bg)  # emmm大概就是让bg这个图层能被写字
+        # interval = interval - interval//3
+        # for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
+        #     text += '　'
+        text+='              '#添加固定长度的缩进，12个空格
+        if len(name_list[1])<4:
+            text += ' '.join(name_list[1])  #插入第二行字符
+        else:
+            text += name_list[1] #单独处理制式手槍（不加空格）
+
+    draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
     #第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
     draw.text(standard_text_position,
               text,
@@ -806,18 +816,15 @@ async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*ar
 
 # 退出登录
 @bot.command(name='logout')
-async def logout_authtoekn(msg:Message,*arg):
+async def logout_authtoken(msg:Message,*arg):
     logging(msg)
-    if arg!=():
-        await msg.reply(f"您给予了多余的参数！`{arg}`")
-        return
 
     global UserAuthDict
     if msg.author_id not in UserAuthDict: #使用not in判断是否不存在
         await msg.reply(f"你还没有登陆呢！")
         return
     #如果id存在， 删除id
-    print(f"Logout: {msg.author_id}")
+    print(f"Logout: {msg.author_id} - {UserAuthDict[msg.author_id]['GameName']}#{UserAuthDict[msg.author_id]['TagLine']}")
     del UserAuthDict[msg.author_id]
     await msg.reply(f"已成功取消登录")
 
@@ -911,6 +918,7 @@ async def get_daily_shop(msg: Message,*arg):
                     Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
             await msg.reply(cm)
+            print(f"[{GetTime()}] u:{msg.author_id} daily_shop reply successful")
 
         if flag_au != 1:
             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
