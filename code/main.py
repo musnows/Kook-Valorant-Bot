@@ -893,9 +893,8 @@ async def get_daily_shop(msg: Message,*arg):
                 await msg.reply(f"访问商店失败！请尝试重新登录\n```\n{resp}\n```")
                 return
             
-            list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]
-            timeout = resp["SkinsPanelLayout"][
-                "SingleItemOffersRemainingDurationInSeconds"]
+            list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
+            timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
             x = 0
             y = 0
@@ -908,8 +907,9 @@ async def get_daily_shop(msg: Message,*arg):
                     async with session.get(url, headers=headers,
                                         params=params) as response:
                         res_item = json.loads(await response.text())
-                        #print(res_item)
-                res_price=await fetch_item_price_uuid(userdict,skinuuid)
+
+                #res_price=await fetch_item_price_uuid(userdict,skinuuid)
+                res_price=fetch_item_price_bylist(skinuuid) #在本地文件中查找
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 for it in ValSkinList['data']:
                     if it['levels'][0]['uuid'] == skinuuid:
