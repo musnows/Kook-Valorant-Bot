@@ -937,7 +937,7 @@ async def get_daily_shop(msg: Message,*arg):
                     Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
             await msg.reply(cm)
-            print(f"[{GetTime()}] u:{msg.author_id} daily_shop reply successful")
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful")
 
         if flag_au != 1:
             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")

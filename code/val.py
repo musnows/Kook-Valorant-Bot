@@ -264,7 +264,7 @@ async def fetch_item_price_all(u):
 
 # 获取商品价格（用uuid获取单个价格）
 async def fetch_item_price_uuid(u,item_id:str):
-    res= fetch_item_price_all(u)#获取所有价格
+    res=await fetch_item_price_all(u)#获取所有价格
 
     for item in res['Offers']:#遍历查找指定uuid
         if item_id == item['OfferID']:
