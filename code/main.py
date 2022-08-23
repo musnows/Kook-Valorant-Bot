@@ -546,14 +546,15 @@ async def kda(msg: Message):
     await kda123(msg)
 
 # 查询皮肤系列
-# @bot.command()
-# async def skin(msg: Message,*arg):
-#     logging(msg)
-#     if arg ==():
-#         await msg.reply(f"函数参数错误，name: `{arg}`\n")
-#         return
-#     name=" ".join(arg)
-#     await skin123(msg,name)
+@bot.command()
+async def skin(msg: Message,*arg):
+    logging(msg)
+    await msg.reply(f"`/skin`命令已取消，请使用相同功能的`/bundle 皮肤名`")
+    # if arg ==():
+    #     await msg.reply(f"函数参数错误，name: `{arg}`\n")
+    #     return
+    # name=" ".join(arg)
+    # await skin123(msg,name)
 
 # 查询排行榜
 @bot.command()
@@ -1047,7 +1048,7 @@ async def get_user_card(msg: Message,*arg):
         cm2.append(c)
         await msg.reply(cm2)
 
-
+# 获取捆绑包信息
 @bot.command(name='bundle')
 async def get_bundle(msg: Message,*arg):
     logging(msg)
