@@ -40,12 +40,13 @@ Here is the Command List for bot:
 | `/val err_code` | help with the err_code of valorant                           |
 | `/saveid`       | save or change user's game ID                                |
 | `/myid`         | show user's game ID                                          |
-| `/skin name`    | search for skins                                             |
+| `/bundle name`    | search for skin bundles                                            |
 | `/lead 30 20`   | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
-| `/login account passwd` | login your riot_account to fetch auth_token |
+| `/login account passwd` | login your `riot_account` to fetch `auth_token` |
 | `/logout` | logout your riot_account |
 | `/shop` | fetch skin at daily shop |
 | `/point` | fetch remaining `Vp` and `Rp` |
+| `/unifo` | fetch player `card` & `title`|
 
 Recommended to use after the Valorant_Function is stable.
 
@@ -72,7 +73,7 @@ Since I have not studied python, many codes in this repo are modified and used a
 * KOOK_api base on [khl.py](https://github.com/TWT233/khl.py)
 * ValorantGameApi base on [frissyn/valorant.py](https://github.com/frissyn/valorant.py/)
 * Main fetch_code base on [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI)
-
+* Fetch riot_auth_token base on [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth)
 
 
 ### Thanks🎁

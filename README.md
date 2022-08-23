@@ -35,7 +35,7 @@
 | `/val 错误码` | 回复游戏错误码解决方法                     |
 | `/saveid`     | 保存（修改）用户的游戏id                   |
 | `/myid`       | 显示用户的游戏id                           |
-| `/skin name`  | 搜索已有皮肤系列包含什么枪械               |
+| `/bundle 皮肤名`  | 搜索已有皮肤系列包含什么枪械               |
 | `/lead 30 20` | 显示出亚服(ap)排行榜前30名胜场超过20的玩家 |
 | `/login 账户 密码` | 私聊bot进行登录riot账户的操作(获取token) |
 | `/logout` | 退出riot账户登录 |
@@ -102,9 +102,11 @@ pip install -r requirements.txt
 ## 依赖
 
 由于本人压根没有系统的学过Python，所以本仓库的很多代码都是根据他人教程修改后使用的
-* 基本代码参考[khl.py](https://github.com/TWT233/khl.py)提供的KOOK-api库以及使用教程
-* Valorant游戏部分代码基于[frissyn/valorant.py](https://github.com/frissyn/valorant.py/)项目
-* Valorant游戏主要代码基于[ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI)项目
+* 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的KOOK-Api库以及使用教程
+* Valorant游戏部分代码基于 [frissyn/valorant.py](https://github.com/frissyn/valorant.py/) 项目
+* Valorant游戏`主要`代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目
+* 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) 项目
+
 
 ### 特别鸣谢🎁
 * [@DeeChael](https://github.com/DeeChael) for helping me debug
