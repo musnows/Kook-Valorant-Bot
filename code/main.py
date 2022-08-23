@@ -1056,30 +1056,46 @@ async def get_bundle(msg: Message,*arg):
         await msg.reply(f"函数参数错误，name: `{arg}`\n")
         return
     try:
-        name=" ".join(arg)
+        name=" ".join(arg) # 补全函数名
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        weapenlist= await fetch_bundle_byname(name)
-        # 不为空说明找到了
-        if weapenlist!=[]:
-            bundlelist = await fetch_bundles_all()
-            cm = CardMessage()
-            c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
-            for b in bundlelist["data"]:
-                if name in b['displayName']:
-                    c.append(Module.Container(Element.Image(src=b['displayIcon'])))#将图片插入进去
+        # weapenlist= await fetch_bundle_byname(name) 
+        # 不能一来就在武器列表里面找，万一用户输入武器名，那就会把这个武器的所有皮肤都找出来，和该功能的需求不符合
+        bundlelist = await fetch_bundles_all()
+        for b in bundlelist['data']:
+            if name in b['displayName']:
+                # 确认在捆绑包里面有这个名字之后，在查找武器（这里不能使用displayName，因为有些捆绑包两个版本的名字不一样）
+                weapenlist= await fetch_bundle_byname(name)
+                #print(weapenlist)
+                #if weapenlist!=[]: # 这里不需要判断，因为已经是在捆绑包里面找到过名字，不可能存在找不到武器的情况
+                cm = CardMessage()
+                c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
+                for b in bundlelist["data"]:
+                    if name in b['displayName']:
+                        # 部分图片超大了，需要先create_asset进行上传
+                        bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content)) 
+                        imgByteArr = io.BytesIO()
+                        bg_bundle_icon.save(imgByteArr, format='PNG')
+                        imgByte = imgByteArr.getvalue()
+                        bundle_img_src = await bot.client.create_asset(imgByte)
+                        # 将图片插入 卡片消息
+                        c.append(Module.Container(Element.Image(src=bundle_img_src)))
 
-            text="```\n"
-            for w in weapenlist:
-                res_price=fetch_item_price_bylist(w['lv_uuid'])
-                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                text+=f"{w['weapen']}   - vp {price}\n"
-            
-            text+="```\n"
-            c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
-            cm.append(c)
-            await msg.reply(cm)
-        else:
-            await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
+                text="```\n"
+                for w in weapenlist:
+                    res_price=fetch_item_price_bylist(w['lv_uuid'])
+                    if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
+                        price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                        text+=f"{w['weapen']}   - vp {price}\n"
+                    else:# 找不到价格就直接插入武器名字
+                        text+=f"{w['weapen']}\n"
+                
+                text+="```\n" # print(text)
+                c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
+                cm.append(c)
+                await msg.reply(cm)
+                return
+        
+        await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
 
     except Exception as result:
         cm2 = CardMessage()
