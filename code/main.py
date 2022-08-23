@@ -1086,6 +1086,8 @@ async def get_user_card(msg: Message,*arg):
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c)
+            player_mision = await fetch_contract(userdict)
+            print(player_mision)
             await msg.reply(cm)
 
         if flag_au != 1:

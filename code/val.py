@@ -321,13 +321,16 @@ async def fetch_player_loadout(u):
     return res
 
 # 获取合约（任务）进度
+# client version from https://valorant-api.com/v1/version
 async def fetch_contract(u):
     #url="https://pd.ap.a.pvp.net/contract-definitions/v2/definitions/story"
     url=f"https://pd.ap.a.pvp.net/contracts/v1/contracts/"+u['auth_user_id']
     headers = {
         "Content-Type": "application/json",
         "X-Riot-Entitlements-JWT": u['entitlements_token'],
-        "Authorization": "Bearer " + u['access_token']
+        "Authorization": "Bearer " + u['access_token'],
+        "X-Riot-ClientPlatform" : "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9",
+        "X-Riot-ClientVersion": "release-05.03-shipping-8-745499"
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
