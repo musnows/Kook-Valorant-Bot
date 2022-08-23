@@ -11,11 +11,6 @@ from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessa
 from khl.card import CardMessage, Card, Module, Element, Types
 from khl.command import Rule
 
-#忽略PytzUsageWarning相关警告(由bot task引发的报错)
-from warnings import filterwarnings
-from pytz_deprecation_shim import PytzUsageWarning
-filterwarnings('ignore', category=PytzUsageWarning)
-
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
@@ -843,7 +838,7 @@ async def logout_authtoken(msg:Message,*arg):
 
 
 # 定时任务，每天凌晨3点清空token保存
-@bot.task.add_cron(hour=3, minute=0)
+@bot.task.add_cron(hour=3, minute=0,timezone="Asia/Shanghai")
 async def clear_authtoken():
     global UserAuthDict
     UserAuthDict= {}  #置空
