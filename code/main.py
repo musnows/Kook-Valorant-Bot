@@ -873,6 +873,11 @@ async def update_price(msg:Message):
     try:
         global ValPriceList
         prices=await fetch_item_price_all(UserAuthDict['1961572535'])
+        if "errorCode" in prices: #一般遇到这个情况就是token失效了
+            f"ERR! [{GetTime()}] update_price - {prices}"
+            await msg.reply(f"`更新失败!\n`{prices}`")
+            return 0
+        
         ValPriceList=prices
         # 写入文件
         with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
