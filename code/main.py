@@ -759,6 +759,9 @@ with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
 # 所有商品价格
 with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
     ValPriceList = json.load(frpr)
+# 所有捆绑包的图片
+with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
+    ValBundleList = json.load(frbu)
 
 #从list中获取价格，不管其他的
 def fetch_item_price_bylist(item_id):
@@ -837,6 +840,7 @@ async def logout_authtoken(msg:Message,*arg):
 
 
 
+
 # 定时任务，每天凌晨3点清空token保存
 @bot.task.add_cron(hour=3, minute=0,timezone="Asia/Shanghai")
 async def clear_authtoken():
@@ -848,38 +852,88 @@ async def clear_authtoken():
     print(f"[{GetTime()}] task_clear_authtoken")
 
 # 不再使用定时任务，而是封装成一个命令。
-async def update_skins():
-    global ValSkinList
-    skins=await fetch_skins_all()
-    ValSkinList=skins
-    # 写入文件
-    with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
-        json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print(f"[{GetTime()}] update_skins")
+async def update_skins(msg:Message):
+    try:
+        global ValSkinList
+        skins=await fetch_skins_all()
+        ValSkinList=skins
+        # 写入文件
+        with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
+            json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(f"[{GetTime()}] update_skins finished!")
+        return 1
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] update_skins - {result}"
+        print(err_str)
+        await msg.reply(err_str)
+        return 0
 
 #因为下方获取物品价格的操作需要authtoken，自动更新容易遇到token失效的情况
-async def update_price():
-    global ValPriceList
-    prices=await fetch_item_price_all(UserAuthDict['1961572535'])
-    ValPriceList=prices
-    # 写入文件
-    with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
-        json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print(f"[{GetTime()}] update_item_price")
+async def update_price(msg:Message):
+    try:
+        global ValPriceList
+        prices=await fetch_item_price_all(UserAuthDict['1961572535'])
+        ValPriceList=prices
+        # 写入文件
+        with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
+            json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(f"[{GetTime()}] update_item_price finished!")
+        return 1
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] update_price - {result}"
+        print(err_str)
+        await msg.reply(err_str)
+        return 0
+
+# 更新捆绑包
+async def update_bundle_url(msg:Message):
+    try:
+        global ValBundleList
+        resp = await fetch_bundles_all() #从官方获取最新list
+        if len(resp['data']) == len(ValBundleList): #长度相同代表没有更新
+            await msg.reply("len相同，无需更新")
+            return
+
+        for b in resp['data']:
+            flag = 0
+            for local_B in ValBundleList:#不在
+                if b['uuid'] == local_B['uuid']:#相同代表存在无需更新
+                    flag=1 #找到了，无需更新
+                    break
+
+            if flag != 1: #不存在创建图片准备上传
+                bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content)) 
+                imgByteArr = io.BytesIO()
+                bg_bundle_icon.save(imgByteArr, format='PNG')
+                imgByte = imgByteArr.getvalue()
+                print(f"Uploading - {b['displayName']}")
+                bundle_img_src = await bot.client.create_asset(imgByte)
+                print(f"{b['displayName']} - url: {bundle_img_src}")
+                b['displayIcon2']=bundle_img_src#修改url
+                ValBundleList.append(b) #插入
+
+        with open("./log/ValBundle.json",'w',encoding='utf-8') as fw1:
+            json.dump(ValBundleList,fw1,indent=2,sort_keys=True, ensure_ascii=False)
+        
+        print(f"[{GetTime()}] update_bundle_url finished!")
+        return 1
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] update_bundle_url - {result}"
+        print(err_str)
+        await msg.reply(err_str)
+        return 0
 
 # 手动更新商店物品和价格
-@bot.command(name='update_sp')
+@bot.command(name='update_spb')
 async def update_skin_price(msg:Message):
     logging(msg)
-    try:
-        if msg.author_id==master_id:
-            await update_skins()
-            await update_price()
-            await msg.reply(f"成功更新：商店皮肤、物品价格")
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_skin_price - {result}"
-        print(err_str)
-        msg.reply(err_str)
+    if msg.author_id==master_id:
+        if await update_skins(msg):
+            await msg.reply(f"成功更新：商店皮肤")
+        if await update_price(msg):
+            await msg.reply(f"成功更新：物品价格")
+        if await update_bundle_url(msg):
+            await msg.reply(f"成功更新：捆绑包")
 
 
 # 获取每日商店的命令
@@ -1053,39 +1107,37 @@ async def get_bundle(msg: Message,*arg):
     try:
         name=" ".join(arg) # 补全函数名
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        # weapenlist= await fetch_bundle_byname(name) 
         # 不能一来就在武器列表里面找，万一用户输入武器名，那就会把这个武器的所有皮肤都找出来，和该功能的需求不符合
-        bundlelist = await fetch_bundles_all()
-        for b in bundlelist['data']:
+        # bundlelist = await fetch_bundles_all()
+        for b in ValBundleList: #在本地查找
             if name in b['displayName']:
                 # 确认在捆绑包里面有这个名字之后，在查找武器（这里不能使用displayName，因为有些捆绑包两个版本的名字不一样）
                 weapenlist= await fetch_bundle_byname(name)
                 #print(weapenlist)
-                #if weapenlist!=[]: # 这里不需要判断，因为已经是在捆绑包里面找到过名字，不可能存在找不到武器的情况
                 cm = CardMessage()
                 c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
-                for b in bundlelist["data"]:
+                for b in ValBundleList:
                     if name in b['displayName']:
                         # 部分图片超大了，需要先create_asset进行上传
-                        bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content)) 
-                        imgByteArr = io.BytesIO()
-                        bg_bundle_icon.save(imgByteArr, format='PNG')
-                        imgByte = imgByteArr.getvalue()
-                        bundle_img_src = await bot.client.create_asset(imgByte)
+                        # bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content)) 
+                        # imgByteArr = io.BytesIO()
+                        # bg_bundle_icon.save(imgByteArr, format='PNG')
+                        # imgByte = imgByteArr.getvalue()
+                        # bundle_img_src = await bot.client.create_asset(imgByte)
                         # 将图片插入 卡片消息
-                        c.append(Module.Container(Element.Image(src=bundle_img_src)))
-
-                text="```\n"
-                for w in weapenlist:
-                    res_price=fetch_item_price_bylist(w['lv_uuid'])
-                    if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                        price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                        text+=f"{w['weapen']}   - vp {price}\n"
-                    else:# 找不到价格就直接插入武器名字
-                        text+=f"{w['weapen']}\n"
-                
-                text+="```\n" # print(text)
-                c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
+                        c.append(Module.Container(Element.Image(src=b['displayIcon2'])))
+                if weapenlist!=[]: # 遇到“再来一局”这种旧皮肤捆绑包，找不到武器名字
+                    text="```\n"
+                    for w in weapenlist:
+                        res_price=fetch_item_price_bylist(w['lv_uuid'])
+                        if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
+                            price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                            text+=f"{w['weapen']}   - vp {price}\n"
+                        else:# 找不到价格就直接插入武器名字
+                            text+=f"{w['weapen']}\n"
+                    
+                    text+="```\n" # print(text)
+                    c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
                 cm.append(c)
                 await msg.reply(cm)
                 return
