@@ -65,10 +65,23 @@ Recommended to use after the Valorant_Function is stable.
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
-for more guild and information,check out [wiki pages](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)
+![image](./screenshot/daily_shop.png)
 
+![image](./screenshot/points.png)
+
+<details>
+<summary>More Screenshot</summary>
+<img src="./screenshot/bundle.png" alt="bundle">
+<img src="./screenshot/lead.png" alt="leaderborad">
+<img src="./screenshot/uinfo.png" alt="uinfo">
+<img src="./screenshot/weather.png" alt="we">
+</details>
+For more guild and information, check out [wiki pages](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)
+
+---
 
 ## About
+
 Since I have not studied python, many codes in this repo are modified and used according to others' tutorials
 * KOOK_api base on [khl.py](https://github.com/TWT233/khl.py)
 * ValorantGameApi base on [frissyn/valorant.py](https://github.com/frissyn/valorant.py/)

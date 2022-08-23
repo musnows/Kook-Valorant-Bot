@@ -41,6 +41,7 @@
 | `/logout` | 退出riot账户登录 |
 | `/shop` | 获取每日商店的4个皮肤 |
 | `/point` | 获取用户剩余的vp和r点 |
+| `/uinfo` | 获取玩家卡面和称号 |
 
 关于商店查询的初步功能已经添加，但是其`稳定性/是否封号`未知，建议谨慎使用。
 
@@ -59,6 +60,17 @@
 
 你可以在[screenshot](./screenshot)文件夹中找到对应的截图示例
 
+![image](./screenshot/daily_shop.png)
+
+![image](./screenshot/points.png)
+
+<details>
+<summary>更多截图</summary>
+<img src="./screenshot/bundle.png" alt="bundle">
+<img src="./screenshot/lead.png" alt="leaderborad">
+<img src="./screenshot/uinfo.png" alt="uinfo">
+<img src="./screenshot/weather.png" alt="we">
+</details>
 ----
 
 ## 如何使用？
