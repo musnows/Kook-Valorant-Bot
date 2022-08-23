@@ -851,8 +851,7 @@ async def clear_authtoken():
         json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
     print(f"[{GetTime()}] task_clear_authtoken")
 
-# 定时任务，每3天获取一次皮肤（避免因为关闭bot导致时间不够，没法更新）
-@bot.task.add_interval(days=3)
+# 不再使用定时任务，而是封装成一个命令。
 async def update_skins():
     global ValSkinList
     skins=await fetch_skins_all()
@@ -860,18 +859,31 @@ async def update_skins():
     # 写入文件
     with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
         json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print(f"[{GetTime()}] task_update_skins")
+    print(f"[{GetTime()}] update_skins")
 
-# 定时任务，每3天获取一次商品价格
-@bot.task.add_interval(days=3)
-async def update_skins():
+#因为下方获取物品价格的操作需要authtoken，自动更新容易遇到token失效的情况
+async def update_price():
     global ValPriceList
     prices=await fetch_item_price_all(UserAuthDict['1961572535'])
     ValPriceList=prices
     # 写入文件
     with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
         json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print(f"[{GetTime()}] task_update_item_price")
+    print(f"[{GetTime()}] update_item_price")
+
+# 手动更新商店物品和价格
+@bot.command(name='update_sp')
+async def update_skin_price(msg:Message):
+    logging(msg)
+    try:
+        if msg.author_id==master_id:
+            await update_skins()
+            await update_price()
+            await msg.reply(f"成功更新：商店皮肤、物品价格")
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] update_skin_price - {result}"
+        print(err_str)
+        msg.reply(err_str)
 
 
 # 获取每日商店的命令
