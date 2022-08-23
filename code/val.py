@@ -14,12 +14,6 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
 
 bot = Bot(token=config['token'])
 
-# 读取valorant api的key
-with open('./config/valorant.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
-
-KEY = config['token']
-
 ##########################################################################################
 ##########################################################################################
 
@@ -30,7 +24,10 @@ async def kda123(msg: Message):
 # 查询皮肤！只支持English皮肤名
 async def skin123(msg: Message,name:str):
     try:
-        client = valorant.Client(KEY, locale=None)
+        # 读取valorant api的key
+        with open('./config/valorant.json', 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        client = valorant.Client(config['token'], locale=None)
         skins = client.get_skins()
         #name = input("Search a Valorant Skin Collection: ")
         results = skins.find_all(name=lambda x: name.lower() in x.lower())
@@ -48,7 +45,9 @@ async def skin123(msg: Message,name:str):
 # 获取排行榜上的玩家，默认获取前15位胜场超过10的玩家
 async def lead123(msg: Message,sz:int,num:int):
     try:
-        client = valorant.Client(KEY, locale=None,region='ap',route='asia')
+        with open('./config/valorant.json', 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        client = valorant.Client(config['token'], locale=None,region='ap',route='asia')
         lb = client.get_leaderboard(size=sz)
         players = lb.players.get_all(numberOfWins=num)# 筛选出胜场超过num的
         cm = CardMessage()
