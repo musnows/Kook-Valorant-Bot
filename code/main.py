@@ -497,7 +497,7 @@ async def uncle(msg: Message):
 
 from status import status_active_game,status_active_music,status_delete,server_status
 from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_player_title,fetch_player_card
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_player_title,fetch_player_card,fetch_contract_uuid
 
 # 开始打游戏
 @bot.command()
@@ -1068,7 +1068,7 @@ async def get_user_vp(msg: Message,*arg):
 async def get_user_card(msg: Message,*arg):
     logging(msg)
     if arg !=():
-        await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
+        await msg.reply(f"`/uinfo`命令不需要参数。您是否想`/login`？")
         return
 
     try:
@@ -1086,8 +1086,23 @@ async def get_user_card(msg: Message,*arg):
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c)
-            player_mision = await fetch_contract(userdict)
-            print(player_mision)
+            # 获取玩家当前任务和通行证情况
+            player_mision = await fetch_player_contract(userdict) #print(player_mision)
+            interval_con = len(player_mision['Contracts'])
+            battle_pass = player_mision['Contracts'][interval_con-1]
+            contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
+            cur_chapter=player_mision['ProgressionLevelReached']//5 #计算出当前的章节
+            remain_lv = player_mision['ProgressionLevelReached']%5 #计算出在当前章节的位置
+            print(cur_chapter,' - ',remain_lv)
+            if remain_lv:#说明还有余度
+                cur_chapter+=1 #加1
+            else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
+                remain_lv = 5
+            print(cur_chapter,' - ',remain_lv,'\n')
+            reward_list = contract['data']['content']['chapters'][cur_chapter]
+            reward = reward_list[remain_lv]#当前所处的等级和奖励
+            print(reward_list,'\n')
+            print(reward)
             await msg.reply(cm)
 
         if flag_au != 1:

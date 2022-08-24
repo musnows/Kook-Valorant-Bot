@@ -322,7 +322,7 @@ async def fetch_player_loadout(u):
 
 # 获取合约（任务）进度
 # client version from https://valorant-api.com/v1/version
-async def fetch_contract(u):
+async def fetch_player_contract(u):
     #url="https://pd.ap.a.pvp.net/contract-definitions/v2/definitions/story"
     url=f"https://pd.ap.a.pvp.net/contracts/v1/contracts/"+u['auth_user_id']
     headers = {
@@ -337,6 +337,17 @@ async def fetch_contract(u):
             res = json.loads(await response.text())
 
     return res
+
+# 获取玩家当前通行证情况，uuid
+async def fetch_contract_uuid(id):
+    url="https://valorant-api.com/v1/contracts/"+id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_con = json.loads(await response.text())
+
+    return res_con
 
 # 用名字查询捆绑包包含什么枪
 async def fetch_bundle_byname(name):
