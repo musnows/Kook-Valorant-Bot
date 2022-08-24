@@ -189,10 +189,11 @@ Msg_ID = '6fec1aeb-9d5c-4642-aa95-862e3db8aa61'
 @bot.command()
 async def Color_Set_GM(msg: Message,Card_Msg_id:str):
     logging(msg)
-    global Guild_ID,Msg_ID #需要声明全局变量
-    Guild_ID = msg.ctx.guild.id
-    Msg_ID = Card_Msg_id
-    await msg.reply(f'颜色监听服务器更新为 {Guild_ID}\n监听消息更新为 {Msg_ID}\n')
+    if msg.author_id == master_id:
+        global Guild_ID,Msg_ID #需要声明全局变量
+        Guild_ID = msg.ctx.guild.id
+        Msg_ID = Card_Msg_id
+        await msg.reply(f'颜色监听服务器更新为 {Guild_ID}\n监听消息更新为 {Msg_ID}\n')
 
 
 # 判断消息的emoji回应，并给予不同角色
@@ -230,6 +231,9 @@ async def update_reminder(b: Bot, event: Event):
 @bot.command()
 async def Color_Set(msg: Message):
     logging(msg)
+    if msg.author_id != master_id:
+        await msg.reply("您没有权限执行这条命令！")
+        return 
     cm = CardMessage()
     c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
     c1.append(Module.Divider())
@@ -492,7 +496,7 @@ async def uncle(msg: Message):
 
 from status import status_active_game,status_active_music,status_delete,server_status
 from val import fetch_spary_uuid, kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_player_title,fetch_player_card,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_title_uuid,fetch_playercard_uuid,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid
 
 # 开始打游戏
 @bot.command()
@@ -1079,7 +1083,7 @@ async def get_reward(reward):
     reward_type = reward['reward']['type']
     print("get_reward() ",reward_type)
     if reward_type == 'PlayerCard':#玩家卡面
-        res = await fetch_player_card(reward['reward']['uuid'])
+        res = await fetch_playercard_uuid(reward['reward']['uuid'])
         return res
     elif reward_type == 'Currency':#代币
         res ="(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k]" # 拳头通行证返回值里面没有数量，我谢谢宁
@@ -1111,8 +1115,8 @@ async def get_user_card(msg: Message,*arg):
             flag_au = 1
             userdict=UserAuthDict[msg.author_id]
             resp = await fetch_player_loadout(userdict)#获取玩家装备栏
-            player_card=await fetch_player_card(resp['Identity']['PlayerCardID'])#玩家卡面id
-            player_title=await fetch_player_title(resp['Identity']['PlayerTitleID'])#玩家称号id
+            player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
+            player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
             cm = CardMessage()
             c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))#将图片插入进去

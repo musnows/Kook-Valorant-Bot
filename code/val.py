@@ -366,7 +366,7 @@ async def fetch_bundle_byname(name):
 
 
 # 获取玩家卡面，uuid
-async def fetch_player_card(id):
+async def fetch_playercard_uuid(id):
     url="https://valorant-api.com/v1/playercards/"+id
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
@@ -377,7 +377,7 @@ async def fetch_player_card(id):
     return res_card
 
 # 获取玩家称号，uuid
-async def fetch_player_title(id):
+async def fetch_title_uuid(id):
     url="https://valorant-api.com/v1/playertitles/"+id
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
