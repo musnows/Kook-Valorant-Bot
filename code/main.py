@@ -771,9 +771,11 @@ def fetch_item_price_bylist(item_id):
 
 #从list中获取价格，不管其他的
 def fetch_skin_bylist(item_id):
+    res={}#下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
     for item in ValSkinList['data']:#遍历查找指定uuid
         if item_id == item['levels'][0]['uuid']:
-            return item
+            res['data']=item#所以要手动创建一个带data的dict作为返回值
+            return res
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -902,6 +904,7 @@ async def update_bundle_url(msg:Message):
         global ValBundleList
         resp = await fetch_bundles_all() #从官方获取最新list
         if len(resp['data']) == len(ValBundleList): #长度相同代表没有更新
+            print(f"[{GetTime()}] len is the same, doesn't need update!")
             await msg.reply("len相同，无需更新")
             return
 
@@ -1142,9 +1145,8 @@ async def get_user_card(msg: Message,*arg):
 
             c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
             reward_res = await get_reward(reward)
-            #print(reward_res ,'\n')
             reward_nx_res = await get_reward(reward_next)
-            #print(reward_nx_res ,'\n')
+            #print(reward_res,'\n,reward_nx_res ,'\n')
             cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
             cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
             cur+= f"奖励类型：{reward['reward']['type']}\n"
@@ -1152,7 +1154,7 @@ async def get_user_card(msg: Message,*arg):
             c1.append(Module.Section(cur))
             if  'displayIcon' in reward_res['data']:#有图片才插入
                 c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))#将图片插入进去
-            next = f"下一奖励：{reward_nx_res['data']['displayName']}\n"
+            next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
             c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
             cm.append(c1)
             await msg.reply(cm)
