@@ -383,6 +383,29 @@ async def fetch_player_title(id):
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers,params=params) as response:
-            res_ptitle = json.loads(await response.text())
+            res_title = json.loads(await response.text())
 
-    return res_ptitle
+    return res_title
+
+# 获取喷漆，uuid
+async def fetch_spary_uuid(id):
+    url="https://valorant-api.com/v1/sprays/"+id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_sp = json.loads(await response.text())
+
+    return res_sp
+    
+
+# 获取吊坠，uuid
+async def fetch_buddies_uuid(id):
+    url="https://valorant-api.com/v1/buddies/levels/"+id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_sp = json.loads(await response.text())
+
+    return res_sp

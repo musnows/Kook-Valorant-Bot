@@ -496,8 +496,8 @@ async def uncle(msg: Message):
 ###########################################################################################
 
 from status import status_active_game,status_active_music,status_delete,server_status
-from val import kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_player_title,fetch_player_card,fetch_contract_uuid
+from val import fetch_spary_uuid, kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_player_title,fetch_player_card,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid
 
 # 开始打游戏
 @bot.command()
@@ -769,6 +769,11 @@ def fetch_item_price_bylist(item_id):
         if item_id == item['OfferID']:
             return item
 
+#从list中获取价格，不管其他的
+def fetch_skin_bylist(item_id):
+    for item in ValSkinList['data']:#遍历查找指定uuid
+        if item_id == item['levels'][0]['uuid']:
+            return item
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -1063,6 +1068,28 @@ async def get_user_vp(msg: Message,*arg):
         cm2.append(c)
         await msg.reply(cm2)
 
+# 获取不同奖励的信息
+async def get_reward(reward):
+    reward_type = reward['reward']['type']
+    print("get_reward() ",reward_type)
+    if reward_type == 'PlayerCard':#玩家卡面
+        res = await fetch_player_card(reward['reward']['uuid'])
+        return res
+    elif reward_type == 'Currency':#代币
+        res ="(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k]" # 拳头通行证返回值里面没有数量，我谢谢宁
+        return res
+    elif reward_type == 'EquippableSkinLevel':#皮肤
+        res = fetch_skin_bylist(reward['reward']['uuid'])
+        return res
+    elif reward_type == 'Spray':#喷漆
+        res = await fetch_spary_uuid(reward['reward']['uuid'])
+        return res
+    elif reward_type ==  'EquippableCharmLevel':#吊坠
+        res = await fetch_buddies_uuid(reward['reward']['uuid'])
+        return res
+    
+    return None
+
 # 获取玩家卡面
 @bot.command(name='uinfo')
 async def get_user_card(msg: Message,*arg):
@@ -1086,34 +1113,62 @@ async def get_user_card(msg: Message,*arg):
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c)
+
             # 获取玩家当前任务和通行证情况
             player_mision = await fetch_player_contract(userdict) #print(player_mision)
             interval_con = len(player_mision['Contracts'])
             battle_pass = player_mision['Contracts'][interval_con-1]
+            #print(battle_pass,'\n')
             contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
-            cur_chapter=player_mision['ProgressionLevelReached']//5 #计算出当前的章节
-            remain_lv = player_mision['ProgressionLevelReached']%5 #计算出在当前章节的位置
-            print(cur_chapter,' - ',remain_lv)
+            #print(contract,'\n')
+            cur_chapter= battle_pass['ProgressionLevelReached']//5 #计算出当前的章节
+            remain_lv =  battle_pass['ProgressionLevelReached']%5 #计算出在当前章节的位置
+            #print(cur_chapter,' - ',remain_lv)
             if remain_lv:#说明还有余度
                 cur_chapter+=1 #加1
             else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
                 remain_lv = 5
-            print(cur_chapter,' - ',remain_lv,'\n')
-            reward_list = contract['data']['content']['chapters'][cur_chapter]
-            reward = reward_list[remain_lv]#当前所处的等级和奖励
-            print(reward_list,'\n')
-            print(reward)
+
+            reward_list = contract['data']['content']['chapters'][cur_chapter-1]#当前等级所属章节
+            #print(reward_list,'\n')
+            reward = reward_list['levels'][remain_lv-1]#当前所处的等级和奖励
+            #print(reward)
+            reward_next = ""#下一个等级的奖励
+            if remain_lv < 5: 
+                reward_next = reward_list['levels'][remain_lv]#下一级
+            elif remain_lv >= 5 and cur_chapter<11:#避免越界
+                reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]#下一章节的第一个
+            #print(reward_next,'\n')
+
+            c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
+            reward_res = await get_reward(reward)
+            #print(reward_res ,'\n')
+            reward_nx_res = await get_reward(reward_next)
+            #print(reward_nx_res ,'\n')
+            cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
+            cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
+            cur+= f"奖励类型：{reward['reward']['type']}\n"
+            cur+= f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
+            c1.append(Module.Section(cur))
+            if  'displayIcon' in reward_res['data']:#有图片才插入
+                c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))#将图片插入进去
+            next = f"下一奖励：{reward_nx_res['data']['displayName']}\n"
+            c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
+            cm.append(c1)
             await msg.reply(cm)
+            print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         if flag_au != 1:
             await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
             return
     
     except Exception as result:
+        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
         c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1163,20 +1218,17 @@ async def get_bundle(msg: Message,*arg):
                     c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
                 cm.append(c)
                 await msg.reply(cm)
+                print(f"[{GetTime()}] Au:{msg.author_id} get_bundle reply successful!")
                 return
         
         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
 
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        err_str=f"ERR! [{GetTime()}] get_bundle - {result}"
+        print(err_str)
+        await msg.reply(err_str)
+        ch = await bot.fetch_public_channel(Debug_ch)
+        await bot.send(ch,err_str)
 
 
 
