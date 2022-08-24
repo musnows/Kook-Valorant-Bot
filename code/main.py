@@ -452,15 +452,10 @@ async def Weather(msg: Message,city:str="err"):
     try:
         await weather(msg,city)
     except Exception as result:
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        err_str=f"ERR! [{GetTime()}] check_server_user_status: {result}"
+        print(err_str)
+        await msg.reply(err_str)
+
 
 # 设置段位角色（暂时没有启用）
 @bot.command()
@@ -566,10 +561,12 @@ async def saveid(msg: Message,*args):
         game_id = " ".join(args)#避免用户需要输入双引号
         await saveid123(msg, game_id)
     except Exception as result:
+        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        print(err_str)
         cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Context(f"提示:出现json错误是因为消息无法成功创建\n"))
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
         c.append(Module.Divider())
-        c.append(Module.Section(f"【报错】  {result}\n\n"))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -814,12 +811,14 @@ async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
             json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
+        print(f"Login - Au:{msg.author_id} - {UserAuthDict[msg.author_id]['GameName']}#{UserAuthDict[msg.author_id]['TagLine']}")
     except Exception as result:
+        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
         c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -836,7 +835,7 @@ async def logout_authtoken(msg:Message,*arg):
         await msg.reply(f"你还没有登陆呢！")
         return
     #如果id存在， 删除id
-    print(f"Logout: {msg.author_id} - {UserAuthDict[msg.author_id]['GameName']}#{UserAuthDict[msg.author_id]['TagLine']}")
+    print(f"Logout - Au:{msg.author_id} - {UserAuthDict[msg.author_id]['GameName']}#{UserAuthDict[msg.author_id]['TagLine']}")
     del UserAuthDict[msg.author_id]
     await msg.reply(f"已成功取消登录")
 
@@ -1020,10 +1019,12 @@ async def get_daily_shop(msg: Message,*arg):
             return
 
     except Exception as result:
+        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
         c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1061,10 +1062,12 @@ async def get_user_vp(msg: Message,*arg):
             return
     
     except Exception as result:
+        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
         c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"【报错】  {result}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
