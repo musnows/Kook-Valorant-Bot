@@ -1083,20 +1083,23 @@ async def get_reward(reward):
     reward_type = reward['reward']['type']
     print("get_reward() ",reward_type)
     if reward_type == 'PlayerCard':#玩家卡面
-        res = await fetch_playercard_uuid(reward['reward']['uuid'])
-        return res
+        return await fetch_playercard_uuid(reward['reward']['uuid'])
     elif reward_type == 'Currency':#代币
-        res ="(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k]" # 拳头通行证返回值里面没有数量，我谢谢宁
-        return res
+        # 拳头通行证返回值里面没有数量，我谢谢宁
+        return {'data':{"assetPath": "ShooterGame/Content/Currencies/Currency_UpgradeToken_DataAsset",
+                        "displayIcon": "https://media.valorant-api.com/currencies/e59aa87c-4cbf-517a-5983-6e81511be9b7/displayicon.png",
+                        "displayName": "輻能點數",
+                        "displayNameSingular": "輻能點數",
+                        "largeIcon": "https://media.valorant-api.com/currencies/e59aa87c-4cbf-517a-5983-6e81511be9b7/largeicon.png",
+                        "uuid": "e59aa87c-4cbf-517a-5983-6e81511be9b7"}}
     elif reward_type == 'EquippableSkinLevel':#皮肤
-        res = fetch_skin_bylist(reward['reward']['uuid'])
-        return res
+        return fetch_skin_bylist(reward['reward']['uuid'])
     elif reward_type == 'Spray':#喷漆
-        res = await fetch_spary_uuid(reward['reward']['uuid'])
-        return res
+        return await fetch_spary_uuid(reward['reward']['uuid'])
     elif reward_type ==  'EquippableCharmLevel':#吊坠
-        res = await fetch_buddies_uuid(reward['reward']['uuid'])
-        return res
+        return await fetch_buddies_uuid(reward['reward']['uuid'])
+    elif reward_type ==  'Title':#玩家头衔
+        return await fetch_title_uuid(reward['reward']['uuid'])
     
     return None
 
