@@ -102,7 +102,7 @@ async def Vhelp(msg: Message,*arg):
         help_1+="「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1+="「/shop」 查询您的每日商店\n"
         help_1+="「/point」查询您剩余的vp和r点\n"
-        help_1+="「/uinfo」查询您当前装备的卡面和称号\n"
+        help_1+="「/uinfo」查询您当前装备的卡面/称号，通行证信息\n"
         help_1+="「/logout」取消登录\n"
         c3.append(Module.Section(Element.Text(help_1,Types.Text.KMD)))
         c3.append(Module.Divider())
@@ -753,7 +753,7 @@ def bg_comp(bg, img, x, y):
 
 # 预加载用户token
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
-    UserAuthDict = json.load(frau)
+    UserTokenDict = json.load(frau)
 # 所有皮肤
 with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
     ValSkinList = json.load(frsk)
@@ -763,6 +763,9 @@ with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
 # 所有捆绑包的图片
 with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
     ValBundleList = json.load(frbu)
+
+# 用来存放auth对象
+UserAuthDict={}
 
 #从list中获取价格，不管其他的
 def fetch_item_price_bylist(item_id):
@@ -778,46 +781,51 @@ def fetch_skin_bylist(item_id):
             res['data']=item#所以要手动创建一个带data的dict作为返回值
             return res
 
+#查询当前有多少用户登录了
+@bot.command(name="ckau")
+async def check_UserAuthDict_len(msg:Message):
+    logging(msg)
+    sz=len(UserAuthDict)
+    res=f"UserAuthDict_len: `{sz}`"
+    print(res)
+    await msg.reply(res)
+
+
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*arg):
+async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
     if passwd == 'err' or user == 'err':
         await msg.reply(f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`")
         return
-
     elif arg!=():
         await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
         return
 
     try:
-        global UserAuthDict
-
-        if msg.author_id in UserAuthDict: #用in判断dict种是否存在这个键
-            # 如果用户id已有，则不进行操作
+        global UserTokenDict,UserAuthDict
+        if msg.author_id in UserAuthDict: #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
             await msg.reply(f'您今日已经登陆过，无需重复操作\n如需重新登录，请先使用`/logout`命令退出当前登录')
             return
 
         # 不在其中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
         res_gameid=await fetch_user_gameID(res_auth) # 获取用户玩家id
-        UserAuthDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id,'GameName':res_gameid[0]['GameName'],'TagLine':res_gameid[0]['TagLine']}
+        UserTokenDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id,'GameName':res_gameid[0]['GameName'],'TagLine':res_gameid[0]['TagLine']}
+        UserAuthDict[msg.author_id]=res_auth
         #dict[键] = 值
         cm=CardMessage()
-        c=Card(Module.Header("登陆成功！"),
-                Module.Divider(),
-                Module.Section(Element.Text("在明日的`03:00`之前，您可以使用和valorant对接的功能\n在`03:00`之后，您需要重新登录\n",Types.Text.KMD)),
-                Module.Divider(),
-                Module.Section("登陆游戏、多次使用查询命令等操作会使token失效\n您需要logout之后再login以重新登录您的账户")
-                )
+        c=Card(Module.Header(f"登陆成功！ {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"),
+            Module.Divider(),
+            Module.Section(Element.Text("当前token失效时间随机，登陆游戏、多次使用查询命令等操作都可能会使token失效\n好消息是，阿狸已经上线了`自动重新登陆`机制。若出现自动重新登录失败（会有报错），您需要logout之后再login以重新登录您的账户",Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
-            json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        print(f"Login - Au:{msg.author_id} - {UserAuthDict[msg.author_id]['GameName']}#{UserAuthDict[msg.author_id]['TagLine']}")
+            json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        err_str=f"ERR! [{GetTime()}] login - {result}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
@@ -829,39 +837,64 @@ async def login_authtoekn(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         cm2.append(c)
         await msg.reply(cm2)
 
+#重新登录（kook用户id）
+async def login_re_auth(kook_user_id:str):
+    now_time=GetTime()
+    print(f"[{now_time}] Au:{kook_user_id} - auth_token failure,trying reauthorize()")
+    global UserTokenDict,UserAuthDict
+    auth = UserAuthDict[kook_user_id]
+    # Reauth using cookies. Returns a bool indicating whether the reauth attempt was successful.
+    ret = await auth.reauthorize()#用cookie重新登录
+    if ret:#会返回一个bool是否成功,成功了重新赋值
+        UserTokenDict[kook_user_id]['auth_user_id']:auth.user_id
+        UserTokenDict[kook_user_id]['access_token']:auth.access_token
+        UserTokenDict[kook_user_id]['entitlements_token']:auth.entitlements_token
+        UserAuthDict[kook_user_id]=auth
+        print(f"[{now_time}] Au:{kook_user_id} - reauthorize() Successful!")
+    else:
+        print(f"ERR![{now_time}] Au:{kook_user_id} - reauthorize() Failed! T-T")#失败打印
+
+    return ret#正好返回一个bool
+
+#判断是否需要重新获取token
+async def check_re_auth(msg:Message,def_name:str,fun_fetch,resp):
+    """
+        Check if need reauthorize: 
+    """
+    if 'errorCode' in resp:
+        await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
+        ret = await login_re_auth(msg.author_id)
+        if ret==False:#没有正常返回
+            await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
+            return ret #这里可以直接借用返回值进行操作,返回假
+        else:
+            resp = await fun_fetch(UserTokenDict[msg.author_id])#直接调用传过来的函数
+            return resp #代表重新获取token后成功调用函数
+    else:
+        return resp #返回原本的内容
+
 # 退出登录
 @bot.command(name='logout')
 async def logout_authtoken(msg:Message,*arg):
     logging(msg)
-
-    global UserAuthDict
+    global UserTokenDict,UserAuthDict
     if msg.author_id not in UserAuthDict: #使用not in判断是否不存在
         await msg.reply(f"你还没有登陆呢！")
         return
     #如果id存在， 删除id
-    print(f"Logout - Au:{msg.author_id} - {UserAuthDict[msg.author_id]['GameName']}#{UserAuthDict[msg.author_id]['TagLine']}")
+    print(f"Logout - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
+    del UserTokenDict[msg.author_id]
     del UserAuthDict[msg.author_id]
     await msg.reply(f"已成功取消登录")
 
     #最后重新执行写入
     with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
-        json.dump(UserAuthDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
+        json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
     fw1.close()
 
 
 
-
-# 定时任务，每天凌晨3点清空token保存
-@bot.task.add_cron(hour=3, minute=0,timezone="Asia/Shanghai")
-async def clear_authtoken():
-    global UserAuthDict
-    UserAuthDict= {}  #置空
-    # 写入文件
-    with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
-        json.dump(UserAuthDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print(f"[{GetTime()}] task_clear_authtoken")
-
-# 不再使用定时任务，而是封装成一个命令。
+# 不再使用定时任务，而是把所有更新封装成一个命令。
 async def update_skins(msg:Message):
     try:
         global ValSkinList
@@ -882,13 +915,10 @@ async def update_skins(msg:Message):
 async def update_price(msg:Message):
     try:
         global ValPriceList
-        prices=await fetch_item_price_all(UserAuthDict['1961572535'])
-        if "errorCode" in prices: #一般遇到这个情况就是token失效了
-            err_str=f"ERR! [{GetTime()}] update_price - {prices}"
-            print(err_str)
-            await msg.reply(err_str)
-            return 0
-        
+        prices=await fetch_item_price_all(UserTokenDict['1961572535'])
+        prices=await check_re_auth(msg,"所有物品价格",fetch_item_price_all,resp)
+        if prices==False:return
+
         ValPriceList=prices
         # 写入文件
         with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
@@ -963,15 +993,14 @@ async def get_daily_shop(msg: Message,*arg):
 
     try:
         flag_au = 0
-        if msg.author_id in UserAuthDict:
+        if msg.author_id in UserTokenDict:
             # 如果用户id已有，则不需要再次获取token
             flag_au = 1
-            userdict=UserAuthDict[msg.author_id]
+            userdict=UserTokenDict[msg.author_id]
             resp = await fetch_daily_shop(userdict)
-            if "SkinsPanelLayout" not in resp:#这个键值不存在代表没有正常返回结果
-                await msg.reply(f"访问商店失败！请尝试重新登录\n```\n{resp}\n```")
-                return
-            
+            resp=await check_re_auth(msg,"每日商店",fetch_daily_shop,resp)# 判断是否需要重新操作
+            if resp==False:return #如果为假说明重新登录失败
+
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
@@ -1023,11 +1052,10 @@ async def get_daily_shop(msg: Message,*arg):
             return
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        err_str=f"ERR! [{GetTime()}] shop - {result}"
         print(err_str)
         cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
@@ -1046,11 +1074,14 @@ async def get_user_vp(msg: Message,*arg):
 
     try:
         flag_au = 0
-        if msg.author_id in UserAuthDict:
+        if msg.author_id in UserTokenDict:
             # 如果用户id已有，则不需要再次获取token
             flag_au = 1
-            userdict=UserAuthDict[msg.author_id]
+            userdict=UserTokenDict[msg.author_id]
             resp = await fetch_valorant_point(userdict)
+            resp = await check_re_auth(msg,"VP/R点",fetch_valorant_point,resp)#重新登录
+            if resp==False:return #如果为假说明重新登录失败
+
             vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
             rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
 
@@ -1062,7 +1093,7 @@ async def get_user_vp(msg: Message,*arg):
             await msg.reply(cm)
 
         if flag_au != 1:
-            await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
             return
     
     except Exception as result:
@@ -1113,11 +1144,14 @@ async def get_user_card(msg: Message,*arg):
 
     try:
         flag_au = 0
-        if msg.author_id in UserAuthDict:
+        if msg.author_id in UserTokenDict:
             # 如果用户id已有，则不需要再次获取token
             flag_au = 1
-            userdict=UserAuthDict[msg.author_id]
+            userdict=UserTokenDict[msg.author_id]
             resp = await fetch_player_loadout(userdict)#获取玩家装备栏
+            resp = await check_re_auth(msg,"玩家装备",fetch_valorant_point,resp)
+            if resp==False:return #如果为假说明重新登录失败
+            
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
             cm = CardMessage()
@@ -1128,35 +1162,38 @@ async def get_user_card(msg: Message,*arg):
             cm.append(c)
 
             # 获取玩家当前任务和通行证情况
-            player_mision = await fetch_player_contract(userdict) #print(player_mision)
+            player_mision = await fetch_player_contract(userdict)
+            ckau=await check_re_auth(msg,"玩家通行证",fetch_valorant_point,resp)
+
+            print(player_mision)
             interval_con = len(player_mision['Contracts'])
             battle_pass = player_mision['Contracts'][interval_con-1]
-            #print(battle_pass,'\n')
+            print(battle_pass,'\n')
             contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
-            #print(contract,'\n')
+            print(contract,'\n')
             cur_chapter= battle_pass['ProgressionLevelReached']//5 #计算出当前的章节
             remain_lv =  battle_pass['ProgressionLevelReached']%5 #计算出在当前章节的位置
-            #print(cur_chapter,' - ',remain_lv)
+            print(cur_chapter,' - ',remain_lv)
             if remain_lv:#说明还有余度
                 cur_chapter+=1 #加1
             else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
                 remain_lv = 5
 
             reward_list = contract['data']['content']['chapters'][cur_chapter-1]#当前等级所属章节
-            #print(reward_list,'\n')
+            print(reward_list,'\n')
             reward = reward_list['levels'][remain_lv-1]#当前所处的等级和奖励
-            #print(reward)
+            print(reward)
             reward_next = ""#下一个等级的奖励
             if remain_lv < 5: 
                 reward_next = reward_list['levels'][remain_lv]#下一级
             elif remain_lv >= 5 and cur_chapter<11:#避免越界
                 reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]#下一章节的第一个
-            #print(reward_next,'\n')
+            print(reward_next,'\n')
 
             c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
             reward_res = await get_reward(reward)
             reward_nx_res = await get_reward(reward_next)
-            #print(reward_res,'\n,reward_nx_res ,'\n')
+            print(reward_res,'\n',reward_nx_res ,'\n')
             cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
             cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
             cur+= f"奖励类型：{reward['reward']['type']}\n"
@@ -1171,15 +1208,14 @@ async def get_user_card(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         if flag_au != 1:
-            await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
             return
     
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] uinfo - {result}"
         print(err_str)
         cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
@@ -1187,7 +1223,8 @@ async def get_user_card(msg: Message,*arg):
         cm2.append(c)
         await msg.reply(cm2)
 
-# 获取捆绑包信息
+
+# 获取捆绑包信息(无需登录)
 @bot.command(name='bundle')
 async def get_bundle(msg: Message,*arg):
     logging(msg)
@@ -1207,14 +1244,7 @@ async def get_bundle(msg: Message,*arg):
                 cm = CardMessage()
                 c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))
                 for b in ValBundleList:
-                    if name in b['displayName']:
-                        # 部分图片超大了，需要先create_asset进行上传
-                        # bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content)) 
-                        # imgByteArr = io.BytesIO()
-                        # bg_bundle_icon.save(imgByteArr, format='PNG')
-                        # imgByte = imgByteArr.getvalue()
-                        # bundle_img_src = await bot.client.create_asset(imgByte)
-                        # 将图片插入 卡片消息
+                    if name in b['displayName']:# 将图片插入 卡片消息
                         c.append(Module.Container(Element.Image(src=b['displayIcon2'])))
                 if weapenlist!=[]: # 遇到“再来一局”这种旧皮肤捆绑包，找不到武器名字
                     text="```\n"
@@ -1234,7 +1264,7 @@ async def get_bundle(msg: Message,*arg):
                 return
         
         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
-
+        print(f"[{GetTime()}] Au:{msg.author_id} get_bundle failed! Can't find {name}")
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] get_bundle - {result}"
         print(err_str)
