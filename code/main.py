@@ -652,8 +652,8 @@ stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
 stardard_icon_resize_ratio = 0.59 * standard_length / 1000  #枪的默认缩放
 standard_icon_top_blank = math.floor(180 * standard_length /
                                      1000)  # 枪距离图片顶部的像素
-standard_text_position = (math.floor(128 * standard_length / 1000),
-                          math.floor(317 * standard_length / 1000))  #默认文字位置
+standard_text_position = (math.floor(125 * standard_length / 1000),
+                          math.floor(320 * standard_length / 1000))  #默认文字位置
 standard_price_position = (math.floor(280 * standard_length / 1000),
                            math.floor(120 * standard_length / 1000))  #皮肤价格文字位置
 standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  #等级icon图标的缩放
