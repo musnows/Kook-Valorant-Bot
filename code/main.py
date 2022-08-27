@@ -818,9 +818,11 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
 
         # 不在其中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
-        res_gameid=await fetch_user_gameID(res_auth) # 获取用户玩家id
-        UserTokenDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id,'GameName':res_gameid[0]['GameName'],'TagLine':res_gameid[0]['TagLine']}
-        UserAuthDict[msg.author_id]=res_auth
+        UserTokenDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id}#先创建基本信息
+        res_gameid=await fetch_user_gameID(UserTokenDict[msg.author_id]) # 获取用户玩家id
+        UserTokenDict[msg.author_id]['GameName']=res_gameid[0]['GameName']
+        UserTokenDict[msg.author_id]['TagLine']=res_gameid[0]['TagLine']
+        UserAuthDict[msg.author_id]=res_auth#将对象插入
         #dict[键] = 值
         cm=CardMessage()
         c=Card(Module.Header(f"登陆成功！ {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"),
@@ -872,7 +874,7 @@ async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
     """
         Check if need reauthorize: using fetch_user_gameID() for test
     """
-    resp = await fetch_user_gameID(UserAuthDict[msg.author_id])#z直接尝试调用获取玩家id的操作
+    resp = await fetch_user_gameID(UserTokenDict[msg.author_id])#z直接尝试调用获取玩家id的操作
     print(resp)#返回值是一个list
     if not isinstance(resp,list):#获取玩家id失败
         await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")

@@ -196,20 +196,18 @@ async def authflow(user: str, passwd: str):
     await auth.authorize(*CREDS)
     # Reauth using cookies. Returns a bool indicating whether the reauth attempt was successful.
     # await auth.reauthorize()
-    # print(f"Access Token Type: {auth.token_type}\n")
-    # print(f"Access Token: {auth.access_token}\n")
-    # print(f"Entitlements Token: {auth.entitlements_token}\n")
-    # print(f"User ID: {auth.user_id}")
+    # print(f"Access Token Type: {auth.token_type}\n",f"Access Token: {auth.access_token}\n")
+    # print(f"Entitlements Token: {auth.entitlements_token}\n",f"User ID: {auth.user_id}")
     return auth
 
-#获取用户游戏id
+#获取用户游戏id(从使用对象修改成使用文件中的内容)
 async def fetch_user_gameID(auth):
-    url = "https://pd.AP.a.pvp.net/name-service/v2/players"
-    payload = json.dumps([auth.user_id])
+    url = "https://pd.ap.a.pvp.net/name-service/v2/players"
+    payload = json.dumps([auth['auth_user_id']])
     headers = {
         "Content-Type": "application/json",
-        "X-Riot-Entitlements-JWT": auth.entitlements_token,
-        "Authorization": "Bearer " + auth.access_token
+        "X-Riot-Entitlements-JWT": auth['entitlements_token'],
+        "Authorization": "Bearer " + auth['access_token']
     }
     async with aiohttp.ClientSession() as session:
         async with session.put(url, headers=headers,data=payload) as response:
