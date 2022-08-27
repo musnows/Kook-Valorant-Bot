@@ -652,7 +652,7 @@ stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
 stardard_icon_resize_ratio = 0.59 * standard_length / 1000  #枪的默认缩放
 standard_icon_top_blank = math.floor(180 * standard_length /
                                      1000)  # 枪距离图片顶部的像素
-standard_text_position = (math.floor(125 * standard_length / 1000),
+standard_text_position = (math.floor(122 * standard_length / 1000),
                           math.floor(320 * standard_length / 1000))  #默认文字位置
 standard_price_position = (math.floor(280 * standard_length / 1000),
                            math.floor(120 * standard_length / 1000))  #皮肤价格文字位置
@@ -767,13 +767,13 @@ with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
 # 用来存放auth对象
 UserAuthDict={}
 
-#从list中获取价格，不管其他的
+#从list中获取价格
 def fetch_item_price_bylist(item_id):
     for item in ValPriceList['Offers']:#遍历查找指定uuid
         if item_id == item['OfferID']:
             return item
 
-#从list中获取价格，不管其他的
+#从list中获取皮肤
 def fetch_skin_bylist(item_id):
     res={}#下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
     for item in ValSkinList['data']:#遍历查找指定uuid
@@ -788,6 +788,11 @@ async def check_UserAuthDict_len(msg:Message):
     sz=len(UserAuthDict)
     res=f"UserAuthDict_len: `{sz}`"
     print(res)
+    cm = CardMessage()
+    c = Card(Module.Header(f"UserAuthDict_len:  `{sz}`"),
+            Module.Divider(),
+            Module.Container(Element.Text(UserAuthDict,Types.Text.KMD)))
+    cm.append(c)
     await msg.reply(res)
 
 
@@ -843,13 +848,16 @@ async def login_re_auth(kook_user_id:str):
     print(f"[{now_time}] Au:{kook_user_id} - auth_token failure,trying reauthorize()")
     global UserTokenDict,UserAuthDict
     auth = UserAuthDict[kook_user_id]
-    # Reauth using cookies. Returns a bool indicating whether the reauth attempt was successful.
-    ret = await auth.reauthorize()#用cookie重新登录
+    #用cookie重新登录,会返回一个bool是否成功
+    ret = await auth.reauthorize()
     if ret:#会返回一个bool是否成功,成功了重新赋值
         UserTokenDict[kook_user_id]['auth_user_id']:auth.user_id
         UserTokenDict[kook_user_id]['access_token']:auth.access_token
         UserTokenDict[kook_user_id]['entitlements_token']:auth.entitlements_token
         UserAuthDict[kook_user_id]=auth
+        #最后重新执行写入
+        with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
+            json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
         print(f"[{now_time}] Au:{kook_user_id} - reauthorize() Successful!")
     else:
         print(f"ERR![{now_time}] Au:{kook_user_id} - reauthorize() Failed! T-T")#失败打印
@@ -857,21 +865,20 @@ async def login_re_auth(kook_user_id:str):
     return ret#正好返回一个bool
 
 #判断是否需要重新获取token
-async def check_re_auth(msg:Message,def_name:str,fun_fetch,resp):
+async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
     """
-        Check if need reauthorize: 
+        Check if need reauthorize: using fetch_user_gameID() for test
     """
-    if 'errorCode' in resp:
+    resp = await fetch_user_gameID(UserAuthDict[msg.author_id])#z直接尝试调用获取玩家id的操作
+    print("f_gid() ",resp)#返回值是一个list
+    if 'errorCode' in resp[0]:#获取玩家id失败
         await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
         ret = await login_re_auth(msg.author_id)
         if ret==False:#没有正常返回
             await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
-            return ret #这里可以直接借用返回值进行操作,返回假
-        else:
-            resp = await fun_fetch(UserTokenDict[msg.author_id])#直接调用传过来的函数
-            return resp #代表重新获取token后成功调用函数
+        return ret #这里可以直接借用返回值进行操作,返回假
     else:
-        return resp #返回原本的内容
+        return True #返回原本的内容
 
 # 退出登录
 @bot.command(name='logout')
@@ -904,32 +911,32 @@ async def update_skins(msg:Message):
         with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
             json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[{GetTime()}] update_skins finished!")
-        return 1
+        return True
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] update_skins - {result}"
         print(err_str)
         await msg.reply(err_str)
-        return 0
+        return False
 
 #因为下方获取物品价格的操作需要authtoken，自动更新容易遇到token失效的情况
 async def update_price(msg:Message):
     try:
         global ValPriceList
+        reau = await check_re_auth(msg,"物品价格") 
+        if reau==False:
+            return #如果为假说明重新登录失败
         prices=await fetch_item_price_all(UserTokenDict['1961572535'])
-        prices=await check_re_auth(msg,"所有物品价格",fetch_item_price_all,resp)
-        if prices==False:return
-
-        ValPriceList=prices
+        ValPriceList=prices # 所有价格的列表
         # 写入文件
         with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
             json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[{GetTime()}] update_item_price finished!")
-        return 1
+        return True
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] update_price - {result}"
         print(err_str)
         await msg.reply(err_str)
-        return 0
+        return False
 
 # 更新捆绑包
 async def update_bundle_url(msg:Message):
@@ -963,12 +970,12 @@ async def update_bundle_url(msg:Message):
             json.dump(ValBundleList,fw1,indent=2,sort_keys=True, ensure_ascii=False)
         
         print(f"[{GetTime()}] update_bundle_url finished!")
-        return 1
+        return True
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] update_bundle_url - {result}"
         print(err_str)
         await msg.reply(err_str)
-        return 0
+        return False
 
 # 手动更新商店物品和价格
 @bot.command(name='update_spb')
@@ -993,14 +1000,16 @@ async def get_daily_shop(msg: Message,*arg):
 
     try:
         flag_au = 0
-        if msg.author_id in UserTokenDict:
-            # 如果用户id已有，则不需要再次获取token
+        if msg.author_id in UserAuthDict:
             flag_au = 1
+            reau = await check_re_auth(msg,"每日商店") 
+            if reau==False:
+                return #如果为假说明重新登录失败
+            # 登陆成功了再提示正在获取商店
+            await msg.reply(f"正在获取您的每日商店，请耐心等待一会哦")
             userdict=UserTokenDict[msg.author_id]
             resp = await fetch_daily_shop(userdict)
-            resp=await check_re_auth(msg,"每日商店",fetch_daily_shop,resp)# 判断是否需要重新操作
-            if resp==False:return #如果为假说明重新登录失败
-
+            print(resp)
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
@@ -1074,21 +1083,24 @@ async def get_user_vp(msg: Message,*arg):
 
     try:
         flag_au = 0
-        if msg.author_id in UserTokenDict:
-            # 如果用户id已有，则不需要再次获取token
+        if msg.author_id in UserAuthDict:
+            reau = await check_re_auth(msg,"VP/R点")#重新登录
+            if reau==False:
+                return #如果为假说明重新登录失败
+
             flag_au = 1
             userdict=UserTokenDict[msg.author_id]
             resp = await fetch_valorant_point(userdict)
-            resp = await check_re_auth(msg,"VP/R点",fetch_valorant_point,resp)#重新登录
-            if resp==False:return #如果为假说明重新登录失败
-
+            # resp = await check_re_auth(msg,"VP/R点",fetch_valorant_point,resp)#重新登录
+            # if resp==False:return #如果为假说明重新登录失败
+            print(resp)
             vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
             rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
 
             cm = CardMessage()
             c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的点数剩余"),
                     Module.Divider(),
-                    Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k]  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k]  {vp}\n",Types.Text.KMD)))
+                    Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] R点:  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP: {vp}\n",Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
 
@@ -1144,14 +1156,18 @@ async def get_user_card(msg: Message,*arg):
 
     try:
         flag_au = 0
-        if msg.author_id in UserTokenDict:
+        if msg.author_id in UserAuthDict:
+            reau = await check_re_auth(msg,"玩家装备/通行证")#重新登录
+            if reau==False:
+                return #如果为假说明重新登录失败
+
             # 如果用户id已有，则不需要再次获取token
             flag_au = 1
             userdict=UserTokenDict[msg.author_id]
             resp = await fetch_player_loadout(userdict)#获取玩家装备栏
-            resp = await check_re_auth(msg,"玩家装备",fetch_valorant_point,resp)
-            if resp==False:return #如果为假说明重新登录失败
-            
+            # resp = await check_re_auth(msg,"玩家装备",fetch_valorant_point,resp)
+            # if resp==False:return #如果为假说明重新登录失败
+            # print(resp)
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
             cm = CardMessage()
@@ -1160,52 +1176,51 @@ async def get_user_card(msg: Message,*arg):
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c)
-
-            # 获取玩家当前任务和通行证情况
-            player_mision = await fetch_player_contract(userdict)
-            ckau=await check_re_auth(msg,"玩家通行证",fetch_valorant_point,resp)
-
-            print(player_mision)
-            interval_con = len(player_mision['Contracts'])
-            battle_pass = player_mision['Contracts'][interval_con-1]
-            print(battle_pass,'\n')
-            contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
-            print(contract,'\n')
-            cur_chapter= battle_pass['ProgressionLevelReached']//5 #计算出当前的章节
-            remain_lv =  battle_pass['ProgressionLevelReached']%5 #计算出在当前章节的位置
-            print(cur_chapter,' - ',remain_lv)
-            if remain_lv:#说明还有余度
-                cur_chapter+=1 #加1
-            else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
-                remain_lv = 5
-
-            reward_list = contract['data']['content']['chapters'][cur_chapter-1]#当前等级所属章节
-            print(reward_list,'\n')
-            reward = reward_list['levels'][remain_lv-1]#当前所处的等级和奖励
-            print(reward)
-            reward_next = ""#下一个等级的奖励
-            if remain_lv < 5: 
-                reward_next = reward_list['levels'][remain_lv]#下一级
-            elif remain_lv >= 5 and cur_chapter<11:#避免越界
-                reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]#下一章节的第一个
-            print(reward_next,'\n')
-
-            c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
-            reward_res = await get_reward(reward)
-            reward_nx_res = await get_reward(reward_next)
-            print(reward_res,'\n',reward_nx_res ,'\n')
-            cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
-            cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
-            cur+= f"奖励类型：{reward['reward']['type']}\n"
-            cur+= f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
-            c1.append(Module.Section(cur))
-            if  'displayIcon' in reward_res['data']:#有图片才插入
-                c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))#将图片插入进去
-            next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
-            c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
-            cm.append(c1)
             await msg.reply(cm)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
+
+            # # 获取玩家当前任务和通行证情况
+            # player_mision = await fetch_player_contract(userdict)
+            # print(player_mision)
+            # interval_con = len(player_mision['Contracts'])
+            # battle_pass = player_mision['Contracts'][interval_con-1]
+            # print(battle_pass,'\n')
+            # contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
+            # print(contract,'\n')
+            # cur_chapter= battle_pass['ProgressionLevelReached']//5 #计算出当前的章节
+            # remain_lv =  battle_pass['ProgressionLevelReached']%5 #计算出在当前章节的位置
+            # print(cur_chapter,' - ',remain_lv)
+            # if remain_lv:#说明还有余度
+            #     cur_chapter+=1 #加1
+            # else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
+            #     remain_lv = 5
+
+            # reward_list = contract['data']['content']['chapters'][cur_chapter-1]#当前等级所属章节
+            # print(reward_list,'\n')
+            # reward = reward_list['levels'][remain_lv-1]#当前所处的等级和奖励
+            # print(reward)
+            # reward_next = ""#下一个等级的奖励
+            # if remain_lv < 5: 
+            #     reward_next = reward_list['levels'][remain_lv]#下一级
+            # elif remain_lv >= 5 and cur_chapter<11:#避免越界
+            #     reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]#下一章节的第一个
+            # print(reward_next,'\n')
+
+            # c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
+            # reward_res = await get_reward(reward)
+            # reward_nx_res = await get_reward(reward_next)
+            # print(reward_res,'\n',reward_nx_res ,'\n')
+            # cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
+            # cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
+            # cur+= f"奖励类型：{reward['reward']['type']}\n"
+            # cur+= f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
+            # c1.append(Module.Section(cur))
+            # if  'displayIcon' in reward_res['data']:#有图片才插入
+            #     c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))#将图片插入进去
+            # next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
+            # c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
+            # cm.append(c1)
+
 
         if flag_au != 1:
             await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")

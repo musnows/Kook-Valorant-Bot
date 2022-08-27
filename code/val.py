@@ -205,9 +205,7 @@ async def authflow(user: str, passwd: str):
 #获取用户游戏id
 async def fetch_user_gameID(auth):
     url = "https://pd.AP.a.pvp.net/name-service/v2/players"
-    payload = json.dumps([
-        auth.user_id
-    ])
+    payload = json.dumps([auth.user_id])
     headers = {
         "Content-Type": "application/json",
         "X-Riot-Entitlements-JWT": auth.entitlements_token,
