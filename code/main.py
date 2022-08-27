@@ -763,6 +763,9 @@ with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
 # 所有捆绑包的图片
 with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
     ValBundleList = json.load(frbu)
+# 所有物品等级（史诗/传说）
+with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
+    ValItersList = json.load(frrk)
 
 # 用来存放auth对象
 UserAuthDict={}
@@ -772,6 +775,12 @@ def fetch_item_price_bylist(item_id):
     for item in ValPriceList['Offers']:#遍历查找指定uuid
         if item_id == item['OfferID']:
             return item
+#从list中获取等级
+def fetch_item_iters_bylist(iter_id):
+    for iter in ValItersList['data']:#遍历查找指定uuid
+        if iter_id == iter['uuid']:
+            res = {'data': iter} #所以要手动创建一个带data的dict作为返回值
+            return res
 
 #从list中获取皮肤
 def fetch_skin_bylist(item_id):
@@ -781,6 +790,8 @@ def fetch_skin_bylist(item_id):
             res['data']=item#所以要手动创建一个带data的dict作为返回值
             return res
 
+
+
 #查询当前有多少用户登录了
 @bot.command(name="ckau")
 async def check_UserAuthDict_len(msg:Message):
@@ -788,13 +799,7 @@ async def check_UserAuthDict_len(msg:Message):
     sz=len(UserAuthDict)
     res=f"UserAuthDict_len: `{sz}`"
     print(res)
-    cm = CardMessage()
-    c = Card(Module.Header(f"UserAuthDict_len:  `{sz}`"),
-            Module.Divider(),
-            Module.Container(Element.Text(UserAuthDict,Types.Text.KMD)))
-    cm.append(c)
     await msg.reply(res)
-
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -1021,11 +1026,12 @@ async def get_daily_shop(msg: Message,*arg):
             bg = copy.deepcopy(bg_main)
             for skinuuid in list_shop:
                 res_item = fetch_skin_bylist(skinuuid)#从本地文件中查找
-                res_price=fetch_item_price_bylist(skinuuid) #在本地文件中查找
+                res_price= fetch_item_price_bylist(skinuuid) #在本地文件中查找
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 for it in ValSkinList['data']:
                     if it['levels'][0]['uuid'] == skinuuid:
-                        res_iters = await fetch_item_iters(it['contentTierUuid'])
+                        #res_iters = await fetch_item_iters(it['contentTierUuid'])
+                        res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
                         break
 
                 img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
