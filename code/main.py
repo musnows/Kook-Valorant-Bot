@@ -827,7 +827,7 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         cm=CardMessage()
         c=Card(Module.Header(f"登陆成功！ {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"),
             Module.Divider(),
-            Module.Section(Element.Text("当前token失效时间随机，登陆游戏、多次使用查询命令等操作都可能会使token失效\n好消息是，阿狸已经上线了`自动重新登陆`机制。若出现自动重新登录失败（会有报错），您需要logout之后再login以重新登录您的账户",Types.Text.KMD)))
+            Module.Section(Element.Text("当前token失效时间为 `1h`\n除此之外，登陆游戏、多次使用查询命令等操作都可能会使token失效。若出现`自动重新登录`失败[会有报错]，您需要logout之后再login以重新登录您的账户",Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
         # 修改/新增都需要写入文件
@@ -963,7 +963,7 @@ async def update_bundle_url(msg:Message):
         resp = await fetch_bundles_all() #从官方获取最新list
         if len(resp['data']) == len(ValBundleList): #长度相同代表没有更新
             print(f"[{GetTime()}] len is the same, doesn't need update!")
-            await msg.reply("len相同，无需更新")
+            await msg.reply("BundleList_len相同，无需更新")
             return
 
         for b in resp['data']:
