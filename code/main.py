@@ -1111,6 +1111,53 @@ async def get_reward(reward):
     
     return None
 
+# 创建一个玩家任务和通信证的卡片消息
+async def create_cm_contract(msg:Message):
+    userdict=UserTokenDict[msg.author_id]
+    # 获取玩家当前任务和通行证情况
+    player_mision = await fetch_player_contract(userdict)
+    print(player_mision)
+    interval_con = len(player_mision['Contracts'])
+    battle_pass = player_mision['Contracts'][interval_con-1]
+    print(battle_pass,'\n')
+    contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
+    print(contract,'\n')
+    cur_chapter= battle_pass['ProgressionLevelReached']//5 #计算出当前的章节
+    remain_lv =  battle_pass['ProgressionLevelReached']%5 #计算出在当前章节的位置
+    print(cur_chapter,' - ',remain_lv)
+    if remain_lv:#说明还有余度
+        cur_chapter+=1 #加1
+    else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
+        remain_lv = 5
+
+    reward_list = contract['data']['content']['chapters'][cur_chapter-1]#当前等级所属章节
+    print(reward_list,'\n')
+    reward = reward_list['levels'][remain_lv-1]#当前所处的等级和奖励
+    print(reward)
+    reward_next = ""#下一个等级的奖励
+    if remain_lv < 5: 
+        reward_next = reward_list['levels'][remain_lv]#下一级
+    elif remain_lv >= 5 and cur_chapter<11:#避免越界
+        reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]#下一章节的第一个
+    print(reward_next,'\n')
+
+    c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
+    reward_res = await get_reward(reward)
+    reward_nx_res = await get_reward(reward_next)
+    print(reward_res,'\n',reward_nx_res ,'\n')
+    
+    cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
+    cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
+    cur+= f"奖励类型：{reward['reward']['type']}\n"
+    cur+= f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
+    c1.append(Module.Section(cur))
+    if  'displayIcon' in reward_res['data']:#有图片才插入
+        c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))#将图片插入进去
+    next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
+    c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
+    return c1
+
+
 # 获取玩家卡面(添加point的别名)
 @bot.command(name='uinfo',aliases=['point','UINFO','POINT'])
 async def get_user_card(msg: Message,*arg):
@@ -1145,48 +1192,6 @@ async def get_user_card(msg: Message,*arg):
             cm.append(c1)
             await msg.reply(cm)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
-
-            # # 获取玩家当前任务和通行证情况
-            # player_mision = await fetch_player_contract(userdict)
-            # print(player_mision)
-            # interval_con = len(player_mision['Contracts'])
-            # battle_pass = player_mision['Contracts'][interval_con-1]
-            # print(battle_pass,'\n')
-            # contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
-            # print(contract,'\n')
-            # cur_chapter= battle_pass['ProgressionLevelReached']//5 #计算出当前的章节
-            # remain_lv =  battle_pass['ProgressionLevelReached']%5 #计算出在当前章节的位置
-            # print(cur_chapter,' - ',remain_lv)
-            # if remain_lv:#说明还有余度
-            #     cur_chapter+=1 #加1
-            # else:#为0的情况，需要修正为5。比如30级是第六章节的最后一个
-            #     remain_lv = 5
-
-            # reward_list = contract['data']['content']['chapters'][cur_chapter-1]#当前等级所属章节
-            # print(reward_list,'\n')
-            # reward = reward_list['levels'][remain_lv-1]#当前所处的等级和奖励
-            # print(reward)
-            # reward_next = ""#下一个等级的奖励
-            # if remain_lv < 5: 
-            #     reward_next = reward_list['levels'][remain_lv]#下一级
-            # elif remain_lv >= 5 and cur_chapter<11:#避免越界
-            #     reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]#下一章节的第一个
-            # print(reward_next,'\n')
-
-            # c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),Module.Divider())
-            # reward_res = await get_reward(reward)
-            # reward_nx_res = await get_reward(reward_next)
-            # print(reward_res,'\n',reward_nx_res ,'\n')
-            # cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
-            # cur+= f"当前奖励：{reward_res['data']['displayName']}\n"
-            # cur+= f"奖励类型：{reward['reward']['type']}\n"
-            # cur+= f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
-            # c1.append(Module.Section(cur))
-            # if  'displayIcon' in reward_res['data']:#有图片才插入
-            #     c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))#将图片插入进去
-            # next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
-            # c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
-            # cm.append(c1)
 
         if flag_au != 1:
             await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
