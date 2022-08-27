@@ -775,13 +775,12 @@ def fetch_item_price_bylist(item_id):
     for item in ValPriceList['Offers']:#遍历查找指定uuid
         if item_id == item['OfferID']:
             return item
-#从list中获取等级
+#从list中获取等级(这个需要手动更新)
 def fetch_item_iters_bylist(iter_id):
     for iter in ValItersList['data']:#遍历查找指定uuid
         if iter_id == iter['uuid']:
             res = {'data': iter} #所以要手动创建一个带data的dict作为返回值
             return res
-
 #从list中获取皮肤
 def fetch_skin_bylist(item_id):
     res={}#下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
