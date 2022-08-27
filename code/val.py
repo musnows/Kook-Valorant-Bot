@@ -406,3 +406,13 @@ async def fetch_buddies_uuid(id):
             res_sp = json.loads(await response.text())
 
     return res_sp
+
+# 获取皮肤，通过lv0的uuid
+async def fetch_skinlevel_uuid(id):
+    url = f"https://valorant-api.com/v1/weapons/skinlevels/"+id
+    headers = {'Connection': 'close'}
+    params = {"language": "zh-TW"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers,params=params) as response:
+            res_skin = json.loads(await response.text())
+    return res_skin

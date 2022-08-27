@@ -496,7 +496,7 @@ async def uncle(msg: Message):
 
 from status import status_active_game,status_active_music,status_delete,server_status
 from val import fetch_spary_uuid, kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_title_uuid,fetch_playercard_uuid,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_title_uuid,fetch_playercard_uuid,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid,fetch_skinlevel_uuid
 
 # 开始打游戏
 @bot.command()
@@ -870,8 +870,8 @@ async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
         Check if need reauthorize: using fetch_user_gameID() for test
     """
     resp = await fetch_user_gameID(UserAuthDict[msg.author_id])#z直接尝试调用获取玩家id的操作
-    print("f_gid() ",resp)#返回值是一个list
-    if 'errorCode' in resp[0]:#获取玩家id失败
+    print(resp)#返回值是一个list
+    if not isinstance(resp,list):#获取玩家id失败
         await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
         ret = await login_re_auth(msg.author_id)
         if ret==False:#没有正常返回
@@ -1003,13 +1003,16 @@ async def get_daily_shop(msg: Message,*arg):
         if msg.author_id in UserAuthDict:
             flag_au = 1
             reau = await check_re_auth(msg,"每日商店") 
-            if reau==False:
-                return #如果为假说明重新登录失败
+            if reau==False:return #如果为假说明重新登录失败
+
             # 登陆成功了再提示正在获取商店
             await msg.reply(f"正在获取您的每日商店，请耐心等待一会哦")
+            #计算获取每日商店要多久
+            start = time.perf_counter()#开始计时
+            #从auth的dict中获取对象
             userdict=UserTokenDict[msg.author_id]
-            resp = await fetch_daily_shop(userdict)
-            print(resp)
+            resp = await fetch_daily_shop(userdict)#获取每日商店
+            #print(resp)
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
@@ -1017,22 +1020,14 @@ async def get_daily_shop(msg: Message,*arg):
             y = 0
             bg = copy.deepcopy(bg_main)
             for skinuuid in list_shop:
-                url = f"https://valorant-api.com/v1/weapons/skinlevels/{skinuuid}"
-                headers = {'Connection': 'close'}
-                params = {"language": "zh-TW"}
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, headers=headers,
-                                        params=params) as response:
-                        res_item = json.loads(await response.text())
-
-                #res_price=await fetch_item_price_uuid(userdict,skinuuid)
+                res_item = fetch_skin_bylist(skinuuid)#从本地文件中查找
                 res_price=fetch_item_price_bylist(skinuuid) #在本地文件中查找
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 for it in ValSkinList['data']:
                     if it['levels'][0]['uuid'] == skinuuid:
                         res_iters = await fetch_item_iters(it['contentTierUuid'])
                         break
-                #print(price,' ',res_iters['data']['displayName'])
+
                 img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
                 bg = bg_comp(bg, img, x, y)
 
@@ -1047,17 +1042,21 @@ async def get_daily_shop(msg: Message,*arg):
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
             dailyshop_img_src = await bot.client.create_asset(imgByte)
+            #结束计时
+            end = time.perf_counter()
+            using_time = end-start #结果为 浮点数
+            using_time = format(end-start, '.2f')#保留两位小数
 
             cm = CardMessage()
             c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的每日商店！"),
-                    Module.Context(f"失效时间剩余：{timeout}"),
+                    Module.Context(f"失效时间剩余：{timeout}    本次查询用时：{using_time}s"),
                     Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
             await msg.reply(cm)
-            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful")
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
 
         if flag_au != 1:
-            await msg.reply(f"您今日尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
             return
 
     except Exception as result:
@@ -1085,22 +1084,19 @@ async def get_user_vp(msg: Message,*arg):
         flag_au = 0
         if msg.author_id in UserAuthDict:
             reau = await check_re_auth(msg,"VP/R点")#重新登录
-            if reau==False:
-                return #如果为假说明重新登录失败
+            if reau==False:return #如果为假说明重新登录失败
 
             flag_au = 1
             userdict=UserTokenDict[msg.author_id]
             resp = await fetch_valorant_point(userdict)
-            # resp = await check_re_auth(msg,"VP/R点",fetch_valorant_point,resp)#重新登录
-            # if resp==False:return #如果为假说明重新登录失败
-            print(resp)
+            #print(resp)
             vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
             rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
 
             cm = CardMessage()
             c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的点数剩余"),
                     Module.Divider(),
-                    Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] R点:  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP: {vp}\n",Types.Text.KMD)))
+                    Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n",Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
 
@@ -1158,16 +1154,12 @@ async def get_user_card(msg: Message,*arg):
         flag_au = 0
         if msg.author_id in UserAuthDict:
             reau = await check_re_auth(msg,"玩家装备/通行证")#重新登录
-            if reau==False:
-                return #如果为假说明重新登录失败
+            if reau==False:return #如果为假说明重新登录失败
 
             # 如果用户id已有，则不需要再次获取token
             flag_au = 1
             userdict=UserTokenDict[msg.author_id]
             resp = await fetch_player_loadout(userdict)#获取玩家装备栏
-            # resp = await check_re_auth(msg,"玩家装备",fetch_valorant_point,resp)
-            # if resp==False:return #如果为假说明重新登录失败
-            # print(resp)
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
             cm = CardMessage()
@@ -1220,7 +1212,6 @@ async def get_user_card(msg: Message,*arg):
             # next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
             # c1.append(Module.Context(Element.Text(next,Types.Text.KMD)))
             # cm.append(c1)
-
 
         if flag_au != 1:
             await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
