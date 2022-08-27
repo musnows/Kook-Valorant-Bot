@@ -874,16 +874,29 @@ async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
     """
         Check if need reauthorize: using fetch_user_gameID() for test
     """
-    resp = await fetch_user_gameID(UserTokenDict[msg.author_id])#z直接尝试调用获取玩家id的操作
-    print(resp)#返回值是一个list
-    if not isinstance(resp,list):#获取玩家id失败
-        await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
-        ret = await login_re_auth(msg.author_id)
-        if ret==False:#没有正常返回
-            await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
-        return ret #这里可以直接借用返回值进行操作,返回假
-    else:
-        return True #返回原本的内容
+    try:
+        auth=UserAuthDict[msg.author_id]
+        userdict={'auth_user_id':auth.user_id,
+                'access_token':auth.access_token,
+                'entitlements_token':auth.entitlements_token
+        }
+        resp = await fetch_valorant_point(userdict)
+        # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
+        # if not isinstance(resp,list):#获取玩家id失败
+        print(resp)
+        test=resp['httpStatus']#如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
+        if 'errorcode' in str(resp).lower():
+            await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
+            ret = await login_re_auth(msg.author_id)
+            if ret==False:#没有正常返回
+                await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
+            return ret #这里可以直接借用返回值进行操作,返回假
+        else:
+            return True #返回原本的内容
+    except:
+        print("ckeck_re_auth good, No need to reauthorize")
+        return True
+
 
 # 退出登录
 @bot.command(name='logout')
@@ -1015,7 +1028,12 @@ async def get_daily_shop(msg: Message,*arg):
             #计算获取每日商店要多久
             start = time.perf_counter()#开始计时
             #从auth的dict中获取对象
-            userdict=UserTokenDict[msg.author_id]
+            #userdict=UserTokenDict[msg.author_id]
+            auth=UserAuthDict[msg.author_id]
+            userdict={'auth_user_id':auth.user_id,
+                'access_token':auth.access_token,
+                'entitlements_token':auth.entitlements_token
+            }
             resp = await fetch_daily_shop(userdict)#获取每日商店
             #print(resp)
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
@@ -1054,7 +1072,7 @@ async def get_daily_shop(msg: Message,*arg):
             using_time = format(end-start, '.2f')#保留两位小数
 
             cm = CardMessage()
-            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的每日商店！"),
+            c = Card(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"),
                     Module.Context(f"失效时间剩余：{timeout}    本次查询用时：{using_time}s"),
                     Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
@@ -1176,13 +1194,19 @@ async def get_user_card(msg: Message,*arg):
 
             # 如果用户id已有，则不需要再次获取token
             flag_au = 1
-            userdict=UserTokenDict[msg.author_id]
+            #userdict=UserTokenDict[msg.author_id]
+            auth=UserAuthDict[msg.author_id]
+            userdict={'auth_user_id':auth.user_id,
+                'access_token':auth.access_token,
+                'entitlements_token':auth.entitlements_token
+            }
             resp = await fetch_player_loadout(userdict)#获取玩家装备栏
+            #print(resp)
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
 
             cm = CardMessage()
-            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的个人信息"))
+            c = Card(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))#将图片插入进去
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
