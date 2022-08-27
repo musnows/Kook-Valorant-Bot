@@ -1078,39 +1078,39 @@ async def get_daily_shop(msg: Message,*arg):
 
 
 # 获取vp和r点剩余的命令
-@bot.command(name='point',aliases=['POINT'])
+#@bot.command(name='point',aliases=['POINT'])
 async def get_user_vp(msg: Message,*arg):
-    logging(msg)
-    if arg !=():
-        await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
-        return
-
+    # logging(msg)
+    # if arg !=():
+    #     await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
+    #     return
     try:
-        flag_au = 0
-        if msg.author_id in UserAuthDict:
-            reau = await check_re_auth(msg,"VP/R点")#重新登录
-            if reau==False:return #如果为假说明重新登录失败
+        #flag_au = 0
+        #if msg.author_id in UserAuthDict:
+        reau = await check_re_auth(msg,"VP/R点")#重新登录
+        if reau==False:return #如果为假说明重新登录失败
 
-            flag_au = 1
-            userdict=UserTokenDict[msg.author_id]
-            resp = await fetch_valorant_point(userdict)
-            #print(resp)
-            vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
-            rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
+        userdict = UserTokenDict[msg.author_id]
+        resp = await fetch_valorant_point(userdict)
+        #print(resp)
+        vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
+        rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
+        text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
+        return text
+        #cm = CardMessage()
+        # c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的点数剩余"),
+        #         Module.Divider(),
+        #         Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n",Types.Text.KMD)))
+        #cm.append(c)
+        #await msg.reply(cm)
+       
 
-            cm = CardMessage()
-            c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的点数剩余"),
-                    Module.Divider(),
-                    Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n",Types.Text.KMD)))
-            cm.append(c)
-            await msg.reply(cm)
-
-        if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
-            return
+        # if flag_au != 1:
+        #     await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+        #     return
     
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        err_str=f"ERR! [{GetTime()}] point - {result}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"))
@@ -1167,12 +1167,18 @@ async def get_user_card(msg: Message,*arg):
             resp = await fetch_player_loadout(userdict)#获取玩家装备栏
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
+
             cm = CardMessage()
             c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))#将图片插入进去
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c)
+
+            #获取玩家的vp和r点剩余
+            text=await get_user_vp(msg)
+            c1 = Card(Module.Section(Element.Text(text,Types.Text.KMD)))
+            cm.append(c1)
             await msg.reply(cm)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
