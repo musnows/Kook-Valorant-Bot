@@ -101,8 +101,7 @@ async def Vhelp(msg: Message,*arg):
         help_1+="「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
         help_1+="「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1+="「/shop」 查询您的每日商店\n"
-        help_1+="「/point」查询您剩余的vp和r点\n"
-        help_1+="「/uinfo」查询您当前装备的卡面/称号，通行证信息\n"
+        help_1+="「/point」「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
         help_1+="「/logout」取消登录\n"
         c3.append(Module.Section(Element.Text(help_1,Types.Text.KMD)))
         c3.append(Module.Divider())
@@ -539,16 +538,16 @@ async def kda(msg: Message):
     logging(msg)
     await kda123(msg)
 
-# 查询皮肤系列
-@bot.command()
-async def skin(msg: Message,*arg):
-    logging(msg)
-    await msg.reply(f"`/skin`命令已取消，请使用相同功能的`/bundle 皮肤名`")
-    # if arg ==():
-    #     await msg.reply(f"函数参数错误，name: `{arg}`\n")
-    #     return
-    # name=" ".join(arg)
-    # await skin123(msg,name)
+# # 查询皮肤系列
+# @bot.command()
+# async def skin(msg: Message,*arg):
+#     logging(msg)
+#     await msg.reply(f"`/skin`命令已取消，请使用相同功能的`/bundle 皮肤名`")
+#     # if arg ==():
+#     #     await msg.reply(f"函数参数错误，name: `{arg}`\n")
+#     #     return
+#     # name=" ".join(arg)
+#     # await skin123(msg,name)
 
 # 查询排行榜
 @bot.command()
@@ -1077,50 +1076,15 @@ async def get_daily_shop(msg: Message,*arg):
         await msg.reply(cm2)
 
 
-# 获取vp和r点剩余的命令
-#@bot.command(name='point',aliases=['POINT'])
+# 获取vp和r点剩余
 async def get_user_vp(msg: Message,*arg):
-    # logging(msg)
-    # if arg !=():
-    #     await msg.reply(f"`/point`命令不需要参数。您是否想`/login`？")
-    #     return
-    try:
-        #flag_au = 0
-        #if msg.author_id in UserAuthDict:
-        reau = await check_re_auth(msg,"VP/R点")#重新登录
-        if reau==False:return #如果为假说明重新登录失败
-
-        userdict = UserTokenDict[msg.author_id]
-        resp = await fetch_valorant_point(userdict)
-        #print(resp)
-        vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
-        rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
-        text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
-        return text
-        #cm = CardMessage()
-        # c = Card(Module.Header(f"玩家 {userdict['GameName']}#{userdict['TagLine']} 的点数剩余"),
-        #         Module.Divider(),
-        #         Module.Section(Element.Text(f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n",Types.Text.KMD)))
-        #cm.append(c)
-        #await msg.reply(cm)
-       
-
-        # if flag_au != 1:
-        #     await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
-        #     return
-    
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] point - {result}"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+    userdict = UserTokenDict[msg.author_id]
+    resp = await fetch_valorant_point(userdict)
+    #print(resp)
+    vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
+    rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
+    text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
+    return text
 
 # 获取不同奖励的信息
 async def get_reward(reward):
@@ -1147,8 +1111,8 @@ async def get_reward(reward):
     
     return None
 
-# 获取玩家卡面
-@bot.command(name='uinfo')
+# 获取玩家卡面(添加point的别名)
+@bot.command(name='uinfo',aliases=['point','UINFO','POINT'])
 async def get_user_card(msg: Message,*arg):
     logging(msg)
     if arg !=():
@@ -1242,7 +1206,7 @@ async def get_user_card(msg: Message,*arg):
 
 
 # 获取捆绑包信息(无需登录)
-@bot.command(name='bundle')
+@bot.command(name='bundle',aliases=['skin'])
 async def get_bundle(msg: Message,*arg):
     logging(msg)
     if arg ==():
