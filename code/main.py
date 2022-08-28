@@ -1097,8 +1097,8 @@ async def get_daily_shop(msg: Message,*arg):
 
 
 # 获取vp和r点剩余
-async def get_user_vp(msg: Message,*arg):
-    userdict = UserTokenDict[msg.author_id]
+async def get_user_vp(msg: Message,userdict,*arg):
+    #userdict = UserTokenDict[msg.author_id]
     resp = await fetch_valorant_point(userdict)
     #print(resp)
     vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
@@ -1213,7 +1213,7 @@ async def get_user_card(msg: Message,*arg):
             cm.append(c)
 
             #获取玩家的vp和r点剩余
-            text=await get_user_vp(msg)
+            text=await get_user_vp(msg,userdict)
             c1 = Card(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c1)
             await msg.reply(cm)
