@@ -4,6 +4,7 @@ import random
 import time
 import aiohttp
 import requests
+import traceback
 
 from datetime import datetime, timedelta
 
@@ -111,7 +112,7 @@ async def Vhelp(msg: Message,*arg):
         await msg.reply(cm)
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] Ahri - {result}"
+        err_str=f"ERR! [{GetTime()}] vhelp - {result}"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -133,7 +134,7 @@ async def countdown(msg: Message,time: int = 60):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] countdown - {result}"
+        err_str=f"ERR! [{GetTime()}] countdown\n{traceback.format_exc()}"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -148,7 +149,7 @@ async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] roll - {result}"
+        err_str=f"ERR! [{GetTime()}] roll\n{traceback.format_exc()}"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -455,7 +456,7 @@ async def Weather(msg: Message,city:str="err"):
     try:
         await weather(msg,city)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] check_server_user_status: {result}"
+        err_str=f"ERR! [{GetTime()}] we\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
 
@@ -564,11 +565,10 @@ async def saveid(msg: Message,*args):
         game_id = " ".join(args)#避免用户需要输入双引号
         await saveid123(msg, game_id)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        err_str=f"ERR! [{GetTime()}] saveid\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
@@ -590,7 +590,7 @@ async def saveid2(msg: Message):
     try:
         await saveid_2(msg)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] check_server_user_status: {result}"
+        err_str=f"ERR! [{GetTime()}] saveid2 = {result}"
         print(err_str)
         await msg.reply(err_str)
 
@@ -606,7 +606,7 @@ async def myid(msg: Message,*args):
     try:
         await myid123(msg)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] check_server_user_status: {result}"
+        err_str=f"ERR! [{GetTime()}] myid\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
 
@@ -835,11 +835,10 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] login - {result}"
+        err_str=f"ERR! [{GetTime()}] `login`\n {traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
@@ -848,32 +847,23 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         await msg.reply(cm2)
 
 #重新登录（kook用户id）
-async def login_re_auth(kook_user_id:str):
-    now_time=GetTime()
-    print(f"[{now_time}] Au:{kook_user_id} - auth_token failure,trying reauthorize()")
-    global UserTokenDict,UserAuthDict
+async def login_re_auth(msg:Message,kook_user_id:str):
+    base_print=f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = "
+    print(base_print+"auth_token failure,trying reauthorize()")
+    global UserAuthDict
     auth = UserAuthDict[kook_user_id]
     #用cookie重新登录,会返回一个bool是否成功
     ret = await auth.reauthorize()
     if ret:#会返回一个bool是否成功,成功了重新赋值
-        UserTokenDict[kook_user_id]['auth_user_id']:auth.user_id
-        UserTokenDict[kook_user_id]['access_token']:auth.access_token
-        UserTokenDict[kook_user_id]['entitlements_token']:auth.entitlements_token
         UserAuthDict[kook_user_id]=auth
-        #最后重新执行写入
-        with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
-            json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
-        print(f"[{now_time}] Au:{kook_user_id} - reauthorize() Successful!")
+        print(base_print+"reauthorize() Successful!")
     else:
-        print(f"ERR![{now_time}] Au:{kook_user_id} - reauthorize() Failed! T-T")#失败打印
+        print(base_print+"reauthorize() Failed! T-T")#失败打印
 
     return ret#正好返回一个bool
 
 #判断是否需要重新获取token
 async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
-    """
-        Check if need reauthorize: using fetch_user_gameID() for test
-    """
     try:
         auth=UserAuthDict[msg.author_id]
         userdict={'auth_user_id':auth.user_id,
@@ -881,18 +871,18 @@ async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
                 'entitlements_token':auth.entitlements_token
         }
         resp = await fetch_valorant_point(userdict)
-        # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
-        # if not isinstance(resp,list):#获取玩家id失败
         print(resp)
+        # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
+        # if 'errorcode' in str(resp).lower():
+        
         test=resp['httpStatus']#如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
-        if 'errorcode' in str(resp).lower():
-            await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
-            ret = await login_re_auth(msg.author_id)
-            if ret==False:#没有正常返回
-                await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
-            return ret #这里可以直接借用返回值进行操作,返回假
-        else:
-            return True #返回原本的内容
+        await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
+        ret = await login_re_auth(msg.author_id)
+        if ret==False:#没有正常返回
+            await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
+        return ret #这里可以直接借用返回值进行操作,返回假
+        # else:
+        #     return True #返回原本的内容
     except:
         print("ckeck_re_auth good, No need to reauthorize")
         return True
@@ -931,7 +921,7 @@ async def update_skins(msg:Message):
         print(f"[{GetTime()}] update_skins finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_skins - {result}"
+        err_str=f"ERR! [{GetTime()}] update_skins\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -941,8 +931,8 @@ async def update_price(msg:Message):
     try:
         global ValPriceList
         reau = await check_re_auth(msg,"物品价格") 
-        if reau==False:
-            return #如果为假说明重新登录失败
+        if reau==False:return #如果为假说明重新登录失败
+        # 调用api获取价格列表
         prices=await fetch_item_price_all(UserTokenDict['1961572535'])
         ValPriceList=prices # 所有价格的列表
         # 写入文件
@@ -951,7 +941,7 @@ async def update_price(msg:Message):
         print(f"[{GetTime()}] update_item_price finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_price - {result}"
+        err_str=f"ERR! [{GetTime()}] update_price\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -990,7 +980,7 @@ async def update_bundle_url(msg:Message):
         print(f"[{GetTime()}] update_bundle_url finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_bundle_url - {result}"
+        err_str=f"ERR! [{GetTime()}] update_bundle_url\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -1080,11 +1070,11 @@ async def get_daily_shop(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
 
         if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
             return
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] shop - {result}"
+        err_str=f"ERR! [{GetTime()}] `shop`\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
@@ -1220,11 +1210,11 @@ async def get_user_card(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
             return
     
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] uinfo - {result}"
+        err_str=f"ERR! [{GetTime()}] `uinfo`\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
@@ -1278,7 +1268,7 @@ async def get_bundle(msg: Message,*arg):
         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
         print(f"[{GetTime()}] Au:{msg.author_id} get_bundle failed! Can't find {name}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] get_bundle - {result}"
+        err_str=f"ERR! [{GetTime()}] `get_bundle`\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
