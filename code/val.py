@@ -354,7 +354,7 @@ async def fetch_bundle_byname(name):
     for skin in ValSkinList['data']:
         if name in skin['displayName']:
             # 为了方便查询价格，在这里直接把skin的lv0-uuid也给插入进去
-            data={'weapen':skin['displayName'],'lv_uuid':skin['levels'][0]['uuid']}
+            data={'displayName':skin['displayName'],'lv_uuid':skin['levels'][0]['uuid']}
             WeapenList.append(data)
     
     return WeapenList

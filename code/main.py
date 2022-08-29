@@ -134,7 +134,7 @@ async def countdown(msg: Message,time: int = 60):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] countdown\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -149,7 +149,7 @@ async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] roll\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -456,7 +456,7 @@ async def Weather(msg: Message,city:str="err"):
     try:
         await weather(msg,city)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] we\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] we\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
 
@@ -539,17 +539,6 @@ async def kda(msg: Message):
     logging(msg)
     await kda123(msg)
 
-# # 查询皮肤系列
-# @bot.command()
-# async def skin(msg: Message,*arg):
-#     logging(msg)
-#     await msg.reply(f"`/skin`命令已取消，请使用相同功能的`/bundle 皮肤名`")
-#     # if arg ==():
-#     #     await msg.reply(f"函数参数错误，name: `{arg}`\n")
-#     #     return
-#     # name=" ".join(arg)
-#     # await skin123(msg,name)
-
 # 查询排行榜
 @bot.command()
 async def lead(msg: Message,sz:int=15,num:int=10):
@@ -565,11 +554,11 @@ async def saveid(msg: Message,*args):
         game_id = " ".join(args)#避免用户需要输入双引号
         await saveid123(msg, game_id)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] saveid\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] saveid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -606,7 +595,7 @@ async def myid(msg: Message,*args):
     try:
         await myid123(msg)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] myid\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] myid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
 
@@ -750,9 +739,12 @@ def bg_comp(bg, img, x, y):
 
 ##############################################################################
 
-# 预加载用户token
+# 预加载用户token(其实已经没用了)
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
+# 皮肤商店提醒功能
+with open("./log/UserSkinInform.json", 'r', encoding='utf-8') as frsi:
+    SkinInformDict = json.load(frsi)
 # 所有皮肤
 with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
     ValSkinList = json.load(frsk)
@@ -787,7 +779,14 @@ def fetch_skin_bylist(item_id):
         if item_id == item['levels'][0]['uuid']:
             res['data']=item#所以要手动创建一个带data的dict作为返回值
             return res
-
+#从list中，通过皮肤名字获取皮肤列表
+def fetch_skin_byname_list(name):
+    wplist=list()#包含该名字的皮肤list
+    for skin in ValSkinList['data']:
+        if name in skin['displayName']:
+            data={'displayName':skin['displayName'],'lv_uuid':skin['levels'][0]['uuid']}
+            wplist.append(data)
+    return wplist
 
 
 #查询当前有多少用户登录了
@@ -835,11 +834,11 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] `login`\n {traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -921,7 +920,7 @@ async def update_skins(msg:Message):
         print(f"[{GetTime()}] update_skins finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_skins\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] update_skins\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -941,7 +940,7 @@ async def update_price(msg:Message):
         print(f"[{GetTime()}] update_item_price finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_price\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] update_price\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -980,7 +979,7 @@ async def update_bundle_url(msg:Message):
         print(f"[{GetTime()}] update_bundle_url finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_bundle_url\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] update_bundle_url\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -1074,11 +1073,11 @@ async def get_daily_shop(msg: Message,*arg):
             return
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] `shop`\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1214,11 +1213,11 @@ async def get_user_card(msg: Message,*arg):
             return
     
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] `uinfo`\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1254,9 +1253,9 @@ async def get_bundle(msg: Message,*arg):
                         res_price=fetch_item_price_bylist(w['lv_uuid'])
                         if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                             price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                            text+=f"{w['weapen']}   - vp {price}\n"
+                            text+=f"{w['displayName']}   - vp {price}\n"
                         else:# 找不到价格就直接插入武器名字
-                            text+=f"{w['weapen']}\n"
+                            text+=f"{w['displayName']}\n"
                     
                     text+="```\n" # print(text)
                     c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
@@ -1268,12 +1267,64 @@ async def get_bundle(msg: Message,*arg):
         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
         print(f"[{GetTime()}] Au:{msg.author_id} get_bundle failed! Can't find {name}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] `get_bundle`\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] get_bundle\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
         await bot.send(ch,err_str)
 
+#定时提醒（出现xx皮肤）
+@bot.task.add_cron(hour=9,minute=0,timezone="Asia/Shanghai")
+async def auto_skin_inform():
+    return     
+
+
+#设置提醒（出现xx皮肤）
+@bot.command(name="addskin")
+async def add_skin_inform(msg:Message,*arg):
+    logging(msg)
+    if arg == ():
+        await msg.reply(f"你没有提供皮肤参数！skin:{arg}")
+        return 
+    try:
+        name =" ".join(arg)
+        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
+        sklist=fetch_skin_byname_list(name)
+        if sklist==[]:#空list代表这个皮肤不在里面
+            await msg.reply(f"该皮肤不在列表中，请重新查询！")
+            return
+        
+        retlist=list()#用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
+        for s in sklist:
+            res_price=fetch_item_price_bylist(s['lv_uuid'])
+            if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
+                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                data={'skin':s,'price':price}
+                retlist.append(data)
+        i=0
+        text= "```\n"#模拟一个选择表
+        for w in retlist:
+            text+=f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}\n"
+            i+=1
+        text+="```"
+        cm=CardMessage()
+        c=Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
+                Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤",Types.Text.KMD)),
+                Module.Section(Element.Text(text,Types.Text.KMD)))
+        cm.append(c)
+        await msg.reply(cm)
+
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] addskin\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 
 # 开机的时候打印一次时间，记录重启时间
