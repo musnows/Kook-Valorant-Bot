@@ -5,7 +5,7 @@ import time
 import aiohttp
 import requests
 import traceback
-
+from typing import Union
 from datetime import datetime, timedelta
 
 from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage
@@ -863,9 +863,10 @@ async def login_re_auth(msg:Message,kook_user_id:str):
     return ret#正好返回一个bool
 
 #判断是否需要重新获取token
-async def check_re_auth(def_name:str="",msg:Message=None,fun_fetch=None,res=None):
+async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
     try:
-        auth=UserAuthDict[msg.author_id]
+        user_id = msg if isinstance(msg,str) else msg.author_id #如果是str就直接用
+        auth=UserAuthDict[user_id]
         userdict={'auth_user_id':auth.user_id,
                 'access_token':auth.access_token,
                 'entitlements_token':auth.entitlements_token
@@ -881,8 +882,6 @@ async def check_re_auth(def_name:str="",msg:Message=None,fun_fetch=None,res=None
         if ret==False and msg !=None:#没有正常返回
             await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
         return ret #这里可以直接借用返回值进行操作,返回假
-        # else:
-        #     return True #返回原本的内容
     except:
         print("ckeck_re_auth good, No need to reauthorize")
         return True
@@ -1277,17 +1276,18 @@ async def get_bundle(msg: Message,*arg):
 #用户选择列表
 UserSDict={}
 # 皮肤商店提醒记录
-with open("./log/UserSkinInform.json", 'r', encoding='utf-8') as frsi:
-    SkinInformDict = json.load(frsi)
+with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
+    SkinNotifyDict = json.load(frsi)
 
 #@bot.task.add_cron(hour=16, minute=4, timezone="Asia/Shanghai")
 @bot.command(name="test0")
 async def auto_skin_inform(msg:Message):
     logging(msg)
     try:
-        for aid, skin in SkinInformDict.items():
+        for aid, skin in SkinNotifyDict.items():
+            user = await bot.client.fetch_user(aid)
             if aid in UserAuthDict:
-                if await check_re_auth("定时获取玩家商店") == True:  # 重新登录,如果为假说明重新登录失败
+                if await check_re_auth("定时获取玩家商店",aid) == True:  # 重新登录,如果为假说明重新登录失败
                     auth = UserAuthDict[aid]
                     userdict = {'auth_user_id': auth.user_id,
                                 'access_token': auth.access_token,
@@ -1300,8 +1300,9 @@ async def auto_skin_inform(msg:Message):
                     # print(target_skin)
                     for name in target_skin:
                         print(f"[{GetTime()}] Au:{aid} auto_skin_inform = {name}")
-                        user = await bot.client.fetch_user(aid)
                         await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
+            else:#不在auth里面说明没有登录
+                await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
         #完成遍历后打印
         print("[BOT.TASK] auto_skin_inform finished!")
     except Exception as result:
@@ -1311,8 +1312,8 @@ async def auto_skin_inform(msg:Message):
         await bot.send(ch,err_str)
 
 #设置提醒（出现xx皮肤）
-@bot.command(name="addskin")
-async def add_skin_inform(msg:Message,*arg):
+@bot.command(name="notify-add",aliases=['notify-a'])
+async def add_skin_notify(msg:Message,*arg):
     logging(msg)
     if arg == ():
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
@@ -1364,27 +1365,27 @@ async def add_skin_inform(msg:Message,*arg):
         cm2.append(c)
         await msg.reply(cm2)
 
-
+#选择皮肤（这个命令必须跟着上面的命令用）
 @bot.command(name="sts")
-async def select_skin_inform(msg:Message,n:str="err"):
+async def select_skin_notify(msg:Message,n:str="err"):
     logging(msg)
     if n =="err":
         await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号：`{n}`")
         return
     try:
-        global SkinInformDict
+        global SkinNotifyDict
         if msg.author_id in UserSDict:
             num=str2int(n)#转成int下标
             S_skin=UserSDict[msg.author_id][num]
-            if msg.author_id not in SkinInformDict:
-                SkinInformDict[msg.author_id]={}
-                SkinInformDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
+            if msg.author_id not in SkinNotifyDict:
+                SkinNotifyDict[msg.author_id]={}
+                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
             else:#如果存在了就直接在后面添加
-                SkinInformDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
-            # print(SkinInformDict[msg.author_id])
-            #写入文件
-            with open("./log/UserSkinInform.json", 'w', encoding='utf-8') as fw2:
-                json.dump(SkinInformDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
+            # print(SkinNotifyDict[msg.author_id])
+            # 写入文件
+            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
+                json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
             del UserSDict[msg.author_id]#删除选择页面中的
             text=f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
             print(f"Au:{msg.author_id} ",text)
@@ -1404,6 +1405,41 @@ async def select_skin_inform(msg:Message,n:str="err"):
         cm2.append(c)
         await msg.reply(cm2)
 
+# 显示当前设置好了的皮肤通知
+@bot.command(name="notify-list",aliases=['notify-l'])
+async def list_skin_notify(msg:Message):
+    logging(msg)
+    if msg.author_id in SkinNotifyDict:
+        text ="```\n"
+        for skin,name in SkinNotifyDict[msg.author_id].items():
+            text += skin+' = '+name+'\n'
+        text+="```\n"
+        text+="如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
+        text+="如果您需要删除皮肤，请使用`notify-d uuid`\n"
+        text+="注：`=号`前面很长的那一串就是uuid\n"
+        await msg.reply(text)
+
+# 删除已有皮肤通知
+@bot.command(name="notify-del",aliases=['notify-d'])
+async def delete_skin_notify(msg:Message,uuid:str="err"):
+    logging(msg)
+    if uuid == 'err':
+        await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
+        return
+
+    global SkinNotifyDict
+    if msg.author_id in SkinNotifyDict:
+        if uuid in SkinNotifyDict[msg.author_id]:
+            print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
+            await msg.reply(f"已删除皮肤：{SkinNotifyDict[msg.author_id][uuid]}")
+            del SkinNotifyDict[msg.author_id][uuid]
+            # 写入文件
+            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
+                json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        else:
+            await msg.reply(f"您提供的uuid不在列表中！")
+            return
+    
 
 # 开机的时候打印一次时间，记录重启时间
 print(f"Start at: [%s]"%GetTime())
