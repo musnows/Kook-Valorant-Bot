@@ -746,9 +746,6 @@ def bg_comp(bg, img, x, y):
 # 预加载用户token(其实已经没用了)
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
-# 皮肤商店提醒功能
-with open("./log/UserSkinInform.json", 'r', encoding='utf-8') as frsi:
-    SkinInformDict = json.load(frsi)
 # 所有皮肤
 with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
     ValSkinList = json.load(frsk)
@@ -866,7 +863,7 @@ async def login_re_auth(msg:Message,kook_user_id:str):
     return ret#正好返回一个bool
 
 #判断是否需要重新获取token
-async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
+async def check_re_auth(def_name:str="",msg:Message=None,fun_fetch=None,res=None):
     try:
         auth=UserAuthDict[msg.author_id]
         userdict={'auth_user_id':auth.user_id,
@@ -877,11 +874,11 @@ async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
         print(resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # if 'errorcode' in str(resp).lower():
-        
         test=resp['httpStatus']#如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
-        await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
+        if msg !=None:
+            await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
         ret = await login_re_auth(msg.author_id)
-        if ret==False:#没有正常返回
+        if ret==False and msg !=None:#没有正常返回
             await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
         return ret #这里可以直接借用返回值进行操作,返回假
         # else:
@@ -933,7 +930,7 @@ async def update_skins(msg:Message):
 async def update_price(msg:Message):
     try:
         global ValPriceList
-        reau = await check_re_auth(msg,"物品价格") 
+        reau = await check_re_auth("物品价格",msg) 
         if reau==False:return #如果为假说明重新登录失败
         # 调用api获取价格列表
         prices=await fetch_item_price_all(UserTokenDict['1961572535'])
@@ -1013,7 +1010,7 @@ async def get_daily_shop(msg: Message,*arg):
         flag_au = 0
         if msg.author_id in UserAuthDict:
             flag_au = 1
-            reau = await check_re_auth(msg,"每日商店") 
+            reau = await check_re_auth("每日商店",msg) 
             if reau==False:return #如果为假说明重新登录失败
 
             # 登陆成功了再提示正在获取商店
@@ -1073,7 +1070,7 @@ async def get_daily_shop(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
 
         if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
             return
 
     except Exception as result:
@@ -1182,7 +1179,7 @@ async def get_user_card(msg: Message,*arg):
     try:
         flag_au = 0
         if msg.author_id in UserAuthDict:
-            reau = await check_re_auth(msg,"玩家装备/通行证")#重新登录
+            reau = await check_re_auth("玩家装备/通行证",msg)#重新登录
             if reau==False:return #如果为假说明重新登录失败
 
             # 如果用户id已有，则不需要再次获取token
@@ -1213,7 +1210,7 @@ async def get_user_card(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
             return
     
     except Exception as result:
@@ -1277,20 +1274,55 @@ async def get_bundle(msg: Message,*arg):
         ch = await bot.fetch_public_channel(Debug_ch)
         await bot.send(ch,err_str)
 
-#定时提醒（出现xx皮肤）
-@bot.task.add_cron(hour=9,minute=0,timezone="Asia/Shanghai")
-async def auto_skin_inform():
-    return     
+#用户选择列表
+UserSDict={}
+# 皮肤商店提醒记录
+with open("./log/UserSkinInform.json", 'r', encoding='utf-8') as frsi:
+    SkinInformDict = json.load(frsi)
 
+#@bot.task.add_cron(hour=16, minute=4, timezone="Asia/Shanghai")
+@bot.command(name="test0")
+async def auto_skin_inform(msg:Message):
+    logging(msg)
+    try:
+        for aid, skin in SkinInformDict.items():
+            if aid in UserAuthDict:
+                if await check_re_auth("定时获取玩家商店") == True:  # 重新登录,如果为假说明重新登录失败
+                    auth = UserAuthDict[aid]
+                    userdict = {'auth_user_id': auth.user_id,
+                                'access_token': auth.access_token,
+                                'entitlements_token': auth.entitlements_token
+                    }
+                    resp = await fetch_daily_shop(userdict)  # 获取每日商店
+                    list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+                    # 关于下面这一行：https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
+                    target_skin = [ val for key,val in skin.items() if key in list_shop]
+                    # print(target_skin)
+                    for name in target_skin:
+                        print(f"[{GetTime()}] Au:{aid} auto_skin_inform = {name}")
+                        user = await bot.client.fetch_user(aid)
+                        await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
+        #完成遍历后打印
+        print("[BOT.TASK] auto_skin_inform finished!")
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        ch = await bot.fetch_public_channel(Debug_ch)
+        await bot.send(ch,err_str)
 
 #设置提醒（出现xx皮肤）
 @bot.command(name="addskin")
 async def add_skin_inform(msg:Message,*arg):
     logging(msg)
     if arg == ():
-        await msg.reply(f"你没有提供皮肤参数！skin:{arg}")
+        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
         return 
     try:
+        #用户没有登录
+        if msg.author_id not in UserAuthDict:
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作\n设置了皮肤提醒之后，请不要切换已登录的账户")
+            return
+        
         name =" ".join(arg)
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
         sklist=fetch_skin_byname_list(name)
@@ -1305,6 +1337,8 @@ async def add_skin_inform(msg:Message,*arg):
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 data={'skin':s,'price':price}
                 retlist.append(data)
+
+        UserSDict[msg.author_id]=retlist
         i=0
         text= "```\n"#模拟一个选择表
         for w in retlist:
@@ -1314,12 +1348,52 @@ async def add_skin_inform(msg:Message,*arg):
         cm=CardMessage()
         c=Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
                 Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤",Types.Text.KMD)),
-                Module.Section(Element.Text(text,Types.Text.KMD)))
+                Module.Section(Element.Text(text+"\n使用 `/sts 序号` 来选择",Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
 
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] addskin\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
+
+@bot.command(name="sts")
+async def select_skin_inform(msg:Message,n:str="err"):
+    logging(msg)
+    if n =="err":
+        await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号：`{n}`")
+        return
+    try:
+        global SkinInformDict
+        if msg.author_id in UserSDict:
+            num=str2int(n)#转成int下标
+            S_skin=UserSDict[msg.author_id][num]
+            if msg.author_id not in SkinInformDict:
+                SkinInformDict[msg.author_id]={}
+                SkinInformDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
+            else:#如果存在了就直接在后面添加
+                SkinInformDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
+            # print(SkinInformDict[msg.author_id])
+            #写入文件
+            with open("./log/UserSkinInform.json", 'w', encoding='utf-8') as fw2:
+                json.dump(SkinInformDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            del UserSDict[msg.author_id]#删除选择页面中的
+            text=f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
+            print(f"Au:{msg.author_id} ",text)
+            await msg.reply(text)
+        else:
+            await msg.reply(f"您需要重新执行`/addskin`来设置第二个提醒皮肤")
+
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] select_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
