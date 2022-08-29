@@ -658,6 +658,10 @@ bg_main = Image.open(
         content))  #背景
 
 def sm_comp(icon, name,price,level_icon):
+    """
+        icon: skin_icon   | name: skin_name |
+        price: skin_price | level_icon: skin_iters
+    """
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  #新建一个画布
     # 处理武器图片
@@ -1041,7 +1045,7 @@ async def get_daily_shop(msg: Message,*arg):
                         res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
                         break
 
-                img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
+                img = sm_comp(res_item["data"]['levels'][0]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
                 bg = bg_comp(bg, img, x, y)
 
                 if x == 0:
