@@ -553,20 +553,16 @@ async def lead(msg: Message,sz:int=15,num:int=10):
 @bot.command()
 async def saveid(msg: Message,*args):
     logging(msg)
+    if args==():
+        await msg.reply(f"您没有提供您的游戏id：`{args}`")
+        return
     try:
         game_id = " ".join(args)#避免用户需要输入双引号
         await saveid123(msg, game_id)
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] saveid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        await msg.reply(err_str)
 
 
 # 存储id的help命令 
