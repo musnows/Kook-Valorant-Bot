@@ -1400,7 +1400,7 @@ async def select_skin_notify(msg:Message,n:str="err"):
             print(f"Au:{msg.author_id} ",text)
             await msg.reply(text)
         else:
-            await msg.reply(f"您需要重新执行`/addskin`来设置第二个提醒皮肤")
+            await msg.reply(f"您需要（重新）执行`/notify-a`来设置提醒皮肤")
 
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] select_skin_inform\n```\n{traceback.format_exc()}\n```"
