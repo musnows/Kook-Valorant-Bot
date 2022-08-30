@@ -667,14 +667,16 @@ async def fetch_bg():
 
 
 def resize(standard_x, img):
+    log_info="[shop] "
     w, h = img.size
-    print(f'原始图片大小： {w, h}')
+    log_info+=f"原始图片大小:({w},{h}) - "
     ratio = w / h
     sizeco = w / standard_x
-    print("缩放系数: ", sizeco)
+    log_info+=f"缩放系数:{format(sizeco,'.3f')} - "
     w_s = int(w / sizeco)
     h_s = int(h / sizeco)
-    print("缩放后大小： ", w_s, h_s)
+    log_info+=f"缩放后大小:({w_s},{h_s})"
+    print(log_info)
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
     return img
 
