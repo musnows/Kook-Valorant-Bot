@@ -561,7 +561,7 @@ async def saveid(msg: Message,*args):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -842,7 +842,7 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -850,8 +850,8 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         await msg.reply(cm2)
 
 #重新登录（kook用户id）
-async def login_re_auth(msg:Message,kook_user_id:str):
-    base_print=f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = "
+async def login_re_auth(kook_user_id:str):
+    base_print=f"[{GetTime()}] Au:{kook_user_id} = "
     print(base_print+"auth_token failure,trying reauthorize()")
     global UserAuthDict
     auth = UserAuthDict[kook_user_id]
@@ -877,14 +877,16 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
         resp = await fetch_valorant_point(userdict)
         print(resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
-        # if 'errorcode' in str(resp).lower():
-        test=resp['httpStatus']#如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
-        if msg !=None:
+        # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
+        test=resp['httpStatus']
+        if isinstance(msg,Message):#如果传入的是msg，则提示用户
             await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
-        ret = await login_re_auth(msg.author_id)
-        if ret==False and msg !=None:#没有正常返回
+        #不管传入的是用户id还是msg，都传userid进入该函数
+        ret = await login_re_auth(user_id)
+        if ret==False and isinstance(msg,Message):#没有正常返回
             await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
-        return ret #这里可以直接借用返回值进行操作,返回假
+        #这里可以直接借用reauthorize的返回值进行操作
+        return ret 
     except Exception as result:
         print(f"Ckeck_re_auth good,No need to reauthorize. [{result}]")
         return True
@@ -1080,7 +1082,7 @@ async def get_daily_shop(msg: Message,*arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1220,7 +1222,7 @@ async def get_user_card(msg: Message,*arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1353,7 +1355,7 @@ async def add_skin_notify(msg:Message,*arg):
         cm=CardMessage()
         c=Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
                 Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤",Types.Text.KMD)),
-                Module.Section(Element.Text(text+"\n使用 `/sts 序号` 来选择",Types.Text.KMD)))
+                Module.Section(Element.Text(text+"\n\n使用 `/sts 序号` 来选择",Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
 
@@ -1362,7 +1364,7 @@ async def add_skin_notify(msg:Message,*arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1402,7 +1404,7 @@ async def select_skin_notify(msg:Message,n:str="err"):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
