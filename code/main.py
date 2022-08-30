@@ -665,7 +665,7 @@ async def fetch_bg():
             await img_requestor('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png')))  # 背景
 
 
-
+# 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
     log_info="[shop] "
     w, h = img.size
