@@ -94,19 +94,17 @@ async def saveid_1(msg: Message):
 # 显示已有id的个数
 async def saveid_2(msg: Message):
     countD = len(GameIdDict)
-    await msg.reply("目前狸狸已经记下了%d个小伙伴的id喽~"% (countD))
+    await msg.reply(f"目前狸狸已经记下了`{countD}`个小伙伴的id喽~")
 
      
 # 实现读取用户游戏ID并返回
 async def myid123(msg: Message):
-    flag=0
     if msg.author_id in GameIdDict.keys():
            flag=1#找到了对应用户的id
            await msg.reply(f'游戏id: '+GameIdDict[msg.author_id])
-
-    if flag==0:
+    else:
        countD= len(GameIdDict)
-       await msg.reply("狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n```\n/saveid 你的游戏id```\n目前狸狸已经记下了%d个小伙伴的id喽！"% (countD))
+       await msg.reply(f"狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n```\n/saveid 你的游戏id```\n目前狸狸已经记下了`{countD}`个小伙伴的id喽！")
 
 
 ##########################################################################################
