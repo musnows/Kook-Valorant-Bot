@@ -35,6 +35,8 @@ Here is the Command List for bot:
 | `/Ahri`         | help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is an hero in League of Legends） |
 | `/vhelp`         | help command for Valorant serch fuction |
 
+Recommended to use after the Valorant_Function is stable.
+
 | Valorant        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
 | `/val err_code` | help with the err_code of valorant                           |
@@ -45,10 +47,14 @@ Here is the Command List for bot:
 | `/login account passwd` | login your `riot_account` to fetch `auth_token` |
 | `/logout` | logout your riot_account |
 | `/shop` | fetch skin at daily shop |
-| `/point` | fetch remaining `Vp` and `Rp` |
-| `/unifo` | fetch player `card` & `title`|
+| `/uinfo`或`/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
+| `/notify-a skin_name` |search for skin name,providing NO for add it into notification |
+| `/notify-l` | show current notify skin |
+| `/notify-d skin_uuid` | delete skin through `skin_uuid` |
 
-Recommended to use after the Valorant_Function is stable.
+notify function require user to stay `login`, bot wil fetch your daily shop at `08:02 am GMT+8` .If the skin is in daily shop,bot will send a private message to user.
+
+Because the bot is using in Chinese platform, the `name` only support `zh-TW`
 
 | Other        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
