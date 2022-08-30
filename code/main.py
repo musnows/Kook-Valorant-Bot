@@ -882,8 +882,8 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
         if ret==False and msg !=None:#没有正常返回
             await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
         return ret #这里可以直接借用返回值进行操作,返回假
-    except:
-        print("ckeck_re_auth good, No need to reauthorize")
+    except Exception as result:
+        print(f"Ckeck_re_auth good,No need to reauthorize. [{result}]")
         return True
 
 
@@ -1282,6 +1282,7 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
 @bot.task.add_cron(hour=8, minute=2, timezone="Asia/Shanghai")
 async def auto_skin_inform():
     try:
+        print("[BOT.TASK] auto_skin_inform Starting!")#开始的时候打印一下
         for aid, skin in SkinNotifyDict.items():
             user = await bot.client.fetch_user(aid)
             if aid in UserAuthDict:
@@ -1297,12 +1298,14 @@ async def auto_skin_inform():
                     target_skin = [ val for key,val in skin.items() if key in list_shop]
                     # print(target_skin)
                     for name in target_skin:
-                        print(f"[{GetTime()}] Au:{aid} auto_skin_inform = {name}")
+                        print(f"[BOT.TASK] Au:{aid} auto_skin_inform = {name}")
                         await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
+                    print(f"[BOT.TASK] Au:{aid} auto_skin_inform = None")#打印这个说明这个用户正常遍历完了
             else:#不在auth里面说明没有登录
+                print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
                 await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
         #完成遍历后打印
-        print("[BOT.TASK] auto_skin_inform finished!")
+        print("[BOT.TASK] auto_skin_inform Finished!")#正常完成
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
