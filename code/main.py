@@ -1279,10 +1279,8 @@ UserSDict={}
 with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
-#@bot.task.add_cron(hour=16, minute=4, timezone="Asia/Shanghai")
-@bot.command(name="test0")
-async def auto_skin_inform(msg:Message):
-    logging(msg)
+@bot.task.add_cron(hour=8, minute=2, timezone="Asia/Shanghai")
+async def auto_skin_inform():
     try:
         for aid, skin in SkinNotifyDict.items():
             user = await bot.client.fetch_user(aid)
@@ -1431,7 +1429,7 @@ async def delete_skin_notify(msg:Message,uuid:str="err"):
     if msg.author_id in SkinNotifyDict:
         if uuid in SkinNotifyDict[msg.author_id]:
             print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
-            await msg.reply(f"已删除皮肤：{SkinNotifyDict[msg.author_id][uuid]}")
+            await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
             del SkinNotifyDict[msg.author_id][uuid]
             # 写入文件
             with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
