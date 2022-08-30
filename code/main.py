@@ -162,7 +162,7 @@ with open("./log/color_idsave.json", 'r',encoding='utf-8') as frcl:
     ColorIdDict = json.load(frcl)
 
 with open("./config/color_emoji.txt", 'r',encoding='utf-8') as fremoji:
-    EmojiLines=fremoji.readlines()   
+    EmojiLines=fremoji.readlines()
 
 
 # 用于记录使用表情回应获取ID颜色的用户
@@ -646,101 +646,132 @@ import math  #用于小数取整
 standard_length = 1000  #图片默认边长
 # 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
 # 所有的数都  * standard_length / 1000 是为了当标准边长变动时这些参数会按照比例缩放
-standard_length_sm = math.floor(standard_length / 2)  # 组成四宫格小图的边长
+standard_length_sm = int(standard_length / 2)  # 组成四宫格小图的边长
 stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
-stardard_icon_resize_ratio = 0.59 * standard_length / 1000  #枪的默认缩放
-standard_icon_top_blank = math.floor(180 * standard_length /
+stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
+standard_icon_top_blank = int(180 * standard_length /
                                      1000)  # 枪距离图片顶部的像素
-standard_text_position = (math.floor(122 * standard_length / 1000),
-                          math.floor(320 * standard_length / 1000))  #默认文字位置
-standard_price_position = (math.floor(280 * standard_length / 1000),
-                           math.floor(120 * standard_length / 1000))  #皮肤价格文字位置
-standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  #等级icon图标的缩放
-standard_level_icon_position = (math.floor(350 * standard_length /1000),
-                                math.floor(120 * standard_length /1000))  # 等级icon图标的坐标
+standard_text_position = (int(128 * standard_length / 1000),
+                          int(317 * standard_length / 1000))  # 默认文字位置
+standard_price_position = (int(280 * standard_length / 1000),
+                           int(120 * standard_length / 1000))  # 皮肤价格文字位置
+standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
+standard_level_icon_position = (int(350 * standard_length / 1000),
+                                int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
-resp = {}  #没有那个resp数据 为了防止报错
 
-font_color = '#ffffff'  #文字颜色：白色
-bg_main = Image.open(
-    io.BytesIO(
-        requests.get(
-            'https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').
-        content))  #背景
 
-def sm_comp(icon, name,price,level_icon):
+async def img_requestor(img_url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(img_url) as r:
+            return await r.read()
+font_color = '#ffffff'  # 文字颜色：白色
+
+@bot.task.add_date()
+async def fetch_bg():
+    global bg_main
+    bg_main = Image.open(
+        io.BytesIO(
+            await img_requestor('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png')))  # 背景
+
+
+
+def resize(standard_x, img):
+    w, h = img.size
+    print(f'原始图片大小： {w, h}')
+    ratio = w / h
+    sizeco = w / standard_x
+    print("缩放系数: ", sizeco)
+    w_s = int(w / sizeco)
+    h_s = int(h / sizeco)
+    print("缩放后大小： ", w_s, h_s)
+    img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
+    return img
+
+level_icon_temp = {}
+async def sm_comp(icon, name, price, level_icon):
     bg = Image.new(mode='RGBA',
-                   size=(standard_length_sm, standard_length_sm))  #新建一个画布
+                   size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理武器图片
-    layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
-    w, h = layer_icon.size  #读取武器图片长宽
-    new_w = math.floor(w * stardard_icon_resize_ratio)  #按比例缩放的长
-    new_h = math.floor(h * stardard_icon_resize_ratio)  #按比例缩放的宽
-    layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS) 
+    layer_icon = Image.open(io.BytesIO(await img_requestor(icon)))  # 打开武器图片
+    # w, h = layer_icon.size  # 读取武器图片长宽
+    # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
+    # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
+
+    stardard_icon_x = 300 #图像标准宽（要改大小就改这个
+
+    layer_icon = resize(300,layer_icon)
+    # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
     # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
-    left_position = math.floor((standard_length_sm - new_w) /2) 
+    left_position = int((standard_length_sm - stardard_icon_x) / 2)
     # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
     bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)
     # bg.paste代表向bg粘贴一张图片
-    # 第一个参数是图像layer_icon 
+    # 第一个参数是图像layer_icon
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
 
     # 处理武器level的图片
-    Level_icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
-    w, h = Level_icon.size  #读取武器图片长宽
-    new_w = math.floor(w * standard_level_icon_reszie_ratio )  #按比例缩放的长
-    new_h = math.floor(h * standard_level_icon_reszie_ratio )  #按比例缩放的宽
+
+    if level_icon not in level_icon_temp:
+        Level_icon = Image.open(io.BytesIO(await img_requestor(level_icon)))  # 打开武器图片
+        level_icon_temp[level_icon] = Level_icon
+    else:
+        Level_icon = level_icon_temp[level_icon]
+
+    w, h = Level_icon.size  # 读取武器图片长宽
+    new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
+    new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
     Level_icon = Level_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
     bg.paste(Level_icon, standard_level_icon_position, Level_icon)
 
-
-    name = zhconv.convert(name, 'zh-cn')  #将名字简体化
-    name_list = name.split(' ')  #将武器名字分割换行
-    #print(name_list)
-    if '' in name_list:#避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
+    name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
+    name_list = name.split(' ')  # 将武器名字分割换行
+    # print(name_list)
+    if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
         name_list.remove('')
-    
-    text=""
-    if len(name_list[0])>5:
-        text = name_list[0] + '\n'  #如果皮肤名很长就不用加空格
+
+    text = ""
+    if len(name_list[0]) > 5:
+        text = name_list[0] + '\n'  # 如果皮肤名很长就不用加空格
     else:
-        text = ' '.join(name_list[0]) + '\n'  #向皮肤名字添加空格增加字间距
-    #interval = len(name_list[0])
-    #print(len(name_list))
+        text = ' '.join(name_list[0]) + '\n'  # 向皮肤名字添加空格增加字间距
+    # interval = len(name_list[0])
+    # print(len(name_list))
     if len(name_list) > 2:
         i = 1
         while i <= len(name_list) - 2:
             name_list[0] = name_list[0] + ' ' + name_list[i]
-            #print(name_list[0])
+            # print(name_list[0])
             i += 1
         interval = len(name_list[0])
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
-    if len(name_list) > 1: #有些刀皮肤只有一个元素
+    if len(name_list) > 1:  # 有些刀皮肤只有一个元素
         # if len(name_list[1]) > 3:
         #     interval = interval - len(name_list[1]) - 2
         # interval = interval - interval//3
         # for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
         #     text += '　'
-        text+='              '#添加固定长度的缩进，12个空格
-        if len(name_list[1])<4:
-            text += ' '.join(name_list[1])  #插入第二行字符
+        text += '              '  # 添加固定长度的缩进，12个空格
+        if len(name_list[1]) < 4:
+            text += ' '.join(name_list[1])  # 插入第二行字符
         else:
-            text += name_list[1] #单独处理制式手槍（不加空格）
+            text += name_list[1]  # 单独处理制式手槍（不加空格）
 
     draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
-    #第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
+    # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
     draw.text(standard_text_position,
               text,
               font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
               fill=font_color)
-    text=f"{price}"#价格
+    text = f"{price}"  # 价格
     draw.text(standard_price_position,
-            text,
-            font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
-            fill=font_color)
-    #bg.show() #测试用途，展示图片(linux貌似不可用)
+              text,
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              fill=font_color)
+    # bg.show() #测试用途，展示图片(linux貌似不可用)
     return bg
+
 
 def bg_comp(bg, img, x, y):
     position = (x, y)
@@ -1042,7 +1073,7 @@ async def get_daily_shop(msg: Message,*arg):
                         res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
                         break
 
-                img = sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
+                img = await sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
                 bg = bg_comp(bg, img, x, y)
 
                 if x == 0:
