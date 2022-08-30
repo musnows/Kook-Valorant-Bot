@@ -103,11 +103,14 @@ async def Vhelp(msg: Message,*arg):
         help_1+="「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1+="「/shop」 查询您的每日商店\n"
         help_1+="「/point」「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
+        help_1+="「/notify-a 皮肤名」查询皮肤，并选择指定皮肤加入每日商店提醒\n"
+        help_1+="「/notify-l 」查看当前设置了提醒的皮肤\n"
+        help_1+="「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
         help_1+="「/logout」取消登录\n"
         c3.append(Module.Section(Element.Text(help_1,Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Section('若有任何问题，欢迎加入帮助频道',
-                Element.Button('来哩', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+                Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm.append(c3)
         await msg.reply(cm)
 
