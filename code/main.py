@@ -8,7 +8,7 @@ import traceback
 from typing import Union
 from datetime import datetime, timedelta
 
-from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage
+from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage,PrivateMessage
 from khl.card import CardMessage, Card, Module, Element, Types
 from khl.command import Rule
 
@@ -44,9 +44,8 @@ def GetTime(): #将获取当前时间封装成函数方便使用
 
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
-    #print(type(msg))
     now_time = GetTime()
-    if f"{type(msg)}"=="<class 'khl.message.PrivateMessage'>":
+    if isinstance(msg,PrivateMessage):
         print(f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
     else:
         print(f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
@@ -622,6 +621,9 @@ async def dx(msg: Message):
     logging(msg)
     await dx123(msg)
 
+
+###########################################################################################
+###########################################################################################
 
 #多出来的import
 import copy
@@ -1340,6 +1342,10 @@ async def add_skin_notify(msg:Message,*arg):
                 price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 data={'skin':s,'price':price}
                 retlist.append(data)
+        
+        if retlist==[]:#空list代表这个皮肤没有价格
+            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
+            return
 
         UserSDict[msg.author_id]=retlist
         i=0
@@ -1388,7 +1394,8 @@ async def select_skin_notify(msg:Message,n:str="err"):
             # 写入文件
             with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
                 json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            del UserSDict[msg.author_id]#删除选择页面中的
+            
+            del UserSDict[msg.author_id]#删除选择页面中的list
             text=f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
             print(f"Au:{msg.author_id} ",text)
             await msg.reply(text)
@@ -1411,15 +1418,22 @@ async def select_skin_notify(msg:Message,n:str="err"):
 @bot.command(name="notify-list",aliases=['notify-l'])
 async def list_skin_notify(msg:Message):
     logging(msg)
-    if msg.author_id in SkinNotifyDict:
-        text ="```\n"
-        for skin,name in SkinNotifyDict[msg.author_id].items():
-            text += skin+' = '+name+'\n'
-        text+="```\n"
-        text+="如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
-        text+="如果您需要删除皮肤，请使用`notify-d uuid`\n"
-        text+="注：`=号`前面很长的那一串就是uuid\n"
-        await msg.reply(text)
+    try:
+        if msg.author_id in SkinNotifyDict:
+            text ="```\n"
+            for skin,name in SkinNotifyDict[msg.author_id].items():
+                text += skin+' = '+name+'\n'
+            text+="```\n"
+            text+="如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
+            text+="如果您需要删除皮肤，请使用`notify-d uuid`\n"
+            text+="注：`=`号前面很长的那一串就是uuid\n"
+            await msg.reply(text)
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+        ch = await bot.fetch_public_channel(Debug_ch)
+        await bot.send(ch,err_str)
 
 # 删除已有皮肤通知
 @bot.command(name="notify-del",aliases=['notify-d'])
@@ -1428,20 +1442,26 @@ async def delete_skin_notify(msg:Message,uuid:str="err"):
     if uuid == 'err':
         await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
         return
+    try:
+        global SkinNotifyDict
+        if msg.author_id in SkinNotifyDict:
+            if uuid in SkinNotifyDict[msg.author_id]:
+                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
+                await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
+                del SkinNotifyDict[msg.author_id][uuid]
+                # 写入文件
+                with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
+                    json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            else:
+                await msg.reply(f"您提供的uuid不在列表中！")
+                return
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+        ch = await bot.fetch_public_channel(Debug_ch)
+        await bot.send(ch,err_str)
 
-    global SkinNotifyDict
-    if msg.author_id in SkinNotifyDict:
-        if uuid in SkinNotifyDict[msg.author_id]:
-            print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
-            await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
-            del SkinNotifyDict[msg.author_id][uuid]
-            # 写入文件
-            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
-                json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        else:
-            await msg.reply(f"您提供的uuid不在列表中！")
-            return
-    
 
 # 开机的时候打印一次时间，记录重启时间
 print(f"Start at: [%s]"%GetTime())
