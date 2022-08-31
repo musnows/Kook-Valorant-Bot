@@ -896,7 +896,7 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
                 'entitlements_token':auth.entitlements_token
         }
         resp = await fetch_valorant_point(userdict)
-        print(resp)
+        print('[Ckeck_re_auth]',resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
         test=resp['httpStatus']
@@ -909,9 +909,24 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
         #这里可以直接借用reauthorize的返回值进行操作
         return ret 
     except Exception as result:
-        print(f"Ckeck_re_auth good,No need to reauthorize. [{result}]")
+        print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
         return True
 
+# 测试是否已登陆
+@bot.command(name="login-t")
+async def test_if_login(msg:Message,*arg):
+    logging(msg)
+    try:
+        if msg.author_id in UserAuthDict:
+            flag_au = 1
+            reau = await check_re_auth("测试登录",msg) 
+            if reau==False:return #如果为假说明重新登录失败
+
+            await msg.reply(f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`")
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] test_if_login\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
 
 # 退出登录
 @bot.command(name='logout')
@@ -1066,8 +1081,8 @@ async def get_daily_shop(msg: Message,*arg):
                         #res_iters = await fetch_item_iters(it['contentTierUuid'])
                         res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
                         break
-
-                img = await sm_comp(res_item["data"]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
+                # res_item['data']['displayIcon']这个键值，有些皮肤是None
+                img = await sm_comp(res_item["data"]['levels'][0]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
                 bg = bg_comp(bg, img, x, y)
 
                 if x == 0:
@@ -1331,7 +1346,10 @@ async def auto_skin_inform():
                 print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
                 await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
         #完成遍历后打印
-        print("[BOT.TASK] auto_skin_inform Finished!")#正常完成
+        finish_str="[BOT.TASK] auto_skin_inform Finished!"
+        print(finish_str)#正常完成
+        ch = await bot.fetch_public_channel(Debug_ch)
+        await bot.send(ch,finish_str)
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
