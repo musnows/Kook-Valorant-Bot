@@ -703,7 +703,6 @@ async def sm_comp(icon, name, price, level_icon):
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
 
     # 处理武器level的图片
-
     if level_icon not in level_icon_temp:
         Level_icon = Image.open(io.BytesIO(await img_requestor(level_icon)))  # 打开武器图片
         level_icon_temp[level_icon] = Level_icon
@@ -739,11 +738,6 @@ async def sm_comp(icon, name, price, level_icon):
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
     if len(name_list) > 1:  # 有些刀皮肤只有一个元素
-        # if len(name_list[1]) > 3:
-        #     interval = interval - len(name_list[1]) - 2
-        # interval = interval - interval//3
-        # for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
-        #     text += '　'
         text += '              '  # 添加固定长度的缩进，12个空格
         if len(name_list[1]) < 4:
             text += ' '.join(name_list[1])  # 插入第二行字符
