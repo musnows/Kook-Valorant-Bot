@@ -990,7 +990,12 @@ async def update_price(msg:Message):
         reau = await check_re_auth("物品价格",msg) 
         if reau==False:return #如果为假说明重新登录失败
         # 调用api获取价格列表
-        prices=await fetch_item_price_all(UserTokenDict['1961572535'])
+        auth=UserAuthDict[msg.author_id]
+        userdict={'auth_user_id':auth.user_id,
+                'access_token':auth.access_token,
+                'entitlements_token':auth.entitlements_token
+        }
+        prices=await fetch_item_price_all(userdict)
         ValPriceList=prices # 所有价格的列表
         # 写入文件
         with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
