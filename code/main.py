@@ -667,14 +667,16 @@ async def fetch_bg():
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
+    log_info="[shop] "
     w, h = img.size
-    print(f'原始图片大小： {w, h}')
+    log_info+=f"原始图片大小:({w},{h}) - "
     ratio = w / h
     sizeco = w / standard_x
-    print("缩放系数: ", sizeco)
+    log_info+=f"缩放系数:{format(sizeco,'.3f')} - "
     w_s = int(w / sizeco)
     h_s = int(h / sizeco)
-    print("缩放后大小： ", w_s, h_s)
+    log_info+=f"缩放后大小:({w_s},{h_s})"
+    print(log_info)
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
     return img
 
@@ -1144,11 +1146,11 @@ async def get_daily_shop(msg: Message,*arg):
             return
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] `shop`\n{traceback.format_exc()}"
+        err_str=f"ERR! [{GetTime()}] shop\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1265,6 +1267,9 @@ async def get_user_card(msg: Message,*arg):
             #print(resp)
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
+            if resp['Guns'] == None or resp['Sprays'] == None:#可能遇到全新账户（没打过游戏）的情况
+                await msg.reply(f"状态错误！您是否登录了一个全新新账户？\ncard: `{player_card}`\ntitle: `{player_title}`")
+                return
 
             cm = CardMessage()
             c = Card(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
