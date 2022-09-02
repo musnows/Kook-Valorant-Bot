@@ -702,19 +702,18 @@ def sm_comp(icon, name, price, level_icon):
     # 第一个参数是图像layer_icon
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
 
-    # 处理武器level的图片
-
+    # 处理武器level的图片(存到本地dict里面方便调用)
     if level_icon not in level_icon_temp:
-        Level_icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
-        level_icon_temp[level_icon] = Level_icon
+        LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
+        level_icon_temp[level_icon] = LEVEL_Icon
     else:
-        Level_icon = level_icon_temp[level_icon]
+        LEVEL_Icon = level_icon_temp[level_icon]
 
-    w, h = Level_icon.size  # 读取武器图片长宽
+    w, h = LEVEL_Icon.size  # 读取武器图片长宽
     new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
     new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
-    Level_icon = Level_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    bg.paste(Level_icon, standard_level_icon_position, Level_icon)
+    LEVEL_Icon = LEVEL_Icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    bg.paste(LEVEL_Icon, standard_level_icon_position, LEVEL_Icon)
 
     name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
     name_list = name.split(' ')  # 将武器名字分割换行
@@ -739,11 +738,6 @@ def sm_comp(icon, name, price, level_icon):
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
     if len(name_list) > 1:  # 有些刀皮肤只有一个元素
-        # if len(name_list[1]) > 3:
-        #     interval = interval - len(name_list[1]) - 2
-        # interval = interval - interval//3
-        # for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
-        #     text += '　'
         text += '              '  # 添加固定长度的缩进，12个空格
         if len(name_list[1]) < 4:
             text += ' '.join(name_list[1])  # 插入第二行字符
@@ -784,7 +778,6 @@ def uuid_to_comp(skinuuid,ran):
                         res_iters['data']['displayIcon'])
     global shop_img_temp
     shop_img_temp[ran].append(img)
-
 
 
 
