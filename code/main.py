@@ -1,21 +1,23 @@
 # encoding: utf-8:
+import asyncio
 import json
 import random
+import threading
 import time
 import aiohttp
 import requests
 import traceback
-from typing import Union
+
 from datetime import datetime, timedelta
 
-from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage,PrivateMessage
+from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage
 from khl.card import CardMessage, Card, Module, Element, Types
 from khl.command import Rule
 
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
-# 用读取来的 config 初始化 bot，字段对应即可
+# 用读取来的 config 初始化 bot，字段对应即可r
 bot = Bot(token=config['token'])
 
 Botoken=config['token']
@@ -44,8 +46,9 @@ def GetTime(): #将获取当前时间封装成函数方便使用
 
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
+    #print(type(msg))
     now_time = GetTime()
-    if isinstance(msg,PrivateMessage):
+    if f"{type(msg)}"=="<class 'khl.message.PrivateMessage'>":
         print(f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
     else:
         print(f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}")
@@ -102,14 +105,11 @@ async def Vhelp(msg: Message,*arg):
         help_1+="「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1+="「/shop」 查询您的每日商店\n"
         help_1+="「/point」「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
-        help_1+="「/notify-a 皮肤名」查询皮肤，并选择指定皮肤加入每日商店提醒\n"
-        help_1+="「/notify-l 」查看当前设置了提醒的皮肤\n"
-        help_1+="「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
         help_1+="「/logout」取消登录\n"
         c3.append(Module.Section(Element.Text(help_1,Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Section('若有任何问题，欢迎加入帮助频道',
-                Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+                Element.Button('来哩', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm.append(c3)
         await msg.reply(cm)
 
@@ -136,7 +136,7 @@ async def countdown(msg: Message,time: int = 60):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] countdown\n{traceback.format_exc()}"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -151,7 +151,7 @@ async def roll(msg: Message, t_min: int=1, t_max: int=100, n: int = 1):
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] roll\n{traceback.format_exc()}"
         print(err_str)
         #发送错误信息到指定频道
         debug_channel= await bot.fetch_public_channel(Debug_ch)
@@ -458,7 +458,7 @@ async def Weather(msg: Message,city:str="err"):
     try:
         await weather(msg,city)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] we\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] we\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
 
@@ -541,6 +541,17 @@ async def kda(msg: Message):
     logging(msg)
     await kda123(msg)
 
+# # 查询皮肤系列
+# @bot.command()
+# async def skin(msg: Message,*arg):
+#     logging(msg)
+#     await msg.reply(f"`/skin`命令已取消，请使用相同功能的`/bundle 皮肤名`")
+#     # if arg ==():
+#     #     await msg.reply(f"函数参数错误，name: `{arg}`\n")
+#     #     return
+#     # name=" ".join(arg)
+#     # await skin123(msg,name)
+
 # 查询排行榜
 @bot.command()
 async def lead(msg: Message,sz:int=15,num:int=10):
@@ -552,16 +563,20 @@ async def lead(msg: Message,sz:int=15,num:int=10):
 @bot.command()
 async def saveid(msg: Message,*args):
     logging(msg)
-    if args==():
-        await msg.reply(f"您没有提供您的游戏id：`{args}`")
-        return
     try:
         game_id = " ".join(args)#避免用户需要输入双引号
         await saveid123(msg, game_id)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] saveid\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] saveid\n{traceback.format_exc()}"
         print(err_str)
-        await msg.reply(err_str)
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
 
 
 # 存储id的help命令 
@@ -593,7 +608,7 @@ async def myid(msg: Message,*args):
     try:
         await myid123(msg)
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] myid\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] myid\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
 
@@ -621,9 +636,6 @@ async def dx(msg: Message):
     logging(msg)
     await dx123(msg)
 
-
-###########################################################################################
-###########################################################################################
 
 #多出来的import
 import copy
@@ -665,27 +677,25 @@ async def fetch_bg():
             await img_requestor('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png')))  # 背景
 
 
-# 缩放图片，部分皮肤图片大小不正常
+
 def resize(standard_x, img):
-    log_info="[shop] "
     w, h = img.size
-    log_info+=f"原始图片大小:({w},{h}) - "
+    print(f'原始图片大小： {w, h}')
     ratio = w / h
     sizeco = w / standard_x
-    log_info+=f"缩放系数:{format(sizeco,'.3f')} - "
+    print("缩放系数: ", sizeco)
     w_s = int(w / sizeco)
     h_s = int(h / sizeco)
-    log_info+=f"缩放后大小:({w_s},{h_s})"
-    print(log_info)
+    print("缩放后大小： ", w_s, h_s)
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
     return img
 
 level_icon_temp = {}
-async def sm_comp(icon, name, price, level_icon):
+def sm_comp(icon, name, price, level_icon):
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理武器图片
-    layer_icon = Image.open(io.BytesIO(await img_requestor(icon)))  # 打开武器图片
+    layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
     # w, h = layer_icon.size  # 读取武器图片长宽
     # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
     # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
@@ -703,8 +713,9 @@ async def sm_comp(icon, name, price, level_icon):
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
 
     # 处理武器level的图片
+
     if level_icon not in level_icon_temp:
-        Level_icon = Image.open(io.BytesIO(await img_requestor(level_icon)))  # 打开武器图片
+        Level_icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
         level_icon_temp[level_icon] = Level_icon
     else:
         Level_icon = level_icon_temp[level_icon]
@@ -738,6 +749,11 @@ async def sm_comp(icon, name, price, level_icon):
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
     if len(name_list) > 1:  # 有些刀皮肤只有一个元素
+        # if len(name_list[1]) > 3:
+        #     interval = interval - len(name_list[1]) - 2
+        # interval = interval - interval//3
+        # for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
+        #     text += '　'
         text += '              '  # 添加固定长度的缩进，12个空格
         if len(name_list[1]) < 4:
             text += ' '.join(name_list[1])  # 插入第二行字符
@@ -767,7 +783,7 @@ def bg_comp(bg, img, x, y):
 
 ##############################################################################
 
-# 预加载用户token(其实已经没用了)
+# 预加载用户token
 with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
 # 所有皮肤
@@ -804,14 +820,7 @@ def fetch_skin_bylist(item_id):
         if item_id == item['levels'][0]['uuid']:
             res['data']=item#所以要手动创建一个带data的dict作为返回值
             return res
-#从list中，通过皮肤名字获取皮肤列表
-def fetch_skin_byname_list(name):
-    wplist=list()#包含该名字的皮肤list
-    for skin in ValSkinList['data']:
-        if name in skin['displayName']:
-            data={'displayName':skin['displayName'],'lv_uuid':skin['levels'][0]['uuid']}
-            wplist.append(data)
-    return wplist
+
 
 
 #查询当前有多少用户登录了
@@ -859,11 +868,11 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] `login`\n {traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -871,8 +880,8 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         await msg.reply(cm2)
 
 #重新登录（kook用户id）
-async def login_re_auth(kook_user_id:str):
-    base_print=f"[{GetTime()}] Au:{kook_user_id} = "
+async def login_re_auth(msg:Message,kook_user_id:str):
+    base_print=f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = "
     print(base_print+"auth_token failure,trying reauthorize()")
     global UserAuthDict
     auth = UserAuthDict[kook_user_id]
@@ -887,46 +896,30 @@ async def login_re_auth(kook_user_id:str):
     return ret#正好返回一个bool
 
 #判断是否需要重新获取token
-async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
+async def check_re_auth(msg:Message,def_name:str,fun_fetch=None,res=None):
     try:
-        user_id = msg if isinstance(msg,str) else msg.author_id #如果是str就直接用
-        auth=UserAuthDict[user_id]
+        auth=UserAuthDict[msg.author_id]
         userdict={'auth_user_id':auth.user_id,
                 'access_token':auth.access_token,
                 'entitlements_token':auth.entitlements_token
         }
         resp = await fetch_valorant_point(userdict)
-        print('[Ckeck_re_auth]',resp)
+        print(resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
-        # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
-        test=resp['httpStatus']
-        if isinstance(msg,Message):#如果传入的是msg，则提示用户
-            await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
-        #不管传入的是用户id还是msg，都传userid进入该函数
-        ret = await login_re_auth(user_id)
-        if ret==False and isinstance(msg,Message):#没有正常返回
+        # if 'errorcode' in str(resp).lower():
+        
+        test=resp['httpStatus']#如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
+        await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
+        ret = await login_re_auth(msg.author_id)
+        if ret==False:#没有正常返回
             await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
-        #这里可以直接借用reauthorize的返回值进行操作
-        return ret 
-    except Exception as result:
-        print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
+        return ret #这里可以直接借用返回值进行操作,返回假
+        # else:
+        #     return True #返回原本的内容
+    except:
+        print("ckeck_re_auth good, No need to reauthorize")
         return True
 
-# 测试是否已登陆
-@bot.command(name="login-t")
-async def test_if_login(msg:Message,*arg):
-    logging(msg)
-    try:
-        if msg.author_id in UserAuthDict:
-            flag_au = 1
-            reau = await check_re_auth("测试登录",msg) 
-            if reau==False:return #如果为假说明重新登录失败
-
-            await msg.reply(f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`")
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] test_if_login\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
 
 # 退出登录
 @bot.command(name='logout')
@@ -961,7 +954,7 @@ async def update_skins(msg:Message):
         print(f"[{GetTime()}] update_skins finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_skins\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] update_skins\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -970,7 +963,7 @@ async def update_skins(msg:Message):
 async def update_price(msg:Message):
     try:
         global ValPriceList
-        reau = await check_re_auth("物品价格",msg) 
+        reau = await check_re_auth(msg,"物品价格") 
         if reau==False:return #如果为假说明重新登录失败
         # 调用api获取价格列表
         prices=await fetch_item_price_all(UserTokenDict['1961572535'])
@@ -981,7 +974,7 @@ async def update_price(msg:Message):
         print(f"[{GetTime()}] update_item_price finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_price\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] update_price\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -1020,7 +1013,7 @@ async def update_bundle_url(msg:Message):
         print(f"[{GetTime()}] update_bundle_url finished!")
         return True
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] update_bundle_url\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] update_bundle_url\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         return False
@@ -1038,6 +1031,22 @@ async def update_skin_price(msg:Message):
             await msg.reply(f"成功更新：捆绑包")
 
 
+shop_img_temp = {}
+def uuid_to_comp(skinuuid,ran):
+    res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+    res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+    price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+    for it in ValSkinList['data']:
+        if it['levels'][0]['uuid'] == skinuuid:
+            # res_iters = await fetch_item_iters(it['contentTierUuid'])
+            res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
+            break
+    img = sm_comp(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
+                        res_iters['data']['displayIcon'])
+    global shop_img_temp
+    shop_img_temp[ran].append(img)
+
+
 # 获取每日商店的命令
 @bot.command(name='shop',aliases=['SHOP'])
 async def get_daily_shop(msg: Message,*arg):
@@ -1047,12 +1056,9 @@ async def get_daily_shop(msg: Message,*arg):
         return
 
     try:
-        flag_au = 0
         if msg.author_id in UserAuthDict:
-            flag_au = 1
-            reau = await check_re_auth("每日商店",msg) 
+            reau = await check_re_auth(msg,"每日商店") 
             if reau==False:return #如果为假说明重新登录失败
-
             # 登陆成功了再提示正在获取商店
             await msg.reply(f"正在获取您的每日商店，请耐心等待一会哦")
             #计算获取每日商店要多久
@@ -1071,27 +1077,38 @@ async def get_daily_shop(msg: Message,*arg):
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
             x = 0
             y = 0
+            a = time.time()
             bg = copy.deepcopy(bg_main)
+            ran = random.randint(1,9999)
+            global shop_img_temp
+            shop_img_temp[ran] = []
+            img_num = 0
+
             for skinuuid in list_shop:
-                res_item = fetch_skin_bylist(skinuuid)#从本地文件中查找
-                res_price= fetch_item_price_bylist(skinuuid) #在本地文件中查找
-                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                for it in ValSkinList['data']:
-                    if it['levels'][0]['uuid'] == skinuuid:
-                        #res_iters = await fetch_item_iters(it['contentTierUuid'])
-                        res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
-                        break
-                # res_item['data']['displayIcon']这个键值，有些皮肤是None
-                img = await sm_comp(res_item["data"]['levels'][0]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
-                bg = bg_comp(bg, img, x, y)
+                th = threading.Thread(target=uuid_to_comp,args=(skinuuid,ran))
+                th.start()
+                await asyncio.sleep(0.3)
+            while True:
+                img_temp = copy.deepcopy(shop_img_temp)
+                for i in img_temp[ran]:
 
-                if x == 0:
-                    x += standard_length_sm
-                elif x == standard_length_sm:
-                    x = 0
-                    y += standard_length_sm
+                    shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
+                    bg = bg_comp(bg, i, x, y)
+                    if x == 0:
+                        x += standard_length_sm
+                    elif x == standard_length_sm:
+                        x = 0
+                        y += standard_length_sm
+                    img_num += 1
+                if img_num >= 4:
+                    break
+                await asyncio.sleep(0.2)
 
+
+
+            print(time.time()-a)
             #bg.save(f"test.png")  #保存到本地
+
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
@@ -1109,16 +1126,16 @@ async def get_daily_shop(msg: Message,*arg):
             await msg.reply(cm)
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
 
-        if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
+        else:
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
             return
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] `shop`\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1219,7 +1236,7 @@ async def get_user_card(msg: Message,*arg):
     try:
         flag_au = 0
         if msg.author_id in UserAuthDict:
-            reau = await check_re_auth("玩家装备/通行证",msg)#重新登录
+            reau = await check_re_auth(msg,"玩家装备/通行证")#重新登录
             if reau==False:return #如果为假说明重新登录失败
 
             # 如果用户id已有，则不需要再次获取token
@@ -1250,15 +1267,15 @@ async def get_user_card(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
             return
     
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] `uinfo`\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1294,9 +1311,9 @@ async def get_bundle(msg: Message,*arg):
                         res_price=fetch_item_price_bylist(w['lv_uuid'])
                         if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                             price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                            text+=f"{w['displayName']}   - vp {price}\n"
+                            text+=f"{w['weapen']}   - vp {price}\n"
                         else:# 找不到价格就直接插入武器名字
-                            text+=f"{w['displayName']}\n"
+                            text+=f"{w['weapen']}\n"
                     
                     text+="```\n" # print(text)
                     c.append(Module.Section(Element.Text(text,Types.Text.KMD)))#插入皮肤
@@ -1308,200 +1325,12 @@ async def get_bundle(msg: Message,*arg):
         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
         print(f"[{GetTime()}] Au:{msg.author_id} get_bundle failed! Can't find {name}")
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] get_bundle\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] `get_bundle`\n{traceback.format_exc()}"
         print(err_str)
         await msg.reply(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
         await bot.send(ch,err_str)
 
-#用户选择列表
-UserSDict={}
-# 皮肤商店提醒记录
-with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
-    SkinNotifyDict = json.load(frsi)
-
-@bot.task.add_cron(hour=8, minute=2, timezone="Asia/Shanghai")
-async def auto_skin_inform():
-    try:
-        print("[BOT.TASK] auto_skin_inform Starting!")#开始的时候打印一下
-        for aid, skin in SkinNotifyDict.items():
-            user = await bot.client.fetch_user(aid)
-            if aid in UserAuthDict:
-                if await check_re_auth("定时获取玩家商店",aid) == True:  # 重新登录,如果为假说明重新登录失败
-                    auth = UserAuthDict[aid]
-                    userdict = {'auth_user_id': auth.user_id,
-                                'access_token': auth.access_token,
-                                'entitlements_token': auth.entitlements_token
-                    }
-                    resp = await fetch_daily_shop(userdict)  # 获取每日商店
-                    list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                    # 关于下面这一行：https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
-                    target_skin = [ val for key,val in skin.items() if key in list_shop]
-                    # print(target_skin)
-                    for name in target_skin:
-                        print(f"[BOT.TASK] Au:{aid} auto_skin_inform = {name}")
-                        await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
-                    print(f"[BOT.TASK] Au:{aid} auto_skin_inform = None")#打印这个说明这个用户正常遍历完了
-            else:#不在auth里面说明没有登录
-                print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
-                await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
-        #完成遍历后打印
-        finish_str="[BOT.TASK] auto_skin_inform Finished!"
-        print(finish_str)#正常完成
-        ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch,finish_str)
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch,err_str)
-
-#设置提醒（出现xx皮肤）
-@bot.command(name="notify-add",aliases=['notify-a'])
-async def add_skin_notify(msg:Message,*arg):
-    logging(msg)
-    if arg == ():
-        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
-        return 
-    try:
-        #用户没有登录
-        if msg.author_id not in UserAuthDict:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作\n设置了皮肤提醒之后，请不要切换已登录的账户")
-            return
-        
-        name =" ".join(arg)
-        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist=fetch_skin_byname_list(name)
-        if sklist==[]:#空list代表这个皮肤不在里面
-            await msg.reply(f"该皮肤不在列表中，请重新查询！")
-            return
-        
-        retlist=list()#用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
-        for s in sklist:
-            res_price=fetch_item_price_bylist(s['lv_uuid'])
-            if res_price != None:# 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                data={'skin':s,'price':price}
-                retlist.append(data)
-        
-        if retlist==[]:#空list代表这个皮肤没有价格
-            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
-            return
-
-        UserSDict[msg.author_id]=retlist
-        i=0
-        text= "```\n"#模拟一个选择表
-        for w in retlist:
-            text+=f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}\n"
-            i+=1
-        text+="```"
-        cm=CardMessage()
-        c=Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
-                Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤",Types.Text.KMD)),
-                Module.Section(Element.Text(text+"\n\n使用 `/sts 序号` 来选择",Types.Text.KMD)))
-        cm.append(c)
-        await msg.reply(cm)
-
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] addskin\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
-
-#选择皮肤（这个命令必须跟着上面的命令用）
-@bot.command(name="sts")
-async def select_skin_notify(msg:Message,n:str="err"):
-    logging(msg)
-    if n =="err":
-        await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号：`{n}`")
-        return
-    try:
-        global SkinNotifyDict
-        if msg.author_id in UserSDict:
-            num=str2int(n)#转成int下标
-            S_skin=UserSDict[msg.author_id][num]
-            if msg.author_id not in SkinNotifyDict:
-                SkinNotifyDict[msg.author_id]={}
-                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
-            else:#如果存在了就直接在后面添加
-                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']]=S_skin['skin']['displayName']
-            # print(SkinNotifyDict[msg.author_id])
-            # 写入文件
-            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
-                json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            
-            del UserSDict[msg.author_id]#删除选择页面中的list
-            text=f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
-            print(f"Au:{msg.author_id} ",text)
-            await msg.reply(text)
-        else:
-            await msg.reply(f"您需要（重新）执行`/notify-a`来设置提醒皮肤")
-
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] select_skin_inform\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
-
-# 显示当前设置好了的皮肤通知
-@bot.command(name="notify-list",aliases=['notify-l'])
-async def list_skin_notify(msg:Message):
-    logging(msg)
-    try:
-        if msg.author_id in SkinNotifyDict:
-            text ="```\n"
-            for skin,name in SkinNotifyDict[msg.author_id].items():
-                text += skin+' = '+name+'\n'
-            text+="```\n"
-            text+="如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
-            text+="如果您需要删除皮肤，请使用`notify-d uuid`\n"
-            text+="注：`=`号前面很长的那一串就是uuid\n"
-            await msg.reply(text)
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch,err_str)
-
-# 删除已有皮肤通知
-@bot.command(name="notify-del",aliases=['notify-d'])
-async def delete_skin_notify(msg:Message,uuid:str="err"):
-    logging(msg)
-    if uuid == 'err':
-        await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
-        return
-    try:
-        global SkinNotifyDict
-        if msg.author_id in SkinNotifyDict:
-            if uuid in SkinNotifyDict[msg.author_id]:
-                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
-                await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
-                del SkinNotifyDict[msg.author_id][uuid]
-                # 写入文件
-                with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
-                    json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            else:
-                await msg.reply(f"您提供的uuid不在列表中！")
-                return
-    except Exception as result:
-        err_str=f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch,err_str)
 
 
 # 开机的时候打印一次时间，记录重启时间
