@@ -774,7 +774,7 @@ def uuid_to_comp(skinuuid,ran):
             # res_iters = await fetch_item_iters(it['contentTierUuid'])
             res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
             break
-    img = sm_comp(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
+    img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
                         res_iters['data']['displayIcon'])
     global shop_img_temp
     shop_img_temp[ran].append(img)
@@ -1077,7 +1077,6 @@ async def get_daily_shop(msg: Message,*arg):
             #计算获取每日商店要多久
             start = time.perf_counter()#开始计时
             #从auth的dict中获取对象
-            #userdict=UserTokenDict[msg.author_id]
             auth=UserAuthDict[msg.author_id]
             userdict={'auth_user_id':auth.user_id,
                 'access_token':auth.access_token,
@@ -1090,7 +1089,7 @@ async def get_daily_shop(msg: Message,*arg):
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
             x = 0
             y = 0
-            a = time.time()
+            a_time = time.time()#开始计算画图需要的时间
             bg = copy.deepcopy(bg_main)
             ran = random.randint(1,9999)
             global shop_img_temp
@@ -1118,15 +1117,14 @@ async def get_daily_shop(msg: Message,*arg):
                 await asyncio.sleep(0.2)
 
 
-
-            print(time.time()-a)
+            #打印画图耗时
+            print('[Drawing]',time.time()-a_time)
             #bg.save(f"test.png")  #保存到本地
-
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
             dailyshop_img_src = await bot.client.create_asset(imgByte)
-            #结束计时
+            #结束总计时
             end = time.perf_counter()
             using_time = end-start #结果为 浮点数
             using_time = format(end-start, '.2f')#保留两位小数
