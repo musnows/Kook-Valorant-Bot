@@ -685,7 +685,10 @@ def sm_comp(icon, name, price, level_icon):
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理武器图片
+    start = time.perf_counter()#开始计时
     layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
+    end = time.perf_counter()
+    print('[GetWeapen]',end-start)
     # w, h = layer_icon.size  # 读取武器图片长宽
     # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
     # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
@@ -703,11 +706,15 @@ def sm_comp(icon, name, price, level_icon):
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
 
     # 处理武器level的图片(存到本地dict里面方便调用)
+    start = time.perf_counter()#开始计时
     if level_icon not in level_icon_temp:
         LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
         level_icon_temp[level_icon] = LEVEL_Icon
     else:
         LEVEL_Icon = level_icon_temp[level_icon]
+    end = time.perf_counter()
+    print('[GetIters]',end-start)
+
 
     w, h = LEVEL_Icon.size  # 读取武器图片长宽
     new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
@@ -1099,7 +1106,7 @@ async def get_daily_shop(msg: Message,*arg):
             for skinuuid in list_shop:
                 th = threading.Thread(target=uuid_to_comp,args=(skinuuid,ran))
                 th.start()
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.8)#尝试错开网络请求
             while True:
                 img_temp = copy.deepcopy(shop_img_temp)
                 for i in img_temp[ran]:
