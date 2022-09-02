@@ -498,7 +498,7 @@ async def uncle(msg: Message):
 
 from status import status_active_game,status_active_music,status_delete,server_status
 from val import fetch_spary_uuid, kda123,skin123,lead123,saveid123,saveid_1,saveid_2,myid123,val123,dx123
-from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_title_uuid,fetch_playercard_uuid,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid,fetch_skinlevel_uuid
+from val import authflow,fetch_daily_shop,fetch_user_gameID,fetch_valorant_point,fetch_item_price_uuid,fetch_item_iters,fetch_skins_all,fetch_player_contract,fetch_bundle_weapen_byname,fetch_player_loadout,fetch_bundles_all,fetch_item_price_all,fetch_title_uuid,fetch_playercard_uuid,fetch_contract_uuid,fetch_spary_uuid,fetch_buddies_uuid,fetch_skinlevel_uuid
 
 # 开始打游戏
 @bot.command()
@@ -1317,7 +1317,7 @@ async def get_bundle(msg: Message,*arg):
         for b in ValBundleList: #在本地查找
             if name in b['displayName']:
                 # 确认在捆绑包里面有这个名字之后，在查找武器（这里不能使用displayName，因为有些捆绑包两个版本的名字不一样）
-                weapenlist= await fetch_bundle_byname(name)
+                weapenlist= await fetch_bundle_weapen_byname(name)
                 #print(weapenlist)
                 cm = CardMessage()
                 c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包",Types.Text.KMD)))

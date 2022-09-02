@@ -343,7 +343,7 @@ async def fetch_contract_uuid(id):
     return res_con
 
 # 用名字查询捆绑包包含什么枪
-async def fetch_bundle_byname(name):
+async def fetch_bundle_weapen_byname(name):
     # 所有皮肤
     with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
         ValSkinList = json.load(frsk)
