@@ -630,7 +630,7 @@ import copy
 import io  #用于将 图片url 转换成可被打开的二进制
 from PIL import Image, ImageDraw, ImageFont  #用于合成图片
 import zhconv  #用于繁体转简体（因为部分字体不支持繁体
-import math  #用于小数取整
+import threading , asyncio
 
 
 standard_length = 1000  #图片默认边长
@@ -667,25 +667,23 @@ async def fetch_bg():
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
-    log_info="[shop] "
     w, h = img.size
-    log_info+=f"原始图片大小:({w},{h}) - "
+    print(f'原始图片大小： {w, h}')
     ratio = w / h
     sizeco = w / standard_x
-    log_info+=f"缩放系数:{format(sizeco,'.3f')} - "
+    print("缩放系数: ", sizeco)
     w_s = int(w / sizeco)
     h_s = int(h / sizeco)
-    log_info+=f"缩放后大小:({w_s},{h_s})"
-    print(log_info)
+    print("缩放后大小： ", w_s, h_s)
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
     return img
 
 level_icon_temp = {}
-async def sm_comp(icon, name, price, level_icon):
+def sm_comp(icon, name, price, level_icon):
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理武器图片
-    layer_icon = Image.open(io.BytesIO(await img_requestor(icon)))  # 打开武器图片
+    layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
     # w, h = layer_icon.size  # 读取武器图片长宽
     # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
     # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
@@ -703,8 +701,9 @@ async def sm_comp(icon, name, price, level_icon):
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
 
     # 处理武器level的图片
+
     if level_icon not in level_icon_temp:
-        Level_icon = Image.open(io.BytesIO(await img_requestor(level_icon)))  # 打开武器图片
+        Level_icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
         level_icon_temp[level_icon] = Level_icon
     else:
         Level_icon = level_icon_temp[level_icon]
@@ -738,6 +737,11 @@ async def sm_comp(icon, name, price, level_icon):
         name_list[1] = name_list[len(name_list) - 1]
         text = name_list[0] + '\n'
     if len(name_list) > 1:  # 有些刀皮肤只有一个元素
+        # if len(name_list[1]) > 3:
+        #     interval = interval - len(name_list[1]) - 2
+        # interval = interval - interval//3
+        # for i in range(interval):  #第二行前半部分要留空 根据第一行的字数加空格
+        #     text += '　'
         text += '              '  # 添加固定长度的缩进，12个空格
         if len(name_list[1]) < 4:
             text += ' '.join(name_list[1])  # 插入第二行字符
@@ -763,6 +767,24 @@ def bg_comp(bg, img, x, y):
     position = (x, y)
     bg.paste(img, position, img)  #如sm—comp中一样，向bg粘贴img
     return bg
+
+shop_img_temp = {}
+def uuid_to_comp(skinuuid,ran):
+    res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+    res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+    price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+    for it in ValSkinList['data']:
+        if it['levels'][0]['uuid'] == skinuuid:
+            # res_iters = await fetch_item_iters(it['contentTierUuid'])
+            res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
+            break
+    img = sm_comp(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
+                        res_iters['data']['displayIcon'])
+    global shop_img_temp
+    shop_img_temp[ran].append(img)
+
+
+
 
 
 ##############################################################################
@@ -1047,12 +1069,9 @@ async def get_daily_shop(msg: Message,*arg):
         return
 
     try:
-        flag_au = 0
         if msg.author_id in UserAuthDict:
-            flag_au = 1
-            reau = await check_re_auth("每日商店",msg) 
+            reau = await check_re_auth(msg,"每日商店")
             if reau==False:return #如果为假说明重新登录失败
-
             # 登陆成功了再提示正在获取商店
             await msg.reply(f"正在获取您的每日商店，请耐心等待一会哦")
             #计算获取每日商店要多久
@@ -1071,27 +1090,38 @@ async def get_daily_shop(msg: Message,*arg):
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
             x = 0
             y = 0
+            a = time.time()
             bg = copy.deepcopy(bg_main)
+            ran = random.randint(1,9999)
+            global shop_img_temp
+            shop_img_temp[ran] = []
+            img_num = 0
+
             for skinuuid in list_shop:
-                res_item = fetch_skin_bylist(skinuuid)#从本地文件中查找
-                res_price= fetch_item_price_bylist(skinuuid) #在本地文件中查找
-                price=res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                for it in ValSkinList['data']:
-                    if it['levels'][0]['uuid'] == skinuuid:
-                        #res_iters = await fetch_item_iters(it['contentTierUuid'])
-                        res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
-                        break
-                # res_item['data']['displayIcon']这个键值，有些皮肤是None
-                img = await sm_comp(res_item["data"]['levels'][0]["displayIcon"],res_item["data"]["displayName"],price,res_iters['data']['displayIcon'])
-                bg = bg_comp(bg, img, x, y)
+                th = threading.Thread(target=uuid_to_comp,args=(skinuuid,ran))
+                th.start()
+                await asyncio.sleep(0.3)
+            while True:
+                img_temp = copy.deepcopy(shop_img_temp)
+                for i in img_temp[ran]:
 
-                if x == 0:
-                    x += standard_length_sm
-                elif x == standard_length_sm:
-                    x = 0
-                    y += standard_length_sm
+                    shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
+                    bg = bg_comp(bg, i, x, y)
+                    if x == 0:
+                        x += standard_length_sm
+                    elif x == standard_length_sm:
+                        x = 0
+                        y += standard_length_sm
+                    img_num += 1
+                if img_num >= 4:
+                    break
+                await asyncio.sleep(0.2)
 
+
+
+            print(time.time()-a)
             #bg.save(f"test.png")  #保存到本地
+
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
@@ -1109,21 +1139,22 @@ async def get_daily_shop(msg: Message,*arg):
             await msg.reply(cm)
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
 
-        if flag_au != 1:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
+        else:
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
             return
 
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] `shop`\n{traceback.format_exc()}"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行`/login`操作",Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
             Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
+
 
 
 # 获取vp和r点剩余
