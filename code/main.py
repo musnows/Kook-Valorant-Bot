@@ -682,6 +682,7 @@ def resize(standard_x, img):
     return img
 
 level_icon_temp = {}
+weapon_icon_temp = {}
 def sm_comp(icon, name, price, level_icon,skinuuid):
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  # 新建一个画布
@@ -725,6 +726,7 @@ def sm_comp(icon, name, price, level_icon,skinuuid):
     else:
         LEVEL_Icon = level_icon_temp[level_icon]
     end = time.perf_counter()
+
     print('[GetIters]',end-start)
 
 
@@ -777,6 +779,9 @@ def sm_comp(icon, name, price, level_icon,skinuuid):
     # bg.show() #测试用途，展示图片(linux貌似不可用)
     if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
         bg.save(f'./log/img_temp/comp/{skinuuid}.png')
+    global weapon_icon_temp
+    if skinuuid not in weapon_icon_temp:
+        weapon_icon_temp[skinuuid] = bg
     return bg
 
 
@@ -1180,8 +1185,11 @@ async def get_daily_shop(msg: Message,*arg):
 
             for skinuuid in list_shop:
                 img_path = f'./log/img_temp/comp/{skinuuid}.png'
-                if os.path.exists(img_path):
+                if skinuuid in weapon_icon_temp:
+                    shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
+                elif os.path.exists(img_path):
                     shop_img_temp[ran].append(Image.open(img_path))
+
                 else:
                     th = threading.Thread(target=uuid_to_comp,args=(skinuuid,ran))
                     th.start()
