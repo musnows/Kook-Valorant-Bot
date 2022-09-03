@@ -8,10 +8,10 @@ import traceback
 from typing import Union
 from datetime import datetime, timedelta
 
-from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage,PrivateMessage
+from khl import Bot, Message, EventTypes, Event,Client,PublicChannel,PublicMessage,PrivateMessage,ChannelPrivacyTypes
 from khl.card import CardMessage, Card, Module, Element, Types
 from khl.command import Rule
-
+from upd_msg import icon,upd_card
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
@@ -858,6 +858,16 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
         return
 
+    cm=CardMessage()#卡片侧边栏颜色
+    text="正在尝试获取您的riot账户token"
+    c=Card(color='#fb4b57')
+    c.append(Module.Section(
+        Element.Text(text,Types.Text.KMD),
+        Element.Image(src=icon.val_logo_gif,size='sm')))
+    c.append(Module.Context(Element.Text("小憩一下，很快就好啦！",Types.Text.KMD)))    
+    cm.append(c)
+    send_msg = await msg.reply(cm) #记录消息id用于后续更新
+    print(send_msg)
     try:
         global UserTokenDict,UserAuthDict
         if msg.author_id in UserAuthDict: #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
@@ -866,18 +876,22 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
 
         # 不在其中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
-        UserTokenDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id}#先创建基本信息
+        UserTokenDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id}#先创建基本信息 dict[键] = 值
         res_gameid=await fetch_user_gameID(UserTokenDict[msg.author_id]) # 获取用户玩家id
         UserTokenDict[msg.author_id]['GameName']=res_gameid[0]['GameName']
         UserTokenDict[msg.author_id]['TagLine']=res_gameid[0]['TagLine']
         UserAuthDict[msg.author_id]=res_auth#将对象插入
-        #dict[键] = 值
+        
         cm=CardMessage()
-        c=Card(Module.Header(f"登陆成功！ {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"),
-            Module.Divider(),
-            Module.Section(Element.Text("当前token失效时间为 `1h`\n除此之外，登陆游戏、多次使用查询命令等操作都可能会使token失效。若出现`自动重新登录`失败[会有报错]，您需要logout之后再login以重新登录您的账户",Types.Text.KMD)))
+        text=f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        c=Card(color='#fb4b57')
+        c.append(Module.Section(
+            Element.Text(text,Types.Text.KMD),
+            Element.Image(src=icon.correct,size='sm')))
+        c.append(Module.Context(Element.Text("当前token失效时间为1h，有任何问题请[点我](https://kook.top/gpbTwZ)",Types.Text.KMD)))    
         cm.append(c)
-        await msg.reply(cm)
+        await upd_card(send_msg['msg_id'],cm)
+
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
@@ -1145,7 +1159,7 @@ async def get_daily_shop(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
 
         else:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```请确认您知晓login是一个风险操作")
+            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
             return
 
     except Exception as result:
