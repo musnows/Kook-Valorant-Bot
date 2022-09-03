@@ -1150,7 +1150,6 @@ async def get_daily_shop(msg: Message,*arg):
                 'entitlements_token':auth.entitlements_token
             }
             resp = await fetch_daily_shop(userdict)#获取每日商店
-            resp = {}
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
@@ -1217,20 +1216,21 @@ async def get_daily_shop(msg: Message,*arg):
             await msg.reply(cm)
             return
     except Exception as result:
-        print(send_msg)
         err_str=f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
         print(err_str)
+        cm2 = CardMessage()
+        c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
             text=f"键值错误，需要重新登录"
             c.append(Module.Section(
                 Element.Text(text,Types.Text.KMD),
                 Element.Image(src=icon.lagging,size='sm')))
-            c.append(Module.Context(Element.Text(f"KeyError:{result},please re-login",Types.Text.KMD)))    
-            cm.append(c)
-            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
+            c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login",Types.Text.KMD)))    
+            cm2.append(c)
+            await upd_card(send_msg['msg_id'],cm2,channel_type=msg.channel_type)
         else:
-            cm2 = CardMessage()
-            c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
+            c.append(Module.Header(f"很抱歉，发生了一些错误"))
+            c.append(Module.Divider())
             c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",Types.Text.KMD)))
             c.append(Module.Divider())
             c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
