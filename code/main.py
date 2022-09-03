@@ -858,26 +858,33 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
         await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
         return
 
-    cm=CardMessage()#卡片侧边栏颜色
-    text="正在尝试获取您的riot账户token"
-    c=Card(color='#fb4b57')
-    c.append(Module.Section(
-        Element.Text(text,Types.Text.KMD),
-        Element.Image(src=icon.val_logo_gif,size='sm')))
-    c.append(Module.Context(Element.Text("小憩一下，很快就好啦！",Types.Text.KMD)))    
-    cm.append(c)
-    send_msg = await msg.reply(cm) #记录消息id用于后续更新
-    print(send_msg)
     try:
+        cm0=CardMessage()
+        c=Card(color='#fb4b57')#卡片侧边栏颜色
         global UserTokenDict,UserAuthDict
         if msg.author_id in UserAuthDict: #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
-            await msg.reply(f'您今日已经登陆过，无需重复操作\n如需重新登录，请先使用`/logout`命令退出当前登录')
+            text="您已经登陆，无需重复操作"
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.shaka,size='sm')))
+            c.append(Module.Context(Element.Text("如需重新登录，请先logout退出当前登录",Types.Text.KMD)))    
+            cm0.append(c)
+            await msg.reply(cm0)
             return
+
+        text="正在尝试获取您的riot账户token"
+        c.append(Module.Section(
+            Element.Text(text,Types.Text.KMD),
+            Element.Image(src=icon.val_logo_gif,size='sm')))
+        c.append(Module.Context(Element.Text("小憩一下，很快就好啦！",Types.Text.KMD)))    
+        cm0.append(c)
+        send_msg = await msg.reply(cm0) #记录消息id用于后续更新
 
         # 不在其中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
         UserTokenDict[msg.author_id] = {'auth_user_id':res_auth.user_id}#先创建基本信息 dict[键] = 值
-        res_gameid=await fetch_user_gameID(UserTokenDict[msg.author_id]) # 获取用户玩家id
+        userdict={'auth_user_id':res_auth.user_id,'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token}
+        res_gameid=await fetch_user_gameID(userdict) # 获取用户玩家id
         UserTokenDict[msg.author_id]['GameName']=res_gameid[0]['GameName']
         UserTokenDict[msg.author_id]['TagLine']=res_gameid[0]['TagLine']
         UserAuthDict[msg.author_id]=res_auth#将对象插入
@@ -890,7 +897,7 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
             Element.Image(src=icon.correct,size='sm')))
         c.append(Module.Context(Element.Text("当前token失效时间为1h，有任何问题请[点我](https://kook.top/gpbTwZ)",Types.Text.KMD)))    
         cm.append(c)
-        await upd_card(send_msg['msg_id'],cm)
+        await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
 
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
@@ -909,7 +916,7 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
                 Element.Image(src=icon.dont_do_that,size='sm')))
             c.append(Module.Context(Element.Text("Make sure username and password are correct",Types.Text.KMD)))    
             cm.append(c)
-            await upd_card(send_msg['msg_id'],cm)
+            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
         elif "Multi-factor authentication is not currently supported" in result:
             text=f"当前不支持开启了`邮箱双重验证`的账户"
             c.append(Module.Section(
@@ -917,7 +924,7 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
                 Element.Image(src=icon.that_it,size='sm')))
             c.append(Module.Context(Element.Text("Multi-factor authentication is not currently supported",Types.Text.KMD)))    
             cm.append(c)
-            await upd_card(send_msg['msg_id'],cm)
+            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
         else:
             c.append(Module.Header(f"很抱歉，发生了未知错误"))
             c.append(Module.Divider())
@@ -967,8 +974,13 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
         #这里可以直接借用reauthorize的返回值进行操作
         return ret 
     except Exception as result:
-        print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
-        return True
+        print(f"{traceback.format_exc()}")
+        if 'httpStatus' in str(result):
+            print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
+            return True
+        else:
+            print(f"[Ckeck_re_auth] Unkown ERR! [{result}]")
+            return False
 
 # 测试是否已登陆
 @bot.command(name="login-t")
@@ -1006,7 +1018,7 @@ async def logout_authtoken(msg:Message,*arg):
             json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
         fw1.close()
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] test_if_login\n```\n{traceback.format_exc()}\n```"
+        err_str=f"ERR! [{GetTime()}] logout\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
 
@@ -1116,10 +1128,19 @@ async def get_daily_shop(msg: Message,*arg):
 
     try:
         if msg.author_id in UserAuthDict:
-            reau = await check_re_auth(msg,"每日商店")
+            reau = await check_re_auth("每日商店",msg)
             if reau==False:return #如果为假说明重新登录失败
-            # 登陆成功了再提示正在获取商店
-            await msg.reply(f"正在获取您的每日商店，请耐心等待一会哦")
+            # 重新获取token成功了再提示正在获取商店
+            cm=CardMessage()#卡片侧边栏颜色
+            text="正在尝试获取您的每日商店"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.duck,size='sm')))
+            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！",Types.Text.KMD)))    
+            cm.append(c)
+            send_msg = await msg.reply(cm) #记录消息id用于后续更新
+
             #计算获取每日商店要多久
             start = time.perf_counter()#开始计时
             #从auth的dict中获取对象
@@ -1129,13 +1150,14 @@ async def get_daily_shop(msg: Message,*arg):
                 'entitlements_token':auth.entitlements_token
             }
             resp = await fetch_daily_shop(userdict)#获取每日商店
-            #print(resp)
+            resp = {}
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
-            x = 0
-            y = 0
-            a_time = time.time()#开始计算画图需要的时间
+
+            #开始画图
+            a_time = time.time()#计算画图需要的时间
+            x = 0;y = 0
             bg = copy.deepcopy(bg_main)
             ran = random.randint(1,9999)
             global shop_img_temp
@@ -1176,28 +1198,45 @@ async def get_daily_shop(msg: Message,*arg):
             using_time = format(end-start, '.2f')#保留两位小数
 
             cm = CardMessage()
-            c = Card(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"),
-                    Module.Context(f"失效时间剩余：{timeout}    本次查询用时：{using_time}s"),
-                    Module.Container(Element.Image(src=dailyshop_img_src)))
+            c = Card(color='#fb4b57')
+            c.append(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"))
+            c.append(Module.Context(f"失效时间剩余：{timeout}    本次查询用时：{using_time}s"))
+            c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
+            cm.append(c)
+            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
+        else:
+            cm=CardMessage()#卡片侧边栏颜色
+            text="您尚未登陆！请「私聊」使用login命令进行登录操作\n"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.whats_that,size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作",Types.Text.KMD)))    
             cm.append(c)
             await msg.reply(cm)
-            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
-
-        else:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
             return
-
     except Exception as result:
-        err_str=f"ERR! [{GetTime()}] shop\n{traceback.format_exc()}"
+        print(send_msg)
+        err_str=f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        if "SkinsPanelLayout" in str(result):
+            text=f"键值错误，需要重新登录"
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.lagging,size='sm')))
+            c.append(Module.Context(Element.Text(f"KeyError:{result},please re-login",Types.Text.KMD)))    
+            cm.append(c)
+            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
+        else:
+            cm2 = CardMessage()
+            c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
+            c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",Types.Text.KMD)))
+            c.append(Module.Divider())
+            c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+                Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+            cm2.append(c)
+            await msg.reply(cm2)
 
 
 
