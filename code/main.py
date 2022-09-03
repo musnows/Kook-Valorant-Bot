@@ -876,7 +876,7 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
 
         # 不在其中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
-        UserTokenDict[msg.author_id] = {'access_token':res_auth.access_token,'entitlements_token':res_auth.entitlements_token,'auth_user_id':res_auth.user_id}#先创建基本信息 dict[键] = 值
+        UserTokenDict[msg.author_id] = {'auth_user_id':res_auth.user_id}#先创建基本信息 dict[键] = 值
         res_gameid=await fetch_user_gameID(UserTokenDict[msg.author_id]) # 获取用户玩家id
         UserTokenDict[msg.author_id]['GameName']=res_gameid[0]['GameName']
         UserTokenDict[msg.author_id]['TagLine']=res_gameid[0]['TagLine']
@@ -899,14 +899,34 @@ async def login_authtoken(msg: Message,user: str = 'err',passwd: str = 'err',*ar
     except Exception as result:
         err_str=f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
         print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"),Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作",Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-            Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        result=str(result)#转成str
+        cm=CardMessage()
+        c=Card(color='#fb4b57')
+        if "Make sure username and password are correct" in result:
+            text=f"当前的账户密码真的对了吗？"
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.dont_do_that,size='sm')))
+            c.append(Module.Context(Element.Text("Make sure username and password are correct",Types.Text.KMD)))    
+            cm.append(c)
+            await upd_card(send_msg['msg_id'],cm)
+        elif "Multi-factor authentication is not currently supported" in result:
+            text=f"当前不支持开启了`邮箱双重验证`的账户"
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.that_it,size='sm')))
+            c.append(Module.Context(Element.Text("Multi-factor authentication is not currently supported",Types.Text.KMD)))    
+            cm.append(c)
+            await upd_card(send_msg['msg_id'],cm)
+        else:
+            c.append(Module.Header(f"很抱歉，发生了未知错误"))
+            c.append(Module.Divider())
+            c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",Types.Text.KMD)))
+            c.append(Module.Divider())
+            c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+                Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+            cm.append(c)
+            await msg.reply(cm)
 
 #重新登录（kook用户id）
 async def login_re_auth(kook_user_id:str):

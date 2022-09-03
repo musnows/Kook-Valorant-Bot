@@ -16,6 +16,7 @@ class icon:
     lagging="https://img.kookapp.cn/assets/2022-09/D1nqrTszjQ0e80e8.png"
     correct="https://img.kookapp.cn/assets/2022-09/DknXSpwrlQ0e80e8.gif"
     duck="https://img.kookapp.cn/assets/2022-09/qARsaxW6lp0e80e8.gif"
+    that_it = "https://img.kookapp.cn/assets/2022-09/LqD0pQY2P70e80e8.png"
 
 #更新卡片消息
 async def upd_card(msg_id: str, content, target_id='', 
