@@ -990,20 +990,25 @@ async def test_if_login(msg:Message,*arg):
 @bot.command(name='logout')
 async def logout_authtoken(msg:Message,*arg):
     logging(msg)
-    global UserTokenDict,UserAuthDict
-    if msg.author_id not in UserAuthDict: #使用not in判断是否不存在
-        await msg.reply(f"你还没有登陆呢！")
-        return
-    #如果id存在， 删除id
-    print(f"Logout - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
-    del UserTokenDict[msg.author_id]
-    del UserAuthDict[msg.author_id]
-    await msg.reply(f"已成功取消登录")
+    try:
+        global UserTokenDict,UserAuthDict
+        if msg.author_id not in UserAuthDict: #使用not in判断是否不存在
+            await msg.reply(f"你还没有登陆呢！")
+            return
+        #如果id存在， 删除id
+        print(f"Logout - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
+        del UserTokenDict[msg.author_id]
+        del UserAuthDict[msg.author_id]
+        await msg.reply(f"已成功取消登录")
 
-    #最后重新执行写入
-    with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
-        json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
-    fw1.close()
+        #最后重新执行写入
+        with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
+            json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
+        fw1.close()
+    except Exception as result:
+        err_str=f"ERR! [{GetTime()}] test_if_login\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
 
 
 
