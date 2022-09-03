@@ -1,5 +1,6 @@
 # encoding: utf-8:
 import json
+import os
 import random
 import time
 import aiohttp
@@ -681,20 +682,23 @@ def resize(standard_x, img):
     return img
 
 level_icon_temp = {}
-def sm_comp(icon, name, price, level_icon):
+def sm_comp(icon, name, price, level_icon,skinuuid):
     bg = Image.new(mode='RGBA',
                    size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理武器图片
     start = time.perf_counter()#开始计时
-    layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
+
+    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
+        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
+    else:
+        layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
+        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
     end = time.perf_counter()
     print('[GetWeapen]',end-start)
     # w, h = layer_icon.size  # 读取武器图片长宽
     # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
     # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
-
     stardard_icon_x = 300 #图像标准宽（要改大小就改这个
-
     layer_icon = resize(300,layer_icon)
     # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
     # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
@@ -704,9 +708,17 @@ def sm_comp(icon, name, price, level_icon):
     # bg.paste代表向bg粘贴一张图片
     # 第一个参数是图像layer_icon
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
-
     # 处理武器level的图片(存到本地dict里面方便调用)
     start = time.perf_counter()#开始计时
+    # if level_icon not in level_icon_temp:
+    #     if os.path.exists(f'./log/img_temp/level/{level_icon}.png'):
+    #         LEVEL_Icon = Image.open(f'./log/img_temp/level/{skinuuid}.png')
+    #     else:
+    #         LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
+    #         LEVEL_Icon.save(f'./log/img_temp/level/{level_icon}',format='PNG')
+    #     level_icon_temp[level_icon] = LEVEL_Icon
+    # else:
+    #     LEVEL_Icon = level_icon_temp[level_icon]
     if level_icon not in level_icon_temp:
         LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
         level_icon_temp[level_icon] = LEVEL_Icon
@@ -763,6 +775,8 @@ def sm_comp(icon, name, price, level_icon):
               font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
               fill=font_color)
     # bg.show() #测试用途，展示图片(linux貌似不可用)
+    if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
+        bg.save(f'./log/img_temp/comp/{skinuuid}.png')
     return bg
 
 
@@ -772,6 +786,7 @@ def bg_comp(bg, img, x, y):
     return bg
 
 shop_img_temp = {}
+img_save_temp = {}
 def uuid_to_comp(skinuuid,ran):
     res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
     res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
@@ -782,7 +797,7 @@ def uuid_to_comp(skinuuid,ran):
             res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
             break
     img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
-                        res_iters['data']['displayIcon'])
+                        res_iters['data']['displayIcon'],skinuuid)
     global shop_img_temp
     shop_img_temp[ran].append(img)
 
@@ -1164,8 +1179,12 @@ async def get_daily_shop(msg: Message,*arg):
             img_num = 0
 
             for skinuuid in list_shop:
-                th = threading.Thread(target=uuid_to_comp,args=(skinuuid,ran))
-                th.start()
+                img_path = f'./log/img_temp/comp/{skinuuid}.png'
+                if os.path.exists(img_path):
+                    shop_img_temp[ran].append(Image.open(img_path))
+                else:
+                    th = threading.Thread(target=uuid_to_comp,args=(skinuuid,ran))
+                    th.start()
                 await asyncio.sleep(0.8)#尝试错开网络请求
             while True:
                 img_temp = copy.deepcopy(shop_img_temp)
