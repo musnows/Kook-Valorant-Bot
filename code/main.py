@@ -994,12 +994,11 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
         #这里可以直接借用reauthorize的返回值进行操作
         return ret 
     except Exception as result:
-        print(f"{traceback.format_exc()}")
         if 'httpStatus' in str(result):
             print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
             return True
         else:
-            print(f"[Ckeck_re_auth] Unkown ERR! [{result}]")
+            print(f"[Ckeck_re_auth] Unkown ERR!\n{traceback.format_exc()}")
             return False
 
 # 测试是否已登陆
@@ -1274,7 +1273,9 @@ async def get_user_vp(msg: Message,userdict,*arg):
     #print(resp)
     vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]#vp
     rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]#R点
-    text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"+"    "+f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
+    text =f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"
+    text+= "    "
+    text+=f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
     return text
 
 # 获取不同奖励的信息
