@@ -1056,7 +1056,7 @@ async def logout_authtoken(msg:Message,*arg):
             c.append(Module.Section(
                 Element.Text(text,Types.Text.KMD),
                 Element.Image(src=icon.that_it,size='sm')))
-            c.append(Module.Context(Element.Text(f"使用login登录吧！",Types.Text.KMD)))    
+            c.append(Module.Context(Element.Text(f"「/login 账户 密码」请确认您知晓这是一个风险操作",Types.Text.KMD)))    
             cm.append(c)
             await msg.reply(cm)
             return
@@ -1278,7 +1278,7 @@ async def get_daily_shop(msg: Message,*arg):
             await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
         else:
-            cm=CardMessage()#卡片侧边栏颜色
+            cm=CardMessage()
             text="您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c=Card(color='#fb4b57')
             c.append(Module.Section(
@@ -1462,7 +1462,15 @@ async def get_user_card(msg: Message,*arg):
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         else:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
+            cm=CardMessage()
+            text="您尚未登陆！请「私聊」使用login命令进行登录操作\n"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.whats_that,size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作",Types.Text.KMD)))    
+            cm.append(c)
+            await msg.reply(cm)
             return
     
     except Exception as result:
@@ -1598,7 +1606,15 @@ async def add_skin_notify(msg:Message,*arg):
     try:
         #用户没有登录
         if msg.author_id not in UserAuthDict:
-            await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作\n设置了皮肤提醒之后，请不要切换已登录的账户")
+            cm=CardMessage()
+            text="您尚未登陆！请「私聊」使用login命令进行登录操作\n"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.whats_that,size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作\n设置了皮肤提醒之后，请勿切换已登录的账户",Types.Text.KMD)))    
+            cm.append(c)
+            await msg.reply(cm)
             return
         
         name =" ".join(arg)
