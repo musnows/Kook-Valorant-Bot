@@ -1547,6 +1547,26 @@ async def auto_skin_inform():
                     }
                     resp = await fetch_daily_shop(userdict)  # 获取每日商店
                     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+                    timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] #剩余时间
+                    timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))  #将秒数转为标准时间
+                    text = ""
+                    for skinuuid in list_shop:
+                        res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+                        res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+                        price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                        text+=f"{res_item['data']['displayName']}     - VP {price}\n"
+                    
+                    cm=CardMessage()#向用户发送当前的每日商店（文字）
+                    c=Card(color='#fb4b57')
+                    c.append(Module.Section(
+                        Element.Text(f"请查收您的每日商店",Types.Text.KMD),
+                        Element.Image(src=icon.shot_on_fire,size='sm')))
+                    c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+                    c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？",Types.Text.KMD)))
+                    cm.append(c)
+                    await user.send(cm)
+
+                    # 然后再遍历列表查看是否有提醒皮肤
                     # 关于下面这一行：https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
                     target_skin = [ val for key,val in skin.items() if key in list_shop]
                     # print(target_skin)
