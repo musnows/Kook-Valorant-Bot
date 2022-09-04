@@ -1447,16 +1447,17 @@ async def get_user_card(msg: Message,*arg):
                 return
 
             cm = CardMessage()
-            c = Card(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
+            c = Card(color='#fb4b57')
+            c.append(Module.Header(f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))#将图片插入进去
             text=f"玩家称号："+player_title['data']['displayName']+"\n"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
-            cm.append(c)
+            #cm.append(c)
 
             #获取玩家的vp和r点剩余
             text=await get_user_vp(msg,userdict)
-            c1 = Card(Module.Section(Element.Text(text,Types.Text.KMD)))
-            cm.append(c1)
+            c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+            cm.append(c)
             #await msg.reply(cm)
             await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
