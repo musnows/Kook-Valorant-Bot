@@ -1050,15 +1050,32 @@ async def logout_authtoken(msg:Message,*arg):
     try:
         global UserTokenDict,UserAuthDict
         if msg.author_id not in UserAuthDict: #使用not in判断是否不存在
-            await msg.reply(f"你还没有登陆呢！")
+            cm=CardMessage()
+            text=f"你还没有登录呢！"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.that_it,size='sm')))
+            c.append(Module.Context(Element.Text(f"使用login登录吧！",Types.Text.KMD)))    
+            cm.append(c)
+            await msg.reply(cm)
             return
+
         #如果id存在， 删除id
+        del UserAuthDict[msg.author_id] #先删除auth对象
         print(f"Logout - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}")
-        del UserTokenDict[msg.author_id]
-        del UserAuthDict[msg.author_id]
-        await msg.reply(f"已成功取消登录")
+        cm=CardMessage()
+        text=f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        c=Card(color='#fb4b57')
+        c.append(Module.Section(
+            Element.Text(text,Types.Text.KMD),
+            Element.Image(src=icon.crying_crab,size='sm')))
+        c.append(Module.Context(Element.Text(f"你会回来的，对吗？",Types.Text.KMD)))    
+        cm.append(c)
+        await msg.reply(cm)
 
         #最后重新执行写入
+        del UserTokenDict[msg.author_id]
         with open("./log/UserAuth.json",'w',encoding='utf-8') as fw1:
             json.dump(UserTokenDict,fw1,indent=2,sort_keys=True, ensure_ascii=False)
         fw1.close()
@@ -1389,14 +1406,25 @@ async def get_user_card(msg: Message,*arg):
         return
 
     try:
-        flag_au = 0
         if msg.author_id in UserAuthDict:
             reau = await check_re_auth("玩家装备/通行证",msg)#重新登录
             if reau==False:return #如果为假说明重新登录失败
 
-            # 如果用户id已有，则不需要再次获取token
-            flag_au = 1
-            #userdict=UserTokenDict[msg.author_id]
+            cm=CardMessage()
+            text="正在尝试获取您的 玩家卡面/VP/R点"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.rgx_card,size='sm')))
+            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！",Types.Text.KMD)))    
+            cm.append(c)
+            if isinstance(reau,dict):#如果传过来的是一个dict，说明重新登录成功且发送了消息
+                await upd_card(reau['msg_id'],cm,channel_type=msg.channel_type)
+                send_msg = reau
+            else:
+                send_msg = await msg.reply(cm) #记录消息id用于后续更新
+
+
             auth=UserAuthDict[msg.author_id]
             userdict={'auth_user_id':auth.user_id,
                 'access_token':auth.access_token,
@@ -1407,7 +1435,15 @@ async def get_user_card(msg: Message,*arg):
             player_card=await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])#玩家卡面id
             player_title=await fetch_title_uuid(resp['Identity']['PlayerTitleID'])#玩家称号id
             if resp['Guns'] == None or resp['Sprays'] == None:#可能遇到全新账户（没打过游戏）的情况
-                await msg.reply(f"状态错误！您是否登录了一个全新新账户？\ncard: `{player_card}`\ntitle: `{player_title}`")
+                cm=CardMessage()
+                text=f"状态错误！您是否登录了一个全新账户？"
+                c=Card(color='#fb4b57')
+                c.append(Module.Section(
+                    Element.Text(text,Types.Text.KMD),
+                    Element.Image(src=icon.say_hello_to_camera,size='sm')))
+                c.append(Module.Section(Element.Text(f"card: `{player_card}`\ntitle: `{player_title}`",Types.Text.KMD)))
+                cm.append(c)
+                await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
                 return
 
             cm = CardMessage()
@@ -1421,10 +1457,11 @@ async def get_user_card(msg: Message,*arg):
             text=await get_user_vp(msg,userdict)
             c1 = Card(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm.append(c1)
-            await msg.reply(cm)
+            #await msg.reply(cm)
+            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
-        if flag_au != 1:
+        else:
             await msg.reply(f"您尚未登陆！请私聊使用`/login`命令进行登录操作\n```\n/login 账户 密码\n```\n请确认您知晓login是一个风险操作")
             return
     

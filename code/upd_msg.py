@@ -22,6 +22,7 @@ class icon:
     say_hello_to_camera="https://img.kookapp.cn/assets/2022-09/sHh8VJrMp20e80e8.png"
     crying_crab="https://img.kookapp.cn/assets/2022-09/DfveorD0lS0e80e8.png"
     im_good_phoniex="https://img.kookapp.cn/assets/2022-09/RdiFsx16Aw0e80e8.png"
+    rgx_card = "https://img.kookapp.cn/assets/2022-09/p1VwoNZZWD0e80e8.gif"
 
 #更新卡片消息
 async def upd_card(msg_id: str, content, target_id='', 
