@@ -973,6 +973,12 @@ async def login_re_auth(kook_user_id:str):
 
 #判断是否需要重新获取token
 async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
+    """
+    return value:
+     - True: no need to reauthorize / get `user_id` as params & reauhorize success 
+     - False: unkown err / reauthorize failed
+     - send_msg: get `Message` as params & reauhorize success
+    """
     try:
         user_id = msg if isinstance(msg,str) else msg.author_id #如果是str就直接用
         auth=UserAuthDict[user_id]
@@ -985,14 +991,34 @@ async def check_re_auth(def_name:str="",msg:Union[Message,str] = ''):
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
         test=resp['httpStatus']
-        if isinstance(msg,Message):#如果传入的是msg，则提示用户
-            await msg.reply(f"获取 `{def_name}` 失败！正在尝试重新获取token，您无需操作\n```\n{resp}\n```")
+        is_msg = isinstance(msg,Message)#判断传入的类型是不是消息
+        if is_msg:#如果传入的是msg，则提示用户
+            cm=CardMessage()
+            text=f"获取「{def_name}」失败！正在尝试重新获取token，您无需操作"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.im_good_phoniex,size='sm')))
+            c.append(Module.Context(Element.Text(f"{resp['message']}",Types.Text.KMD)))
+            cm.append(c)
+            send_msg=await msg.reply(cm)
+
         #不管传入的是用户id还是msg，都传userid进入该函数
         ret = await login_re_auth(user_id)
-        if ret==False and isinstance(msg,Message):#没有正常返回
-            await msg.reply(f"重新获取token失败，请私聊`/login`重新登录\n")
-        #这里可以直接借用reauthorize的返回值进行操作
-        return ret 
+        if ret==False and is_msg:#没有正常返回
+            cm=CardMessage()
+            text=f"重新获取token失败，请私聊「/login」重新登录\n"
+            c=Card(color='#fb4b57')
+            c.append(Module.Section(
+                Element.Text(text,Types.Text.KMD),
+                Element.Image(src=icon.crying_crab,size='sm')))
+            c.append(Module.Context(Element.Text(f"Auto Reauthorize Failed!",Types.Text.KMD)))    
+            cm.append(c)#如果重新获取token失败，则更新上面的消息
+            await upd_card(send_msg['msg_id'],cm,channel_type=msg.channel_type)
+        elif ret==True and is_msg:#正常重新登录，且传过来了消息
+            return send_msg#返回发送出去的消息（用于更新）
+
+        return ret #返回假
     except Exception as result:
         if 'httpStatus' in str(result):
             print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
@@ -1158,7 +1184,11 @@ async def get_daily_shop(msg: Message,*arg):
                 Element.Image(src=icon.duck,size='sm')))
             c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！",Types.Text.KMD)))    
             cm.append(c)
-            send_msg = await msg.reply(cm) #记录消息id用于后续更新
+            if isinstance(reau,dict):#如果传过来的是一个dict，说明重新登录成功且发送了消息
+                await upd_card(reau['msg_id'],cm,channel_type=msg.channel_type)
+                send_msg = reau
+            else:
+                send_msg = await msg.reply(cm) #记录消息id用于后续更新
 
             #计算获取每日商店要多久
             start = time.perf_counter()#开始计时

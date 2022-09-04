@@ -19,6 +19,9 @@ class icon:
     that_it = "https://img.kookapp.cn/assets/2022-09/LqD0pQY2P70e80e8.png"
     to_much_money="https://img.kookapp.cn/assets/2022-09/y17ZhjjaVf0e80e8.png"
     shaka = "https://img.kookapp.cn/assets/2022-09/kMWT5AoEic0e80e8.png"
+    say_hello_to_camera="https://img.kookapp.cn/assets/2022-09/sHh8VJrMp20e80e8.png"
+    crying_crab="https://img.kookapp.cn/assets/2022-09/DfveorD0lS0e80e8.png"
+    im_good_phoniex="https://img.kookapp.cn/assets/2022-09/RdiFsx16Aw0e80e8.png"
 
 #更新卡片消息
 async def upd_card(msg_id: str, content, target_id='', 
