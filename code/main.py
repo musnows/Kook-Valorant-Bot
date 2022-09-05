@@ -9,7 +9,7 @@ from typing import Union
 
 import aiohttp
 import requests
-from khl import (Bot, ChannelPrivacyTypes, Client, Event, EventTypes, Message,
+from khl import (Bot, Client, Event, EventTypes, Message,
                  PrivateMessage, PublicChannel, PublicMessage)
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
@@ -110,7 +110,7 @@ async def Ahri(msg: Message, *arg):
         print(err_str)
         #发送错误信息到指定频道
         debug_channel = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(debug_channel, err_str)
+        await bot.client.send(debug_channel, err_str)
 
 
 # help命令(瓦洛兰特相关)
@@ -156,7 +156,7 @@ async def Vhelp(msg: Message, *arg):
         print(err_str)
         #发送错误信息到指定频道
         debug_channel = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(debug_channel, err_str)
+        await bot.client.send(debug_channel, err_str)
 
 
 #################################################################################################
@@ -183,7 +183,7 @@ async def countdown(msg: Message, time: int = 60):
         print(err_str)
         #发送错误信息到指定频道
         debug_channel = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(debug_channel, err_str)
+        await bot.client.send(debug_channel, err_str)
 
 
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
@@ -198,7 +198,7 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
         print(err_str)
         #发送错误信息到指定频道
         debug_channel = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(debug_channel, err_str)
+        await bot.client.send(debug_channel, err_str)
 
 
 ################################以下是给用户上色功能的内容########################################
@@ -368,7 +368,7 @@ async def thanks_sonser():
         if check_sponsor(its) == 0:
             channel = await bot.fetch_public_channel("8342620158040885"
                                                      )  #发送感谢信息的文字频道
-            await bot.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
+            await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
             print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
 
 
@@ -475,7 +475,7 @@ async def ShutdownTL(msg: Message):
     while i < len(ListTL):
         if (ListTL[i]) != '0':  #不能对0的频道进行操作
             channel = await bot.fetch_public_channel(ListTL[i])
-            await bot.send(channel, "不好意思，阿狸的主人已经清空了实时翻译的栏位！")
+            await bot.client.send(channel, "不好意思，阿狸的主人已经清空了实时翻译的栏位！")
             ListTL[i] = '0'
         i += 1
     await msg.reply(f"实时翻译栏位已清空！目前为: {checkTL()}/{len(ListTL)}")
@@ -1957,7 +1957,7 @@ async def get_bundle(msg: Message, *arg):
         print(err_str)
         await msg.reply(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch, err_str)
+        await bot.client.send(ch, err_str)
 
 
 #用户选择列表
@@ -2031,12 +2031,12 @@ async def auto_skin_inform():
         finish_str = "[BOT.TASK] auto_skin_inform Finished!"
         print(finish_str)  #正常完成
         ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch, finish_str)
+        await bot.client.send(ch, finish_str)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch, err_str)
+        await bot.client.send(ch, err_str)
 
 
 #设置提醒（出现xx皮肤）
@@ -2192,7 +2192,7 @@ async def list_skin_notify(msg: Message):
         print(err_str)
         await msg.reply(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch, err_str)
+        await bot.client.send(ch, err_str)
 
 
 # 删除已有皮肤通知
@@ -2228,7 +2228,7 @@ async def delete_skin_notify(msg: Message, uuid: str = "err"):
         print(err_str)
         await msg.reply(err_str)
         ch = await bot.fetch_public_channel(Debug_ch)
-        await bot.send(ch, err_str)
+        await bot.client.send(ch, err_str)
 
 
 # 开机的时候打印一次时间，记录重启时间
