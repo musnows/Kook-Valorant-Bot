@@ -1537,6 +1537,13 @@ def shop_time_remain():
 def isSame_Authuuid(msg:Message):#判断uuid是否相等
     return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
 
+#每天早上8点准时清除商店dict
+@bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
+async def clear_usershopdict():
+    global UserShopDict
+    UserShopDict={}
+    print("[BOT.TASK] clear UserShopDict finished")
+
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message, *arg):
