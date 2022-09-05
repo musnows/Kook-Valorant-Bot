@@ -1518,7 +1518,25 @@ async def update_skin_price(msg: Message):
         if await update_bundle_url(msg):
             await msg.reply(f"成功更新：捆绑包")
 
-UserShopDict={}#用来存放用户每天的商店
+#用来存放用户每天的商店
+UserShopDict={}
+
+#计算当前时间和明天早上8点的差值
+def shop_time_remain():
+    today = datetime.today().strftime("%y-%m-%d %H:%M:%S")#今天日期+时间
+    tomorow = (datetime.today()+timedelta(days=1)).strftime("%y-%m-%d")#明天日期
+    #print(f"{tomorow} 08:00:00")
+    times_tomorow = time.mktime(time.strptime(f"{tomorow} 08:00:00","%y-%m-%d %H:%M:%S"))#明天早上8点时间戳
+    times_now = time.mktime(time.strptime(f"{today}","%y-%m-%d %H:%M:%S"))#现在的时间戳
+    #print(times_tomorow)
+    timeout = times_tomorow - times_now#计算差值
+    timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))#转换成可读时间
+    #print(timeout)
+    return timeout
+
+def isSame_Authuuid(msg:Message):#判断uuid是否相等
+    return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
+
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message, *arg):
@@ -1558,16 +1576,31 @@ async def get_daily_shop(msg: Message, *arg):
                 'access_token': auth.access_token,
                 'entitlements_token': auth.entitlements_token
             }
-            resp = await fetch_daily_shop(userdict)  #获取每日商店
-            list_shop = resp["SkinsPanelLayout"][
-                "SingleItemOffers"]  # 商店刷出来的4把枪
-            timeout = resp["SkinsPanelLayout"][
-                "SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
-            timeout = time.strftime("%H:%M:%S",
-                                    time.gmtime(timeout))  #将秒数转为标准时间
-
+            log_time=""
+            global UserShopDict
+            if msg.author_id in UserShopDict and isSame_Authuuid(msg):
+                a_time = time.time()
+                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"][
+                    "SingleItemOffers"]  # 商店刷出来的4把枪
+                timeout = shop_time_remain()
+                log_time+=f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
+            else:
+                a_time = time.time()
+                resp = await fetch_daily_shop(userdict)  #获取每日商店
+                list_shop = resp["SkinsPanelLayout"][
+                    "SingleItemOffers"]  # 商店刷出来的4把枪
+                timeout = resp["SkinsPanelLayout"][
+                    "SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
+                timeout = time.strftime("%H:%M:%S",
+                                        time.gmtime(timeout))  #将秒数转为标准时间
+                #需要设置uuid来保证是同一个用户
+                UserShopDict[msg.author_id]={}
+                UserShopDict[msg.author_id]["auth_user_id"]=UserTokenDict[msg.author_id]["auth_user_id"]
+                UserShopDict[msg.author_id]["SkinsPanelLayout"]=resp["SkinsPanelLayout"]
+                log_time+=f"[Api_shop] {format(time.time()-a_time,'.4f')} "
+            
             #开始画图
-            a_time = time.time()  #计算画图需要的时间
+            draw_time = time.time()  #计算画图需要的时间
             x = 0
             y = 0
             bg = copy.deepcopy(bg_main)
@@ -1605,7 +1638,8 @@ async def get_daily_shop(msg: Message, *arg):
                 await asyncio.sleep(0.2)
 
             #打印画图耗时
-            print('[Drawing]', time.time() - a_time)
+            log_time+=f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
+            print(log_time)
             #bg.save(f"test.png")  #保存到本地
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
