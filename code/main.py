@@ -773,7 +773,7 @@ import asyncio
 import copy
 import io  # 用于将 图片url 转换成可被打开的二进制
 import threading
-
+from riot_auth import auth_exceptions
 import zhconv  # 用于繁体转简体（因为部分字体不支持繁体
 from PIL import Image, ImageDraw, ImageFont  # 用于合成图片
 
@@ -846,7 +846,7 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
             requests.get(icon).content))  # 打开武器图片
         layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
     end = time.perf_counter()
-    print('[GetWeapen]', end - start)
+    log_time=f"[GetWeapen] {format(end - start, '.4f')} "
     # w, h = layer_icon.size  # 读取武器图片长宽
     # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
     # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
@@ -878,8 +878,8 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
     else:
         LEVEL_Icon = level_icon_temp[level_icon]
     end = time.perf_counter()
-
-    print('[GetIters]', end - start)
+    log_time+=f"- [GetIters] {format(end - start, '.4f')} "
+    print(log_time)
 
     w, h = LEVEL_Icon.size  # 读取武器图片长宽
     new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
@@ -1032,7 +1032,7 @@ async def check_UserAuthDict_len(msg: Message):
     print(res)
     await msg.reply(res)
 
-
+login_dict={}#用于限制用户操作，一分钟只能3次
 # 登录，保存用户的token
 @bot.command(name='login')
 async def login_authtoken(msg: Message,
@@ -1067,6 +1067,36 @@ async def login_authtoken(msg: Message,
             await msg.reply(cm0)
             return
 
+        global login_dict #检查用户请求次数，避免超速
+        if msg.author_id in login_dict:
+            time_stap = time.time()
+            time_diff = time_stap - login_dict[msg.author_id]['time']
+            if login_dict[msg.author_id]['nums']>=3 and time_diff<=60.0:
+                # 思路是第一次请求超速后，要过60s才能执行下一次
+                if login_dict[msg.author_id]['nums']==3: #第一次请求超速
+                    login_dict[msg.author_id]['time'] = time_stap #更新时间戳
+                    time_diff = 0 #更新diff
+                
+                login_dict[msg.author_id]['nums'] += 1
+                time_remain = format(62.0-time_diff, '.1f')#剩余需要等待的时间
+                text = f"请求超速，请在 {time_remain}s 后重试"
+                c.append(
+                    Module.Section(Element.Text(text, Types.Text.KMD),
+                                Element.Image(src=icon.powder, size='sm')))
+                c.append(
+                    Module.Context(
+                        Element.Text(f"raise RiotRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
+                cm0.append(c)
+                await msg.reply(cm0)
+                return
+            elif time_diff>60.0: #请求次数超限，但是已经过了60s
+                login_dict[msg.author_id]['nums'] = 1 #重置为1
+                login_dict[msg.author_id]['time'] = time_stap
+            else: # login_dict[msg.author_id]['nums']<3 and time_diff<=60.0
+                login_dict[msg.author_id]['nums'] += 1
+        else:
+            login_dict[msg.author_id]={'time':time.time(),'nums':1}
+        
         text = "正在尝试获取您的riot账户token"
         c.append(
             Module.Section(Element.Text(text, Types.Text.KMD),
@@ -1114,55 +1144,75 @@ async def login_authtoken(msg: Message,
         print(
             f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        result = str(result)  #转成str
+    
+    except auth_exceptions.RiotAuthenticationError as result:
+        print(f"ERR! [{GetTime()}] login - {result}")
         cm = CardMessage()
         c = Card(color='#fb4b57')
-        if "Make sure username and password are correct" in result:
-            text = f"当前的账户密码真的对了吗？"
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.dont_do_that,
-                                             size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text("Make sure username and password are correct",
-                                 Types.Text.KMD)))
-            cm.append(c)
-            await upd_card(send_msg['msg_id'],
-                           cm,
-                           channel_type=msg.channel_type)
-        elif "Multi-factor authentication is not currently supported" in result:
-            text = f"当前不支持开启了`邮箱双重验证`的账户"
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.that_it, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(
-                        "Multi-factor authentication is not currently supported",
-                        Types.Text.KMD)))
-            cm.append(c)
-            await upd_card(send_msg['msg_id'],
-                           cm,
-                           channel_type=msg.channel_type)
-        else:
-            c.append(Module.Header(f"很抱歉，发生了未知错误"))
-            c.append(Module.Divider())
-            c.append(
-                Module.Section(
-                    Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",
-                                 Types.Text.KMD)))
-            c.append(Module.Divider())
-            c.append(
-                Module.Section(
-                    '有任何问题，请加入帮助服务器与我联系',
-                    Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                   Types.Click.LINK)))
-            cm.append(c)
-            await msg.reply(cm)
+        text = f"当前的账户密码真的对了吗？"
+        c.append(
+            Module.Section(Element.Text(text, Types.Text.KMD),
+                            Element.Image(src=icon.dont_do_that,
+                                            size='sm')))
+        c.append(
+            Module.Context(
+                Element.Text("Make sure username and password are correct",
+                                Types.Text.KMD)))
+        cm.append(c)
+        await upd_card(send_msg['msg_id'],
+                        cm,
+                        channel_type=msg.channel_type)
+    except auth_exceptions.RiotMultifactorError as result:
+        print(f"ERR! [{GetTime()}] login - {result}")
+        text = f"当前不支持开启了`邮箱双重验证`的账户"
+        cm = CardMessage()
+        c = Card(color='#fb4b57')
+        c.append(
+            Module.Section(Element.Text(text, Types.Text.KMD),
+                            Element.Image(src=icon.that_it, size='sm')))
+        c.append(
+            Module.Context(
+                Element.Text(
+                    "Multi-factor authentication is not currently supported",
+                    Types.Text.KMD)))
+        cm.append(c)
+        await upd_card(send_msg['msg_id'],
+                        cm,
+                        channel_type=msg.channel_type)
+    except auth_exceptions.RiotRatelimitError as result:
+        print(f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError")
+        text = f"阿狸的登录请求超速！请稍等一会"
+        cm = CardMessage()
+        c = Card(color='#fb4b57')
+        c.append(
+            Module.Section(Element.Text(text, Types.Text.KMD),
+                            Element.Image(src=icon.lagging, size='sm')))
+        c.append(
+            Module.Context(
+                Element.Text(
+                    "raise RiotRatelimitError, please try again later",
+                    Types.Text.KMD)))
+        cm.append(c)
+        await upd_card(send_msg['msg_id'],
+                        cm,
+                        channel_type=msg.channel_type)
+    except:
+        err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
+        print(err_str) #只有不认识的报错消息才打印结果
+        c.append(Module.Header(f"很抱歉，发生了未知错误"))
+        c.append(Module.Divider())
+        c.append(
+            Module.Section(
+                Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",
+                                Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(
+            Module.Section(
+                '有任何问题，请加入帮助服务器与我联系',
+                Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                Types.Click.LINK)))
+        cm.append(c)
+        await msg.reply(cm)
 
 
 #重新登录（kook用户id）
@@ -1199,7 +1249,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             'entitlements_token': auth.entitlements_token
         }
         resp = await fetch_valorant_point(userdict)
-        print('[Ckeck_re_auth]', resp)
+        # print('[Ckeck_re_auth]', resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
         test = resp['httpStatus']
@@ -1532,7 +1582,7 @@ async def get_daily_shop(msg: Message, *arg):
                     f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"
                 ))
             c.append(
-                Module.Context(f"失效时间剩余：{timeout}    本次查询用时：{using_time}s"))
+                Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
             await upd_card(send_msg['msg_id'],
