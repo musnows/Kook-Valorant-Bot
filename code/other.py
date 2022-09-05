@@ -30,8 +30,6 @@ async def history(msg: Message):
 
 
 # 天气 来自http://api.asilu.com/#today
-
-
 async def weather(msg: Message, city: str):
     url = f'https://query.asilu.com/weather/baidu?city={city}'
     async with aiohttp.ClientSession() as session:
