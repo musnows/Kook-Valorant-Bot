@@ -1032,7 +1032,67 @@ async def check_UserAuthDict_len(msg: Message):
     print(res)
     await msg.reply(res)
 
+
+
 login_dict={}#用于限制用户操作，一分钟只能3次
+#全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
+login_rate_limit={'limit':False,
+                  'time':time.time()} 
+
+#遇到全局速率限制统一获取卡片消息
+def get_login_rate_cm(time_diff=None):
+    if time_diff != None:
+        text = f"阿狸的登录请求超速！请在 {format(240.0-time_diff, '.1f')}s 后重试"
+    else:
+        text = f"阿狸的登录请求超速！请在 240.0s 后重试"
+    cm = CardMessage()
+    c = Card(color='#fb4b57')
+    c.append(Module.Section(Element.Text(text, Types.Text.KMD),
+                        Element.Image(src=icon.lagging, size='sm')))
+    c.append(Module.Context(Element.Text("raise RiotRatelimitError, please try again later",Types.Text.KMD)))
+    cm.append(c)
+    return cm
+
+#检查是否存在用户请求超速
+async def check_user_login_rate(msg:Message):
+    """
+    Returns:
+     - True: UserRatelimitError
+     - False: good_to_go
+    """
+    global login_dict #检查用户请求次数，避免超速
+    if msg.author_id in login_dict:
+        time_stap = time.time()
+        time_diff = time_stap - login_dict[msg.author_id]['time']
+        if login_dict[msg.author_id]['nums']>=3 and time_diff<=70.0:
+            # 思路是第一次请求超速后，要过70s才能执行下一次
+            if login_dict[msg.author_id]['nums']==3: #第一次请求超速
+                login_dict[msg.author_id]['time'] = time_stap #更新时间戳
+                time_diff = 0 #更新diff
+            
+            login_dict[msg.author_id]['nums'] += 1
+            time_remain = format(70.0-time_diff, '.1f')#剩余需要等待的时间
+            text = f"用户登录请求超速，请在 {time_remain}s 后重试"
+            cm0 = CardMessage()
+            c = Card(color='#fb4b57')  #卡片侧边栏颜色
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD),
+                            Element.Image(src=icon.powder, size='sm')))
+            c.append(Module.Context(Element.Text(f"raise UserRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
+            cm0.append(c)
+            await msg.reply(cm0)
+            return True
+        elif time_diff>70.0: #请求次数超限，但是已经过了70s
+            login_dict[msg.author_id]['nums'] = 1 #重置为1
+            login_dict[msg.author_id]['time'] = time_stap
+            return False
+        else: # login_dict[msg.author_id]['nums']<3 and time_diff<=60.0
+            login_dict[msg.author_id]['nums'] += 1
+            return False
+    else:
+        login_dict[msg.author_id]={'time':time.time(),'nums':1}
+        return False
+
+
 # 登录，保存用户的token
 @bot.command(name='login')
 async def login_authtoken(msg: Message,
@@ -1051,6 +1111,7 @@ async def login_authtoken(msg: Message,
             f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
         return
 
+    global login_rate_limit
     try:
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
@@ -1066,36 +1127,24 @@ async def login_authtoken(msg: Message,
             cm0.append(c)
             await msg.reply(cm0)
             return
-
-        global login_dict #检查用户请求次数，避免超速
-        if msg.author_id in login_dict:
+        
+        #全局请求超速
+        if login_rate_limit['limit']:
             time_stap = time.time()
-            time_diff = time_stap - login_dict[msg.author_id]['time']
-            if login_dict[msg.author_id]['nums']>=3 and time_diff<=60.0:
-                # 思路是第一次请求超速后，要过60s才能执行下一次
-                if login_dict[msg.author_id]['nums']==3: #第一次请求超速
-                    login_dict[msg.author_id]['time'] = time_stap #更新时间戳
-                    time_diff = 0 #更新diff
-                
-                login_dict[msg.author_id]['nums'] += 1
-                time_remain = format(62.0-time_diff, '.1f')#剩余需要等待的时间
-                text = f"请求超速，请在 {time_remain}s 后重试"
-                c.append(
-                    Module.Section(Element.Text(text, Types.Text.KMD),
-                                Element.Image(src=icon.powder, size='sm')))
-                c.append(
-                    Module.Context(
-                        Element.Text(f"raise RiotRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
-                cm0.append(c)
-                await msg.reply(cm0)
+            time_diff = time_stap - login_rate_limit['time']
+            if time_diff <= 240.0: #240s内无法使用login
+                ret_cm = get_login_rate_cm(time_diff)
+                await msg.reply(ret_cm)
+                print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
                 return
-            elif time_diff>60.0: #请求次数超限，但是已经过了60s
-                login_dict[msg.author_id]['nums'] = 1 #重置为1
-                login_dict[msg.author_id]['time'] = time_stap
-            else: # login_dict[msg.author_id]['nums']<3 and time_diff<=60.0
-                login_dict[msg.author_id]['nums'] += 1
-        else:
-            login_dict[msg.author_id]={'time':time.time(),'nums':1}
+            else:#超过240s，解除限制
+                login_rate_limit['limit'] = False
+                login_rate_limit['time'] = time_stap
+                
+        if await check_user_login_rate(msg):
+            print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
+            return
+
         
         text = "正在尝试获取您的riot账户token"
         c.append(
@@ -1181,20 +1230,12 @@ async def login_authtoken(msg: Message,
                         channel_type=msg.channel_type)
     except auth_exceptions.RiotRatelimitError as result:
         print(f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError")
-        text = f"阿狸的登录请求超速！请稍等一会"
-        cm = CardMessage()
-        c = Card(color='#fb4b57')
-        c.append(
-            Module.Section(Element.Text(text, Types.Text.KMD),
-                            Element.Image(src=icon.lagging, size='sm')))
-        c.append(
-            Module.Context(
-                Element.Text(
-                    "raise RiotRatelimitError, please try again later",
-                    Types.Text.KMD)))
-        cm.append(c)
+         #更新全局速率限制
+        login_rate_limit['limit'] = True
+        login_rate_limit['time'] = time.time()
+        ret_cm = get_login_rate_cm()#这里是第一个出现速率限制err的用户
         await upd_card(send_msg['msg_id'],
-                        cm,
+                        ret_cm,
                         channel_type=msg.channel_type)
     except:
         err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
