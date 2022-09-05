@@ -4,20 +4,32 @@ import aiohttp
 import urllib.request
 import urllib.parse
 
-# youdao code is from https://github.com/Chinese-boy/Many-Translaters
-def youdao_translate(txt:str):
-        #print(txt)
-        url = 'http://fanyi.youdao.com/translate?smartresult=dict&smartresult=rule&sessionFrom=https://www.baidu.com/link'
-        data = {'from': 'AUTO', 'to': 'AUTO', 'smartresult': 'dict', 'client': 'fanyideskweb', 'salt': '1500092479607',
-                'sign': 'c98235a85b213d482b8e65f6b1065e26', 'doctype': 'json', 'version': '2.1', 'keyfrom': 'fanyi.web',
-                'action': 'FY_BY_CL1CKBUTTON', 'typoResult': 'true', 'i': txt}
 
-        data = urllib.parse.urlencode(data).encode('utf-8')
-        wy = urllib.request.urlopen(url, data)
-        html = wy.read().decode('utf-8')
-        ta = json.loads(html)
-        #print(ta['translateResult'][0][0]['tgt'])
-        return ta['translateResult'][0][0]['tgt']
+# youdao code is from https://github.com/Chinese-boy/Many-Translaters
+def youdao_translate(txt: str):
+    #print(txt)
+    url = 'http://fanyi.youdao.com/translate?smartresult=dict&smartresult=rule&sessionFrom=https://www.baidu.com/link'
+    data = {
+        'from': 'AUTO',
+        'to': 'AUTO',
+        'smartresult': 'dict',
+        'client': 'fanyideskweb',
+        'salt': '1500092479607',
+        'sign': 'c98235a85b213d482b8e65f6b1065e26',
+        'doctype': 'json',
+        'version': '2.1',
+        'keyfrom': 'fanyi.web',
+        'action': 'FY_BY_CL1CKBUTTON',
+        'typoResult': 'true',
+        'i': txt
+    }
+
+    data = urllib.parse.urlencode(data).encode('utf-8')
+    wy = urllib.request.urlopen(url, data)
+    html = wy.read().decode('utf-8')
+    ta = json.loads(html)
+    #print(ta['translateResult'][0][0]['tgt'])
+    return ta['translateResult'][0][0]['tgt']
 
 
 # 读取彩云的key
@@ -25,6 +37,7 @@ with open('./config/caiyun.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 CyKey = config['token']
+
 
 # caiyun translte
 async def caiyun_translate(source, direction):
@@ -45,8 +58,9 @@ async def caiyun_translate(source, direction):
 
     #用aiohttp效率更高
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=json.dumps(payload), headers=headers) as response:
-                return json.loads(await response.text())["target"]
+        async with session.post(url, data=json.dumps(payload),
+                                headers=headers) as response:
+            return json.loads(await response.text())["target"]
 
 
 # 由于彩云不支持输入中文自动翻译成英文（目前只支持其他语种自动转中文）
