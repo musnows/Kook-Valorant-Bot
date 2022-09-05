@@ -250,16 +250,16 @@ async def Color_Set_GM(msg: Message, Card_Msg_id: str):
 # 判断消息的emoji回应，并给予不同角色
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def update_reminder(b: Bot, event: Event):
-    g = await b.fetch_guild(Guild_ID)  # 填入服务器id
+    g = await bot.client.fetch_guild(Guild_ID)  # 填入服务器id
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == Msg_ID:
         now_time = GetTime()  #记录时间
         print(f"[{now_time}] React:{event.body}"
               )  # 这里的打印eventbody的完整内容，包含emoji_id
 
-        channel = await b.fetch_public_channel(event.body['channel_id']
+        channel = await bot.client.fetch_public_channel(event.body['channel_id']
                                                )  #获取事件频道
-        s = await b.fetch_user(event.body['user_id'])  #通过event获取用户id(对象)
+        s = await bot.client.fetch_user(event.body['user_id'])  #通过event获取用户id(对象)
         # 判断用户回复的emoji是否合法
         emoji = event.body["emoji"]['id']
         flag = 0
