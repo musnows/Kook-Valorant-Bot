@@ -87,7 +87,7 @@ async def Ahri(msg: Message, *arg):
         c3.append(
             Module.Section(
                 Element.Text(
-                    "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「`/Vhelp`」瓦洛兰特游戏查询相关功能的帮助",
+                    "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「`/vhelp`」瓦洛兰特游戏查询相关功能的帮助",
                     Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header('和阿狸玩小游戏吧~ '))
@@ -784,7 +784,7 @@ standard_length_sm = int(standard_length / 2)  # 组成四宫格小图的边长
 stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
 stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
 standard_icon_top_blank = int(180 * standard_length / 1000)  # 枪距离图片顶部的像素
-standard_text_position = (int(128 * standard_length / 1000),
+standard_text_position = (int(124 * standard_length / 1000),
                           int(317 * standard_length / 1000))  # 默认文字位置
 standard_price_position = (int(280 * standard_length / 1000),
                            int(120 * standard_length / 1000))  # 皮肤价格文字位置
@@ -1518,7 +1518,7 @@ async def update_skin_price(msg: Message):
         if await update_bundle_url(msg):
             await msg.reply(f"成功更新：捆绑包")
 
-
+UserShopDict={}#用来存放用户每天的商店
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message, *arg):
