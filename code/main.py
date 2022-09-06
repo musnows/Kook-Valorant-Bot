@@ -257,8 +257,7 @@ async def update_reminder(b: Bot, event: Event):
         print(f"[{now_time}] React:{event.body}"
               )  # 这里的打印eventbody的完整内容，包含emoji_id
 
-        channel = await bot.client.fetch_public_channel(event.body['channel_id']
-                                               )  #获取事件频道
+        channel = await bot.client.fetch_public_channel(event.body['channel_id'])  #获取事件频道
         s = await bot.client.fetch_user(event.body['user_id'])  #通过event获取用户id(对象)
         # 判断用户回复的emoji是否合法
         emoji = event.body["emoji"]['id']
@@ -271,19 +270,19 @@ async def update_reminder(b: Bot, event: Event):
                     event.body['user_id'],
                     event.body["emoji"]['id'])  # 判断用户之前是否已经获取过角色
                 if ret == 1:  #已经获取过角色
-                    await b.send(channel,
+                    await b.client.send(channel,
                                  f'你已经设置过你的ID颜色啦！修改要去找管理员哦~',
                                  temp_target_id=event.body['user_id'])
                     return
                 else:
                     role = int(v[1])
                     await g.grant_role(s, role)
-                    await b.send(channel,
+                    await b.client.send(channel,
                                  f'阿狸已经给你上了 {emoji} 对应的颜色啦~',
                                  temp_target_id=event.body['user_id'])
 
         if flag == 0:  #回复的表情不合法
-            await b.send(channel,
+            await b.client.send(channel,
                          f'你回应的表情不在列表中哦~再试一次吧！',
                          temp_target_id=event.body['user_id'])
 
