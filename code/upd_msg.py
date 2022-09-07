@@ -24,6 +24,7 @@ class icon:
     crying_crab = "https://img.kookapp.cn/assets/2022-09/DfveorD0lS0e80e8.png"
     im_good_phoniex = "https://img.kookapp.cn/assets/2022-09/RdiFsx16Aw0e80e8.png"
     rgx_card = "https://img.kookapp.cn/assets/2022-09/p1VwoNZZWD0e80e8.gif"
+    rgx_broken = "https://img.kookapp.cn/assets/2022-09/A8wPGOtJmz0e80e8.gif"
     shot_on_fire = "https://img.kookapp.cn/assets/2022-09/L5EeqS3GDC0e80e8.png"
     powder = "https://img.kookapp.cn/assets/2022-09/nwXm6aNzj20e80e8.png"
 
