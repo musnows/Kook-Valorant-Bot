@@ -109,7 +109,7 @@ async def Ahri(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] Ahri - {result}"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.fetch_public_channel(Debug_ch)
+        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_channel, err_str)
 
 
@@ -155,7 +155,7 @@ async def Vhelp(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] vhelp - {result}"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.fetch_public_channel(Debug_ch)
+        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_channel, err_str)
 
 
@@ -182,7 +182,7 @@ async def countdown(msg: Message, time: int = 60):
         err_str = f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.fetch_public_channel(Debug_ch)
+        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_channel, err_str)
 
 
@@ -197,7 +197,7 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
         err_str = f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.fetch_public_channel(Debug_ch)
+        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_channel, err_str)
 
 
@@ -365,7 +365,7 @@ async def thanks_sonser():
     for its in json_dict['data']['items']:
         #print(f"{its['id']}:{its['nickname']}")
         if check_sponsor(its) == 0:
-            channel = await bot.fetch_public_channel("8342620158040885"
+            channel = await bot.client.fetch_public_channel("8342620158040885"
                                                      )  #发送感谢信息的文字频道
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
             print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
@@ -473,7 +473,7 @@ async def ShutdownTL(msg: Message):
     i = 0
     while i < len(ListTL):
         if (ListTL[i]) != '0':  #不能对0的频道进行操作
-            channel = await bot.fetch_public_channel(ListTL[i])
+            channel = await bot.client.fetch_public_channel(ListTL[i])
             await bot.client.send(channel, "不好意思，阿狸的主人已经清空了实时翻译的栏位！")
             ListTL[i] = '0'
         i += 1
@@ -1996,12 +1996,12 @@ async def get_bundle(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] get_bundle\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
+        ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(ch, err_str)
 
 
 #用户选择列表
-UserSDict = {}
+UserStsDict = {}
 # 皮肤商店提醒记录
 with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
@@ -2070,12 +2070,12 @@ async def auto_skin_inform():
         #完成遍历后打印
         finish_str = "[BOT.TASK] auto_skin_inform Finished!"
         print(finish_str)  #正常完成
-        ch = await bot.fetch_public_channel(Debug_ch)
+        ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(ch, finish_str)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
+        ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(ch, err_str)
 
 
@@ -2124,7 +2124,7 @@ async def add_skin_notify(msg: Message, *arg):
             await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
             return
 
-        UserSDict[msg.author_id] = retlist
+        UserStsDict[msg.author_id] = retlist
         i = 0
         text = "```\n"  #模拟一个选择表
         for w in retlist:
@@ -2161,16 +2161,20 @@ async def add_skin_notify(msg: Message, *arg):
 
 #选择皮肤（这个命令必须跟着上面的命令用）
 @bot.command(name="sts")
-async def select_skin_notify(msg: Message, n: str = "err"):
+async def select_skin_notify(msg: Message, n: str = "err",*arg):
     logging(msg)
-    if n == "err":
-        await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号：`{n}`")
+    if n == "err" or '-' in n:
+        await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号")
         return
     try:
         global SkinNotifyDict
-        if msg.author_id in UserSDict:
-            num = str2int(n)  #转成int下标
-            S_skin = UserSDict[msg.author_id][num]
+        if msg.author_id in UserStsDict:
+            num = str2int(n)  #转成int下标（不能处理负数）
+            if num >= len(UserStsDict[msg.author_id]):#下标判断，避免越界
+                await msg.reply(f"您的选择越界了！请正确填写序号")
+                return
+                
+            S_skin = UserStsDict[msg.author_id][num]
             if msg.author_id not in SkinNotifyDict:
                 SkinNotifyDict[msg.author_id] = {}
                 SkinNotifyDict[msg.author_id][
@@ -2188,7 +2192,7 @@ async def select_skin_notify(msg: Message, n: str = "err"):
                           sort_keys=True,
                           ensure_ascii=False)
 
-            del UserSDict[msg.author_id]  #删除选择页面中的list
+            del UserStsDict[msg.author_id]  #删除选择页面中的list
             text = f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
             print(f"Au:{msg.author_id} ", text)
             await msg.reply(text)
@@ -2202,7 +2206,7 @@ async def select_skin_notify(msg: Message, n: str = "err"):
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
         c.append(
             Module.Section(
-                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+                Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(
             Module.Section(
@@ -2215,7 +2219,7 @@ async def select_skin_notify(msg: Message, n: str = "err"):
 
 # 显示当前设置好了的皮肤通知
 @bot.command(name="notify-list", aliases=['notify-l'])
-async def list_skin_notify(msg: Message):
+async def list_skin_notify(msg: Message,*arg):
     logging(msg)
     try:
         if msg.author_id in SkinNotifyDict:
@@ -2231,13 +2235,13 @@ async def list_skin_notify(msg: Message):
         err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
+        ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(ch, err_str)
 
 
 # 删除已有皮肤通知
 @bot.command(name="notify-del", aliases=['notify-d'])
-async def delete_skin_notify(msg: Message, uuid: str = "err"):
+async def delete_skin_notify(msg: Message, uuid: str = "err",*arg):
     logging(msg)
     if uuid == 'err':
         await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
@@ -2267,7 +2271,7 @@ async def delete_skin_notify(msg: Message, uuid: str = "err"):
         err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        ch = await bot.fetch_public_channel(Debug_ch)
+        ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(ch, err_str)
 
 
