@@ -1,7 +1,3 @@
-from ast import Str
-from pickle import NONE
-from re import A
-from tkinter import N
 import uuid
 import json
 import time
@@ -39,16 +35,16 @@ with open("./log/VipUser.json", 'r', encoding='utf-8') as frus:
 # 计算时间戳，用于给用户设置vip时间
 def vip_time_stap(kook_user_id:str,vip_time:int=0):
     day = vip_time*30
-    # 今天日期
-    today = datetime.today().strftime("%y-%m-%d")
-    # 今天0点时间戳
-    times_tomorow = time.mktime(time.strptime(f"{today} 00:00:00","%y-%m-%d %H:%M:%S"))
-    # 下n个月同一天的日期
-    next_month = (datetime.today()+timedelta(days=day)).strftime("%y-%m-%d")
-    # 下n个月同一天的0点时间戳
-    times_next_month = time.mktime(time.strptime(f"{next_month} 00:00:00","%y-%m-%d %H:%M:%S"))
-    # 从0点开始算到下一个月的0点时间插值
-    times_diff = times_next_month - times_tomorow 
+    # 算到下一个月的时间戳差值
+    times_diff = day*86400
+    # # 今天日期
+    # today = datetime.today().strftime("%y-%m-%d")
+    # # 今天0点时间戳
+    # times_tomorow = time.mktime(time.strptime(f"{today} 00:00:00","%y-%m-%d %H:%M:%S"))
+    
+    # 下n个月同时间的时间戳，86400是一天的秒数
+    times_next_month = time.time()+ times_diff
+    
     # 如果用户不在dict里面，说明是新的vip
     if kook_user_id not in VipUserDict:
         return times_next_month 
@@ -115,7 +111,7 @@ async def vip_time_remain_cm(times):
     return cm
 
 # 兑换vip
-async def using_vip_uuid(msg:Message,uuid1:Str):
+async def using_vip_uuid(msg:Message,uuid1:str):
     user_id = msg.author_id
     cm = CardMessage()
     c = Card(color='#e17f89')
