@@ -947,7 +947,7 @@ shop_img_temp = {}
 img_save_temp = {}
 
 
-def uuid_to_comp(skinuuid, ran):
+def skin_uuid_to_comp(skinuuid, ran):
     res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
     res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
     price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
@@ -1623,7 +1623,7 @@ async def get_daily_shop(msg: Message, *arg):
                     shop_img_temp[ran].append(Image.open(img_path))
 
                 else:
-                    th = threading.Thread(target=uuid_to_comp,
+                    th = threading.Thread(target=skin_uuid_to_comp,
                                           args=(skinuuid, ran))
                     th.start()
                 await asyncio.sleep(0.8)  #尝试错开网络请求
