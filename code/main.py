@@ -10,7 +10,7 @@ from typing import Union
 import aiohttp
 import requests
 from khl import (Bot, Client, Event, EventTypes, Message,
-                 PrivateMessage, PublicChannel, PublicMessage)
+                 PrivateMessage, PublicChannel, PublicMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
@@ -2007,10 +2007,9 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
 
-#@bot.task.add_cron(hour=8, minute=2, timezone="Asia/Shanghai")
-@bot.command(name='test')
-async def auto_skin_inform(msg:Message):
-    logging(msg)
+@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
+async def auto_skin_inform():
+    debug_ch = await bot.client.fetch_public_channel(Debug_ch)
     try:
         print("[BOT.TASK] auto_skin_inform Starting!")  #开始的时候打印一下
         for aid, skin in SkinNotifyDict.items():
@@ -2072,16 +2071,15 @@ async def auto_skin_inform(msg:Message):
                     await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
             except Exception as result:#这个是用来获取单个用户的问题的
                 err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n{result}"
+                print(err_str)
         #完成遍历后打印
         finish_str = "[BOT.TASK] auto_skin_inform Finished!"
         print(finish_str)  #正常完成
-        ch = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(ch, finish_str)
+        await bot.client.send(debug_ch, finish_str) #发送消息到debug频道
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        ch = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(ch, err_str)
+        await bot.client.send(debug_ch, err_str) # 发送消息到debug频道
 
 
 #设置提醒（出现xx皮肤）
@@ -2171,13 +2169,17 @@ async def select_skin_notify(msg: Message, n: str = "err",*arg):
     if n == "err" or '-' in n:
         await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号")
         return
-    try:
+    try:        
         global SkinNotifyDict
         if msg.author_id in UserStsDict:
             num = str2int(n)  #转成int下标（不能处理负数）
             if num >= len(UserStsDict[msg.author_id]):#下标判断，避免越界
                 await msg.reply(f"您的选择越界了！请正确填写序号")
                 return
+            
+            # 先发送一个私聊消息，作为测试（避免有人开了不给私信）
+            user_test=await bot.client.fetch_user(msg.author_id)
+            await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
                 
             S_skin = UserStsDict[msg.author_id][num]
             if msg.author_id not in SkinNotifyDict:
@@ -2187,7 +2189,8 @@ async def select_skin_notify(msg: Message, n: str = "err",*arg):
             else:  #如果存在了就直接在后面添加
                 SkinNotifyDict[msg.author_id][
                     S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
-            # print(SkinNotifyDict[msg.author_id])
+            # print(SkinNotifyDict[msg.author_id])            
+            
             # 写入文件
             with open("./log/UserSkinNotify.json", 'w',
                       encoding='utf-8') as fw2:
@@ -2199,11 +2202,27 @@ async def select_skin_notify(msg: Message, n: str = "err",*arg):
 
             del UserStsDict[msg.author_id]  #删除选择页面中的list
             text = f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
-            print(f"Au:{msg.author_id} ", text)
+            # 设置成功并删除list后，再发送提醒事项设置成功的消息
             await msg.reply(text)
+            print(f"[sts] Au:{msg.author_id} ", text)
         else:
             await msg.reply(f"您需要（重新）执行 `/notify-a` 来设置提醒皮肤")
-
+    except requester.HTTPRequester.APIRequestFailed as result:
+        err_str = f"ERR! [{GetTime()}] select_skin_inform\n```\n{result}\n```"
+        print(err_str)
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
+        c.append(
+            Module.Section(
+                Element.Text(f"{err_str}\n您是否开启了不允许私信？请检查您的私信权限设置\n这会影响notify功能的使用", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(
+            Module.Section(
+                '有任何问题，请加入帮助服务器与我联系',
+                Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                               Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] select_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
