@@ -2090,6 +2090,21 @@ async def add_skin_notify(msg: Message, *arg):
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
         return
     try:
+        # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
+        # if msg.author_id in SkinNotifyDict:
+        #     if len(SkinNotifyDict[msg.author_id])>2:
+        #         cm = CardMessage()
+        #         c = Card(color='#fb4b57')
+        #         c.append(Module.Section(
+        #                     Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
+        #                     Element.Image(src=icon.rgx_broken, size='sm')))
+        #         c.append(
+        #             Module.Context(
+        #                 Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri)阿狸呢！", Types.Text.KMD)))
+        #         cm.append(c)
+        #         await msg.reply(cm)
+        #         return
+        
         #用户没有登录
         if msg.author_id not in UserAuthDict:
             cm = CardMessage()
