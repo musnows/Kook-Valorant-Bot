@@ -67,7 +67,7 @@ async def world(msg: Message):
 
 
 # help命令
-@bot.command(name='Ahri', aliases=['阿狸'])
+@bot.command(name='Ahri', aliases=['ahri'])
 async def Ahri(msg: Message, *arg):
     logging(msg)
     try:
@@ -82,17 +82,23 @@ async def Ahri(msg: Message, *arg):
         c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
         c3.append(Module.Divider())
         c3.append(Module.Header('上号，瓦一把！'))
-        c3.append(
-            Module.Section(
-                Element.Text(
-                    "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n「/dx」 关于DirectX Runtime报错的解决方案\n「/saveid 游戏id」 保存(修改)您的游戏id\n「/myid」 让阿狸说出您的游戏id\n「`/vhelp`」瓦洛兰特游戏查询相关功能的帮助",
-                    Types.Text.KMD)))
+        text = "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n"
+        text += "「/dx」 关于DirectX Runtime报错的解决方案\n"
+        text += "「/saveid 游戏id」 保存(修改)您的游戏id\n"
+        text += "「/myid」 让阿狸说出您的游戏id\n"
+        text += "「`/vhelp`」瓦洛兰特游戏查询相关功能的帮助\n"
+        text += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri)"
+        c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header('和阿狸玩小游戏吧~ '))
-        c3.append(
-            Module.Section(
-                '「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n「/countdown 秒数」倒计时，默认60秒\n「/TL 内容」翻译内容，支持多语译中和中译英\n「/TLON」 在本频道打开实时翻译\n「/TLOFF」在本频道关闭实时翻译\n「/we 城市」查询城市未来3天的天气情况\n「更多…」还有一些隐藏指令哦~\n'
-            ))
+        text = "「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n"
+        text += "「/countdown 秒数」倒计时，默认60秒\n"
+        text += "「/TL 内容」翻译内容，支持多语译中和中译英\n"
+        text += "「/TLON」 在本频道打开实时翻译\n"
+        text += "「/TLOFF」在本频道关闭实时翻译\n"
+        text += "「/we 城市」查询城市未来3天的天气情况\n"
+        text += "「更多…」还有一些隐藏指令哦~\n"
+        c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(
             Module.Section(' 游戏打累了？想来本狸的家坐坐吗~', Element.Button('让我康康', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -120,11 +126,10 @@ async def Vhelp(msg: Message, *arg):
             Module.Context(
                 Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...",
                              Types.Text.KMD)))
-        c3.append(
-            Module.Section(
-                Element.Text(
-                    "使用前，请确认您知晓相关功能可能有风险：\n1.阿狸的后台不会做任何`打印/保存`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n2.目前查询功能稳定性未知，可能有`封号`风险，建议使用小号测试;\n若担心相关风险，请不要使用如下功能\n",
-                    Types.Text.KMD)))
+        text = "使用前，请确认您知晓相关功能可能有风险：\n"
+        text += "1.阿狸的后台不会做任何`打印/保存`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n"
+        text += "2.目前查询功能稳定性未知，可能有`封号`风险，建议使用小号测试;\n若担心相关风险，请不要使用如下功能\n"
+        c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
         help_1 = "「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
         help_1 += "「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
@@ -135,6 +140,7 @@ async def Vhelp(msg: Message, *arg):
         help_1 += "「/notify-l 」查看当前设置了提醒的皮肤\n"
         help_1 += "「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
         help_1 += "「/logout」取消登录\n"
+        help_1 += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri)"
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Section('若有任何问题，欢迎加入帮助频道', Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1861,7 +1867,7 @@ async def auto_skin_inform():
                         list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
-                        if await vip_ck(aid): #vip商店提醒
+                        if await vip_ck(aid):  #vip商店提醒
                             text = ""
                             for skinuuid in list_shop:
                                 res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
@@ -1873,7 +1879,7 @@ async def auto_skin_inform():
                             c = Card(color='#fb4b57')
                             c.append(
                                 Module.Section(Element.Text(f"请查收您的每日商店", Types.Text.KMD),
-                                            Element.Image(src=icon.shot_on_fire, size='sm')))
+                                               Element.Image(src=icon.shot_on_fire, size='sm')))
                             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
                             c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
                             cm.append(c)
