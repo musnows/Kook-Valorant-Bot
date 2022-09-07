@@ -963,6 +963,87 @@ def skin_uuid_to_comp(skinuuid, ran):
     shop_img_temp[ran].append(img)
 
 
+from check_vip import create_vip_uuid,using_vip_uuid,vip_time_remain,vip_time_remain_cm,vip_ck
+
+# 加载文件中的uuid
+with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
+    VipUuidDict = json.load(frrk)
+
+# 新建vip的uuid
+@bot.command(name="vip-a")
+async def get_vip_uuid(msg:Message):
+    logging(msg)
+    try:
+        if msg.author_id == master_id:
+            text = await create_vip_uuid()
+            cm = CardMessage()
+            c = Card(Module.Header("已生成新的uuid"),
+                Module.Divider(),
+                Module.Section(Element.Text(text, Types.Text.KMD))
+                )
+            cm.append(c)
+            await msg.reply(cm)
+            print("[vip-c] create_vip_uuid reply successful!")
+        else:
+            await msg.reply("您没有权限操作此命令！")
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] create_vip_uuid\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+
+# 兑换vip
+@bot.command(name="vip-u",aliases=['兑换'])
+async def buy_vip_uuid(msg:Message,uuid:str='err',*arg):
+    logging(msg)
+    if uuid=='err':
+        await msg.reply(f"只有输入vip的兑换码才可以操作哦！uuid: `{uuid}`")
+        return
+    try:
+        ret = await using_vip_uuid(msg,uuid)
+    
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] buy_vip_uuid\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
+        c.append(
+            Module.Section(
+                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(
+            Module.Section(
+                '有任何问题，请加入帮助服务器与我联系',
+                Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                               Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
+# 看vip剩余时间
+@bot.command(name="vip-c")
+async def check_vip_timeremain(msg:Message,*arg):
+    logging(msg)
+    try:
+        if not await vip_ck(msg):
+            return 
+        # 获取时间
+        ret_t = vip_time_remain(msg.author_id)
+        ret_cm = await vip_time_remain_cm(ret_t)
+        await msg.reply(ret_cm )
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] vip_time_remain\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        cm2 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
+        c.append(
+            Module.Section(
+                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
+                    Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                Types.Click.LINK)))
+        cm2.append(c)
+        await msg.reply(cm2)
+
 ##############################################################################
 
 # 预加载用户token(其实已经没用了)
@@ -2091,19 +2172,20 @@ async def add_skin_notify(msg: Message, *arg):
         return
     try:
         # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
-        # if msg.author_id in SkinNotifyDict:
-        #     if len(SkinNotifyDict[msg.author_id])>2:
-        #         cm = CardMessage()
-        #         c = Card(color='#fb4b57')
-        #         c.append(Module.Section(
-        #                     Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
-        #                     Element.Image(src=icon.rgx_broken, size='sm')))
-        #         c.append(
-        #             Module.Context(
-        #                 Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri)阿狸呢！", Types.Text.KMD)))
-        #         cm.append(c)
-        #         await msg.reply(cm)
-        #         return
+        vip_status = await vip_ck(msg.author_id)
+        if msg.author_id in SkinNotifyDict and not vip_status:
+            if len(SkinNotifyDict[msg.author_id])>2:
+                cm = CardMessage()
+                c = Card(color='#fb4b57')
+                c.append(Module.Section(
+                            Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
+                            Element.Image(src=icon.rgx_broken, size='sm')))
+                c.append(
+                    Module.Context(
+                        Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri)阿狸呢！", Types.Text.KMD)))
+                cm.append(c)
+                await msg.reply(cm)
+                return
         
         #用户没有登录
         if msg.author_id not in UserAuthDict:
