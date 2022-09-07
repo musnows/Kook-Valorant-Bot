@@ -58,8 +58,7 @@ async def caiyun_translate(source, direction):
 
     #用aiohttp效率更高
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=json.dumps(payload),
-                                headers=headers) as response:
+        async with session.post(url, data=json.dumps(payload), headers=headers) as response:
             return json.loads(await response.text())["target"]
 
 

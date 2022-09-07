@@ -20,9 +20,7 @@ bot = Bot(token=config['token'])
 
 # 没啥用的中二病指令
 async def kda123(msg: Message):
-    await msg.reply(
-        '本狸就是女王！\n[https://s1.ax1x.com/2022/07/03/jGFl0U.jpg](https://s1.ax1x.com/2022/07/03/jGFl0U.jpg)'
-    )
+    await msg.reply('本狸就是女王！\n[https://s1.ax1x.com/2022/07/03/jGFl0U.jpg](https://s1.ax1x.com/2022/07/03/jGFl0U.jpg)')
 
 
 # 查询皮肤！只支持English皮肤名
@@ -39,10 +37,7 @@ async def skin123(msg: Message, name: str):
         c1 = Card(Module.Header('查询到你想看的皮肤了！'), Module.Context('还想查其他皮肤吗...'))
         c1.append(Module.Divider())
         for skin in results:
-            c1.append(
-                Module.Section(
-                    f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"
-                ))
+            c1.append(Module.Section(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"))
             #print(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
         cm.append(c1)
         await msg.reply(cm)
@@ -55,21 +50,14 @@ async def lead123(msg: Message, sz: int, num: int):
     try:
         with open('./config/valorant.json', 'r', encoding='utf-8') as f:
             config = json.load(f)
-        client = valorant.Client(config['token'],
-                                 locale=None,
-                                 region='ap',
-                                 route='asia')
+        client = valorant.Client(config['token'], locale=None, region='ap', route='asia')
         lb = client.get_leaderboard(size=sz)
         players = lb.players.get_all(numberOfWins=num)  # 筛选出胜场超过num的
         cm = CardMessage()
-        c1 = Card(Module.Header('查询到你想看的排行榜了！'),
-                  Module.Context('什么？你也上榜了嘛...'))
+        c1 = Card(Module.Header('查询到你想看的排行榜了！'), Module.Context('什么？你也上榜了嘛...'))
         c1.append(Module.Divider())
         for p in lb.players:
-            c1.append(
-                Module.Section(
-                    f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)"
-                ))
+            c1.append(Module.Section(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)"))
             #print(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)")
         cm.append(c1)
         await msg.reply(cm)
@@ -100,11 +88,7 @@ async def saveid123(msg: Message, game_id: str):
         await msg.reply(f"本狸已经记下你的游戏id喽~")
     # 修改/新增都需要写入文件
     with open("./log/game_idsave.json", 'w', encoding='utf-8') as fw2:
-        json.dump(GameIdDict,
-                  fw2,
-                  indent=2,
-                  sort_keys=True,
-                  ensure_ascii=False)
+        json.dump(GameIdDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
 
 # 让阿狸记住游戏id的help指令
@@ -127,9 +111,7 @@ async def myid123(msg: Message):
         await msg.reply(f'游戏id: ' + GameIdDict[msg.author_id])
     else:
         countD = len(GameIdDict)
-        await msg.reply(
-            f"狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n```\n/saveid 你的游戏id```\n目前狸狸已经记下了`{countD}`个小伙伴的id喽！"
-        )
+        await msg.reply(f"狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n```\n/saveid 你的游戏id```\n目前狸狸已经记下了`{countD}`个小伙伴的id喽！")
 
 
 ##########################################################################################
@@ -140,9 +122,7 @@ async def val123(msg: Message, num: int):
     # msg 触发指令为 '/val 错误码'
     # msg.reply() 根据错误码回复对应解决方法
     if num == 0:
-        await msg.reply(
-            '目前支持查询的错误信息有：\n「val 1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002」'
-        )
+        await msg.reply('目前支持查询的错误信息有：\n「val 1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002」')
     elif num == 1067:
         await msg.reply(
             '1.请检查您的电脑是否有安装「完美对战平台」，可能有冲突；\n2.请在「控制面板-时钟和区域」中尝试修改时区为`美国`或者`香港`，这不会影响您电脑的时间显示；\n3.尝试重启游戏、重启加速器（更换节点）、重启电脑；\n4.可能和您的鼠标驱动有冲突，尝试关闭雷蛇/罗技的鼠标驱动软件;\n5.尝试进入bios开启tmp2.0\n6.卸载valorant，打开csgo/ow/r6。'
@@ -182,8 +162,7 @@ async def val123(msg: Message, num: int):
     elif num >= 62 and num <= 67:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 68:
-        await msg.reply(
-            '1.请尝试关闭valorant，右键图标以管理员身份运行游戏\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
+        await msg.reply('1.请尝试关闭valorant，右键图标以管理员身份运行游戏\n2.网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num >= 69 and num <= 70:
         await msg.reply('网络连接问题，请重启游戏、更换加速器（节点）、重启电脑。')
     elif num == 81:
@@ -210,8 +189,7 @@ async def val123(msg: Message, num: int):
     elif num == 10000:
         await msg.reply('本狸提醒您：谨防电信诈骗哦~')
     else:
-        await msg.reply(
-            '抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
+        await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
 
 
 #关于dx报错的解决方法
@@ -316,8 +294,7 @@ async def fetch_item_iters(iters_id: str):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_iters = json.loads(await response.text())
 
     return res_iters
@@ -329,8 +306,7 @@ async def fetch_skins_all():
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_skin = json.loads(await response.text())
 
     return res_skin
@@ -342,8 +318,7 @@ async def fetch_bundles_all():
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_bundle = json.loads(await response.text())
 
     return res_bundle
@@ -391,8 +366,7 @@ async def fetch_contract_uuid(id):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_con = json.loads(await response.text())
 
     return res_con
@@ -408,10 +382,7 @@ async def fetch_bundle_weapen_byname(name):
     for skin in ValSkinList['data']:
         if name in skin['displayName']:
             # 为了方便查询价格，在这里直接把skin的lv0-uuid也给插入进去
-            data = {
-                'displayName': skin['displayName'],
-                'lv_uuid': skin['levels'][0]['uuid']
-            }
+            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
             WeapenList.append(data)
 
     return WeapenList
@@ -423,8 +394,7 @@ async def fetch_playercard_uuid(id):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_card = json.loads(await response.text())
 
     return res_card
@@ -436,8 +406,7 @@ async def fetch_title_uuid(id):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_title = json.loads(await response.text())
 
     return res_title
@@ -449,8 +418,7 @@ async def fetch_spary_uuid(id):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_sp = json.loads(await response.text())
 
     return res_sp
@@ -462,8 +430,7 @@ async def fetch_buddies_uuid(id):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_sp = json.loads(await response.text())
 
     return res_sp
@@ -475,7 +442,6 @@ async def fetch_skinlevel_uuid(id):
     headers = {'Connection': 'close'}
     params = {"language": "zh-TW"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers,
-                               params=params) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             res_skin = json.loads(await response.text())
     return res_skin

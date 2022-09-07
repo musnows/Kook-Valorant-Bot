@@ -25,12 +25,7 @@ async def status_active_game(game: int):
 # 让机器人开始听歌
 async def status_active_music(name: str, singer: str):
     url = kook + "/api/v3/game/activity"
-    params = {
-        "data_type": 2,
-        "software": "qqmusic",
-        "singer": singer,
-        "music_name": name
-    }
+    params = {"data_type": 2, "software": "qqmusic", "singer": singer, "music_name": name}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=params, headers=headers) as response:
             return json.loads(await response.text())
@@ -51,8 +46,7 @@ async def server_status(Gulid_ID: str = "3566823018281801"):
     url = kook + "/api/v3/guild/user-list"
     params = {"guild_id": Gulid_ID}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, params=params,
-                               headers=headers) as response:
+        async with session.get(url, params=params, headers=headers) as response:
             ret1 = json.loads(await response.text())
             #print(ret1)
             return ret1

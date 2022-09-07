@@ -65,8 +65,7 @@ async def invite(msg: Message, url: str):
                 ret = json.loads(await response.text())
                 print(ret['guild'])
                 if ret['guild']['id'] != msg.ctx.guild.id:
-                    await msg.reply(
-                        f"(met){ret['inviter']['id']}(met) 请不要发送其他频道的邀请链接！")
+                    await msg.reply(f"(met){ret['inviter']['id']}(met) 请不要发送其他频道的邀请链接！")
                     await msg.delete()
 
 

@@ -31,6 +31,7 @@ class icon:
     ahri2 = "https://img.kookapp.cn/assets/2022-09/bK1v7R6D7j08c08c.jpg"
     ahri3 = "https://img.kookapp.cn/assets/2022-09/zS5B2wkBvG08c08c.jpg"
 
+
 #更新卡片消息
 async def upd_card(msg_id: str,
                    content,
@@ -42,11 +43,7 @@ async def upd_card(msg_id: str,
     if target_id != '':
         data['temp_target_id'] = target_id
     if channel_type == 'public' or channel_type == ChannelPrivacyTypes.GROUP:
-        result = await bot.client.gate.request('POST',
-                                               'message/update',
-                                               data=data)
+        result = await bot.client.gate.request('POST', 'message/update', data=data)
     else:
-        result = await bot.client.gate.request('POST',
-                                               'direct-message/update',
-                                               data=data)
+        result = await bot.client.gate.request('POST', 'direct-message/update', data=data)
     return result

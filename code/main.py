@@ -9,8 +9,7 @@ from typing import Union
 
 import aiohttp
 import requests
-from khl import (Bot, Client, Event, EventTypes, Message,
-                 PrivateMessage, PublicChannel, PublicMessage, requester)
+from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage, PublicChannel, PublicMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
@@ -77,9 +76,8 @@ async def Ahri(msg: Message, *arg):
         c3 = Card(
             Module.Header('你可以用下面这些指令呼叫本狸哦！'),
             Module.Context(
-                Element.Text(
-                    "开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多玩耍方式上线中...",
-                    Types.Text.KMD)))
+                Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多玩耍方式上线中...",
+                             Types.Text.KMD)))
         #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD))) #实现卡片的markdown文本
         c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
         c3.append(Module.Divider())
@@ -97,10 +95,7 @@ async def Ahri(msg: Message, *arg):
             ))
         c3.append(Module.Divider())
         c3.append(
-            Module.Section(
-                ' 游戏打累了？想来本狸的家坐坐吗~',
-                Element.Button('让我康康', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+            Module.Section(' 游戏打累了？想来本狸的家坐坐吗~', Element.Button('让我康康', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm.append(c3)
 
         await msg.reply(cm)
@@ -123,9 +118,8 @@ async def Vhelp(msg: Message, *arg):
         c3 = Card(
             Module.Header('目前阿狸支持查询的valorant信息如下'),
             Module.Context(
-                Element.Text(
-                    "开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...",
-                    Types.Text.KMD)))
+                Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...",
+                             Types.Text.KMD)))
         c3.append(
             Module.Section(
                 Element.Text(
@@ -143,11 +137,7 @@ async def Vhelp(msg: Message, *arg):
         help_1 += "「/logout」取消登录\n"
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
         c3.append(Module.Divider())
-        c3.append(
-            Module.Section(
-                '若有任何问题，欢迎加入帮助频道',
-                Element.Button('来狸', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+        c3.append(Module.Section('若有任何问题，欢迎加入帮助频道', Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm.append(c3)
         await msg.reply(cm)
 
@@ -169,13 +159,9 @@ async def countdown(msg: Message, time: int = 60):
     logging(msg)
     try:
         cm = CardMessage()
-        c1 = Card(Module.Header('本狸帮你按下秒表喽~'),
-                  color=(198, 65,
-                         55))  # color=(90,59,215) is another available form
+        c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55))  # color=(90,59,215) is another available form
         c1.append(Module.Divider())
-        c1.append(
-            Module.Countdown(datetime.now() + timedelta(seconds=time),
-                             mode=Types.CountdownMode.SECOND))
+        c1.append(Module.Countdown(datetime.now() + timedelta(seconds=time), mode=Types.CountdownMode.SECOND))
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
@@ -222,11 +208,7 @@ def save_userid_color(userid: str, emoji: str):
     #原有txt内没有该用户信息，进行追加操作
     ColorIdDict[userid] = emoji
     with open("./log/color_idsave.json", 'w', encoding='utf-8') as fw2:
-        json.dump(ColorIdDict,
-                  fw2,
-                  indent=2,
-                  sort_keys=True,
-                  ensure_ascii=False)
+        json.dump(ColorIdDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
     return flag
 
@@ -254,8 +236,7 @@ async def update_reminder(b: Bot, event: Event):
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == Msg_ID:
         now_time = GetTime()  #记录时间
-        print(f"[{now_time}] React:{event.body}"
-              )  # 这里的打印eventbody的完整内容，包含emoji_id
+        print(f"[{now_time}] React:{event.body}")  # 这里的打印eventbody的完整内容，包含emoji_id
 
         channel = await bot.client.fetch_public_channel(event.body['channel_id'])  #获取事件频道
         s = await bot.client.fetch_user(event.body['user_id'])  #通过event获取用户id(对象)
@@ -266,25 +247,17 @@ async def update_reminder(b: Bot, event: Event):
             v = line.strip().split(':')
             if emoji == v[0]:
                 flag = 1  #确认用户回复的emoji合法
-                ret = save_userid_color(
-                    event.body['user_id'],
-                    event.body["emoji"]['id'])  # 判断用户之前是否已经获取过角色
+                ret = save_userid_color(event.body['user_id'], event.body["emoji"]['id'])  # 判断用户之前是否已经获取过角色
                 if ret == 1:  #已经获取过角色
-                    await b.client.send(channel,
-                                 f'你已经设置过你的ID颜色啦！修改要去找管理员哦~',
-                                 temp_target_id=event.body['user_id'])
+                    await b.client.send(channel, f'你已经设置过你的ID颜色啦！修改要去找管理员哦~', temp_target_id=event.body['user_id'])
                     return
                 else:
                     role = int(v[1])
                     await g.grant_role(s, role)
-                    await b.client.send(channel,
-                                 f'阿狸已经给你上了 {emoji} 对应的颜色啦~',
-                                 temp_target_id=event.body['user_id'])
+                    await b.client.send(channel, f'阿狸已经给你上了 {emoji} 对应的颜色啦~', temp_target_id=event.body['user_id'])
 
         if flag == 0:  #回复的表情不合法
-            await b.client.send(channel,
-                         f'你回应的表情不在列表中哦~再试一次吧！',
-                         temp_target_id=event.body['user_id'])
+            await b.client.send(channel, f'你回应的表情不在列表中哦~再试一次吧！', temp_target_id=event.body['user_id'])
 
 
 # 给用户上色（在发出消息后，机器人自动添加回应）
@@ -295,16 +268,10 @@ async def Color_Set(msg: Message):
         await msg.reply("您没有权限执行这条命令！")
         return
     cm = CardMessage()
-    c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'),
-              Module.Context('五颜六色等待上线...'))
+    c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
     c1.append(Module.Divider())
-    c1.append(
-        Module.Section(
-            '「:pig:」粉色  「:heart:」红色\n「:black_heart:」黑色  「:yellow_heart:」黄色\n'))
-    c1.append(
-        Module.Section(
-            '「:blue_heart:」蓝色  「:purple_heart:」紫色\n「:green_heart:」绿色  「:+1:」默认\n'
-        ))
+    c1.append(Module.Section('「:pig:」粉色  「:heart:」红色\n「:black_heart:」黑色  「:yellow_heart:」黄色\n'))
+    c1.append(Module.Section('「:blue_heart:」蓝色  「:purple_heart:」紫色\n「:green_heart:」绿色  「:+1:」默认\n'))
     cm.append(c1)
     sent = await msg.ctx.channel.send(cm)  #接受send的返回值
     # 自己new一个msg对象
@@ -343,11 +310,7 @@ def check_sponsor(it: dict):
     #原有txt内没有该用户信息，进行追加操作
     SponsorDict[it['id']] = it['nickname']
     with open("./log/sponsor_roles.json", 'w', encoding='utf-8') as fw2:
-        json.dump(SponsorDict,
-                  fw2,
-                  indent=2,
-                  sort_keys=True,
-                  ensure_ascii=False)
+        json.dump(SponsorDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
     return flag
 
@@ -365,8 +328,7 @@ async def thanks_sonser():
     for its in json_dict['data']['items']:
         #print(f"{its['id']}:{its['nickname']}")
         if check_sponsor(its) == 0:
-            channel = await bot.client.fetch_public_channel("8342620158040885"
-                                                     )  #发送感谢信息的文字频道
+            channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
             print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
 
@@ -383,8 +345,7 @@ def deleteByStartAndEnd(s, start, end):
     # 结束位置是：结束字符串的最右边的第一个位置
     while s.find(start) != -1:
         x1 = s.find(start)
-        x2 = s.find(end, x1 + 5) + len(
-            end)  # s.index()函数算出来的是字符串的最左边的第一个位置，所以需要加上长度找到末尾
+        x2 = s.find(end, x1 + 5) + len(end)  # s.index()函数算出来的是字符串的最左边的第一个位置，所以需要加上长度找到末尾
         # 找出两个字符串之间的内容
         x3 = s[x1:x2]
         # 将内容替换为空字符串s
@@ -406,10 +367,8 @@ async def translate(msg: Message, *arg):
     word = ret
     try:
         cm = CardMessage()
-        c1 = Card(
-            Module.Section(
-                Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}",
-                             Types.Text.KMD)), Module.Context('来自: 有道翻译'))
+        c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}", Types.Text.KMD)),
+                  Module.Context('来自: 有道翻译'))
         cm.append(c1)
         #await msg.ctx.channel.send(cm)
         await msg.reply(cm)
@@ -418,15 +377,13 @@ async def translate(msg: Message, *arg):
         if is_CN(word):
             c1 = Card(
                 Module.Section(
-                    Element.Text(
-                        f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}",
-                        Types.Text.KMD)), Module.Context('来自: 彩云小译，中译英'))
+                    Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
+                Module.Context('来自: 彩云小译，中译英'))
         else:
             c1 = Card(
                 Module.Section(
-                    Element.Text(
-                        f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}",
-                        Types.Text.KMD)), Module.Context('来自: 彩云小译，英译中'))
+                    Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
+                Module.Context('来自: 彩云小译，英译中'))
 
         cm.append(c1)
         await msg.reply(cm)
@@ -514,9 +471,7 @@ async def TLON(msg: Message):
             break
         i += 1
     ret = checkTL()
-    await msg.reply(
-        f"Real-Time Translation ON\n阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~"
-    )
+    await msg.reply(f"Real-Time Translation ON\n阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
 
 
 # 关闭实时翻译功能
@@ -528,8 +483,7 @@ async def TLOFF(msg: Message):
     while i < len(ListTL):
         if ListTL[i] == msg.ctx.channel.id:
             ListTL[i] = '0'
-            await msg.reply(
-                f"Real-Time Translation OFF！目前栏位: {checkTL()}/{len(ListTL)}")
+            await msg.reply(f"Real-Time Translation OFF！目前栏位: {checkTL()}/{len(ListTL)}")
             return
         i += 1
     await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位: {checkTL()}/{len(ListTL)}")
@@ -569,16 +523,9 @@ async def Weather(msg: Message, city: str = "err"):
 async def rankset(msg: Message):
     logging(msg)
     cm = CardMessage()
-    c1 = Card(Module.Header('在下面添加回应，来设置你的段位吧！'),
-              Module.Context('段位更改功能等待上线...'))
-    c1.append(
-        Module.Section(
-            '「:question:」黑铁 「:eyes:」青铜\n「:sweat_drops:」白银 「:yellow_heart:」黄金\n'
-        ))
-    c1.append(
-        Module.Section(
-            '「:blue_heart:」铂金 「:purple_heart:」钻石\n「:green_heart:」翡翠 「:heart:」神话\n'
-        ))
+    c1 = Card(Module.Header('在下面添加回应，来设置你的段位吧！'), Module.Context('段位更改功能等待上线...'))
+    c1.append(Module.Section('「:question:」黑铁 「:eyes:」青铜\n「:sweat_drops:」白银 「:yellow_heart:」黄金\n'))
+    c1.append(Module.Section('「:blue_heart:」铂金 「:purple_heart:」钻石\n「:green_heart:」翡翠 「:heart:」神话\n'))
     cm.append(c1)
     await msg.ctx.channel.send(cm)
 
@@ -598,25 +545,19 @@ async def atAhri(msg: Message, mention_str: str):
 async def uncle(msg: Message):
     logging(msg)
     await msg.reply(
-        '本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)'
-    )
+        '本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
 
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
-from status import (server_status, status_active_game, status_active_music,
-                    status_delete)
-from val import (authflow, dx123, fetch_buddies_uuid,
-                 fetch_bundle_weapen_byname, fetch_bundles_all,
-                 fetch_contract_uuid, fetch_daily_shop, fetch_item_iters,
-                 fetch_item_price_all, fetch_item_price_uuid,
-                 fetch_player_contract, fetch_player_loadout,
-                 fetch_playercard_uuid, fetch_skinlevel_uuid, fetch_skins_all,
-                 fetch_spary_uuid, fetch_title_uuid, fetch_user_gameID,
-                 fetch_valorant_point, kda123, lead123, myid123, saveid123,
-                 saveid_1, saveid_2, skin123, val123)
+from status import (server_status, status_active_game, status_active_music, status_delete)
+from val import (authflow, dx123, fetch_buddies_uuid, fetch_bundle_weapen_byname, fetch_bundles_all,
+                 fetch_contract_uuid, fetch_daily_shop, fetch_item_iters, fetch_item_price_all, fetch_item_price_uuid,
+                 fetch_player_contract, fetch_player_loadout, fetch_playercard_uuid, fetch_skinlevel_uuid,
+                 fetch_skins_all, fetch_spary_uuid, fetch_title_uuid, fetch_user_gameID, fetch_valorant_point, kda123,
+                 lead123, myid123, saveid123, saveid_1, saveid_2, skin123, val123)
 
 
 # 开始打游戏
@@ -726,21 +667,19 @@ from functools import reduce
 
 
 def str2int(s):
-    return reduce(
-        lambda x, y: x * 10 + y,
-        map(
-            lambda s: {
-                '0': 0,
-                '1': 1,
-                '2': 2,
-                '3': 3,
-                '4': 4,
-                '5': 5,
-                '6': 6,
-                '7': 7,
-                '8': 8,
-                '9': 9
-            }[s], s))
+    return reduce(lambda x, y: x * 10 + y,
+                  map(lambda s: {
+                      '0': 0,
+                      '1': 1,
+                      '2': 2,
+                      '3': 3,
+                      '4': 4,
+                      '5': 5,
+                      '6': 6,
+                      '7': 7,
+                      '8': 8,
+                      '9': 9
+                  }[s], s))
 
 
 # 查询游戏错误码
@@ -783,14 +722,10 @@ standard_length_sm = int(standard_length / 2)  # 组成四宫格小图的边长
 stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
 stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
 standard_icon_top_blank = int(180 * standard_length / 1000)  # 枪距离图片顶部的像素
-standard_text_position = (int(124 * standard_length / 1000),
-                          int(317 * standard_length / 1000))  # 默认文字位置
-standard_price_position = (int(280 * standard_length / 1000),
-                           int(120 * standard_length / 1000))  # 皮肤价格文字位置
+standard_text_position = (int(124 * standard_length / 1000), int(317 * standard_length / 1000))  # 默认文字位置
+standard_price_position = (int(280 * standard_length / 1000), int(120 * standard_length / 1000))  # 皮肤价格文字位置
 standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
-standard_level_icon_position = (int(350 * standard_length / 1000),
-                                int(120 * standard_length / 1000)
-                                )  # 等级icon图标的坐标
+standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
 
 async def img_requestor(img_url):
@@ -805,10 +740,8 @@ font_color = '#ffffff'  # 文字颜色：白色
 @bot.task.add_date()
 async def fetch_bg():
     global bg_main
-    bg_main = Image.open(
-        io.BytesIO(await img_requestor(
-            'https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png'
-        )))  # 背景
+    bg_main = Image.open(io.BytesIO(await
+                                    img_requestor('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png')))  # 背景
 
 
 # 缩放图片，部分皮肤图片大小不正常
@@ -832,20 +765,17 @@ weapon_icon_temp = {}
 
 
 def sm_comp(icon, name, price, level_icon, skinuuid):
-    bg = Image.new(mode='RGBA',
-                   size=(standard_length_sm, standard_length_sm))  # 新建一个画布
+    bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理武器图片
     start = time.perf_counter()  #开始计时
 
     if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
-        layer_icon = Image.open(
-            f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
+        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
     else:
-        layer_icon = Image.open(io.BytesIO(
-            requests.get(icon).content))  # 打开武器图片
+        layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
         layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
     end = time.perf_counter()
-    log_time=f"[GetWeapen] {format(end - start, '.4f')} "
+    log_time = f"[GetWeapen] {format(end - start, '.4f')} "
     # w, h = layer_icon.size  # 读取武器图片长宽
     # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
     # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
@@ -871,13 +801,12 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
     # else:
     #     LEVEL_Icon = level_icon_temp[level_icon]
     if level_icon not in level_icon_temp:
-        LEVEL_Icon = Image.open(io.BytesIO(
-            requests.get(level_icon).content))  # 打开武器图片
+        LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
         level_icon_temp[level_icon] = LEVEL_Icon
     else:
         LEVEL_Icon = level_icon_temp[level_icon]
     end = time.perf_counter()
-    log_time+=f"- [GetIters] {format(end - start, '.4f')} "
+    log_time += f"- [GetIters] {format(end - start, '.4f')} "
     print(log_time)
 
     w, h = LEVEL_Icon.size  # 读取武器图片长宽
@@ -919,14 +848,12 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
     # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
     draw.text(standard_text_position,
               text,
-              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf',
-                                      30),
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
               fill=font_color)
     text = f"{price}"  # 价格
     draw.text(standard_price_position,
               text,
-              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf',
-                                      30),
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
               fill=font_color)
     # bg.show() #测试用途，展示图片(linux貌似不可用)
     if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
@@ -956,31 +883,28 @@ def skin_uuid_to_comp(skinuuid, ran):
             # res_iters = await fetch_item_iters(it['contentTierUuid'])
             res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
             break
-    img = sm_comp(res_item["data"]['levels'][0]["displayIcon"],
-                  res_item["data"]["displayName"], price,
+    img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
                   res_iters['data']['displayIcon'], skinuuid)
     global shop_img_temp
     shop_img_temp[ran].append(img)
 
 
-from check_vip import create_vip_uuid,using_vip_uuid,vip_time_remain,vip_time_remain_cm,vip_ck
+from check_vip import create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
     VipUuidDict = json.load(frrk)
 
+
 # 新建vip的uuid
 @bot.command(name="vip-a")
-async def get_vip_uuid(msg:Message,num:int=10,day:int=30):
+async def get_vip_uuid(msg: Message, num: int = 10, day: int = 30):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            text = await create_vip_uuid(num,day)
+            text = await create_vip_uuid(num, day)
             cm = CardMessage()
-            c = Card(Module.Header("已生成新的uuid"),
-                Module.Divider(),
-                Module.Section(Element.Text(text, Types.Text.KMD))
-                )
+            c = Card(Module.Header("已生成新的uuid"), Module.Divider(), Module.Section(Element.Text(text, Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
             print("[vip-c] create_vip_uuid reply successful!")
@@ -991,56 +915,53 @@ async def get_vip_uuid(msg:Message,num:int=10,day:int=30):
         print(err_str)
         await msg.reply(err_str)
 
+
 # 兑换vip
-@bot.command(name="vip-u",aliases=['兑换'])
-async def buy_vip_uuid(msg:Message,uuid:str='err',*arg):
+@bot.command(name="vip-u", aliases=['兑换'])
+async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
     logging(msg)
-    if uuid=='err':
+    if uuid == 'err':
         await msg.reply(f"只有输入vip的兑换码才可以操作哦！uuid: `{uuid}`")
         return
     try:
-        ret = await using_vip_uuid(msg,uuid)
-    
+        ret = await using_vip_uuid(msg, uuid)
+
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] buy_vip_uuid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(
-            Module.Section(
-                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(Module.Section(
-                '有任何问题，请加入帮助服务器与我联系',
-                Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
+
 # 看vip剩余时间
 @bot.command(name="vip-c")
-async def check_vip_timeremain(msg:Message,*arg):
+async def check_vip_timeremain(msg: Message, *arg):
     logging(msg)
     try:
         if not await vip_ck(msg):
-            return 
+            return
         # 获取时间
         ret_t = vip_time_remain(msg.author_id)
         ret_cm = await vip_time_remain_cm(ret_t)
-        await msg.reply(ret_cm )
+        await msg.reply(ret_cm)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] ck_vip_timeremain\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(
-                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
-                    Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
+
 
 ##############################################################################
 
@@ -1093,10 +1014,7 @@ def fetch_skin_byname_list(name):
     wplist = list()  #包含该名字的皮肤list
     for skin in ValSkinList['data']:
         if name in skin['displayName']:
-            data = {
-                'displayName': skin['displayName'],
-                'lv_uuid': skin['levels'][0]['uuid']
-            }
+            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
             wplist.append(data)
     return wplist
 
@@ -1111,11 +1029,10 @@ async def check_UserAuthDict_len(msg: Message):
     await msg.reply(res)
 
 
-
-login_dict={}#用于限制用户操作，一分钟只能3次
+login_dict = {}  #用于限制用户操作，一分钟只能3次
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
-login_rate_limit={'limit':False,
-                  'time':time.time()} 
+login_rate_limit = {'limit': False, 'time': time.time()}
+
 
 #遇到全局速率限制统一获取卡片消息
 def get_login_rate_cm(time_diff=None):
@@ -1125,68 +1042,62 @@ def get_login_rate_cm(time_diff=None):
         text = f"阿狸的登录请求超速！请在 240.0s 后重试"
     cm = CardMessage()
     c = Card(color='#fb4b57')
-    c.append(Module.Section(Element.Text(text, Types.Text.KMD),
-                        Element.Image(src=icon.lagging, size='sm')))
-    c.append(Module.Context(Element.Text("raise RiotRatelimitError, please try again later",Types.Text.KMD)))
+    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.lagging, size='sm')))
+    c.append(Module.Context(Element.Text("raise RiotRatelimitError, please try again later", Types.Text.KMD)))
     cm.append(c)
     return cm
 
+
 #检查是否存在用户请求超速
-async def check_user_login_rate(msg:Message):
+async def check_user_login_rate(msg: Message):
     """
     Returns:
      - True: UserRatelimitError
      - False: good_to_go
     """
-    global login_dict #检查用户请求次数，避免超速
+    global login_dict  #检查用户请求次数，避免超速
     if msg.author_id in login_dict:
         time_stap = time.time()
         time_diff = time_stap - login_dict[msg.author_id]['time']
-        if login_dict[msg.author_id]['nums']>=3 and time_diff<=70.0:
+        if login_dict[msg.author_id]['nums'] >= 3 and time_diff <= 70.0:
             # 思路是第一次请求超速后，要过70s才能执行下一次
-            if login_dict[msg.author_id]['nums']==3: #第一次请求超速
-                login_dict[msg.author_id]['time'] = time_stap #更新时间戳
-                time_diff = 0 #更新diff
-            
+            if login_dict[msg.author_id]['nums'] == 3:  #第一次请求超速
+                login_dict[msg.author_id]['time'] = time_stap  #更新时间戳
+                time_diff = 0  #更新diff
+
             login_dict[msg.author_id]['nums'] += 1
-            time_remain = format(70.0-time_diff, '.1f')#剩余需要等待的时间
+            time_remain = format(70.0 - time_diff, '.1f')  #剩余需要等待的时间
             text = f"用户登录请求超速，请在 {time_remain}s 后重试"
             cm0 = CardMessage()
             c = Card(color='#fb4b57')  #卡片侧边栏颜色
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD),
-                            Element.Image(src=icon.powder, size='sm')))
-            c.append(Module.Context(Element.Text(f"raise UserRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.powder, size='sm')))
+            c.append(
+                Module.Context(
+                    Element.Text(f"raise UserRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
             cm0.append(c)
             await msg.reply(cm0)
             return True
-        elif time_diff>70.0: #请求次数超限，但是已经过了70s
-            login_dict[msg.author_id]['nums'] = 1 #重置为1
+        elif time_diff > 70.0:  #请求次数超限，但是已经过了70s
+            login_dict[msg.author_id]['nums'] = 1  #重置为1
             login_dict[msg.author_id]['time'] = time_stap
             return False
-        else: # login_dict[msg.author_id]['nums']<3 and time_diff<=60.0
+        else:  # login_dict[msg.author_id]['nums']<3 and time_diff<=60.0
             login_dict[msg.author_id]['nums'] += 1
             return False
     else:
-        login_dict[msg.author_id]={'time':time.time(),'nums':1}
+        login_dict[msg.author_id] = {'time': time.time(), 'nums': 1}
         return False
 
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message,
-                          user: str = 'err',
-                          passwd: str = 'err',
-                          *arg):
-    print(
-        f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login"
-    )
+async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', *arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
     if passwd == 'err' or user == 'err':
-        await msg.reply(
-            f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`")
+        await msg.reply(f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`")
         return
     elif arg != ():
-        await msg.reply(
-            f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
+        await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
         return
 
     global login_rate_limit
@@ -1196,47 +1107,38 @@ async def login_authtoken(msg: Message,
         global UserTokenDict, UserAuthDict
         if msg.author_id in UserAuthDict:  #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
             text = "您已经登陆，无需重复操作"
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.shaka, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text("如需重新登录，请先logout退出当前登录", Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.shaka, size='sm')))
+            c.append(Module.Context(Element.Text("如需重新登录，请先logout退出当前登录", Types.Text.KMD)))
             cm0.append(c)
             await msg.reply(cm0)
             return
-        
+
         #全局请求超速
         if login_rate_limit['limit']:
             time_stap = time.time()
             time_diff = time_stap - login_rate_limit['time']
-            if time_diff <= 240.0: #240s内无法使用login
+            if time_diff <= 240.0:  #240s内无法使用login
                 ret_cm = get_login_rate_cm(time_diff)
                 await msg.reply(ret_cm)
                 print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
                 return
-            else:#超过240s，解除限制
+            else:  #超过240s，解除限制
                 login_rate_limit['limit'] = False
                 login_rate_limit['time'] = time_stap
-                
+
         if await check_user_login_rate(msg):
             print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
             return
 
-        
         text = "正在尝试获取您的riot账户token"
-        c.append(
-            Module.Section(Element.Text(text, Types.Text.KMD),
-                           Element.Image(src=icon.val_logo_gif, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.val_logo_gif, size='sm')))
         c.append(Module.Context(Element.Text("小憩一下，很快就好啦！", Types.Text.KMD)))
         cm0.append(c)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
         # 不在其中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
-        UserTokenDict[msg.author_id] = {
-            'auth_user_id': res_auth.user_id
-        }  #先创建基本信息 dict[键] = 值
+        UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id}  #先创建基本信息 dict[键] = 值
         userdict = {
             'auth_user_id': res_auth.user_id,
             'access_token': res_auth.access_token,
@@ -1250,86 +1152,52 @@ async def login_authtoken(msg: Message,
         cm = CardMessage()
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         c = Card(color='#fb4b57')
-        c.append(
-            Module.Section(Element.Text(text, Types.Text.KMD),
-                           Element.Image(src=icon.correct, size='sm')))
-        c.append(
-            Module.Context(
-                Element.Text(
-                    "当前token失效时间为1h，有任何问题请[点我](https://kook.top/gpbTwZ)",
-                    Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.correct, size='sm')))
+        c.append(Module.Context(Element.Text("当前token失效时间为1h，有任何问题请[点我](https://kook.top/gpbTwZ)", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
 
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
-            json.dump(UserTokenDict,
-                      fw2,
-                      indent=2,
-                      sort_keys=True,
-                      ensure_ascii=False)
+            json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(
             f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
-    
+
     except auth_exceptions.RiotAuthenticationError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
         cm = CardMessage()
         c = Card(color='#fb4b57')
         text = f"当前的账户密码真的对了吗？"
-        c.append(
-            Module.Section(Element.Text(text, Types.Text.KMD),
-                            Element.Image(src=icon.dont_do_that,
-                                            size='sm')))
-        c.append(
-            Module.Context(
-                Element.Text("Make sure username and password are correct",
-                                Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.dont_do_that, size='sm')))
+        c.append(Module.Context(Element.Text("Make sure username and password are correct", Types.Text.KMD)))
         cm.append(c)
-        await upd_card(send_msg['msg_id'],
-                        cm,
-                        channel_type=msg.channel_type)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotMultifactorError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
         text = f"当前不支持开启了`邮箱双重验证`的账户"
         cm = CardMessage()
         c = Card(color='#fb4b57')
-        c.append(
-            Module.Section(Element.Text(text, Types.Text.KMD),
-                            Element.Image(src=icon.that_it, size='sm')))
-        c.append(
-            Module.Context(
-                Element.Text(
-                    "Multi-factor authentication is not currently supported",
-                    Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.that_it, size='sm')))
+        c.append(Module.Context(Element.Text("Multi-factor authentication is not currently supported", Types.Text.KMD)))
         cm.append(c)
-        await upd_card(send_msg['msg_id'],
-                        cm,
-                        channel_type=msg.channel_type)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotRatelimitError as result:
         print(f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError")
-         #更新全局速率限制
+        #更新全局速率限制
         login_rate_limit['limit'] = True
         login_rate_limit['time'] = time.time()
-        ret_cm = get_login_rate_cm()#这里是第一个出现速率限制err的用户
-        await upd_card(send_msg['msg_id'],
-                        ret_cm,
-                        channel_type=msg.channel_type)
+        ret_cm = get_login_rate_cm()  #这里是第一个出现速率限制err的用户
+        await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
     except:
         err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
-        print(err_str) #只有不认识的报错消息才打印结果
+        print(err_str)  #只有不认识的报错消息才打印结果
         c.append(Module.Header(f"很抱歉，发生了未知错误"))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
-                Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",
-                                Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
-                '有任何问题，请加入帮助服务器与我联系',
-                Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm.append(c)
         await msg.reply(cm)
 
@@ -1378,12 +1246,8 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             text = f"获取「{def_name}」失败！正在尝试重新获取token，您无需操作"
             c = Card(color='#fb4b57')
             c.append(
-                Module.Section(
-                    Element.Text(text, Types.Text.KMD),
-                    Element.Image(src=icon.im_good_phoniex, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(f"{resp['message']}", Types.Text.KMD)))
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.im_good_phoniex, size='sm')))
+            c.append(Module.Context(Element.Text(f"{resp['message']}", Types.Text.KMD)))
             cm.append(c)
             send_msg = await msg.reply(cm)
 
@@ -1393,16 +1257,10 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             cm = CardMessage()
             text = f"重新获取token失败，请私聊「/login」重新登录\n"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.crying_crab, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(f"Auto Reauthorize Failed!", Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.crying_crab, size='sm')))
+            c.append(Module.Context(Element.Text(f"Auto Reauthorize Failed!", Types.Text.KMD)))
             cm.append(c)  #如果重新获取token失败，则更新上面的消息
-            await upd_card(send_msg['msg_id'],
-                           cm,
-                           channel_type=msg.channel_type)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         elif ret == True and is_msg:  #正常重新登录，且传过来了消息
             return send_msg  #返回发送出去的消息（用于更新）
 
@@ -1427,8 +1285,7 @@ async def test_if_login(msg: Message, *arg):
             if reau == False: return  #如果为假说明重新登录失败
 
             await msg.reply(
-                f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`"
-            )
+                f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] test_if_login\n```\n{traceback.format_exc()}\n```"
         print(err_str)
@@ -1445,13 +1302,8 @@ async def logout_authtoken(msg: Message, *arg):
             cm = CardMessage()
             text = f"你还没有登录呢！"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.that_it, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(f"「/login 账户 密码」请确认您知晓这是一个风险操作",
-                                 Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.that_it, size='sm')))
+            c.append(Module.Context(Element.Text(f"「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
             return
@@ -1464,9 +1316,7 @@ async def logout_authtoken(msg: Message, *arg):
         cm = CardMessage()
         text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         c = Card(color='#fb4b57')
-        c.append(
-            Module.Section(Element.Text(text, Types.Text.KMD),
-                           Element.Image(src=icon.crying_crab, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.crying_crab, size='sm')))
         c.append(Module.Context(Element.Text(f"你会回来的，对吗？", Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
@@ -1474,11 +1324,7 @@ async def logout_authtoken(msg: Message, *arg):
         #最后重新执行写入
         del UserTokenDict[msg.author_id]
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw1:
-            json.dump(UserTokenDict,
-                      fw1,
-                      indent=2,
-                      sort_keys=True,
-                      ensure_ascii=False)
+            json.dump(UserTokenDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
         fw1.close()
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] logout\n```\n{traceback.format_exc()}\n```"
@@ -1494,11 +1340,7 @@ async def update_skins(msg: Message):
         ValSkinList = skins
         # 写入文件
         with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValSkinList,
-                      fw2,
-                      indent=2,
-                      sort_keys=True,
-                      ensure_ascii=False)
+            json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[{GetTime()}] update_skins finished!")
         return True
     except Exception as result:
@@ -1525,11 +1367,7 @@ async def update_price(msg: Message):
         ValPriceList = prices  # 所有价格的列表
         # 写入文件
         with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValPriceList,
-                      fw2,
-                      indent=2,
-                      sort_keys=True,
-                      ensure_ascii=False)
+            json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[{GetTime()}] update_item_price finished!")
         return True
     except Exception as result:
@@ -1557,8 +1395,7 @@ async def update_bundle_url(msg: Message):
                     break
 
             if flag != 1:  #不存在创建图片准备上传
-                bg_bundle_icon = Image.open(
-                    io.BytesIO(requests.get(b['displayIcon']).content))
+                bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content))
                 imgByteArr = io.BytesIO()
                 bg_bundle_icon.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
@@ -1569,11 +1406,7 @@ async def update_bundle_url(msg: Message):
                 ValBundleList.append(b)  #插入
 
         with open("./log/ValBundle.json", 'w', encoding='utf-8') as fw1:
-            json.dump(ValBundleList,
-                      fw1,
-                      indent=2,
-                      sort_keys=True,
-                      ensure_ascii=False)
+            json.dump(ValBundleList, fw1, indent=2, sort_keys=True, ensure_ascii=False)
 
         print(f"[{GetTime()}] update_bundle_url finished!")
         return True
@@ -1596,31 +1429,36 @@ async def update_skin_price(msg: Message):
         if await update_bundle_url(msg):
             await msg.reply(f"成功更新：捆绑包")
 
+
 #用来存放用户每天的商店
-UserShopDict={}
+UserShopDict = {}
+
 
 #计算当前时间和明天早上8点的差值
 def shop_time_remain():
-    today = datetime.today().strftime("%y-%m-%d %H:%M:%S")#今天日期+时间
-    tomorow = (datetime.today()+timedelta(days=1)).strftime("%y-%m-%d")#明天日期
+    today = datetime.today().strftime("%y-%m-%d %H:%M:%S")  #今天日期+时间
+    tomorow = (datetime.today() + timedelta(days=1)).strftime("%y-%m-%d")  #明天日期
     #print(f"{tomorow} 08:00:00")
-    times_tomorow = time.mktime(time.strptime(f"{tomorow} 08:00:00","%y-%m-%d %H:%M:%S"))#明天早上8点时间戳
-    times_now = time.mktime(time.strptime(f"{today}","%y-%m-%d %H:%M:%S"))#现在的时间戳
+    times_tomorow = time.mktime(time.strptime(f"{tomorow} 08:00:00", "%y-%m-%d %H:%M:%S"))  #明天早上8点时间戳
+    times_now = time.mktime(time.strptime(f"{today}", "%y-%m-%d %H:%M:%S"))  #现在的时间戳
     #print(times_tomorow)
-    timeout = times_tomorow - times_now#计算差值
-    timeout = time.strftime("%H:%M:%S",time.gmtime(timeout))#转换成可读时间
+    timeout = times_tomorow - times_now  #计算差值
+    timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #转换成可读时间
     #print(timeout)
     return timeout
 
-def isSame_Authuuid(msg:Message):#判断uuid是否相等
+
+def isSame_Authuuid(msg: Message):  #判断uuid是否相等
     return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
+
 
 #每天早上8点准时清除商店dict
 @bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
 async def clear_usershopdict():
     global UserShopDict
-    UserShopDict={}
+    UserShopDict = {}
     print("[BOT.TASK] clear UserShopDict finished")
+
 
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
@@ -1638,16 +1476,11 @@ async def get_daily_shop(msg: Message, *arg):
             cm = CardMessage()  #卡片侧边栏颜色
             text = "正在尝试获取您的每日商店"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.duck, size='sm')))
-            c.append(
-                Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.duck, size='sm')))
+            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
             cm.append(c)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
-                await upd_card(reau['msg_id'],
-                               cm,
-                               channel_type=msg.channel_type)
+                await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                 send_msg = reau
             else:
                 send_msg = await msg.reply(cm)  #记录消息id用于后续更新
@@ -1661,29 +1494,25 @@ async def get_daily_shop(msg: Message, *arg):
                 'access_token': auth.access_token,
                 'entitlements_token': auth.entitlements_token
             }
-            log_time=""
+            log_time = ""
             global UserShopDict
             if msg.author_id in UserShopDict and isSame_Authuuid(msg):
                 a_time = time.time()
-                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"][
-                    "SingleItemOffers"]  # 商店刷出来的4把枪
+                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                 timeout = shop_time_remain()
-                log_time+=f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
+                log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
             else:
                 a_time = time.time()
                 resp = await fetch_daily_shop(userdict)  #获取每日商店
-                list_shop = resp["SkinsPanelLayout"][
-                    "SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = resp["SkinsPanelLayout"][
-                    "SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
-                timeout = time.strftime("%H:%M:%S",
-                                        time.gmtime(timeout))  #将秒数转为标准时间
+                list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+                timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
+                timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                 #需要设置uuid来保证是同一个用户
-                UserShopDict[msg.author_id]={}
-                UserShopDict[msg.author_id]["auth_user_id"]=UserTokenDict[msg.author_id]["auth_user_id"]
-                UserShopDict[msg.author_id]["SkinsPanelLayout"]=resp["SkinsPanelLayout"]
-                log_time+=f"[Api_shop] {format(time.time()-a_time,'.4f')} "
-            
+                UserShopDict[msg.author_id] = {}
+                UserShopDict[msg.author_id]["auth_user_id"] = UserTokenDict[msg.author_id]["auth_user_id"]
+                UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+                log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
+
             #开始画图
             draw_time = time.time()  #计算画图需要的时间
             x = 0
@@ -1702,8 +1531,7 @@ async def get_daily_shop(msg: Message, *arg):
                     shop_img_temp[ran].append(Image.open(img_path))
 
                 else:
-                    th = threading.Thread(target=skin_uuid_to_comp,
-                                          args=(skinuuid, ran))
+                    th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran))
                     th.start()
                 await asyncio.sleep(0.8)  #尝试错开网络请求
             while True:
@@ -1723,7 +1551,7 @@ async def get_daily_shop(msg: Message, *arg):
                 await asyncio.sleep(0.2)
 
             #打印画图耗时
-            log_time+=f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
+            log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
             print(log_time)
             #bg.save(f"test.png")  #保存到本地
             imgByteArr = io.BytesIO()
@@ -1739,29 +1567,18 @@ async def get_daily_shop(msg: Message, *arg):
             c = Card(color='#fb4b57')
             c.append(
                 Module.Header(
-                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"
-                ))
-            c.append(
-                Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"))
+            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
-            await upd_card(send_msg['msg_id'],
-                           cm,
-                           channel_type=msg.channel_type)
-            print(
-                f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]"
-            )
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
         else:
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.whats_that, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作",
-                                 Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.whats_that, size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
             return
@@ -1772,30 +1589,17 @@ async def get_daily_shop(msg: Message, *arg):
         c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
             text = f"键值错误，需要重新登录"
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.lagging, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(f"KeyError:{result}, please re-login",
-                                 Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.lagging, size='sm')))
+            c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
             cm2.append(c)
-            await upd_card(send_msg['msg_id'],
-                           cm2,
-                           channel_type=msg.channel_type)
+            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
             c.append(Module.Header(f"很抱歉，发生了一些错误"))
             c.append(Module.Divider())
-            c.append(
-                Module.Section(
-                    Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作",
-                                 Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
             c.append(Module.Divider())
             c.append(
-                Module.Section(
-                    '有任何问题，请加入帮助服务器与我联系',
-                    Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                   Types.Click.LINK)))
+                Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
             cm2.append(c)
             await msg.reply(cm2)
 
@@ -1823,8 +1627,7 @@ async def get_reward(reward):
         # 拳头通行证返回值里面没有数量，我谢谢宁
         return {
             'data': {
-                "assetPath":
-                "ShooterGame/Content/Currencies/Currency_UpgradeToken_DataAsset",
+                "assetPath": "ShooterGame/Content/Currencies/Currency_UpgradeToken_DataAsset",
                 "displayIcon":
                 "https://media.valorant-api.com/currencies/e59aa87c-4cbf-517a-5983-6e81511be9b7/displayicon.png",
                 "displayName": "輻能點數",
@@ -1865,8 +1668,7 @@ async def create_cm_contract(msg: Message):
     else:  #为0的情况，需要修正为5。比如30级是第六章节的最后一个
         remain_lv = 5
 
-    reward_list = contract['data']['content']['chapters'][cur_chapter -
-                                                          1]  #当前等级所属章节
+    reward_list = contract['data']['content']['chapters'][cur_chapter - 1]  #当前等级所属章节
     print(reward_list, '\n')
     reward = reward_list['levels'][remain_lv - 1]  #当前所处的等级和奖励
     print(reward)
@@ -1874,12 +1676,10 @@ async def create_cm_contract(msg: Message):
     if remain_lv < 5:
         reward_next = reward_list['levels'][remain_lv]  #下一级
     elif remain_lv >= 5 and cur_chapter < 11:  #避免越界
-        reward_next = contract['data']['content']['chapters'][cur_chapter][
-            'levels'][0]  #下一章节的第一个
+        reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]  #下一章节的第一个
     print(reward_next, '\n')
 
-    c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"),
-              Module.Divider())
+    c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"), Module.Divider())
     reward_res = await get_reward(reward)
     reward_nx_res = await get_reward(reward_next)
     print(reward_res, '\n', reward_nx_res, '\n')
@@ -1890,10 +1690,7 @@ async def create_cm_contract(msg: Message):
     cur += f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
     c1.append(Module.Section(cur))
     if 'displayIcon' in reward_res['data']:  #有图片才插入
-        c1.append(
-            Module.Container(
-                Element.Image(
-                    src=reward_res['data']['displayIcon'])))  #将图片插入进去
+        c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))  #将图片插入进去
     next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
     c1.append(Module.Context(Element.Text(next, Types.Text.KMD)))
     return c1
@@ -1915,16 +1712,11 @@ async def get_user_card(msg: Message, *arg):
             cm = CardMessage()
             text = "正在尝试获取您的 玩家卡面/VP/R点"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.rgx_card, size='sm')))
-            c.append(
-                Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.rgx_card, size='sm')))
+            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
             cm.append(c)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
-                await upd_card(reau['msg_id'],
-                               cm,
-                               channel_type=msg.channel_type)
+                await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                 send_msg = reau
             else:
                 send_msg = await msg.reply(cm)  #记录消息id用于后续更新
@@ -1937,41 +1729,27 @@ async def get_user_card(msg: Message, *arg):
             }
             resp = await fetch_player_loadout(userdict)  #获取玩家装备栏
             #print(resp)
-            player_card = await fetch_playercard_uuid(
-                resp['Identity']['PlayerCardID'])  #玩家卡面id
-            player_title = await fetch_title_uuid(
-                resp['Identity']['PlayerTitleID'])  #玩家称号id
-            if resp['Guns'] == None or resp[
-                    'Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
+            player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
+            player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
+            if resp['Guns'] == None or resp['Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
                 cm = CardMessage()
                 text = f"状态错误！您是否登录了一个全新账户？"
                 c = Card(color='#fb4b57')
                 c.append(
-                    Module.Section(
-                        Element.Text(text, Types.Text.KMD),
-                        Element.Image(src=icon.say_hello_to_camera,
-                                      size='sm')))
-                c.append(
-                    Module.Section(
-                        Element.Text(
-                            f"card: `{player_card}`\ntitle: `{player_title}`",
-                            Types.Text.KMD)))
+                    Module.Section(Element.Text(text, Types.Text.KMD),
+                                   Element.Image(src=icon.say_hello_to_camera, size='sm')))
+                c.append(Module.Section(Element.Text(f"card: `{player_card}`\ntitle: `{player_title}`",
+                                                     Types.Text.KMD)))
                 cm.append(c)
-                await upd_card(send_msg['msg_id'],
-                               cm,
-                               channel_type=msg.channel_type)
+                await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
                 return
 
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(
                 Module.Header(
-                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"
-                ))
-            c.append(
-                Module.Container(
-                    Element.Image(
-                        src=player_card['data']['wideArt'])))  #将图片插入进去
+                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
+            c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
             text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
             #cm.append(c)
@@ -1981,22 +1759,15 @@ async def get_user_card(msg: Message, *arg):
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
             cm.append(c)
             #await msg.reply(cm)
-            await upd_card(send_msg['msg_id'],
-                           cm,
-                           channel_type=msg.channel_type)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         else:
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.whats_that, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作",
-                                 Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.whats_that, size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
             return
@@ -2006,15 +1777,10 @@ async def get_user_card(msg: Message, *arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(
-            Module.Section(
-                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
-                '有任何问题，请加入帮助服务器与我联系',
-                Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
@@ -2037,40 +1803,29 @@ async def get_bundle(msg: Message, *arg):
                 weapenlist = await fetch_bundle_weapen_byname(name)
                 #print(weapenlist)
                 cm = CardMessage()
-                c = Card(
-                    Module.Section(
-                        Element.Text(f"已为您查询到 `{name}` 相关捆绑包",
-                                     Types.Text.KMD)))
+                c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包", Types.Text.KMD)))
                 for b in ValBundleList:
                     if name in b['displayName']:  # 将图片插入 卡片消息
-                        c.append(
-                            Module.Container(
-                                Element.Image(src=b['displayIcon2'])))
+                        c.append(Module.Container(Element.Image(src=b['displayIcon2'])))
                 if weapenlist != []:  # 遇到“再来一局”这种旧皮肤捆绑包，找不到武器名字
                     text = "```\n"
                     for w in weapenlist:
                         res_price = fetch_item_price_bylist(w['lv_uuid'])
                         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                            price = res_price['Cost'][
-                                '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                            price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                             text += f"{w['displayName']}   - vp {price}\n"
                         else:  # 找不到价格就直接插入武器名字
                             text += f"{w['displayName']}\n"
 
                     text += "```\n"  # print(text)
-                    c.append(Module.Section(Element.Text(
-                        text, Types.Text.KMD)))  #插入皮肤
+                    c.append(Module.Section(Element.Text(text, Types.Text.KMD)))  #插入皮肤
                 cm.append(c)
                 await msg.reply(cm)
-                print(
-                    f"[{GetTime()}] Au:{msg.author_id} get_bundle reply successful!"
-                )
+                print(f"[{GetTime()}] Au:{msg.author_id} get_bundle reply successful!")
                 return
 
         await msg.reply(f"未能查找到结果，请检查您的皮肤名拼写")
-        print(
-            f"[{GetTime()}] Au:{msg.author_id} get_bundle failed! Can't find {name}"
-        )
+        print(f"[{GetTime()}] Au:{msg.author_id} get_bundle failed! Can't find {name}")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] get_bundle\n```\n{traceback.format_exc()}\n```"
         print(err_str)
@@ -2095,8 +1850,7 @@ async def auto_skin_inform():
             try:
                 user = await bot.client.fetch_user(aid)
                 if aid in UserAuthDict:
-                    if await check_re_auth("定时获取玩家商店",
-                                        aid) == True:  # 重新登录,如果为假说明重新登录失败
+                    if await check_re_auth("定时获取玩家商店", aid) == True:  # 重新登录,如果为假说明重新登录失败
                         auth = UserAuthDict[aid]
                         userdict = {
                             'auth_user_id': auth.user_id,
@@ -2104,61 +1858,49 @@ async def auto_skin_inform():
                             'entitlements_token': auth.entitlements_token
                         }
                         resp = await fetch_daily_shop(userdict)  # 获取每日商店
-                        list_shop = resp["SkinsPanelLayout"][
-                            "SingleItemOffers"]  # 商店刷出来的4把枪
-                        timeout = resp["SkinsPanelLayout"][
-                            "SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
-                        timeout = time.strftime("%H:%M:%S",
-                                                time.gmtime(timeout))  #将秒数转为标准时间
+                        list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+                        timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
+                        timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                         text = ""
                         for skinuuid in list_shop:
                             res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
-                            res_price = fetch_item_price_bylist(
-                                skinuuid)  # 在本地文件中查找
-                            price = res_price['Cost'][
-                                '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                            res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+                            price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                             text += f"{res_item['data']['displayName']}     - VP {price}\n"
 
                         cm = CardMessage()  #向用户发送当前的每日商店（文字）
                         c = Card(color='#fb4b57')
                         c.append(
-                            Module.Section(
-                                Element.Text(f"请查收您的每日商店", Types.Text.KMD),
-                                Element.Image(src=icon.shot_on_fire, size='sm')))
-                        c.append(Module.Section(Element.Text(text,
-                                                            Types.Text.KMD)))
-                        c.append(
-                            Module.Context(
-                                Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
+                            Module.Section(Element.Text(f"请查收您的每日商店", Types.Text.KMD),
+                                           Element.Image(src=icon.shot_on_fire, size='sm')))
+                        c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+                        c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
                         cm.append(c)
                         await user.send(cm)
 
                         # 然后再遍历列表查看是否有提醒皮肤
                         # 关于下面这一行：https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
-                        target_skin = [
-                            val for key, val in skin.items() if key in list_shop
-                        ]
+                        target_skin = [val for key, val in skin.items() if key in list_shop]
                         # print(target_skin)
                         for name in target_skin:
                             print(f"[BOT.TASK] Au:{aid} auto_skin_inform = {name}")
-                            await user.send(
-                                f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
+                            await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
                         # 打印这个说明这个用户正常遍历完了
-                        print(f"[BOT.TASK] Au:{aid} auto_skin_inform = None")  
+                        print(f"[BOT.TASK] Au:{aid} auto_skin_inform = None")
                 else:  #不在auth里面说明没有登录
                     print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
                     await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
-            except Exception as result:#这个是用来获取单个用户的问题的
+            except Exception as result:  #这个是用来获取单个用户的问题的
                 err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n{result}"
                 print(err_str)
         #完成遍历后打印
         finish_str = "[BOT.TASK] auto_skin_inform Finished!"
         print(finish_str)  #正常完成
-        await bot.client.send(debug_ch, finish_str) #发送消息到debug频道
+        await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        await bot.client.send(debug_ch, err_str) # 发送消息到debug频道
+        await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
 
 #设置提醒（出现xx皮肤）
@@ -2172,32 +1914,26 @@ async def add_skin_notify(msg: Message, *arg):
         # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
         vip_status = await vip_ck(msg.author_id)
         if msg.author_id in SkinNotifyDict and not vip_status:
-            if len(SkinNotifyDict[msg.author_id])>2:
+            if len(SkinNotifyDict[msg.author_id]) > 2:
                 cm = CardMessage()
                 c = Card(color='#fb4b57')
-                c.append(Module.Section(
-                            Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
-                            Element.Image(src=icon.rgx_broken, size='sm')))
                 c.append(
-                    Module.Context(
-                        Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri)阿狸呢！", Types.Text.KMD)))
+                    Module.Section(Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
+                                   Element.Image(src=icon.rgx_broken, size='sm')))
+                c.append(
+                    Module.Context(Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri)阿狸呢！",
+                                                Types.Text.KMD)))
                 cm.append(c)
                 await msg.reply(cm)
                 return
-        
+
         #用户没有登录
         if msg.author_id not in UserAuthDict:
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD),
-                               Element.Image(src=icon.whats_that, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(
-                        "「/login 账户 密码」请确认您知晓这是一个风险操作\n设置了皮肤提醒之后，请勿切换已登录的账户",
-                        Types.Text.KMD)))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.whats_that, size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作\n设置了皮肤提醒之后，请勿切换已登录的账户", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
             return
@@ -2213,8 +1949,7 @@ async def add_skin_notify(msg: Message, *arg):
         for s in sklist:
             res_price = fetch_item_price_bylist(s['lv_uuid'])
             if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                price = res_price['Cost'][
-                    '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 data = {'skin': s, 'price': price}
                 retlist.append(data)
 
@@ -2230,12 +1965,9 @@ async def add_skin_notify(msg: Message, *arg):
             i += 1
         text += "```"
         cm = CardMessage()
-        c = Card(
-            Module.Header(f"查询到 {name} 相关皮肤如下"),
-            Module.Context(
-                Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤", Types.Text.KMD)),
-            Module.Section(
-                Element.Text(text + "\n\n使用 `/sts 序号` 来选择", Types.Text.KMD)))
+        c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
+                 Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤", Types.Text.KMD)),
+                 Module.Section(Element.Text(text + "\n\n使用 `/sts 序号` 来选择", Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
 
@@ -2244,56 +1976,44 @@ async def add_skin_notify(msg: Message, *arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(
-            Module.Section(
-                Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
-                '有任何问题，请加入帮助服务器与我联系',
-                Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
 
 #选择皮肤（这个命令必须跟着上面的命令用）
 @bot.command(name="sts")
-async def select_skin_notify(msg: Message, n: str = "err",*arg):
+async def select_skin_notify(msg: Message, n: str = "err", *arg):
     logging(msg)
     if n == "err" or '-' in n:
         await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号")
         return
-    try:        
+    try:
         global SkinNotifyDict
         if msg.author_id in UserStsDict:
             num = str2int(n)  #转成int下标（不能处理负数）
-            if num >= len(UserStsDict[msg.author_id]):#下标判断，避免越界
+            if num >= len(UserStsDict[msg.author_id]):  #下标判断，避免越界
                 await msg.reply(f"您的选择越界了！请正确填写序号")
                 return
-            
+
             # 先发送一个私聊消息，作为测试（避免有人开了不给私信）
-            user_test=await bot.client.fetch_user(msg.author_id)
+            user_test = await bot.client.fetch_user(msg.author_id)
             await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
-                
+
             S_skin = UserStsDict[msg.author_id][num]
             if msg.author_id not in SkinNotifyDict:
                 SkinNotifyDict[msg.author_id] = {}
-                SkinNotifyDict[msg.author_id][
-                    S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
             else:  #如果存在了就直接在后面添加
-                SkinNotifyDict[msg.author_id][
-                    S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
-            # print(SkinNotifyDict[msg.author_id])            
-            
+                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            # print(SkinNotifyDict[msg.author_id])
+
             # 写入文件
-            with open("./log/UserSkinNotify.json", 'w',
-                      encoding='utf-8') as fw2:
-                json.dump(SkinNotifyDict,
-                          fw2,
-                          indent=2,
-                          sort_keys=True,
-                          ensure_ascii=False)
+            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
+                json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
             del UserStsDict[msg.author_id]  #删除选择页面中的list
             text = f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
@@ -2307,15 +2027,10 @@ async def select_skin_notify(msg: Message, n: str = "err",*arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(
-            Module.Section(
-                Element.Text(f"{err_str}\n您是否开启了不允许私信？请检查您的私信权限设置\n这会影响notify功能的使用", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您是否开启了不允许私信？请检查您的私信权限设置\n这会影响notify功能的使用", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
-                '有任何问题，请加入帮助服务器与我联系',
-                Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
     except Exception as result:
@@ -2323,22 +2038,17 @@ async def select_skin_notify(msg: Message, n: str = "err",*arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(
-            Module.Section(
-                Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
-                '有任何问题，请加入帮助服务器与我联系',
-                Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                               Types.Click.LINK)))
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
 
 
 # 显示当前设置好了的皮肤通知
 @bot.command(name="notify-list", aliases=['notify-l'])
-async def list_skin_notify(msg: Message,*arg):
+async def list_skin_notify(msg: Message, *arg):
     logging(msg)
     try:
         if msg.author_id in SkinNotifyDict:
@@ -2360,7 +2070,7 @@ async def list_skin_notify(msg: Message,*arg):
 
 # 删除已有皮肤通知
 @bot.command(name="notify-del", aliases=['notify-d'])
-async def delete_skin_notify(msg: Message, uuid: str = "err",*arg):
+async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
     logging(msg)
     if uuid == 'err':
         await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
@@ -2369,20 +2079,12 @@ async def delete_skin_notify(msg: Message, uuid: str = "err",*arg):
         global SkinNotifyDict
         if msg.author_id in SkinNotifyDict:
             if uuid in SkinNotifyDict[msg.author_id]:
-                print(
-                    f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}"
-                )
-                await msg.reply(
-                    f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
+                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
+                await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
                 del SkinNotifyDict[msg.author_id][uuid]
                 # 写入文件
-                with open("./log/UserSkinNotify.json", 'w',
-                          encoding='utf-8') as fw2:
-                    json.dump(SkinNotifyDict,
-                              fw2,
-                              indent=2,
-                              sort_keys=True,
-                              ensure_ascii=False)
+                with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
+                    json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
             else:
                 await msg.reply(f"您提供的uuid不在列表中！")
                 return
