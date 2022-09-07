@@ -33,8 +33,7 @@ with open("./log/VipUser.json", 'r', encoding='utf-8') as frus:
 
 
 # 计算时间戳，用于给用户设置vip时间
-def vip_time_stap(kook_user_id:str,vip_time:int=0):
-    day = vip_time*30
+def vip_time_stap(kook_user_id:str,day:int=0):
     # 算到下一个月的时间戳差值
     times_diff = day*86400
     # # 今天日期
@@ -59,28 +58,33 @@ def vip_time_stap(kook_user_id:str,vip_time:int=0):
         
 
 # 生成uuid
-async def create_vip_uuid():
+async def create_vip_uuid(num:int=10,day:int=30):
+    """_summary_
+
+    Args:
+        num (int, optional): _description_. Defaults to 10.
+        day (int, optional): _description_. Defaults to 30.
+
+    Returns:
+        _type_: _description_
+    """
     global VipUuidDict
     #一次性生成20个
-    i=20
+    i=num
+    NewUuid=list()#当前创建的新uuid
     while(i>0):
         uuid = str(get_uuid())
-        VipUuidDict['month'][uuid]=GetTime()
-        uuid = str(get_uuid())
-        VipUuidDict['season'][uuid]=GetTime()
+        VipUuidDict[uuid]={'status':True,'days':day,'prime':False}
+        if day>3000:VipUuidDict[uuid]['prime']=True #永久会员
+        NewUuid.append(uuid)
         i-=1
         
     # 更新uuid
     with open("./log/VipUuid.json", 'w',encoding='utf-8') as fw2:
         json.dump(VipUuidDict,fw2,indent=2,sort_keys=True,ensure_ascii=False)
         
-    text="Month\n"
-    for uuid in VipUuidDict['month']:
-        text+=f"{uuid}"+"\n"
-    
-    text+="\n"
-    text+="Season\n"
-    for uuid in VipUuidDict['season']:
+    text=""
+    for uuid in NewUuid:
         text+=f"{uuid}"+"\n"
         
     print("[vip-c] create_vip_uuid")
@@ -101,8 +105,9 @@ def vip_time_remain(user_id):
 #获取vip时间剩余卡片消息
 async def vip_time_remain_cm(times):
     cm = CardMessage()
-    c1 = Card(Module.Header('您的vip会员还剩'),
-                color='#e17f89')  # color=(90,59,215) is another available form
+    c1 = Card(color='#e17f89') 
+    c1.append(Module.Section(Element.Text('您的「vip会员」还剩', Types.Text.KMD),
+                        Element.Image(src=icon.ahri3, size='sm')))
     c1.append(Module.Divider())
     c1.append(
         Module.Countdown(datetime.now() + timedelta(seconds=times),
@@ -117,33 +122,24 @@ async def using_vip_uuid(msg:Message,uuid1:str):
     c = Card(color='#e17f89')
     text="";log_str=""
     global VipUuidDict,VipUserDict
-    # 月度
-    if uuid1 in VipUuidDict['month']:
-        del VipUuidDict['month'][uuid1]
-        time = vip_time_stap(user_id,1)
-        VipUserDict[user_id]=time
-        log_str = f"[vip-u] del {uuid1}\n"
-        log_str+= f"[vip-u] month_vip - Au:{user_id}"
-        text = "您已激活阿狸的「月度」会员\n"
-    # 季度
-    elif uuid1 in VipUuidDict['season']:
-        del VipUuidDict['season'][uuid1]
-        time = vip_time_stap(user_id,3)
-        VipUserDict[user_id]=time
-        log_str = f"[vip-u] del {uuid1}\n"
-        log_str+= f"[vip-u] season_vip - Au:{user_id}"
-        text = "您已激活阿狸的「季度」会员\n"
-    # 永久
-    elif uuid1 in VipUuidDict['prime']:
-        del VipUuidDict['prime'][uuid1]
-        VipUserDict[user_id]= -1 #用于标记永久
-        log_str = f"[vip-u] del {uuid1}\n"
-        log_str+= f"[vip-u] prime_vip - Au:{user_id}"
-        text = "您已「永久」包养了阿狸！\n"
+    # 判断uuid类型
+    if uuid1 in VipUuidDict:
+        VipUuidDict[uuid1]['status']=False
+        days=VipUuidDict[uuid1]['days']
+        time = vip_time_stap(user_id,days)
+        # 设置用户的时间
+        VipUserDict[user_id]= time
+        if VipUuidDict[uuid1]['prime']:
+            log_str+= f"[vip-u] prime_vip - Au:{user_id}"
+            text = "您已「永久」包养了阿狸！\n"
+        else:
+            log_str+= f"[vip-u] vip {days} - Au:{user_id}"
+            text = f"您已激活阿狸「{days}」天会员\n"
     else:
         log_str = "ERR! [vip-u] uuid not in dict"
         await msg.reply(f"该兑换码无效！")
         return False
+    
     # 更新uuid
     with open("./log/VipUuid.json", 'w',encoding='utf-8') as fw2:
         json.dump(VipUuidDict,fw2,indent=2,sort_keys=True,ensure_ascii=False)

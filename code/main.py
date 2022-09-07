@@ -971,11 +971,11 @@ with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
 
 # 新建vip的uuid
 @bot.command(name="vip-a")
-async def get_vip_uuid(msg:Message):
+async def get_vip_uuid(msg:Message,num:int=10,day:int=30):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            text = await create_vip_uuid()
+            text = await create_vip_uuid(num,day)
             cm = CardMessage()
             c = Card(Module.Header("已生成新的uuid"),
                 Module.Divider(),
@@ -1010,8 +1010,7 @@ async def buy_vip_uuid(msg:Message,uuid:str='err',*arg):
             Module.Section(
                 Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
         c.append(Module.Divider())
-        c.append(
-            Module.Section(
+        c.append(Module.Section(
                 '有任何问题，请加入帮助服务器与我联系',
                 Element.Button('帮助', 'https://kook.top/gpbTwZ',
                                Types.Click.LINK)))
@@ -1030,12 +1029,11 @@ async def check_vip_timeremain(msg:Message,*arg):
         ret_cm = await vip_time_remain_cm(ret_t)
         await msg.reply(ret_cm )
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] vip_time_remain\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{GetTime()}] ck_vip_timeremain\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(
-            Module.Section(
+        c.append(Module.Section(
                 Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系',
