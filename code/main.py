@@ -895,7 +895,7 @@ def skin_uuid_to_comp(skinuuid, ran):
     shop_img_temp[ran].append(img)
 
 
-from check_vip import create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck
+from check_vip import create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck,fetch_vip_user
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
@@ -910,7 +910,7 @@ async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
         if msg.author_id == master_id:
             text = await create_vip_uuid(num, day)
             cm = CardMessage()
-            c = Card(Module.Header(f"已生成新的uuid 数量:{num}  天数:{day}"), Module.Divider(), Module.Section(Element.Text(text, Types.Text.KMD)))
+            c = Card(Module.Header(f"已生成新的uuid   数量:{num}  天数:{day}"), Module.Divider(), Module.Section(Element.Text(text, Types.Text.KMD)),color='#e17f89')
             cm.append(c)
             await msg.reply(cm)
             print("[vip-c] create_vip_uuid reply successful!")
@@ -967,6 +967,25 @@ async def check_vip_timeremain(msg: Message, *arg):
                                                                      Types.Click.LINK)))
         cm2.append(c)
         await msg.reply(cm2)
+
+# 看vip用户列表        
+@bot.command(name="vip-l")
+async def list_vip_user(msg: Message, *arg):
+    logging(msg)
+    try:
+        if msg.author_id==master_id:
+            text = fetch_vip_user()
+            cm2 = CardMessage()
+            c = Card(Module.Header(f"当前vip用户列表如下"),color='#e17f89')
+            c.append(Module.Section(Element.Text(f"```\n{text}```", Types.Text.KMD)))
+            cm2.append(c)
+            await msg.reply(cm2)
+        else:
+            await msg.reply("您没有权限操作此命令！")
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] create_vip_uuid\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
 
 
 ##############################################################################

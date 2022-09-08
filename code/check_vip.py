@@ -35,14 +35,9 @@ with open("./log/VipUser.json", 'r', encoding='utf-8') as frus:
 
 
 # 计算时间戳，用于给用户设置vip时间
-def vip_time_stap(kook_user_id: str, day: int = 0):
+def vip_time_stamp(kook_user_id: str, day: int = 0):
     # 算到下一个月的时间戳差值
     times_diff = day * 86400
-    # # 今天日期
-    # today = datetime.today().strftime("%y-%m-%d")
-    # # 今天0点时间戳
-    # times_tomorow = time.mktime(time.strptime(f"{today} 00:00:00","%y-%m-%d %H:%M:%S"))
-
     # 下n个月同时间的时间戳，86400是一天的秒数
     times_next_month = time.time() + times_diff
 
@@ -50,12 +45,20 @@ def vip_time_stap(kook_user_id: str, day: int = 0):
     if kook_user_id not in VipUserDict:
         return times_next_month
     else:
-        times_end = VipUserDict[kook_user_id]
+        times_end = VipUserDict[kook_user_id]['time']
         # 当前结束时间戳+下n个月的时间戳
         next_end = times_end + times_diff
         #print(next_end)
         return next_end
 
+#检查vip的剩余时间
+def vip_time_remain(user_id):
+    """
+    get_time_remain of vip,return in seconds
+    """
+    # 时间差值
+    timeout = VipUserDict[user_id]['time'] - time.time()
+    return timeout
 
 # 生成uuid
 async def create_vip_uuid(num: int = 10, day: int = 30):
@@ -91,18 +94,6 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
     return text
 
 
-#检查vip的剩余时间
-def vip_time_remain(user_id):
-    # 现在的日期+时间
-    today = datetime.today().strftime("%y-%m-%d %H:%M:%S")
-    # 现在的时间戳
-    times_now = time.mktime(time.strptime(f"{today}", "%y-%m-%d %H:%M:%S"))
-    # 时间差值
-    timeout = VipUserDict[user_id] - times_now
-    #timeout = time.strftime("%y-%m-%d %H:%M:%S",time.gmtime(timeout))#转换成可读时间
-    return timeout
-
-
 #获取vip时间剩余卡片消息
 async def vip_time_remain_cm(times):
     cm = CardMessage()
@@ -126,9 +117,12 @@ async def using_vip_uuid(msg: Message, uuid1: str):
     if uuid1 in VipUuidDict:
         VipUuidDict[uuid1]['status'] = False
         days = VipUuidDict[uuid1]['days']
-        time = vip_time_stap(user_id, days)
-        # 设置用户的时间
-        VipUserDict[user_id] = time
+        time = vip_time_stamp(user_id, days)
+        # 设置用户的时间和个人信息
+        VipUserDict[user_id] = {
+            'time':time,
+            'name_tag':f"{msg.author.username}#{msg.author.identify_num}"
+        }
         # 记录uuid被谁使用了
         VipUuidDict[uuid1]['user_id'] = user_id
         if VipUuidDict[uuid1]['prime']:
@@ -177,7 +171,7 @@ async def vip_ck(msg):
     cm.append(c)
     # 检查
     if user_id in VipUserDict:
-        if time.time() > VipUserDict[user_id]:
+        if time.time() > VipUserDict[user_id]['time']:
             del VipUserDict[user_id]
             #如果是消息，那就发送提示
             if flag: await msg.reply(cm)
@@ -188,3 +182,12 @@ async def vip_ck(msg):
         #如果是消息，那就发送提示
         if flag: await msg.reply(cm)
         return False
+    
+#获取当前vip用户列表
+def fetch_vip_user():
+    text=""
+    for u,ifo in VipUserDict.items():
+        text +=f"{u}_{ifo['name_tag']} = {vip_time_remain(u)/86400}\n"
+        
+    return text
+        
