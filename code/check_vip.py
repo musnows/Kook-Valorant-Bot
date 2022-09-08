@@ -129,6 +129,8 @@ async def using_vip_uuid(msg: Message, uuid1: str):
         time = vip_time_stap(user_id, days)
         # 设置用户的时间
         VipUserDict[user_id] = time
+        # 记录uuid被谁使用了
+        VipUuidDict[uuid1]['user_id'] = user_id
         if VipUuidDict[uuid1]['prime']:
             log_str += f"[vip-u] prime_vip - Au:{user_id}"
             text = "您已「永久」包养了阿狸！\n"
