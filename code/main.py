@@ -910,7 +910,7 @@ async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
         if msg.author_id == master_id:
             text = await create_vip_uuid(num, day)
             cm = CardMessage()
-            c = Card(Module.Header("已生成新的uuid"), Module.Divider(), Module.Section(Element.Text(text, Types.Text.KMD)))
+            c = Card(Module.Header(f"已生成新的uuid 数量:{num}  天数:{day}"), Module.Divider(), Module.Section(Element.Text(text, Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
             print("[vip-c] create_vip_uuid reply successful!")
