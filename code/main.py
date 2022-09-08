@@ -1819,7 +1819,8 @@ async def get_bundle(msg: Message, *arg):
                         res_price = fetch_item_price_bylist(w['lv_uuid'])
                         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                            text += f"{w['displayName']}   - vp {price}\n"
+                            #text += f"{w['displayName']} \t- vp {price}\n"
+                            text += '%-28s\t- vp%5s\n'%(w['displayName'],price)
                         else:  # 找不到价格就直接插入武器名字
                             text += f"{w['displayName']}\n"
 
