@@ -87,7 +87,7 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
     for uuid in NewUuid:
         text += f"{uuid}" + "\n"
 
-    print("[vip-c] create_vip_uuid")
+    print(f"[vip-c] create_vip_uuid - num:{num} - day:{day}")
     return text
 
 
