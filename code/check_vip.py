@@ -187,7 +187,10 @@ async def vip_ck(msg):
 def fetch_vip_user():
     text=""
     for u,ifo in VipUserDict.items():
-        text +=f"{u}_{ifo['name_tag']} = {vip_time_remain(u)/86400}\n"
+        time = vip_time_remain(u)
+        time = format(time/86400, '.2f')
+        #通过/86400计算出大概的天数
+        text +=f"{u}_{ifo['name_tag']}\t = {time}\n"
         
     return text
         
