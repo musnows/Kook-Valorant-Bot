@@ -171,7 +171,7 @@ async def vip_ck(msg):
 
     cm = CardMessage()
     c = Card(color='#e17f89')
-    text = "您并非vip用户，可以来 [支持一下](https://afdian.net/a/128ahri) 阿狸呢~"
+    text = "您并非vip用户，可以来 [支持一下](https://afdian.net/a/128ahri?tab=shop) 阿狸呢~"
     c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.ahri2, size='sm')))
     c.append(Module.Context(Element.Text("您的恩情，阿狸会永远铭记。", Types.Text.KMD)))
     cm.append(c)

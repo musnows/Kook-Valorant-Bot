@@ -87,7 +87,7 @@ async def Ahri(msg: Message, *arg):
         text += "「/saveid 游戏id」 保存(修改)您的游戏id\n"
         text += "「/myid」 让阿狸说出您的游戏id\n"
         text += "「`/vhelp`」瓦洛兰特游戏查询相关功能的帮助\n"
-        text += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri)"
+        text += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)"
         c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header('和阿狸玩小游戏吧~ '))
@@ -140,7 +140,7 @@ async def Vhelp(msg: Message, *arg):
         help_1 += "「/notify-l 」查看当前设置了提醒的皮肤\n"
         help_1 += "「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
         help_1 += "「/logout」取消登录\n"
-        help_1 += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri)"
+        help_1 += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)"
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Section('若有任何问题，欢迎加入帮助频道', Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -1929,7 +1929,7 @@ async def add_skin_notify(msg: Message, *arg):
                     Module.Section(Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
                                    Element.Image(src=icon.rgx_broken, size='sm')))
                 c.append(
-                    Module.Context(Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri)阿狸呢！",
+                    Module.Context(Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
                                                 Types.Text.KMD)))
                 cm.append(c)
                 await msg.reply(cm)
