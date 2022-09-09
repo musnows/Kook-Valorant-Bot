@@ -445,3 +445,89 @@ async def fetch_skinlevel_uuid(id):
         async with session.get(url, headers=headers, params=params) as response:
             res_skin = json.loads(await response.text())
     return res_skin
+
+
+
+##############################################################################################
+
+# 获取不同奖励的信息
+async def get_reward(reward):
+    reward_type = reward['reward']['type']
+    print("get_reward() ", reward_type)
+    if reward_type == 'PlayerCard':  #玩家卡面
+        return await fetch_playercard_uuid(reward['reward']['uuid'])
+    elif reward_type == 'Currency':  #代币
+        # 拳头通行证返回值里面没有数量，我谢谢宁
+        return {
+            'data': {
+                "assetPath": "ShooterGame/Content/Currencies/Currency_UpgradeToken_DataAsset",
+                "displayIcon":
+                "https://media.valorant-api.com/currencies/e59aa87c-4cbf-517a-5983-6e81511be9b7/displayicon.png",
+                "displayName": "輻能點數",
+                "displayNameSingular": "輻能點數",
+                "largeIcon":
+                "https://media.valorant-api.com/currencies/e59aa87c-4cbf-517a-5983-6e81511be9b7/largeicon.png",
+                "uuid": "e59aa87c-4cbf-517a-5983-6e81511be9b7"
+            }
+        }
+    elif reward_type == 'EquippableSkinLevel':  #皮肤
+        return fetch_skinlevel_uuid(reward['reward']['uuid'])
+    elif reward_type == 'Spray':  #喷漆
+        return await fetch_spary_uuid(reward['reward']['uuid'])
+    elif reward_type == 'EquippableCharmLevel':  #吊坠
+        return await fetch_buddies_uuid(reward['reward']['uuid'])
+    elif reward_type == 'Title':  #玩家头衔
+        return await fetch_title_uuid(reward['reward']['uuid'])
+
+    return None
+
+
+# 创建一个玩家任务和通信证的卡片消息
+async def create_cm_contract(msg: Message):
+    # 预加载用户token(其实已经没用了)
+    with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
+        UserTokenDict = json.load(frau)
+        
+    userdict = UserTokenDict[msg.author_id]
+    # 获取玩家当前任务和通行证情况
+    player_mision = await fetch_player_contract(userdict)
+    print(player_mision)
+    interval_con = len(player_mision['Contracts'])
+    battle_pass = player_mision['Contracts'][interval_con - 1]
+    print(battle_pass, '\n')
+    contract = await fetch_contract_uuid(battle_pass["ContractDefinitionID"])
+    print(contract, '\n')
+    cur_chapter = battle_pass['ProgressionLevelReached'] // 5  #计算出当前的章节
+    remain_lv = battle_pass['ProgressionLevelReached'] % 5  #计算出在当前章节的位置
+    print(cur_chapter, ' - ', remain_lv)
+    if remain_lv:  #说明还有余度
+        cur_chapter += 1  #加1
+    else:  #为0的情况，需要修正为5。比如30级是第六章节的最后一个
+        remain_lv = 5
+
+    reward_list = contract['data']['content']['chapters'][cur_chapter - 1]  #当前等级所属章节
+    print(reward_list, '\n')
+    reward = reward_list['levels'][remain_lv - 1]  #当前所处的等级和奖励
+    print(reward)
+    reward_next = ""  #下一个等级的奖励
+    if remain_lv < 5:
+        reward_next = reward_list['levels'][remain_lv]  #下一级
+    elif remain_lv >= 5 and cur_chapter < 11:  #避免越界
+        reward_next = contract['data']['content']['chapters'][cur_chapter]['levels'][0]  #下一章节的第一个
+    print(reward_next, '\n')
+
+    c1 = Card(Module.Header(f"通行证 - {contract['data']['displayName']}"), Module.Divider())
+    reward_res = await get_reward(reward)
+    reward_nx_res = await get_reward(reward_next)
+    print(reward_res, '\n', reward_nx_res, '\n')
+
+    cur = f"当前等级：{battle_pass['ProgressionLevelReached']}\n"
+    cur += f"当前奖励：{reward_res['data']['displayName']}\n"
+    cur += f"奖励类型：{reward['reward']['type']}\n"
+    cur += f"经验XP：{reward['xp']-battle_pass['ProgressionTowardsNextLevel']}/{reward['xp']}\n"
+    c1.append(Module.Section(cur))
+    if 'displayIcon' in reward_res['data']:  #有图片才插入
+        c1.append(Module.Container(Element.Image(src=reward_res['data']['displayIcon'])))  #将图片插入进去
+    next = f"下一奖励：{reward_nx_res['data']['displayName']}  - 类型:{reward_next['reward']['type']}\n"
+    c1.append(Module.Context(Element.Text(next, Types.Text.KMD)))
+    return c1
