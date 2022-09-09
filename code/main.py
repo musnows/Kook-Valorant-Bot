@@ -742,13 +742,9 @@ async def img_requestor(img_url):
 
 font_color = '#ffffff'  # 文字颜色：白色
 
-
-@bot.task.add_date()
-async def fetch_bg():
-    global bg_main
-    bg_main = Image.open(io.BytesIO(await
-                                    img_requestor('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png')))  # 背景
-
+bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # 普通用户商店背景
+bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # vip商店默认背景
+bg_skin_bak_bw =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
@@ -894,6 +890,102 @@ def skin_uuid_to_comp(skinuuid, ran):
     global shop_img_temp
     shop_img_temp[ran].append(img)
 
+
+def sm_comp_vip(icon, name, price, level_icon, skinuuid):
+    bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
+    # 处理武器图片
+    start = time.perf_counter()  #开始计时
+
+    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
+        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
+    else:
+        layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
+        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
+    end = time.perf_counter()
+    log_time = f"[GetWeapen] {format(end - start, '.4f')} "
+    # w, h = layer_icon.size  # 读取武器图片长宽
+    # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
+    # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
+    stardard_icon_x = 300  #图像标准宽（要改大小就改这个
+    layer_icon = resize(300, layer_icon)
+    # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
+    left_position = int((standard_length_sm - stardard_icon_x) / 2)
+    # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
+    bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)
+    # bg.paste代表向bg粘贴一张图片
+    # 第一个参数是图像layer_icon
+    # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
+    # 处理武器level的图片(存到本地dict里面方便调用)
+    start = time.perf_counter()  #开始计时
+    if level_icon not in level_icon_temp:
+        LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
+        level_icon_temp[level_icon] = LEVEL_Icon
+    else:
+        LEVEL_Icon = level_icon_temp[level_icon]
+    end = time.perf_counter()
+    log_time += f"- [GetIters] {format(end - start, '.4f')} "
+    print(log_time)
+
+    w, h = LEVEL_Icon.size  # 读取武器图片长宽
+    new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
+    new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
+    LEVEL_Icon = LEVEL_Icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    bg.paste(LEVEL_Icon, standard_level_icon_position, LEVEL_Icon)
+
+    name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
+    name_list = name.split(' ')  # 将武器名字分割换行
+    # print(name_list)
+    if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
+        name_list.remove('')
+
+    text = ""
+    if len(name_list[0]) > 5:
+        text = name_list[0] + '\n'  # 如果皮肤名很长就不用加空格
+    else:
+        text = ' '.join(name_list[0]) + '\n'  # 向皮肤名字添加空格增加字间距
+    # interval = len(name_list[0])
+    # print(len(name_list))
+    if len(name_list) > 2:
+        i = 1
+        while i <= len(name_list) - 2:
+            name_list[0] = name_list[0] + ' ' + name_list[i]
+            # print(name_list[0])
+            i += 1
+        interval = len(name_list[0])
+        name_list[1] = name_list[len(name_list) - 1]
+        text = name_list[0] + '\n'
+    if len(name_list) > 1:  # 有些刀皮肤只有一个元素
+        text += '              '  # 添加固定长度的缩进，12个空格
+        if len(name_list[1]) < 4:
+            text += ' '.join(name_list[1])  # 插入第二行字符
+        else:
+            text += name_list[1]  # 单独处理制式手槍（不加空格）
+
+    draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
+    # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
+    draw.text(standard_text_position,
+              text,
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              fill=font_color)
+    text = f"{price}"  # 价格
+    draw.text(standard_price_position,
+              text,
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              fill=font_color)
+    bg.show() #测试用途，展示图片(linux貌似不可用)
+    if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
+        bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
+    global weapon_icon_temp
+    if skinuuid not in weapon_icon_temp:
+        weapon_icon_temp[skinuuid] = bg
+    return bg
+
+
+
+
+
+#####################################################################################################
 
 from check_vip import create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck,fetch_vip_user
 
