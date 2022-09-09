@@ -19,6 +19,8 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
+# 只用来上传图片的bot
+bot_upimg = Bot(token=config['img_upload_token'])
 
 Botoken = config['token']
 kook = "https://www.kookapp.cn"
@@ -140,8 +142,16 @@ async def Vhelp(msg: Message, *arg):
         help_1 += "「/notify-l 」查看当前设置了提醒的皮肤\n"
         help_1 += "「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
         help_1 += "「/logout」取消登录\n"
-        help_1 += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)"
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
+        c3.append(Module.Divider())
+        c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
+        help_2  = "「/vip-u 激活码」兑换阿狸的vip\n"
+        help_2 += "「/vip-c」 查看vip的剩余时间\n"
+        help_2 += "「/vip-shop 图片url」自定义商店查询的背景图\n"
+        help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
+        help_2 += "```\n目前商店查询背景图diy仅支持1比1的图片。将图片上传到kook→点击图片→底部...处复制图片链接→使用/vip-shop命令设置背景\n```\n请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
+        c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
+        c3.append(Module.Context(Element.Text("[如果你觉得这些功能还不错，可以发电支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)",Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Section('若有任何问题，欢迎加入帮助频道', Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm.append(c3)
@@ -1639,7 +1649,7 @@ async def update_bundle_url(msg: Message):
                 bg_bundle_icon.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
                 print(f"Uploading - {b['displayName']}")
-                bundle_img_src = await bot.client.create_asset(imgByte)
+                bundle_img_src = await bot_upimg.client.create_asset(imgByte)
                 print(f"{b['displayName']} - url: {bundle_img_src}")
                 b['displayIcon2'] = bundle_img_src  #修改url
                 ValBundleList.append(b)  #插入
@@ -1839,7 +1849,7 @@ async def get_daily_shop(msg: Message, *arg):
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
-            dailyshop_img_src = await bot.client.create_asset(imgByte)# 上传图片
+            dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)# 上传图片
             # 结束shop的总计时
             end = time.perf_counter()
             #结果为浮点数，保留两位小数
