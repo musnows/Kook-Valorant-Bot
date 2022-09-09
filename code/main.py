@@ -2067,6 +2067,11 @@ async def auto_skin_inform():
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                         if await vip_ck(aid):  #vip商店提醒
+                            #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
+                            global UserShopDict
+                            UserShopDict[aid] = {}
+                            UserShopDict[aid]["auth_user_id"] = UserTokenDict[aid]["auth_user_id"]
+                            UserShopDict[aid]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                             text = ""
                             for skinuuid in list_shop:
                                 res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
