@@ -162,6 +162,15 @@ async def using_vip_uuid(msg: Message, uuid1: str):
 
 # 检查用户vip是否失效或者不是vip
 async def vip_ck(msg):
+    """
+    params can be:
+        * `msg:Message`   check & inform user if they aren't vip
+        * `author_id:str` will not send reply, just check_if_vip 
+    
+    retuns:
+        * True: is vip
+        * False: not vip
+    """
     flag = False
     user_id = msg
     if isinstance(msg, Message):
