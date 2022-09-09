@@ -734,6 +734,19 @@ standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon�
 standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
 
+standard_length_vip = 1000  #图片默认长
+standard_height_vip = 600   #图片默认宽
+standard_length_sm_vip = 360  # 组成四宫格小图的长
+standard_height_sm_vip = 220  # 组成四宫格小图的宽
+stardard_blank_sm_vip = 120 * standard_length_vip / 1000  # 小图左边的留空
+# stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
+standard_icon_top_blank_vip = int(100 * standard_height_vip / 1000)  # 枪距离图片顶部的像素
+standard_text_position_vip = (int(124 * standard_length_vip / 1000), int(317 * standard_height_vip / 1000))  # 皮肤名字文字位置
+standard_price_position_vip = (int(180 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000))  # 皮肤价格文字位置
+standard_level_icon_reszie_ratio_vip = 0.13 * standard_length_vip / 1000  # 等级icon图标的缩放
+standard_level_icon_position_vip = (int(200 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000))  # 等级icon图标的坐标
+
+
 async def img_requestor(img_url):
     async with aiohttp.ClientSession() as session:
         async with session.get(img_url) as r:
@@ -744,7 +757,7 @@ font_color = '#ffffff'  # 文字颜色：白色
 
 bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # 普通用户商店背景
 bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # vip商店默认背景
-bg_skin_bak_bw =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
+bg_main_bw =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
@@ -865,37 +878,11 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
         weapon_icon_temp[skinuuid] = bg
     return bg
 
-
-def bg_comp(bg, img, x, y):
-    position = (x, y)
-    bg.paste(img, position, img)  #如sm—comp中一样，向bg粘贴img
-    return bg
-
-
-shop_img_temp = {}
-img_save_temp = {}
-
-
-def skin_uuid_to_comp(skinuuid, ran):
-    res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
-    res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
-    price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-    for it in ValSkinList['data']:
-        if it['levels'][0]['uuid'] == skinuuid:
-            # res_iters = await fetch_item_iters(it['contentTierUuid'])
-            res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
-            break
-    img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
-                  res_iters['data']['displayIcon'], skinuuid)
-    global shop_img_temp
-    shop_img_temp[ran].append(img)
-
-
+# 处理vip图片
 def sm_comp_vip(icon, name, price, level_icon, skinuuid):
-    bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
+    bg = Image.new(mode='RGBA', size=(standard_length_sm_vip, standard_height_sm_vip))  # 新建一个画布
     # 处理武器图片
     start = time.perf_counter()  #开始计时
-
     if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
         layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
     else:
@@ -903,16 +890,13 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
         layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
     end = time.perf_counter()
     log_time = f"[GetWeapen] {format(end - start, '.4f')} "
-    # w, h = layer_icon.size  # 读取武器图片长宽
-    # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
-    # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
     stardard_icon_x = 300  #图像标准宽（要改大小就改这个
     layer_icon = resize(300, layer_icon)
     # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
     # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
-    left_position = int((standard_length_sm - stardard_icon_x) / 2)
+    left_position = int((standard_length_sm_vip - stardard_icon_x) / 2)
     # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
-    bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)
+    bg.paste(layer_icon, (left_position, standard_icon_top_blank_vip), layer_icon)
     # bg.paste代表向bg粘贴一张图片
     # 第一个参数是图像layer_icon
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
@@ -973,7 +957,7 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
               text,
               font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
               fill=font_color)
-    bg.show() #测试用途，展示图片(linux貌似不可用)
+    # bg.show() #测试用途，展示图片(linux貌似不可用)
     if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
         bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
     global weapon_icon_temp
@@ -982,6 +966,35 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
     return bg
 
 
+def bg_comp(bg, img, x, y):
+    position = (x, y)
+    bg.paste(img, position, img)  #如sm—comp中一样，向bg粘贴img
+    return bg
+
+
+shop_img_temp = {}
+shop_img_temp_vip = {}
+img_save_temp = {}
+
+
+def skin_uuid_to_comp(skinuuid, ran,is_vip:bool):
+    res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+    res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+    price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+    for it in ValSkinList['data']:
+        if it['levels'][0]['uuid'] == skinuuid:
+            res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
+            break
+    if is_vip:
+        img = sm_comp_vip(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+                  res_iters['data']['displayIcon'], skinuuid)
+        global shop_img_temp_vip #这里是把处理好的图片存到本地
+        shop_img_temp_vip[ran].append(img)
+    else:
+        img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+                  res_iters['data']['displayIcon'], skinuuid)
+        global shop_img_temp #这里是把处理好的图片存到本地
+        shop_img_temp[ran].append(img)
 
 
 
@@ -1076,6 +1089,113 @@ async def list_vip_user(msg: Message, *arg):
             await msg.reply("您没有权限操作此命令！")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] create_vip_uuid\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+
+# vip用户商店自定义图片
+VipShopBgDict={}
+with open("./log/VipUserShopBg.json", 'r', encoding='utf-8') as frau:
+    VipShopBgDict = json.load(frau)
+
+#因为下面两个函数都要用，所以直接独立出来
+def get_vip_shop_bg_cm(msg:Message):
+    if msg.author_id not in VipShopBgDict:
+        return "您尚未自定义商店背景图！"
+    cm = CardMessage()
+    c1 = Card(color='#e17f89')
+    c1.append(Module.Header('您当前设置的商店背景图如下'))
+    c1.append(Module.Container(Element.Image(src=VipShopBgDict[msg.author_id]["background"][0])))
+    sz = len(VipShopBgDict[msg.author_id])
+    if sz>1:
+        c1.append(Module.Divider())
+        c1.append(Module.Section(Element.Text('当前尚未启用的背景图', Types.Text.KMD)))
+        i=1
+        while(i<sz):
+            c1.append(Module.Section(Element.Text(f'[{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i], size='lg')))
+            i+=1
+        
+    cm.append(c1)
+    return cm
+ 
+@bot.command(name="vip-shop")
+async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
+    logging(msg)
+    if icon != 'err' and('http' not in icon or '](' not in icon):
+        await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
+        return
+    try:
+        if not await vip_ck(msg):
+            return
+        if msg.author_id not in VipShopBgDict:
+            VipShopBgDict[msg.author_id]={}
+            VipShopBgDict[msg.author_id]["background"]=list()
+
+        x3=""
+        if icon != 'err':
+            #提取图片url
+            x1 = icon.find('](')
+            x2 = icon.find(')',x1+2)
+            x3 = icon[x1+2:x2]
+            print('[vip_shop_bg]',x3)#日后用于排错
+            try:
+                bg_vip = Image.open(io.BytesIO(requests.get(x3).content))
+                w, h = bg_vip.size
+                if w!=h:
+                    await msg.reply(f"您当前上传的图片比例不是1-1，为保证最终效果，请重新上传！")
+                    return
+            except Exception as result:
+                err_str = f"ERR! [{GetTime()}] vip_shop_bg_set_imgck\n```\n{result}\n```"
+                print(err_str)
+                await msg.reply(f"图片违规！请重新上传\n{err_str}")
+                return
+        
+            VipShopBgDict[msg.author_id]["background"].append(x3)
+        
+        cm = get_vip_shop_bg_cm(msg)
+        await msg.reply(cm)
+        
+        # 修改/新增都需要写入文件
+        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}]  vip_shop\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+        
+@bot.command(name="vip-shop-s")
+async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
+    logging(msg)
+    if num == 'err':
+        await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
+        return
+    try:
+        if not await vip_ck(msg):
+            return
+        if msg.author_id not in VipShopBgDict:
+            await msg.reply("您尚未自定义商店背景图！")
+            return
+
+        num = str2int(num)
+        if num<len(VipShopBgDict[msg.author_id]):
+            #交换两个图片的位置
+            icon_num = VipShopBgDict[msg.author_id]["background"][num]
+            VipShopBgDict[msg.author_id]["background"][num] = VipShopBgDict[msg.author_id]["background"][0]
+            VipShopBgDict[msg.author_id]["background"][0] = icon_num
+            VipShopBgDict[msg.author_id]['is_latest']=False
+        else:
+            await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop-s`进行查看")
+            return
+        
+        cm = get_vip_shop_bg_cm(msg)
+        await msg.reply(cm)
+        
+        # 修改/新增都需要写入文件
+        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] vip_shop_s\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
 
@@ -1309,6 +1429,8 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
     except:
         err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
         print(err_str)  #只有不认识的报错消息才打印结果
+        cm = CardMessage()
+        c = Card(color='#fb4b57')
         c.append(Module.Header(f"很抱歉，发生了未知错误"))
         c.append(Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
@@ -1621,6 +1743,7 @@ async def get_daily_shop(msg: Message, *arg):
             else:
                 a_time = time.time()
                 resp = await fetch_daily_shop(userdict)  #获取每日商店
+                #resp = {"SkinsPanelLayout":{"SingleItemOffers":["fc4c3dcb-4f6d-5e8e-3dc3-1695f55d24c2","c8652efa-462f-d455-20b0-699dd00a9e2a","2607b2c6-45f7-e75e-94f8-58a738773d5c","cdc130c2-4b12-3702-c8f6-5a8920746395"],"SingleItemOffersRemainingDurationInSeconds":60193}}
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                 timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                 timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
@@ -1632,53 +1755,95 @@ async def get_daily_shop(msg: Message, *arg):
 
             #开始画图
             draw_time = time.time()  #计算画图需要的时间
-            x = 0
-            y = 0
-            bg = copy.deepcopy(bg_main)
-            ran = random.randint(1, 9999)
-            global shop_img_temp
-            shop_img_temp[ran] = []
-            img_num = 0
+            x = 0; y = 0
+            is_vip = await vip_ck(msg.author_id)
+            if False:#暂时不启用这里的错误代码
+                x = 100; y = 0
+                bg = copy.deepcopy(bg_main_bw)#黑底白字的框框
+                ran = random.randint(1, 9999)
+                global shop_img_temp_vip
+                shop_img_temp_vip[ran] = []
+                img_num = 0
 
-            for skinuuid in list_shop:
-                img_path = f'./log/img_temp/comp/{skinuuid}.png'
-                if skinuuid in weapon_icon_temp:
-                    shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
-                elif os.path.exists(img_path):
-                    shop_img_temp[ran].append(Image.open(img_path))
-
+                for skinuuid in list_shop:
+                    img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
+                    if skinuuid in weapon_icon_temp:
+                        shop_img_temp_vip[ran].append(weapon_icon_temp[skinuuid])
+                    elif os.path.exists(img_path):
+                        shop_img_temp_vip[ran].append(Image.open(img_path))
+                    else:
+                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran,is_vip))
+                        th.start()
+                    await asyncio.sleep(0.8)  #尝试错开网络请求
+                while True:
+                    img_temp = copy.deepcopy(shop_img_temp_vip)
+                    for i in img_temp[ran]:
+                        shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
+                        bg = bg_comp(bg, i, x, y)
+                        if x == 100:
+                            x += 450
+                        elif x == 550:
+                            x = 100
+                            y += 280
+                        img_num += 1
+                    if img_num >= 4:
+                        break
+                    await asyncio.sleep(0.2)
+            else:
+                if is_vip and msg.author_id in VipShopBgDict:
+                    vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
+                    if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
+                        bg_vip = Image.open(io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
+                        bg_vip = resize(1000, bg_vip) #进行缩放后保存
+                        bg_vip.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+                    else:
+                        bg_vip = Image.open(vip_bg_path)
+                    bg = copy.deepcopy(bg_vip)
                 else:
-                    th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran))
-                    th.start()
-                await asyncio.sleep(0.8)  #尝试错开网络请求
-            while True:
-                img_temp = copy.deepcopy(shop_img_temp)
-                for i in img_temp[ran]:
+                    bg = copy.deepcopy(bg_main)
+                ran = random.randint(1, 9999)
+                global shop_img_temp
+                shop_img_temp[ran] = []
+                img_num = 0
 
-                    shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
-                    bg = bg_comp(bg, i, x, y)
-                    if x == 0:
-                        x += standard_length_sm
-                    elif x == standard_length_sm:
-                        x = 0
-                        y += standard_length_sm
-                    img_num += 1
-                if img_num >= 4:
-                    break
-                await asyncio.sleep(0.2)
+                for skinuuid in list_shop:
+                    img_path = f'./log/img_temp/comp/{skinuuid}.png'
+                    if skinuuid in weapon_icon_temp:
+                        shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
+                    elif os.path.exists(img_path):
+                        shop_img_temp[ran].append(Image.open(img_path))
+                    else:
+                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran,is_vip))
+                        th.start()
+                    await asyncio.sleep(0.8)  #尝试错开网络请求
+                while True:
+                    img_temp = copy.deepcopy(shop_img_temp)
+                    for i in img_temp[ran]:
 
-            #打印画图耗时
+                        shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
+                        bg = bg_comp(bg, i, x, y)
+                        if x == 0:
+                            x += standard_length_sm
+                        elif x == standard_length_sm:
+                            x = 0
+                            y += standard_length_sm
+                        img_num += 1
+                    if img_num >= 4:
+                        break
+                    await asyncio.sleep(0.2)
+
+            # 打印画图耗时
             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
             print(log_time)
-            #bg.save(f"test.png")  #保存到本地
+            # bg.save(f"test.png")  #保存到本地
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
-            dailyshop_img_src = await bot.client.create_asset(imgByte)
-            #结束总计时
+            dailyshop_img_src = await bot.client.create_asset(imgByte)# 上传图片
+            # 结束shop的总计时
             end = time.perf_counter()
-            using_time = end - start  #结果为 浮点数
-            using_time = format(end - start, '.2f')  #保留两位小数
+            #结果为浮点数，保留两位小数
+            using_time = format(end - start, '.2f')
 
             cm = CardMessage()
             c = Card(color='#fb4b57')
