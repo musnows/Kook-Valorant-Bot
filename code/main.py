@@ -1241,7 +1241,8 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
                 
         x3="[None]"
         if icon != 'err':
-            if len(VipShopBgDict[msg.author_id]["background"])>=4:
+            user_ind = (msg.author_id in VipShopBgDict) #判断当前用户在不在dict中
+            if user_ind and len(VipShopBgDict[msg.author_id]["background"])>=4:
                 text = f"当前仅支持保存4个自定义图片"
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
                 c.append(Module.Context(Element.Text("您可用「/vip-shop-d 图片编号」删除已有图片再添加", Types.Text.KMD)))
@@ -1272,7 +1273,7 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
                 return
 
             #到插入的时候再创建list，避免出现图片没有通过检查，但是list又被创建了的情况
-            if msg.author_id not in VipShopBgDict:
+            if not user_ind:
                 VipShopBgDict[msg.author_id]={}
                 VipShopBgDict[msg.author_id]["background"]=list()
                 VipShopBgDict[msg.author_id]["is_latest"]=True #因为是新建的用户所以默认为true
