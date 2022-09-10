@@ -332,22 +332,28 @@ def check_sponsor(it: dict):
     return flag
 
 
-# 感谢助力者（每20分钟检查一次）
-@bot.task.add_interval(minutes=20)
-async def thanks_sonser():
-    #在api链接重需要设置服务器id和助力者角色的id
+# 感谢助力者（每1小时检查一次）
+@bot.task.add_interval(minutes=60)
+async def thanks_sponser(msg:Message):
+    print("[BOT.TASK] thanks_sponser start!")
+    #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant服务器生效
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
-
     async with aiohttp.ClientSession() as session:
         async with session.post(api, headers=headers) as response:
-            json_dict = await response.json()
-
+            json_dict = json.loads(await response.text())
+    
+    #长度相同无需更新
+    sz = len(SponsorDict)
+    if json_dict['data']['meta']['total'] == sz:
+        print(f"[BOT.TASK] No new sponser, same_len [{sz}]")
+        return
+    
     for its in json_dict['data']['items']:
-        #print(f"{its['id']}:{its['nickname']}")
         if check_sponsor(its) == 0:
             channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
             print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
+    print("[BOT.TASK] thanks_sponser finished!")
 
 
 ######################################## Translate ################################################
