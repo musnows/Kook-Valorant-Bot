@@ -13,7 +13,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage, Public
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
-from upd_msg import icon, upd_card
+from upd_msg import icon_cm, upd_card
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
@@ -147,9 +147,10 @@ async def Vhelp(msg: Message, *arg):
         c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
         help_2  = "「/vip-u 激活码」兑换阿狸的vip\n"
         help_2 += "「/vip-c」 查看vip的剩余时间\n"
-        help_2 += "「/vip-shop 图片url」自定义商店查询的背景图\n"
+        help_2 += "「/vip-shop」查看已保存的商店查询diy背景图\n"
+        help_2 += "「/vip-shop 图片url」添加商店查询diy背景图\n"
         help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
-        help_2 += "```\n目前商店查询背景图diy仅支持1比1的图片。将图片上传到kook→点击图片→底部...处复制图片链接→使用/vip-shop命令设置背景\n```\n请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
+        help_2 += "1.目前商店查询背景图diy仅支持1比1的图片，图片url获取：PC端将图片上传到kook→点击图片→底部...处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
         c3.append(Module.Context(Element.Text("[如果你觉得这些功能还不错，可以发电支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)",Types.Text.KMD)))
         c3.append(Module.Divider())
@@ -1115,13 +1116,14 @@ def get_vip_shop_bg_cm(msg:Message):
     c1 = Card(color='#e17f89')
     c1.append(Module.Header('您当前设置的商店背景图如下'))
     c1.append(Module.Container(Element.Image(src=VipShopBgDict[msg.author_id]["background"][0])))
-    sz = len(VipShopBgDict[msg.author_id])
+    sz = len(VipShopBgDict[msg.author_id]["background"])
     if sz>1:
         c1.append(Module.Divider())
         c1.append(Module.Section(Element.Text('当前尚未启用的背景图', Types.Text.KMD)))
         i=1
         while(i<sz):
             c1.append(Module.Section(Element.Text(f'[{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i], size='lg')))
+            #print("append ",VipShopBgDict[msg.author_id]["background"][i])
             i+=1
         
     cm.append(c1)
@@ -1134,14 +1136,24 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
         await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
         return
     try:
+        cm = CardMessage()
+        c = Card(color='#fb4b57')
         if not await vip_ck(msg):
             return
         if msg.author_id not in VipShopBgDict:
             VipShopBgDict[msg.author_id]={}
             VipShopBgDict[msg.author_id]["background"]=list()
-
+        
         x3=""
         if icon != 'err':
+            if len(VipShopBgDict[msg.author_id]["background"])>=4:
+                text = f"当前仅支持保存4个自定义图片"
+                c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
+                c.append(Module.Context(Element.Text("您可用「/vip-shop-d 图片编号」删除已有图片再添加", Types.Text.KMD)))
+                cm.append(c)
+                await msg.reply(cm)
+                return
+        
             #提取图片url
             x1 = icon.find('](')
             x2 = icon.find(')',x1+2)
@@ -1151,7 +1163,11 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
                 bg_vip = Image.open(io.BytesIO(requests.get(x3).content))
                 w, h = bg_vip.size
                 if w!=h:
-                    await msg.reply(f"您当前上传的图片比例不是1-1，为保证最终效果，请重新上传！")
+                    text = f"您当前上传的图片比例不是1-1，为保证最终效果，请重新上传！"
+                    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_dark, size='sm')))
+                    c.append(Module.Context(Element.Text("您可用手机相册将您的图片裁剪为1-1", Types.Text.KMD)))
+                    cm.append(c)
+                    await msg.reply(cm)
                     return
             except Exception as result:
                 err_str = f"ERR! [{GetTime()}] vip_shop_bg_set_imgck\n```\n{result}\n```"
@@ -1171,8 +1187,17 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
     except Exception as result:
         err_str = f"ERR! [{GetTime()}]  vip_shop\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        await msg.reply(err_str)
+        cm = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
+        cm.append(c)
+        await msg.reply(cm)
         
+
 @bot.command(name="vip-shop-s")
 async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
     logging(msg)
@@ -1187,14 +1212,14 @@ async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
             return
 
         num = str2int(num)
-        if num<len(VipShopBgDict[msg.author_id]):
+        if num<len(VipShopBgDict[msg.author_id]["background"]):
             #交换两个图片的位置
             icon_num = VipShopBgDict[msg.author_id]["background"][num]
             VipShopBgDict[msg.author_id]["background"][num] = VipShopBgDict[msg.author_id]["background"][0]
             VipShopBgDict[msg.author_id]["background"][0] = icon_num
             VipShopBgDict[msg.author_id]['is_latest']=False
         else:
-            await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop-s`进行查看")
+            await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
         
         cm = get_vip_shop_bg_cm(msg)
@@ -1207,8 +1232,15 @@ async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] vip_shop_s\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        await msg.reply(err_str)
-
+        cm = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
+        cm.append(c)
+        await msg.reply(cm)
 
 ##############################################################################
 
@@ -1289,7 +1321,7 @@ def get_login_rate_cm(time_diff=None):
         text = f"阿狸的登录请求超速！请在 240.0s 后重试"
     cm = CardMessage()
     c = Card(color='#fb4b57')
-    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.lagging, size='sm')))
+    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
     c.append(Module.Context(Element.Text("raise RiotRatelimitError, please try again later", Types.Text.KMD)))
     cm.append(c)
     return cm
@@ -1317,7 +1349,7 @@ async def check_user_login_rate(msg: Message):
             text = f"用户登录请求超速，请在 {time_remain}s 后重试"
             cm0 = CardMessage()
             c = Card(color='#fb4b57')  #卡片侧边栏颜色
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.powder, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.powder, size='sm')))
             c.append(
                 Module.Context(
                     Element.Text(f"raise UserRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
@@ -1354,7 +1386,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         global UserTokenDict, UserAuthDict
         if msg.author_id in UserAuthDict:  #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
             text = "您已经登陆，无需重复操作"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.shaka, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.shaka, size='sm')))
             c.append(Module.Context(Element.Text("如需重新登录，请先logout退出当前登录", Types.Text.KMD)))
             cm0.append(c)
             await msg.reply(cm0)
@@ -1378,7 +1410,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             return
 
         text = "正在尝试获取您的riot账户token"
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.val_logo_gif, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.val_logo_gif, size='sm')))
         c.append(Module.Context(Element.Text("小憩一下，很快就好啦！", Types.Text.KMD)))
         cm0.append(c)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
@@ -1399,7 +1431,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm = CardMessage()
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         c = Card(color='#fb4b57')
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.correct, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.correct, size='sm')))
         c.append(Module.Context(Element.Text("当前token失效时间为1h，有任何问题请[点我](https://kook.top/gpbTwZ)", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1416,7 +1448,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm = CardMessage()
         c = Card(color='#fb4b57')
         text = f"当前的账户密码真的对了吗？"
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.dont_do_that, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.dont_do_that, size='sm')))
         c.append(Module.Context(Element.Text("Make sure username and password are correct", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1425,7 +1457,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         text = f"当前不支持开启了`邮箱双重验证`的账户"
         cm = CardMessage()
         c = Card(color='#fb4b57')
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.that_it, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
         c.append(Module.Context(Element.Text("Multi-factor authentication is not currently supported", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1495,7 +1527,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             text = f"获取「{def_name}」失败！正在尝试重新获取token，您无需操作"
             c = Card(color='#fb4b57')
             c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.im_good_phoniex, size='sm')))
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.im_good_phoniex, size='sm')))
             c.append(Module.Context(Element.Text(f"{resp['message']}", Types.Text.KMD)))
             cm.append(c)
             send_msg = await msg.reply(cm)
@@ -1506,7 +1538,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             cm = CardMessage()
             text = f"重新获取token失败，请私聊「/login」重新登录\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.crying_crab, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.crying_crab, size='sm')))
             c.append(Module.Context(Element.Text(f"Auto Reauthorize Failed!", Types.Text.KMD)))
             cm.append(c)  #如果重新获取token失败，则更新上面的消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1551,7 +1583,7 @@ async def logout_authtoken(msg: Message, *arg):
             cm = CardMessage()
             text = f"你还没有登录呢！"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.that_it, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
             c.append(Module.Context(Element.Text(f"「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
@@ -1565,7 +1597,7 @@ async def logout_authtoken(msg: Message, *arg):
         cm = CardMessage()
         text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         c = Card(color='#fb4b57')
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.crying_crab, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.crying_crab, size='sm')))
         c.append(Module.Context(Element.Text(f"你会回来的，对吗？", Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
@@ -1725,7 +1757,7 @@ async def get_daily_shop(msg: Message, *arg):
             cm = CardMessage()  #卡片侧边栏颜色
             text = "正在尝试获取您的每日商店"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.duck, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.duck, size='sm')))
             c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
             cm.append(c)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
@@ -1869,7 +1901,7 @@ async def get_daily_shop(msg: Message, *arg):
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.whats_that, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
             c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
@@ -1881,7 +1913,7 @@ async def get_daily_shop(msg: Message, *arg):
         c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
             text = f"键值错误，需要重新登录"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.lagging, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
             c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
@@ -1926,7 +1958,7 @@ async def get_user_card(msg: Message, *arg):
             cm = CardMessage()
             text = "正在尝试获取您的 玩家卡面/VP/R点"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.rgx_card, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.rgx_card, size='sm')))
             c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
             cm.append(c)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
@@ -1951,7 +1983,7 @@ async def get_user_card(msg: Message, *arg):
                 c = Card(color='#fb4b57')
                 c.append(
                     Module.Section(Element.Text(text, Types.Text.KMD),
-                                   Element.Image(src=icon.say_hello_to_camera, size='sm')))
+                                   Element.Image(src=icon_cm.say_hello_to_camera, size='sm')))
                 c.append(Module.Section(Element.Text(f"card: `{player_card}`\ntitle: `{player_title}`",
                                                      Types.Text.KMD)))
                 cm.append(c)
@@ -1980,7 +2012,7 @@ async def get_user_card(msg: Message, *arg):
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.whats_that, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
             c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
@@ -2093,7 +2125,7 @@ async def auto_skin_inform():
                             c = Card(color='#fb4b57')
                             c.append(
                                 Module.Section(Element.Text(f"请查收您的每日商店", Types.Text.KMD),
-                                               Element.Image(src=icon.shot_on_fire, size='sm')))
+                                               Element.Image(src=icon_cm.shot_on_fire, size='sm')))
                             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
                             c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
                             cm.append(c)
@@ -2140,7 +2172,7 @@ async def add_skin_notify(msg: Message, *arg):
                 c = Card(color='#fb4b57')
                 c.append(
                     Module.Section(Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
-                                   Element.Image(src=icon.rgx_broken, size='sm')))
+                                   Element.Image(src=icon_cm.rgx_broken, size='sm')))
                 c.append(
                     Module.Context(Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
                                                 Types.Text.KMD)))
@@ -2153,7 +2185,7 @@ async def add_skin_notify(msg: Message, *arg):
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.whats_that, size='sm')))
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
             c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作\n设置了皮肤提醒之后，请勿切换已登录的账户", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)

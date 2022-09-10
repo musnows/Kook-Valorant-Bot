@@ -4,7 +4,7 @@ import time
 from khl import Message
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
-from upd_msg import icon
+from upd_msg import icon_cm
 
 
 #获取uuid
@@ -98,7 +98,7 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
 async def vip_time_remain_cm(times):
     cm = CardMessage()
     c1 = Card(color='#e17f89')
-    c1.append(Module.Section(Element.Text('您的「vip会员」还剩', Types.Text.KMD), Element.Image(src=icon.ahri_forest, size='sm')))
+    c1.append(Module.Section(Element.Text('您的「vip会员」还剩', Types.Text.KMD), Element.Image(src=icon_cm.ahri_forest, size='sm')))
     c1.append(Module.Divider())
     c1.append(Module.Countdown(datetime.now() + timedelta(seconds=times), mode=Types.CountdownMode.DAY))
     cm.append(c1)
@@ -134,7 +134,7 @@ async def using_vip_uuid(msg: Message, uuid1: str):
     else:
         log_str = "ERR! [vip-u] uuid not in dict or used"
         text = f"该兑换码无效！"
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.ahri_dark, size='sm')))
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_dark, size='sm')))
         c.append(Module.Context(Element.Text("或许是填错了？一个兑换码只能用一次哦", Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
@@ -149,7 +149,7 @@ async def using_vip_uuid(msg: Message, uuid1: str):
         json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
     # 发送卡片消息
-    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.ahri_kda3, size='sm')))
+    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
     c.append(Module.Context(Element.Text("您的恩情，阿狸会永远铭记。", Types.Text.KMD)))
     c.append(Module.Divider())
     c.append(
@@ -180,7 +180,7 @@ async def vip_ck(msg):
     cm = CardMessage()
     c = Card(color='#e17f89')
     text = "您并非vip用户，可以来 [支持一下](https://afdian.net/a/128ahri?tab=shop) 阿狸呢~"
-    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon.ahri_game, size='sm')))
+    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_game, size='sm')))
     c.append(Module.Context(Element.Text("您的恩情，阿狸会永远铭记。", Types.Text.KMD)))
     cm.append(c)
     # 检查
