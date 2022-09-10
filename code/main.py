@@ -1109,10 +1109,20 @@ VipShopBgDict={}
 with open("./log/VipUserShopBg.json", 'r', encoding='utf-8') as frau:
     VipShopBgDict = json.load(frau)
 
+#计算用户背景图的list大小，避免出现空list的情况
+def len_VusBg(user_id:str):
+    """
+        len(VipShopBgDict[user_id]["background"])
+    """
+    return len(VipShopBgDict[user_id]["background"])
+
 #因为下面两个函数都要用，所以直接独立出来
 def get_vip_shop_bg_cm(msg:Message):
     if msg.author_id not in VipShopBgDict:
         return "您尚未自定义商店背景图！"
+    elif len_VusBg(msg.author_id)==0:
+        return "您尚未自定义商店背景图！"
+    
     cm = CardMessage()
     c1 = Card(color='#e17f89')
     c1.append(Module.Header('您当前设置的商店背景图如下'))
@@ -1141,10 +1151,7 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
         c = Card(color='#fb4b57')
         if not await vip_ck(msg):
             return
-        if msg.author_id not in VipShopBgDict:
-            VipShopBgDict[msg.author_id]={}
-            VipShopBgDict[msg.author_id]["background"]=list()
-        
+                
         x3=""
         if icon != 'err':
             if len(VipShopBgDict[msg.author_id]["background"])>=4:
@@ -1175,7 +1182,12 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
                 print(err_str)
                 await msg.reply(f"图片违规！请重新上传\n{err_str}")
                 return
-        
+
+            #到插入的时候再创建list，避免出现图片没有通过检查，但是list又被创建了的情况
+            if msg.author_id not in VipShopBgDict:
+                VipShopBgDict[msg.author_id]={}
+                VipShopBgDict[msg.author_id]["background"]=list()
+            #插入图片
             VipShopBgDict[msg.author_id]["background"].append(x3)
         
         cm = get_vip_shop_bg_cm(msg)
@@ -1878,27 +1890,33 @@ async def get_daily_shop(msg: Message, *arg):
                         break
                     await asyncio.sleep(0.2)
             else:
-                if is_vip and msg.author_id in VipShopBgDict:
+                if is_vip and (msg.author_id in VipShopBgDict):
                     vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
-                    if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
-                        bg_vip = Image.open(io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
-                        imgSize = (1000,1000)
-                        bg_vip = bg_vip.resize(imgSize) #进行缩放后保存
-                        bg_vip = bg_vip.convert('RGBA')
-                        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-                        finalImg = Image.alpha_composite(bg_vip, bg_main_11)
-                        finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
-                        bg_vip = finalImg
-                    else:
-                        bg_vip = Image.open(vip_bg_path)
-                    bg = copy.deepcopy(bg_vip)
-                else:
+                    if len_VusBg(msg.author_id)>0: #如果为0则不执行自定义图片
+                        # 如果图片路径不存在（说明没有缓存）或者图片不是最新(用户修改过图片)则重新获取背景图
+                        if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
+                            bg_vip = Image.open(io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
+                            imgSize = (1000,1000)
+                            bg_vip = bg_vip.resize(imgSize) #进行缩放后保存
+                            bg_vip = bg_vip.convert('RGBA')
+                            # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+                            finalImg = Image.alpha_composite(bg_vip, bg_main_11)
+                            finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+                            bg_vip = finalImg
+                        else: #使用缓存好的vip图片
+                            bg_vip = Image.open(vip_bg_path)
+                        bg = copy.deepcopy(bg_vip)
+                    else:# vip用户但是出现了空list
+                        bg = copy.deepcopy(bg_main)
+                else:# 普通用户
                     bg = copy.deepcopy(bg_main)
+                
+                # 开始后续画图操作
                 ran = random.randint(1, 9999)
                 global shop_img_temp
                 shop_img_temp[ran] = []
                 img_num = 0
-
+                # 插入皮肤图片
                 for skinuuid in list_shop:
                     img_path = f'./log/img_temp/comp/{skinuuid}.png'
                     if skinuuid in weapon_icon_temp:
