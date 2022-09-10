@@ -766,7 +766,8 @@ async def img_requestor(img_url):
 
 font_color = '#ffffff'  # 文字颜色：白色
 
-bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # 普通用户商店背景
+bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))  # 普通用户商店背景
+bg_main_11 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/Mqo43d7eqW0rs0rs.png').content))  # vip用户背景框
 bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # vip商店默认背景
 bg_main_bw =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
 
@@ -1836,8 +1837,13 @@ async def get_daily_shop(msg: Message, *arg):
                     vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
                     if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
                         bg_vip = Image.open(io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
-                        bg_vip = resize(1000, bg_vip) #进行缩放后保存
-                        bg_vip.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+                        imgSize = (1000,1000)
+                        bg_vip = bg_vip.resize(imgSize) #进行缩放后保存
+                        bg_vip = bg_vip.convert('RGBA')
+                        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+                        finalImg = Image.alpha_composite(bg_vip, bg_main_11)
+                        finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+                        bg_vip = finalImg
                     else:
                         bg_vip = Image.open(vip_bg_path)
                     bg = copy.deepcopy(bg_vip)
