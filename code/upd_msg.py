@@ -9,7 +9,7 @@ bot = Bot(token=config['token'])
 
 
 # 图标
-class icon:
+class icon_cm:
     val_logo = "https://img.kookapp.cn/assets/2022-09/gVBtXI0ZSg03n03n.png"
     val_logo_gif = "https://img.kookapp.cn/assets/2022-09/5skrwZcjGJ0dc07i.gif"
     whats_that = "https://img.kookapp.cn/assets/2022-09/uhm2AewC1i0e80e8.png"
