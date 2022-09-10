@@ -334,7 +334,7 @@ def check_sponsor(it: dict):
 
 # 感谢助力者（每1小时检查一次）
 @bot.task.add_interval(minutes=60)
-async def thanks_sponser(msg:Message):
+async def thanks_sponser():
     print("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant服务器生效
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
@@ -736,7 +736,7 @@ import io  # 用于将 图片url 转换成可被打开的二进制
 import threading
 from riot_auth import auth_exceptions
 import zhconv  # 用于繁体转简体（因为部分字体不支持繁体
-from PIL import Image, ImageDraw, ImageFont  # 用于合成图片
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError # 用于合成图片
 
 standard_length = 1000  #图片默认边长
 # 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
@@ -1115,6 +1115,74 @@ VipShopBgDict={}
 with open("./log/VipUserShopBg.json", 'r', encoding='utf-8') as frau:
     VipShopBgDict = json.load(frau)
 
+#定期检查图片是否没问题
+#下图用于替换违规的vip图片
+illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
+async def check_vip_img():
+    debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+    print("[BOT.TASK] check_vip_img start!")
+    try:
+        global VipShopBgDict
+        cm0 = CardMessage()
+        c = Card(color='#fb4b57')  #卡片侧边栏颜色
+        text=f"您设置的vip背景图违规！请尽快替换"
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.powder, size='sm')))
+        c.append(Module.Context(Element.Text("多次发送违禁图片会导致阿狸被封，请您慎重选择图片！", Types.Text.KMD)))
+        #遍历vip用户的图片
+        for vip_user,vip_bg in VipShopBgDict.items():
+            user = await bot.client.fetch_user(vip_user)
+            sz = len(vip_bg["background"])
+            i=0
+            while i<sz:
+                try:
+                    bg_test = Image.open(io.BytesIO(await img_requestor(vip_bg["background"][i])))
+                    i+=1
+                except UnidentifiedImageError as result:
+                    err_str = f"ERR! [{GetTime()}] checking [{vip_user}] img\n```\n{result}\n"
+                    #把被ban的图片替换成默认的图片，打印url便于日后排错
+                    err_str +=f"[UnidentifiedImageError] url={vip_bg['background'][i]}\n```"
+                    c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
+                    cm0.append(c)
+                    await user.send(cm0)# 发送私聊消息给用户
+                    await bot.client.send(debug_ch, err_str) # 发送消息到debug频道
+                    vip_bg["background"][i] = illegal_img_11
+                    vip_bg["is_latest"]=False #需要重新加载图片
+                    print(err_str)
+                except Exception as result:
+                    err_str = f"ERR! [{GetTime()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
+                    print(err_str)
+                    c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
+                    cm0.append(c)
+                    await user.send(cm0)
+                    await bot.client.send(debug_ch, err_str)
+
+            # 遍历完一个用户后打印结果
+            print(f"[BOT.TASK] check_vip_img Au:{vip_user} finished!")
+        #所有用户成功遍历后，写入文件
+        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        #打印
+        print("[BOT.TASK] check_vip_img finished!")
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] check_vip_img\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
+
+#因为这个功能很重要，所以设置成可以用命令调用+定时任务
+@bot.task.add_cron(hour=3,minute=0, timezone="Asia/Shanghai")
+async def check_vip_img_task():
+    await check_vip_img()
+    
+@bot.command(name="vip-img")
+async def check_vip_img_task(msg:Message,*arg):
+    logging(msg)
+    if msg.author_id == master_id:
+        await check_vip_img()
+        await msg.reply("背景图片diy检查完成！")
+    else:
+        await msg.reply("您没有权限执行此命令！")
+        return
+
 #计算用户背景图的list大小，避免出现空list的情况
 def len_VusBg(user_id:str):
     """
@@ -1123,7 +1191,8 @@ def len_VusBg(user_id:str):
     return len(VipShopBgDict[user_id]["background"])
 
 #因为下面两个函数都要用，所以直接独立出来
-def get_vip_shop_bg_cm(msg:Message):
+async def get_vip_shop_bg_cm(msg:Message):
+    global VipShopBgDict
     if msg.author_id not in VipShopBgDict:
         return "您尚未自定义商店背景图！"
     elif len_VusBg(msg.author_id)==0:
@@ -1136,12 +1205,24 @@ def get_vip_shop_bg_cm(msg:Message):
     sz = len(VipShopBgDict[msg.author_id]["background"])
     if sz>1:
         c1.append(Module.Divider())
-        c1.append(Module.Section(Element.Text('当前尚未启用的背景图', Types.Text.KMD)))
+        c1.append(Module.Section(Element.Text('当前未启用的背景图，可用「/vip-shop-s 序号」切换', Types.Text.KMD)))
         i=1
         while(i<sz):
-            c1.append(Module.Section(Element.Text(f' [{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i], size='lg')))
-            #print("append ",VipShopBgDict[msg.author_id]["background"][i])
-            i+=1
+            try:
+                #打开图片进行测试，没有问题就append
+                bg_test = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[msg.author_id]["background"][i])))
+                c1.append(Module.Section(Element.Text(f' [{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i])))
+                i+=1
+            except UnidentifiedImageError as result:
+                err_str = f"ERR! [{GetTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
+                #把被ban的图片替换成默认的图片，打印url便于日后排错
+                err_str +=f"[UnidentifiedImageError] url={VipShopBgDict[msg.author_id]['background'][i]}\n```"
+                await msg.reply(f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}")
+                VipShopBgDict[msg.author_id]["background"][i] = illegal_img_11
+                VipShopBgDict[msg.author_id]["is_latest"]=False #需要重新加载图片
+                debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+                await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
+                print(err_str)
         
     cm.append(c1)
     return cm
@@ -1158,7 +1239,7 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
         if not await vip_ck(msg):
             return
                 
-        x3=""
+        x3="[None]"
         if icon != 'err':
             if len(VipShopBgDict[msg.author_id]["background"])>=4:
                 text = f"当前仅支持保存4个自定义图片"
@@ -1172,7 +1253,7 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
             x1 = icon.find('](')
             x2 = icon.find(')',x1+2)
             x3 = icon[x1+2:x2]
-            print('[vip_shop_bg]',x3)#日后用于排错
+            print(f"[vip-shop] Au:{msg.author_id} get_url ",x3)
             try:
                 bg_vip = Image.open(io.BytesIO(requests.get(x3).content))
                 w, h = bg_vip.size
@@ -1182,9 +1263,10 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
                     c.append(Module.Context(Element.Text("您可用手机相册将您的图片裁剪为1-1", Types.Text.KMD)))
                     cm.append(c)
                     await msg.reply(cm)
+                    print(f"[vip-shop] Au:{msg.author_id} img_not_1-1")
                     return
             except Exception as result:
-                err_str = f"ERR! [{GetTime()}] vip_shop_bg_set_imgck\n```\n{result}\n```"
+                err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
                 print(err_str)
                 await msg.reply(f"图片违规！请重新上传\n{err_str}")
                 return
@@ -1193,12 +1275,14 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
             if msg.author_id not in VipShopBgDict:
                 VipShopBgDict[msg.author_id]={}
                 VipShopBgDict[msg.author_id]["background"]=list()
+                VipShopBgDict[msg.author_id]["is_latest"]=True #因为是新建的用户所以默认为true
             #插入图片
             VipShopBgDict[msg.author_id]["background"].append(x3)
-        
-        cm = get_vip_shop_bg_cm(msg)
+            
+        cm = await get_vip_shop_bg_cm(msg)
         await msg.reply(cm)
-        
+        # 打印用户新增的图片日后用于排错
+        print(f"[vip-shop] Au:{msg.author_id} add ",x3)
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
@@ -1241,9 +1325,9 @@ async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
             await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
         
-        cm = get_vip_shop_bg_cm(msg)
+        cm = await get_vip_shop_bg_cm(msg)
         await msg.reply(cm)
-        
+        print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict[msg.author_id]['background'][0]}]")
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
@@ -1276,7 +1360,8 @@ async def vip_shop_bg_set_d(msg: Message, num:str="err",*arg):
 
         num = str2int(num)
         if num<len(VipShopBgDict[msg.author_id]["background"]) and num>0:
-            #交换两个图片的位置
+            # 删除图片
+            del_img_url = VipShopBgDict[msg.author_id]["background"][num]
             del VipShopBgDict[msg.author_id]["background"][num]
         elif num==0:
             await msg.reply("不支持删除当前正在使用的背景图！")
@@ -1285,9 +1370,9 @@ async def vip_shop_bg_set_d(msg: Message, num:str="err",*arg):
             await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
         
-        cm = get_vip_shop_bg_cm(msg)
+        cm = await get_vip_shop_bg_cm(msg)
         await msg.reply(cm)
-        
+        print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
