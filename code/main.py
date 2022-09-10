@@ -1123,7 +1123,7 @@ def get_vip_shop_bg_cm(msg:Message):
         c1.append(Module.Section(Element.Text('当前尚未启用的背景图', Types.Text.KMD)))
         i=1
         while(i<sz):
-            c1.append(Module.Section(Element.Text(f'[{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i], size='lg')))
+            c1.append(Module.Section(Element.Text(f' [{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i], size='lg')))
             #print("append ",VipShopBgDict[msg.author_id]["background"][i])
             i+=1
         
@@ -1232,6 +1232,50 @@ async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
             
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] vip_shop_s\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        cm = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
+        cm.append(c)
+        await msg.reply(cm)
+        
+@bot.command(name="vip-shop-d")
+async def vip_shop_bg_set_d(msg: Message, num:str="err",*arg):
+    logging(msg)
+    if num == 'err':
+        await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
+        return
+    try:
+        if not await vip_ck(msg):
+            return
+        if msg.author_id not in VipShopBgDict:
+            await msg.reply("您尚未自定义商店背景图！")
+            return
+
+        num = str2int(num)
+        if num<len(VipShopBgDict[msg.author_id]["background"]) and num>0:
+            #交换两个图片的位置
+            del VipShopBgDict[msg.author_id]["background"][num]
+        elif num==0:
+            await msg.reply("不支持删除当前正在使用的背景图！")
+            return
+        else:
+            await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
+            return
+        
+        cm = get_vip_shop_bg_cm(msg)
+        await msg.reply(cm)
+        
+        # 修改/新增都需要写入文件
+        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] vip_shop_d\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
@@ -1749,7 +1793,7 @@ async def get_daily_shop(msg: Message, *arg):
     if arg != ():
         await msg.reply(f"`/shop`命令不需要参数。您是否想`/login`？")
         return
-
+    send_msg = None
     try:
         if msg.author_id in UserAuthDict:
             reau = await check_re_auth("每日商店", msg)
@@ -1931,7 +1975,10 @@ async def get_daily_shop(msg: Message, *arg):
             c.append(
                 Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
             cm2.append(c)
-            await msg.reply(cm2)
+            if send_msg!=None:# 非none则执行更新消息，而不是直接发送
+                await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+            else:
+                await msg.reply(cm2)
 
 
 # 获取vp和r点剩余
