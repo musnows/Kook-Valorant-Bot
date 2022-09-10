@@ -2141,11 +2141,61 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
 
-@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
+@bot.task.add_cron(hour=9, minute=48, timezone="Asia/Shanghai")
 async def auto_skin_inform():
     debug_ch = await bot.client.fetch_public_channel(Debug_ch)
     try:
         print("[BOT.TASK] auto_skin_inform Starting!")  #开始的时候打印一下
+        #加载vip用户列表
+        with open("./log/VipUser.json", 'r', encoding='utf-8') as frau:
+            VipUserD = json.load(frau)
+        #先遍历vip用户列表，获取vip用户的商店
+        for vip,uinfo in VipUserD.items():
+            try:
+                user = await bot.client.fetch_user(vip)
+                if vip in UserAuthDict:
+                    if await check_re_auth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
+                        auth = UserAuthDict[vip]
+                        userdict = {
+                            'auth_user_id': auth.user_id,
+                            'access_token': auth.access_token,
+                            'entitlements_token': auth.entitlements_token
+                        }
+                        resp = await fetch_daily_shop(userdict)  # 获取每日商店
+                        list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+                        timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
+                        timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
+                        #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
+                        if await vip_ck(vip):
+                            global UserShopDict
+                            UserShopDict[vip] = {}
+                            UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
+                            UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+
+                        text = ""
+                        for skinuuid in list_shop:
+                            res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+                            res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+                            price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                            text += f"{res_item['data']['displayName']}     - VP {price}\n"
+
+                        cm = CardMessage()  #向用户发送当前的每日商店（文字）
+                        c = Card(color='#fb4b57')
+                        c.append(
+                            Module.Section(Element.Text(f"早上好呀！请查收您的每日商店", Types.Text.KMD),
+                                            Element.Image(src=icon_cm.shot_on_fire, size='sm')))
+                        c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+                        c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
+                        cm.append(c)
+                        await user.send(cm)
+                else:  #不在auth里面说明没有登录
+                    print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
+                    await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
+            except Exception as result:  #这个是用来获取单个用户的问题的
+                err_str = f"ERR! [BOT.TASK] auto_skin_inform vip_user.send\n{result}"
+                print(err_str)
+            
+        # 再遍历所有用户的皮肤提醒
         for aid, skin in SkinNotifyDict.items():
             try:
                 user = await bot.client.fetch_user(aid)
@@ -2157,35 +2207,15 @@ async def auto_skin_inform():
                             'access_token': auth.access_token,
                             'entitlements_token': auth.entitlements_token
                         }
-                        resp = await fetch_daily_shop(userdict)  # 获取每日商店
-                        list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                        timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
-                        timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
-                        if await vip_ck(aid):  #vip商店提醒
-                            #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
-                            global UserShopDict
-                            UserShopDict[aid] = {}
-                            UserShopDict[aid]["auth_user_id"] = UserTokenDict[aid]["auth_user_id"]
-                            UserShopDict[aid]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
-                            text = ""
-                            for skinuuid in list_shop:
-                                res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
-                                res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
-                                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                                text += f"{res_item['data']['displayName']}     - VP {price}\n"
-
-                            cm = CardMessage()  #向用户发送当前的每日商店（文字）
-                            c = Card(color='#fb4b57')
-                            c.append(
-                                Module.Section(Element.Text(f"请查收您的每日商店", Types.Text.KMD),
-                                               Element.Image(src=icon_cm.shot_on_fire, size='sm')))
-                            c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-                            c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
-                            cm.append(c)
-                            await user.send(cm)
-
+                        #vip用户在前面已经获取过商店了
+                        if await vip_ck(aid):
+                            list_shop = UserShopDict[aid]["SkinsPanelLayout"]["SingleItemOffers"]
+                        else:
+                            resp = await fetch_daily_shop(userdict)  # 获取每日商店
+                            list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+    
                         # 然后再遍历列表查看是否有提醒皮肤
-                        # 关于下面这一行：https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
+                        # 关于下面这一行参考 https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
                         target_skin = [val for key, val in skin.items() if key in list_shop]
                         # print(target_skin)
                         for name in target_skin:
@@ -2199,6 +2229,7 @@ async def auto_skin_inform():
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n{result}"
                 print(err_str)
+
         #完成遍历后打印
         finish_str = "[BOT.TASK] auto_skin_inform Finished!"
         print(finish_str)  #正常完成
