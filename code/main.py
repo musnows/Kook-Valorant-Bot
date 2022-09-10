@@ -1553,6 +1553,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
      - False: unkown err / reauthorize failed
      - send_msg: get `Message` as params & reauhorize success
     """
+    user_id = "[ERR!]" #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
         auth = UserAuthDict[user_id]
@@ -1593,7 +1594,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
         return ret  #返回假
     except Exception as result:
         if 'httpStatus' in str(result):
-            print(f"[Ckeck_re_auth] No need to reauthorize. [{result}]")
+            print(f"[Ckeck_re_auth] Au:{user_id} No need to reauthorize [{result}]")
             return True
         else:
             print(f"[Ckeck_re_auth] Unkown ERR!\n{traceback.format_exc()}")
@@ -2141,7 +2142,7 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
 
-@bot.task.add_cron(hour=9, minute=48, timezone="Asia/Shanghai")
+@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
 async def auto_skin_inform():
     debug_ch = await bot.client.fetch_public_channel(Debug_ch)
     try:
