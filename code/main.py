@@ -766,18 +766,6 @@ standard_price_position = (int(280 * standard_length / 1000), int(120 * standard
 standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
 standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
-standard_length_vip = 1280  #图片默认长
-standard_height_vip = 720  #图片默认宽
-standard_length_sm_vip = 350  # 组成四宫格小图的长
-standard_height_sm_vip = 240  # 组成四宫格小图的宽
-stardard_blank_sm_vip = 120 * standard_length_vip / 1000  # 小图左边的留空
-# stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
-standard_icon_top_blank_vip = int(100 * standard_height_vip / 1000)  # 枪距离图片顶部的像素
-standard_text_position_vip = (int(124 * standard_length_vip / 1000), int(317 * standard_height_vip / 1000))  # 皮肤名字文字位置
-standard_price_position_vip = (int(180 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000))  # 皮肤价格文字位置
-standard_level_icon_reszie_ratio_vip = 0.13 * standard_length_vip / 1000  # 等级icon图标的缩放
-standard_level_icon_position_vip = (int(200 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000)
-                                    )  # 等级icon图标的坐标
 
 
 async def img_requestor(img_url):
@@ -794,7 +782,7 @@ bg_main_vip =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2
 bg_main_169 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/sAFIce5xsz0zk0k0.png').content))# vip用户背景框 16-9
 
 # 缩放图片，部分皮肤图片大小不正常
-def resize(standard_x, img,standard_y = ''):
+def resize(standard_x, img, standard_y = ''):
     standard_y = standard_x if standard_y == '' else standard_y
     log_info = "[shop] "
     w, h = img.size
@@ -1628,7 +1616,7 @@ async def check_user_login_rate(msg: Message):
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.task.add_date()
 async def loading_cookie():
-    await asyncio.sleep(2)#睡2s避免和开头获取频道的task冲突
+    await asyncio.sleep(3)#睡3s避免和开头获取频道的task冲突
     print("[BOT.TASK] loading cookie start")
     global UserAuthDict, UserTokenDict, UserCookieDict
     # 已保存的登陆用户
@@ -2568,9 +2556,12 @@ async def auto_skin_inform(msg:Message):
                             await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
                         # 打印这个说明这个用户正常遍历完了
                         print(f"[BOT.TASK] Au:{aid} auto_skin_inform = None")
+                    else:#reauthorize failed!
+                        print(f"[BOT.TASK] Vip_Au:{vip} user reauthorize failed")
+                        await user.send(f"您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
                 else:  #不在auth里面说明没有登录
                     print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
-                    await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~")
+                    await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？")
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n{result}"
                 print(err_str)
