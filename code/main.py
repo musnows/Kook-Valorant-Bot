@@ -1152,7 +1152,7 @@ async def replace_illegal_img(user_id:str,num:int):
         global VipShopBgDict
         img_str=VipShopBgDict[user_id]["background"][num]
         VipShopBgDict[user_id]["background"][num] = illegal_img_169
-        VipShopBgDict[user_id]["is_latest"] = False  #需要重新加载图片
+        VipShopBgDict[user_id]["status"] = False  #需要重新加载图片
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[Replace_img] Au:{user_id} [{img_str}]")#写入文件后打印log信息
@@ -1189,7 +1189,7 @@ async def check_vip_img():
                     await user.send(cm0)  # 发送私聊消息给用户
                     await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
                     vip_bg["background"][i] = illegal_img_169 #修改成16比9的图片
-                    vip_bg["is_latest"] = False  #需要重新加载图片
+                    vip_bg["status"] = False  #需要重新加载图片
                     print(err_str)
                 except Exception as result:
                     err_str = f"ERR! [{GetTime()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
@@ -1333,7 +1333,7 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
             if not user_ind:
                 VipShopBgDict[msg.author_id] = {}
                 VipShopBgDict[msg.author_id]["background"] = list()
-                VipShopBgDict[msg.author_id]["is_latest"] = True  #因为是新建的用户所以默认为true
+                VipShopBgDict[msg.author_id]["status"] = True  #因为是新建的用户所以默认为true
             #插入图片
             VipShopBgDict[msg.author_id]["background"].append(x3)
 
@@ -1406,7 +1406,7 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             icon_num = VipShopBgDict[msg.author_id]["background"][num]
             VipShopBgDict[msg.author_id]["background"][num] = VipShopBgDict[msg.author_id]["background"][0]
             VipShopBgDict[msg.author_id]["background"][0] = icon_num
-            VipShopBgDict[msg.author_id]['is_latest'] = False
+            VipShopBgDict[msg.author_id]['status'] = True
             
             #进行缩放+贴上图后保存
             bg_vip = resize_vip(1280,720,bg_vip)
