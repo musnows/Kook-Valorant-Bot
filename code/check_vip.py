@@ -1,12 +1,12 @@
 import uuid
 import json
 import time
-from khl import Message
+from khl import Message,Bot
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
 from upd_msg import icon_cm
 
-
+Debug_ch = '6248953582412867'
 #获取uuid
 def get_uuid():
     get_timestamp_uuid = uuid.uuid1()  # 根据 时间戳生成 uuid , 保证全球唯一
@@ -106,7 +106,7 @@ async def vip_time_remain_cm(times):
 
 
 # 兑换vip
-async def using_vip_uuid(msg: Message, uuid1: str):
+async def using_vip_uuid(msg: Message, uuid1: str,bot:Bot):
     user_id = msg.author_id
     cm = CardMessage()
     c = Card(color='#e17f89')
@@ -157,6 +157,9 @@ async def using_vip_uuid(msg: Message, uuid1: str):
     cm.append(c)
     await msg.reply(cm)
     print(log_str)
+    # 发送消息到日志频道
+    debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+    await bot.client.send(debug_ch, f"用户「{user_id}_{VipUserDict[user_id]['name_tag']}」兑换了「{days}」天阿狸vip！")
     return True
 
 

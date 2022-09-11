@@ -334,7 +334,7 @@ def check_sponsor(it: dict):
 
 
 # 感谢助力者（每天19点进行检查）
-@bot.task.add_corn(hour=19, minute=0, timezone="Asia/Shanghai")
+@bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
 async def thanks_sponser():
     print("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
@@ -1054,14 +1054,15 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
         await msg.reply(f"只有输入vip的兑换码才可以操作哦！uuid: `{uuid}`")
         return
     try:
-        ret = await using_vip_uuid(msg, uuid)
+        #把bot传过去是为了让阿狸在有人成兑换激活码之后发送消息到log频道
+        ret = await using_vip_uuid(msg, uuid, bot)
 
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] buy_vip_uuid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
                                                                      Types.Click.LINK)))
@@ -1085,7 +1086,7 @@ async def check_vip_timeremain(msg: Message, *arg):
         print(err_str)
         cm2 = CardMessage()
         c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
                                                                      Types.Click.LINK)))
