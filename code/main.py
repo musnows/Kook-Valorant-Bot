@@ -734,7 +734,7 @@ import asyncio
 import copy
 import io  # 用于将 图片url 转换成可被打开的二进制
 import threading
-from riot_auth import auth_exceptions
+from riot_auth import auth_exceptions,RiotAuth
 import zhconv  # 用于繁体转简体（因为部分字体不支持繁体
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError # 用于合成图片
 
@@ -1409,9 +1409,6 @@ with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
 with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
     ValItersList = json.load(frrk)
 
-# 用来存放auth对象
-UserAuthDict = {}
-
 
 #从list中获取价格
 def fetch_item_price_bylist(item_id):
@@ -1447,6 +1444,16 @@ def fetch_skin_byname_list(name):
     return wplist
 
 
+# 用来存放auth对象（无法直接保存到文件）
+UserAuthDict = {}
+# 用来存放已保存cookie的用户id（保存在文件中）
+UserCookieDict = {}
+#用于限制用户操作，一分钟只能3次
+login_dict = {}  
+#全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
+login_rate_limit = {'limit': False, 'time': time.time()}
+
+
 #查询当前有多少用户登录了
 @bot.command(name="ckau")
 async def check_UserAuthDict_len(msg: Message):
@@ -1455,11 +1462,6 @@ async def check_UserAuthDict_len(msg: Message):
     res = f"UserAuthDict_len: `{sz}`"
     print(res)
     await msg.reply(res)
-
-
-login_dict = {}  #用于限制用户操作，一分钟只能3次
-#全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
-login_rate_limit = {'limit': False, 'time': time.time()}
 
 
 #遇到全局速率限制统一获取卡片消息
@@ -1517,6 +1519,34 @@ async def check_user_login_rate(msg: Message):
         return False
 
 
+#在阿狸开机的时候自动加载所有保存过的cookie
+@bot.task.add_date()
+async def loading_cookie():
+    print("[BOT.TASK] loading cookie start")
+    global UserAuthDict,UserTokenDict,UserCookieDict
+    # 已保存的登陆用户
+    with open("./log/cookie/UserCookieSave.json", 'r', encoding='utf-8') as frrk:
+        UserCookieDict = json.load(frrk)
+    #遍历用户列表
+    for user,uinfo in UserCookieDict.items():
+        cookie_path = f"./log/cookie/{user}.cke"
+        auth = RiotAuth()#新建一个对象
+        auth._cookie_jar.load(cookie_path)#加载cookie
+        ret_bool = await auth.reauthorize() #尝试登录
+        if ret_bool: # True登陆成功
+            UserAuthDict[user] = auth  #将对象插入
+            print(f"[BOT.TASK] Au:{user} - load cookie success!")
+            #不用重新修改UserTokenDict里面的游戏名和uuid
+            #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
+            #那么玩家id和uuid都是不会变化的，也没必要重新加载
+        else:
+            print(f"[BOT.TASK] Au:{user} - load cookie failed!")
+            continue
+    #结束任务
+    print("[BOT.TASK] loading cookie finished")
+                
+        
+
 # 登录，保存用户的token
 @bot.command(name='login')
 async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', *arg):
@@ -1564,7 +1594,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm0.append(c)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
-        # 不在其中才进行获取token的操作（耗时)
+        # 不在AuthDict中才进行获取token的操作（耗时)
         res_auth = await authflow(user, passwd)
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id}  #先创建基本信息 dict[键] = 值
         userdict = {
@@ -1588,6 +1618,17 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            
+        # 如果是vip用户，则保存cookie
+        if await vip_ck(msg):
+            global UserCookieDict
+            UserCookieDict[msg.author_id]=GetTime()
+            #用于保存cookie的路径
+            cookie_path = f"./log/cookie/{msg.author_id}.cke"
+            res_auth._cookie_jar.save(cookie_path)
+            with open("./log/cookie/UserCookieSave.json", 'w', encoding='utf-8') as fw2:
+                json.dump(UserCookieDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        # 全部都搞定了，打印登录信息
         print(
             f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )

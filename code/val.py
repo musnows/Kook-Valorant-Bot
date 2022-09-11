@@ -212,7 +212,6 @@ async def authflow(user: str, passwd: str):
     CREDS = user, passwd
     auth = riot_auth.RiotAuth()
     await auth.authorize(*CREDS)
-    # Reauth using cookies. Returns a bool indicating whether the reauth attempt was successful.
     # await auth.reauthorize()
     # print(f"Access Token Type: {auth.token_type}\n",f"Access Token: {auth.access_token}\n")
     # print(f"Entitlements Token: {auth.entitlements_token}\n",f"User ID: {auth.user_id}")
