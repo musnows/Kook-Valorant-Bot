@@ -2044,6 +2044,88 @@ async def clear_usershopdict():
 
 
 # 获取每日商店的命令
+async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip:bool=True,msg:Message=None):
+    """returns dict:
+     - {"status":False,"value":f"{err_str}"}
+     - {"status":True,"value":bg}
+    """
+    vip_bg_path = f'./log/img_temp_vip/bg/{user_id}.png'
+    if len_VusBg(user_id) > 0: #如果为0则不执行自定义图片（避免空list）
+        # 如果图片路径不存在（说明没有缓存）
+        if not os.path.exists(vip_bg_path):
+            try:#打开图片进行测试
+                bg_vip = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[user_id]["background"][0])))
+            except UnidentifiedImageError as result:
+                err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
+                await replace_illegal_img(user_id,0) #替换图片
+                # if msg != None: 
+                #     await msg.reply(f"当前使用的图片违规！请重新上传您的背景图\n{err_str}")
+                print(err_str)#写入文件后打印log信息
+                return {"status":False,"value":f"当前使用的图片违规！请重新上传您的背景图\n{err_str}"}
+            #图没有问题，则缩放后保存
+            bg_vip = resize_vip(1280, 720,bg_vip)
+            bg_vip = bg_vip.convert('RGBA')
+            # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+            finalImg = Image.alpha_composite(bg_vip, bg_main_169)
+            finalImg.save(f'./log/img_temp_vip/bg/{user_id}.png')
+            bg_vip = finalImg
+        else:  #使用缓存好的vip图片
+            bg_vip = Image.open(vip_bg_path)
+        # 两种情况都需要把vip图片加载到bg中
+        bg = copy.deepcopy(bg_vip)
+    else:# vip用户但是出现了空list，调用默认的16比9图片
+        bg = copy.deepcopy(bg_main_vip)
+    #开始画图
+    x = 50
+    y = 100
+    ran = random.randint(1, 9999)
+    global shop_img_temp_vip
+    shop_img_temp_vip[ran] = []
+    img_num = 0
+
+    for skinuuid in list_shop:
+        img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
+        if skinuuid in weapon_icon_temp:
+            shop_img_temp_vip[ran].append(weapon_icon_temp[skinuuid])
+        elif os.path.exists(img_path):
+            shop_img_temp_vip[ran].append(Image.open(img_path))
+        else:
+            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
+            th.start()
+        await asyncio.sleep(0.8)  #尝试错开网络请求
+    while True:
+        img_temp = [i for i in shop_img_temp_vip[ran]]
+        for i in img_temp:
+            shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
+            bg = bg_comp(bg, i, x, y)
+            if x == 50:
+                x += 780
+            elif x == 830:
+                x = 50
+                y += 279
+            img_num += 1
+        if img_num >= 4:
+            break
+        await asyncio.sleep(0.2)
+    #vip用户写入vp和r点
+    play_currency = await fetch_valorant_point(userdict)
+    vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
+    rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+    draw = ImageDraw.Draw(bg)
+    vp_c = (f"{vp}")  #vp
+    draw.text((549,666),
+            vp_c,
+            font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
+            fill=font_color)
+    rp_c = (f"{rp}")  #rp
+    draw.text((718,666),
+            rp_c,
+            font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
+            fill=font_color)
+    return {"status":True,"value":bg}
+
+
+# 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message, *arg):
     logging(msg)
@@ -2101,79 +2183,13 @@ async def get_daily_shop(msg: Message, *arg):
             draw_time = time.time()  #计算画图需要的时间
             is_vip = await vip_ck(msg.author_id)
             if is_vip and (msg.author_id in VipShopBgDict):
-                vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
-                if len_VusBg(msg.author_id) > 0: #如果为0则不执行自定义图片（避免空list）
-                    # 如果图片路径不存在（说明没有缓存）
-                    if not os.path.exists(vip_bg_path):
-                        try:#打开图片进行测试
-                            bg_vip = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[msg.author_id]["background"][0])))
-                        except UnidentifiedImageError as result:
-                            err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
-                            await msg.reply(f"当前使用的图片违规！请重新上传您的背景图\n{err_str}")
-                            await replace_illegal_img(msg.author_id,0) #替换图片
-                            print(err_str)#写入文件后打印log信息
-                            return
-                        #图没有问题，则缩放后保存
-                        bg_vip = resize_vip(1280, 720,bg_vip)
-                        bg_vip = bg_vip.convert('RGBA')
-                        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-                        finalImg = Image.alpha_composite(bg_vip, bg_main_169)
-                        finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
-                        bg_vip = finalImg
-                    else:  #使用缓存好的vip图片
-                        bg_vip = Image.open(vip_bg_path)
-                    # 两种情况都需要把vip图片加载到bg中
-                    bg = copy.deepcopy(bg_vip)
-                else:# vip用户但是出现了空list，调用默认的16比9图片
-                    bg = copy.deepcopy(bg_main_vip)
-                #开始画图
-                x = 50
-                y = 100
-                ran = random.randint(1, 9999)
-                global shop_img_temp_vip
-                shop_img_temp_vip[ran] = []
-                img_num = 0
-
-                for skinuuid in list_shop:
-                    img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
-                    if skinuuid in weapon_icon_temp:
-                        shop_img_temp_vip[ran].append(weapon_icon_temp[skinuuid])
-                    elif os.path.exists(img_path):
-                        shop_img_temp_vip[ran].append(Image.open(img_path))
-                    else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
-                        th.start()
-                    await asyncio.sleep(0.8)  #尝试错开网络请求
-                while True:
-                    img_temp = [i for i in shop_img_temp_vip[ran]]
-                    for i in img_temp:
-                        shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
-                        bg = bg_comp(bg, i, x, y)
-                        if x == 50:
-                            x += 780
-                        elif x == 830:
-                            x = 50
-                            y += 279
-                        img_num += 1
-                    if img_num >= 4:
-                        break
-                    await asyncio.sleep(0.2)
-                #vip用户写入vp和r点
-                play_currency = await fetch_valorant_point(userdict)
-                vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
-                rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
-                draw = ImageDraw.Draw(bg)
-                vp_c = (f"{vp}")  #vp
-                draw.text((549,666),
-                        vp_c,
-                        font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
-                        fill=font_color)
-                rp_c = (f"{rp}")  #rp
-                draw.text((718,666),
-                        rp_c,
-                        font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
-                        fill=font_color)   
-            else:  # 普通用户
+                ret = await get_daily_shop_vip_img(list_shop,userdict,msg.author_id,is_vip,msg)
+                if ret['status']:
+                    bg = ret['value']
+                else:#出现图片违规
+                    await msg.reply(ret['value'])
+                    return
+            else:#普通用户
                 x = 0
                 y = 0
                 bg = copy.deepcopy(bg_main)
@@ -2196,7 +2212,6 @@ async def get_daily_shop(msg: Message, *arg):
                 while True:
                     img_temp = copy.deepcopy(shop_img_temp)
                     for i in img_temp[ran]:
-
                         shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
                         bg = bg_comp(bg, i, x, y)
                         if x == 0:
