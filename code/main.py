@@ -145,7 +145,7 @@ async def Vhelp(msg: Message, *arg):
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
-        help_2  = "「/vip-u 激活码」兑换阿狸的vip\n"
+        help_2 = "「/vip-u 激活码」兑换阿狸的vip\n"
         help_2 += "「/vip-c」 查看vip的剩余时间\n"
         help_2 += "「/vip-shop」查看已保存的商店查询diy背景图\n"
         help_2 += "「/vip-shop 图片url」添加商店查询diy背景图\n"
@@ -153,7 +153,9 @@ async def Vhelp(msg: Message, *arg):
         help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n\n"
         help_2 += "1.目前商店查询背景图diy仅支持1比1的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
-        c3.append(Module.Context(Element.Text("[如果你觉得这些功能还不错，可以发电支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)",Types.Text.KMD)))
+        c3.append(
+            Module.Context(
+                Element.Text("[如果你觉得这些功能还不错，可以发电支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)", Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Section('若有任何问题，欢迎加入帮助频道', Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
         cm.append(c3)
@@ -342,13 +344,13 @@ async def thanks_sponser():
     async with aiohttp.ClientSession() as session:
         async with session.post(api, headers=headers) as response:
             json_dict = json.loads(await response.text())
-    
+
     #长度相同无需更新
     sz = len(SponsorDict)
     if json_dict['data']['meta']['total'] == sz:
         print(f"[BOT.TASK] No new sponser, same_len [{sz}]")
         return
-    
+
     for its in json_dict['data']['items']:
         if check_sponsor(its) == 0:
             channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
@@ -735,9 +737,9 @@ import asyncio
 import copy
 import io  # 用于将 图片url 转换成可被打开的二进制
 import threading
-from riot_auth import auth_exceptions,RiotAuth
+from riot_auth import auth_exceptions, RiotAuth
 import zhconv  # 用于繁体转简体（因为部分字体不支持繁体
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError # 用于合成图片
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合成图片
 
 standard_length = 1000  #图片默认边长
 # 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
@@ -751,9 +753,8 @@ standard_price_position = (int(280 * standard_length / 1000), int(120 * standard
 standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
 standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
-
 standard_length_vip = 1000  #图片默认长
-standard_height_vip = 600   #图片默认宽
+standard_height_vip = 600  #图片默认宽
 standard_length_sm_vip = 360  # 组成四宫格小图的长
 standard_height_sm_vip = 220  # 组成四宫格小图的宽
 stardard_blank_sm_vip = 120 * standard_length_vip / 1000  # 小图左边的留空
@@ -762,7 +763,8 @@ standard_icon_top_blank_vip = int(100 * standard_height_vip / 1000)  # 枪距离
 standard_text_position_vip = (int(124 * standard_length_vip / 1000), int(317 * standard_height_vip / 1000))  # 皮肤名字文字位置
 standard_price_position_vip = (int(180 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000))  # 皮肤价格文字位置
 standard_level_icon_reszie_ratio_vip = 0.13 * standard_length_vip / 1000  # 等级icon图标的缩放
-standard_level_icon_position_vip = (int(200 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000))  # 等级icon图标的坐标
+standard_level_icon_position_vip = (int(200 * standard_length_vip / 1000), int(200 * standard_height_vip / 1000)
+                                    )  # 等级icon图标的坐标
 
 
 async def img_requestor(img_url):
@@ -773,10 +775,15 @@ async def img_requestor(img_url):
 
 font_color = '#ffffff'  # 文字颜色：白色
 
-bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))  # 普通用户商店背景
-bg_main_11 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/Mqo43d7eqW0rs0rs.png').content))  # vip用户背景框
-bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # vip商店默认背景
-bg_main_bw =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
+bg_main = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))  # 普通用户商店背景
+bg_main_11 = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/Mqo43d7eqW0rs0rs.png').content))  # vip用户背景框
+bg_main_vip = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # vip商店默认背景
+bg_main_bw = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
+
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
@@ -897,6 +904,7 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
         weapon_icon_temp[skinuuid] = bg
     return bg
 
+
 # 处理vip图片
 def sm_comp_vip(icon, name, price, level_icon, skinuuid):
     bg = Image.new(mode='RGBA', size=(standard_length_sm_vip, standard_height_sm_vip))  # 新建一个画布
@@ -996,7 +1004,7 @@ shop_img_temp_vip = {}
 img_save_temp = {}
 
 
-def skin_uuid_to_comp(skinuuid, ran,is_vip:bool):
+def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
     res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
     res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
     price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
@@ -1006,20 +1014,19 @@ def skin_uuid_to_comp(skinuuid, ran,is_vip:bool):
             break
     if is_vip:
         img = sm_comp_vip(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
-                  res_iters['data']['displayIcon'], skinuuid)
-        global shop_img_temp_vip #这里是把处理好的图片存到本地
+                          res_iters['data']['displayIcon'], skinuuid)
+        global shop_img_temp_vip  #这里是把处理好的图片存到本地
         shop_img_temp_vip[ran].append(img)
     else:
         img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
-                  res_iters['data']['displayIcon'], skinuuid)
-        global shop_img_temp #这里是把处理好的图片存到本地
+                      res_iters['data']['displayIcon'], skinuuid)
+        global shop_img_temp  #这里是把处理好的图片存到本地
         shop_img_temp[ran].append(img)
-
 
 
 #####################################################################################################
 
-from check_vip import VipUserDict, create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck,fetch_vip_user
+from check_vip import VipUserDict, create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck, fetch_vip_user
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
@@ -1034,7 +1041,10 @@ async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
         if msg.author_id == master_id:
             text = await create_vip_uuid(num, day)
             cm = CardMessage()
-            c = Card(Module.Header(f"已生成新的uuid   数量:{num}  天数:{day}"), Module.Divider(), Module.Section(Element.Text(text, Types.Text.KMD)),color='#e17f89')
+            c = Card(Module.Header(f"已生成新的uuid   数量:{num}  天数:{day}"),
+                     Module.Divider(),
+                     Module.Section(Element.Text(text, Types.Text.KMD)),
+                     color='#e17f89')
             cm.append(c)
             await msg.reply(cm)
             print("[vip-c] create_vip_uuid reply successful!")
@@ -1093,15 +1103,16 @@ async def check_vip_timeremain(msg: Message, *arg):
         cm2.append(c)
         await msg.reply(cm2)
 
-# 看vip用户列表        
+
+# 看vip用户列表
 @bot.command(name="vip-l")
 async def list_vip_user(msg: Message, *arg):
     logging(msg)
     try:
-        if msg.author_id==master_id:
+        if msg.author_id == master_id:
             text = fetch_vip_user()
             cm2 = CardMessage()
-            c = Card(Module.Header(f"当前vip用户列表如下"),color='#e17f89')
+            c = Card(Module.Header(f"当前vip用户列表如下"), color='#e17f89')
             c.append(Module.Section(Element.Text(f"```\n{text}```", Types.Text.KMD)))
             cm2.append(c)
             await msg.reply(cm2)
@@ -1112,14 +1123,17 @@ async def list_vip_user(msg: Message, *arg):
         print(err_str)
         await msg.reply(err_str)
 
+
 # vip用户商店自定义图片
-VipShopBgDict={}
+VipShopBgDict = {}
 with open("./log/VipUserShopBg.json", 'r', encoding='utf-8') as frau:
     VipShopBgDict = json.load(frau)
 
 #定期检查图片是否没问题
 #下图用于替换违规的vip图片
 illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
+
+
 async def check_vip_img():
     debug_ch = await bot.client.fetch_public_channel(Debug_ch)
     print("[BOT.TASK] check_vip_img start!")
@@ -1127,28 +1141,28 @@ async def check_vip_img():
         global VipShopBgDict
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
-        text=f"您设置的vip背景图违规！请尽快替换"
+        text = f"您设置的vip背景图违规！请尽快替换"
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.powder, size='sm')))
         c.append(Module.Context(Element.Text("多次发送违禁图片会导致阿狸被封，请您慎重选择图片！", Types.Text.KMD)))
         #遍历vip用户的图片
-        for vip_user,vip_bg in VipShopBgDict.items():
+        for vip_user, vip_bg in VipShopBgDict.items():
             user = await bot.client.fetch_user(vip_user)
             sz = len(vip_bg["background"])
-            i=0
-            while i<sz:
+            i = 0
+            while i < sz:
                 try:
                     bg_test = Image.open(io.BytesIO(await img_requestor(vip_bg["background"][i])))
-                    i+=1
+                    i += 1
                 except UnidentifiedImageError as result:
                     err_str = f"ERR! [{GetTime()}] checking [{vip_user}] img\n```\n{result}\n"
                     #把被ban的图片替换成默认的图片，打印url便于日后排错
-                    err_str +=f"[UnidentifiedImageError] url={vip_bg['background'][i]}\n```"
+                    err_str += f"[UnidentifiedImageError] url={vip_bg['background'][i]}\n```"
                     c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
                     cm0.append(c)
-                    await user.send(cm0)# 发送私聊消息给用户
-                    await bot.client.send(debug_ch, err_str) # 发送消息到debug频道
+                    await user.send(cm0)  # 发送私聊消息给用户
+                    await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
                     vip_bg["background"][i] = illegal_img_11
-                    vip_bg["is_latest"]=False #需要重新加载图片
+                    vip_bg["is_latest"] = False  #需要重新加载图片
                     print(err_str)
                 except Exception as result:
                     err_str = f"ERR! [{GetTime()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
@@ -1170,13 +1184,15 @@ async def check_vip_img():
         print(err_str)
         await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
+
 #因为这个功能很重要，所以设置成可以用命令调用+定时任务
-@bot.task.add_cron(hour=3,minute=0, timezone="Asia/Shanghai")
+@bot.task.add_cron(hour=3, minute=0, timezone="Asia/Shanghai")
 async def check_vip_img_task():
     await check_vip_img()
-    
+
+
 @bot.command(name="vip-img")
-async def check_vip_img_task(msg:Message,*arg):
+async def check_vip_img_task(msg: Message, *arg):
     logging(msg)
     if msg.author_id == master_id:
         await check_vip_img()
@@ -1185,90 +1201,112 @@ async def check_vip_img_task(msg:Message,*arg):
         await msg.reply("您没有权限执行此命令！")
         return
 
+
 #计算用户背景图的list大小，避免出现空list的情况
-def len_VusBg(user_id:str):
+def len_VusBg(user_id: str):
     """
         len(VipShopBgDict[user_id]["background"])
     """
     return len(VipShopBgDict[user_id]["background"])
 
+
 #因为下面两个函数都要用，所以直接独立出来
-async def get_vip_shop_bg_cm(msg:Message):
+async def get_vip_shop_bg_cm(msg: Message):
     global VipShopBgDict
     if msg.author_id not in VipShopBgDict:
         return "您尚未自定义商店背景图！"
-    elif len_VusBg(msg.author_id)==0:
+    elif len_VusBg(msg.author_id) == 0:
         return "您尚未自定义商店背景图！"
-    
+
     cm = CardMessage()
     c1 = Card(color='#e17f89')
     c1.append(Module.Header('您当前设置的商店背景图如下'))
     c1.append(Module.Container(Element.Image(src=VipShopBgDict[msg.author_id]["background"][0])))
     sz = len(VipShopBgDict[msg.author_id]["background"])
-    if sz>1:
+    if sz > 1:
         c1.append(Module.Divider())
         c1.append(Module.Section(Element.Text('当前未启用的背景图，可用「/vip-shop-s 序号」切换', Types.Text.KMD)))
-        i=1
-        while(i<sz):
+        i = 1
+        while (i < sz):
             try:
                 #打开图片进行测试，没有问题就append
                 bg_test = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[msg.author_id]["background"][i])))
-                c1.append(Module.Section(Element.Text(f' [{i}]', Types.Text.KMD), Element.Image(src=VipShopBgDict[msg.author_id]["background"][i])))
-                i+=1
+                c1.append(
+                    Module.Section(Element.Text(f' [{i}]', Types.Text.KMD),
+                                   Element.Image(src=VipShopBgDict[msg.author_id]["background"][i])))
+                i += 1
             except UnidentifiedImageError as result:
                 err_str = f"ERR! [{GetTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
                 #把被ban的图片替换成默认的图片，打印url便于日后排错
-                err_str +=f"[UnidentifiedImageError] url={VipShopBgDict[msg.author_id]['background'][i]}\n```"
-                await msg.reply(f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}")
+                err_str += f"[UnidentifiedImageError] url={VipShopBgDict[msg.author_id]['background'][i]}\n```"
+                #await msg.reply(f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}")
                 VipShopBgDict[msg.author_id]["background"][i] = illegal_img_11
-                VipShopBgDict[msg.author_id]["is_latest"]=False #需要重新加载图片
+                VipShopBgDict[msg.author_id]["is_latest"] = False  #需要重新加载图片
                 debug_ch = await bot.client.fetch_public_channel(Debug_ch)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
                 print(err_str)
-        
+                return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
+
     cm.append(c1)
     return cm
- 
+
+
 @bot.command(name="vip-shop")
-async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
+async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
     logging(msg)
-    if icon != 'err' and('http' not in icon or '](' not in icon):
+    if icon != 'err' and ('http' not in icon or '](' not in icon):
         await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
         return
+
+    cm = CardMessage()
+    c = Card(color='#fb4b57')
     try:
-        cm = CardMessage()
-        c = Card(color='#fb4b57')
         if not await vip_ck(msg):
             return
-                
-        x3="[None]"
+
+        x3 = "[None]"
         if icon != 'err':
-            user_ind = (msg.author_id in VipShopBgDict) #判断当前用户在不在dict中
-            if user_ind and len(VipShopBgDict[msg.author_id]["background"])>=4:
+            user_ind = (msg.author_id in VipShopBgDict)  #判断当前用户在不在dict中
+            if user_ind and len(VipShopBgDict[msg.author_id]["background"]) >= 4:
                 text = f"当前仅支持保存4个自定义图片"
-                c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
+                c.append(
+                    Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
                 c.append(Module.Context(Element.Text("您可用「/vip-shop-d 图片编号」删除已有图片再添加", Types.Text.KMD)))
                 cm.append(c)
                 await msg.reply(cm)
                 return
-        
+
             #提取图片url
             x1 = icon.find('](')
-            x2 = icon.find(')',x1+2)
-            x3 = icon[x1+2:x2]
-            print(f"[vip-shop] Au:{msg.author_id} get_url ",x3)
+            x2 = icon.find(')', x1 + 2)
+            x3 = icon[x1 + 2:x2]
+            print(f"[vip-shop] Au:{msg.author_id} get_url ", x3)
             try:
-                bg_vip = Image.open(io.BytesIO(requests.get(x3).content))
+                # 检查图片链接格式是否支持
+                if ('png' not in x3) and ('jpg' not in x3) and ('jpeg' not in x3):
+                    text = f"您当前上传的图片格式不支持！请上传png/jpg/jpeg格式的图片"
+                    c.append(
+                        Module.Section(Element.Text(text, Types.Text.KMD),
+                                       Element.Image(src=icon_cm.ahri_dark, size='sm')))
+                    c.append(Module.Context(Element.Text("请优先尝试png格式图片，其余格式兼容性有一定问题", Types.Text.KMD)))
+                    cm.append(c)
+                    await msg.reply(cm)
+                    print(f"[vip-shop] Au:{msg.author_id} img_type_not support")
+                    return
+                #打开图片
+                bg_vip = Image.open(io.BytesIO(await img_requestor(x3)))
                 w, h = bg_vip.size
-                if w!=h:
+                if w != h:
                     text = f"您当前上传的图片比例不是1-1，为保证最终效果，请重新上传！"
-                    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_dark, size='sm')))
+                    c.append(
+                        Module.Section(Element.Text(text, Types.Text.KMD),
+                                       Element.Image(src=icon_cm.ahri_dark, size='sm')))
                     c.append(Module.Context(Element.Text("您可用手机相册将您的图片裁剪为1-1", Types.Text.KMD)))
                     cm.append(c)
                     await msg.reply(cm)
                     print(f"[vip-shop] Au:{msg.author_id} img_not_1-1")
                     return
-            except Exception as result:
+            except UnidentifiedImageError as result:
                 err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
                 print(err_str)
                 await msg.reply(f"图片违规！请重新上传\n{err_str}")
@@ -1276,36 +1314,51 @@ async def vip_shop_bg_set(msg: Message, icon:str="err",*arg):
 
             #到插入的时候再创建list，避免出现图片没有通过检查，但是list又被创建了的情况
             if not user_ind:
-                VipShopBgDict[msg.author_id]={}
-                VipShopBgDict[msg.author_id]["background"]=list()
-                VipShopBgDict[msg.author_id]["is_latest"]=True #因为是新建的用户所以默认为true
+                VipShopBgDict[msg.author_id] = {}
+                VipShopBgDict[msg.author_id]["background"] = list()
+                VipShopBgDict[msg.author_id]["is_latest"] = True  #因为是新建的用户所以默认为true
             #插入图片
             VipShopBgDict[msg.author_id]["background"].append(x3)
-            
+
         cm = await get_vip_shop_bg_cm(msg)
         await msg.reply(cm)
-        # 打印用户新增的图片日后用于排错
-        print(f"[vip-shop] Au:{msg.author_id} add ",x3)
+
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            
+        # 打印用户新增的图片日后用于排错
+        print(f"[vip-shop] Au:{msg.author_id} add ", x3)
+        
+    except requester.HTTPRequester.APIRequestFailed as result:
+        err_str = f"ERR! [{GetTime()}]  vip_shop_cm\n```\n{result}\n```\n"
+        print(json.dumps(cm))
+        cm1 = CardMessage()
+        c = Card(
+            Module.Header(f"卡片消息json没有通过验证或者不存在"), Module.Divider(),
+            Module.Section(
+                Element.Text(f"图片违规或图片格式有问题，请不要多次重试，会导致阿狸被封！建议加入帮助频道找我康康到底是啥问题\n{err_str}", Types.Text.KMD)),
+            Module.Divider(),
+            Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm1.append(c)
+        await msg.reply(cm1)
+        VipShopBgDict[msg.author_id]["background"].remove(x3) #删掉里面的图片
+        print(err_str)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}]  vip_shop\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        cm = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
+        cm1 = CardMessage()
+        c = Card(Module.Header(f"很抱歉，发生了未知错误"), color='#fb4b57')
         c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n建议加入帮助频道找我康康到底是啥问题", Types.Text.KMD)))
         c.append(Module.Divider())
         c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
                                                                      Types.Click.LINK)))
-        cm.append(c)
-        await msg.reply(cm)
-        
+        cm1.append(c)
+        await msg.reply(cm1)
+
 
 @bot.command(name="vip-shop-s")
-async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
+async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
     logging(msg)
     if num == 'err':
         await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
@@ -1318,28 +1371,28 @@ async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
             return
 
         num = str2int(num)
-        if num<len(VipShopBgDict[msg.author_id]["background"]):
+        if num < len(VipShopBgDict[msg.author_id]["background"]):
             #交换两个图片的位置
             icon_num = VipShopBgDict[msg.author_id]["background"][num]
             VipShopBgDict[msg.author_id]["background"][num] = VipShopBgDict[msg.author_id]["background"][0]
             VipShopBgDict[msg.author_id]["background"][0] = icon_num
-            VipShopBgDict[msg.author_id]['is_latest']=False
+            VipShopBgDict[msg.author_id]['is_latest'] = False
         else:
             await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
-        
+
         cm = await get_vip_shop_bg_cm(msg)
         await msg.reply(cm)
         print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict[msg.author_id]['background'][0]}]")
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            
+
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] vip_shop_s\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
+        c = Card(Module.Header(f"很抱歉，发生了未知错误"), color='#fb4b57')
         c.append(Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
         c.append(Module.Divider())
@@ -1347,9 +1400,10 @@ async def vip_shop_bg_set_s(msg: Message, num:str="err",*arg):
                                                                      Types.Click.LINK)))
         cm.append(c)
         await msg.reply(cm)
-        
+
+
 @bot.command(name="vip-shop-d")
-async def vip_shop_bg_set_d(msg: Message, num:str="err",*arg):
+async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
     logging(msg)
     if num == 'err':
         await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
@@ -1362,29 +1416,29 @@ async def vip_shop_bg_set_d(msg: Message, num:str="err",*arg):
             return
 
         num = str2int(num)
-        if num<len(VipShopBgDict[msg.author_id]["background"]) and num>0:
+        if num < len(VipShopBgDict[msg.author_id]["background"]) and num > 0:
             # 删除图片
             del_img_url = VipShopBgDict[msg.author_id]["background"][num]
             del VipShopBgDict[msg.author_id]["background"][num]
-        elif num==0:
+        elif num == 0:
             await msg.reply("不支持删除当前正在使用的背景图！")
             return
         else:
             await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
-        
+
         cm = await get_vip_shop_bg_cm(msg)
         await msg.reply(cm)
         print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            
+
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] vip_shop_d\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了未知错误"),color='#fb4b57')
+        c = Card(Module.Header(f"很抱歉，发生了未知错误"), color='#fb4b57')
         c.append(Module.Divider())
         c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
         c.append(Module.Divider())
@@ -1392,6 +1446,7 @@ async def vip_shop_bg_set_d(msg: Message, num:str="err",*arg):
                                                                      Types.Click.LINK)))
         cm.append(c)
         await msg.reply(cm)
+
 
 ##############################################################################
 
@@ -1451,7 +1506,7 @@ UserAuthDict = {}
 # 用来存放已保存cookie的用户id（保存在文件中）
 UserCookieDict = {}
 #用于限制用户操作，一分钟只能3次
-login_dict = {}  
+login_dict = {}
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
 
@@ -1525,20 +1580,20 @@ async def check_user_login_rate(msg: Message):
 @bot.task.add_date()
 async def loading_cookie():
     print("[BOT.TASK] loading cookie start")
-    global UserAuthDict,UserTokenDict,UserCookieDict
+    global UserAuthDict, UserTokenDict, UserCookieDict
     # 已保存的登陆用户
     # with open("./log/cookie/UserCookieSave.json", 'r', encoding='utf-8') as frrk:
     #     UserCookieDict = json.load(frrk)
-    log_str="[BOT.TASK] cookie path not exists = Au:"
+    log_str = "[BOT.TASK] cookie path not exists = Au:"
     #遍历用户列表
-    for user,uinfo in VipUserDict.items():
+    for user, uinfo in VipUserDict.items():
         cookie_path = f"./log/cookie/{user}.cke"
         #如果路径存在，那么说明已经保存了这个vip用户的cookie
         if os.path.exists(cookie_path):
-            auth = RiotAuth()#新建一个对象
-            auth._cookie_jar.load(cookie_path)#加载cookie
-            ret_bool = await auth.reauthorize() #尝试登录
-            if ret_bool: # True登陆成功
+            auth = RiotAuth()  #新建一个对象
+            auth._cookie_jar.load(cookie_path)  #加载cookie
+            ret_bool = await auth.reauthorize()  #尝试登录
+            if ret_bool:  # True登陆成功
                 UserAuthDict[user] = auth  #将对象插入
                 print(f"[BOT.TASK] Au:{user} - load cookie success!")
                 #不用重新修改UserTokenDict里面的游戏名和uuid
@@ -1548,13 +1603,12 @@ async def loading_cookie():
                 print(f"[BOT.TASK] Au:{user} - load cookie failed!")
                 continue
         else:
-            log_str+=f"({user}) "
+            log_str += f"({user}) "
             continue
     #结束任务
-    print(log_str)#打印路径不存在的用户
+    print(log_str)  #打印路径不存在的用户
     print("[BOT.TASK] loading cookie finished")
-                
-        
+
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -1627,7 +1681,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         # 修改/新增都需要写入文件
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-            
+
         # 如果是vip用户，则保存cookie
         if await vip_ck(msg):
             # global UserCookieDict
@@ -1707,7 +1761,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
      - False: unkown err / reauthorize failed
      - send_msg: get `Message` as params & reauhorize success
     """
-    user_id = "[ERR!]" #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
+    user_id = "[ERR!]"  #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
         auth = UserAuthDict[user_id]
@@ -1727,7 +1781,8 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             text = f"获取「{def_name}」失败！正在尝试重新获取token，您无需操作"
             c = Card(color='#fb4b57')
             c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.im_good_phoniex, size='sm')))
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.im_good_phoniex,
+                                                                                 size='sm')))
             c.append(Module.Context(Element.Text(f"{resp['message']}", Types.Text.KMD)))
             cm.append(c)
             send_msg = await msg.reply(cm)
@@ -1738,7 +1793,8 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             cm = CardMessage()
             text = f"重新获取token失败，请私聊「/login」重新登录\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.crying_crab, size='sm')))
+            c.append(
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.crying_crab, size='sm')))
             c.append(Module.Context(Element.Text(f"Auto Reauthorize Failed!", Types.Text.KMD)))
             cm.append(c)  #如果重新获取token失败，则更新上面的消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1997,11 +2053,13 @@ async def get_daily_shop(msg: Message, *arg):
 
             #开始画图
             draw_time = time.time()  #计算画图需要的时间
-            x = 0; y = 0
+            x = 0
+            y = 0
             is_vip = await vip_ck(msg.author_id)
-            if False:#暂时不启用这里的错误代码
-                x = 100; y = 0
-                bg = copy.deepcopy(bg_main_bw)#黑底白字的框框
+            if False:  #暂时不启用这里的错误代码
+                x = 100
+                y = 0
+                bg = copy.deepcopy(bg_main_bw)  #黑底白字的框框
                 ran = random.randint(1, 9999)
                 global shop_img_temp_vip
                 shop_img_temp_vip[ran] = []
@@ -2014,7 +2072,7 @@ async def get_daily_shop(msg: Message, *arg):
                     elif os.path.exists(img_path):
                         shop_img_temp_vip[ran].append(Image.open(img_path))
                     else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran,is_vip))
+                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
                         th.start()
                     await asyncio.sleep(0.8)  #尝试错开网络请求
                 while True:
@@ -2034,25 +2092,26 @@ async def get_daily_shop(msg: Message, *arg):
             else:
                 if is_vip and (msg.author_id in VipShopBgDict):
                     vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
-                    if len_VusBg(msg.author_id)>0: #如果为0则不执行自定义图片
+                    if len_VusBg(msg.author_id) > 0:  #如果为0则不执行自定义图片
                         # 如果图片路径不存在（说明没有缓存）或者图片不是最新(用户修改过图片)则重新获取背景图
                         if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
-                            bg_vip = Image.open(io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
-                            imgSize = (1000,1000)
-                            bg_vip = bg_vip.resize(imgSize) #进行缩放后保存
+                            bg_vip = Image.open(
+                                io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
+                            imgSize = (1000, 1000)
+                            bg_vip = bg_vip.resize(imgSize)  #进行缩放后保存
                             bg_vip = bg_vip.convert('RGBA')
                             # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
                             finalImg = Image.alpha_composite(bg_vip, bg_main_11)
                             finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
                             bg_vip = finalImg
-                        else: #使用缓存好的vip图片
+                        else:  #使用缓存好的vip图片
                             bg_vip = Image.open(vip_bg_path)
                         bg = copy.deepcopy(bg_vip)
-                    else:# vip用户但是出现了空list
+                    else:  # vip用户但是出现了空list
                         bg = copy.deepcopy(bg_main)
-                else:# 普通用户
+                else:  # 普通用户
                     bg = copy.deepcopy(bg_main)
-                
+
                 # 开始后续画图操作
                 ran = random.randint(1, 9999)
                 global shop_img_temp
@@ -2066,7 +2125,7 @@ async def get_daily_shop(msg: Message, *arg):
                     elif os.path.exists(img_path):
                         shop_img_temp[ran].append(Image.open(img_path))
                     else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran,is_vip))
+                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
                         th.start()
                     await asyncio.sleep(0.8)  #尝试错开网络请求
                 while True:
@@ -2092,7 +2151,7 @@ async def get_daily_shop(msg: Message, *arg):
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
-            dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)# 上传图片
+            dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
             # 结束shop的总计时
             end = time.perf_counter()
             #结果为浮点数，保留两位小数
@@ -2112,7 +2171,8 @@ async def get_daily_shop(msg: Message, *arg):
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
+            c.append(
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
             c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
@@ -2136,7 +2196,7 @@ async def get_daily_shop(msg: Message, *arg):
             c.append(
                 Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
             cm2.append(c)
-            if send_msg!=None:# 非none则执行更新消息，而不是直接发送
+            if send_msg != None:  # 非none则执行更新消息，而不是直接发送
                 await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
             else:
                 await msg.reply(cm2)
@@ -2153,7 +2213,6 @@ async def get_user_vp(msg: Message, userdict, *arg):
     text += "    "
     text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
     return text
-
 
 
 # 获取玩家卡面(添加point的别名)
@@ -2226,7 +2285,8 @@ async def get_user_card(msg: Message, *arg):
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
+            c.append(
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
             c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
@@ -2274,7 +2334,7 @@ async def get_bundle(msg: Message, *arg):
                         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                             #text += f"{w['displayName']} \t- vp {price}\n"
-                            text += '%-28s\t- vp%5s\n'%(w['displayName'],price)
+                            text += '%-28s\t- vp%5s\n' % (w['displayName'], price)
                         else:  # 找不到价格就直接插入武器名字
                             text += f"{w['displayName']}\n"
 
@@ -2311,7 +2371,7 @@ async def auto_skin_inform():
         with open("./log/VipUser.json", 'r', encoding='utf-8') as frau:
             VipUserD = json.load(frau)
         #先遍历vip用户列表，获取vip用户的商店
-        for vip,uinfo in VipUserD.items():
+        for vip, uinfo in VipUserD.items():
             try:
                 user = await bot.client.fetch_user(vip)
                 if vip in UserAuthDict:
@@ -2344,7 +2404,7 @@ async def auto_skin_inform():
                         c = Card(color='#fb4b57')
                         c.append(
                             Module.Section(Element.Text(f"早上好呀！请查收您的每日商店", Types.Text.KMD),
-                                            Element.Image(src=icon_cm.shot_on_fire, size='sm')))
+                                           Element.Image(src=icon_cm.shot_on_fire, size='sm')))
                         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
                         c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
                         cm.append(c)
@@ -2355,7 +2415,7 @@ async def auto_skin_inform():
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_str = f"ERR! [BOT.TASK] auto_skin_inform vip_user.send\n{result}"
                 print(err_str)
-            
+
         # 再遍历所有用户的皮肤提醒
         for aid, skin in SkinNotifyDict.items():
             try:
@@ -2374,7 +2434,7 @@ async def auto_skin_inform():
                         else:
                             resp = await fetch_daily_shop(userdict)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    
+
                         # 然后再遍历列表查看是否有提醒皮肤
                         # 关于下面这一行参考 https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
                         target_skin = [val for key, val in skin.items() if key in list_shop]
@@ -2419,8 +2479,8 @@ async def add_skin_notify(msg: Message, *arg):
                     Module.Section(Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
                                    Element.Image(src=icon_cm.rgx_broken, size='sm')))
                 c.append(
-                    Module.Context(Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
-                                                Types.Text.KMD)))
+                    Module.Context(
+                        Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！", Types.Text.KMD)))
                 cm.append(c)
                 await msg.reply(cm)
                 return
@@ -2430,7 +2490,8 @@ async def add_skin_notify(msg: Message, *arg):
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
             c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
+            c.append(
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
             c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作\n设置了皮肤提醒之后，请勿切换已登录的账户", Types.Text.KMD)))
             cm.append(c)
             await msg.reply(cm)
