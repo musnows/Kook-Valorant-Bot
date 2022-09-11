@@ -333,11 +333,11 @@ def check_sponsor(it: dict):
     return flag
 
 
-# 感谢助力者（每1小时检查一次）
-@bot.task.add_interval(minutes=60)
+# 感谢助力者（每天19点进行检查）
+@bot.task.add_corn(hour=19, minute=0, timezone="Asia/Shanghai")
 async def thanks_sponser():
     print("[BOT.TASK] thanks_sponser start!")
-    #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant服务器生效
+    #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
     async with aiohttp.ClientSession() as session:
         async with session.post(api, headers=headers) as response:
