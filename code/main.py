@@ -766,10 +766,10 @@ standard_price_position = (int(280 * standard_length / 1000), int(120 * standard
 standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
 standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
-standard_length_vip = 1000  #图片默认长
-standard_height_vip = 600  #图片默认宽
-standard_length_sm_vip = 360  # 组成四宫格小图的长
-standard_height_sm_vip = 220  # 组成四宫格小图的宽
+standard_length_vip = 1280  #图片默认长
+standard_height_vip = 720  #图片默认宽
+standard_length_sm_vip = 350  # 组成四宫格小图的长
+standard_height_sm_vip = 240  # 组成四宫格小图的宽
 stardard_blank_sm_vip = 120 * standard_length_vip / 1000  # 小图左边的留空
 # stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
 standard_icon_top_blank_vip = int(100 * standard_height_vip / 1000)  # 枪距离图片顶部的像素
@@ -791,18 +791,25 @@ font_color = '#ffffff'  # 文字颜色：白色
 bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))# 普通用户商店背景
 bg_main_11 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/FjPcmVwDkf0rs0rs.png').content))# vip用户背景框 1-1
 bg_main_106 =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))# vip用户背景框 10-6
-bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))# vip商店默认背景
+bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/zsSemuojLY0zk0k0.png').content))# vip商店默认背景
 
 # 缩放图片，部分皮肤图片大小不正常
-def resize(standard_x, img):
+def resize(standard_x, img,standard_y = ''):
+    standard_y = standard_x if standard_y == '' else standard_y
     log_info = "[shop] "
     w, h = img.size
     log_info += f"原始图片大小:({w},{h}) - "
-    ratio = w / h
-    sizeco = w / standard_x
-    log_info += f"缩放系数:{format(sizeco,'.3f')} - "
-    w_s = int(w / sizeco)
-    h_s = int(h / sizeco)
+    ratio = w/h
+    if ratio > 1.5:
+        sizeco = w / standard_x
+        log_info += f"缩放系数:{format(sizeco,'.3f')} - "
+        w_s = int(w / sizeco)
+        h_s = int(h / sizeco)
+    else:
+        sizeco = h / standard_y
+        log_info += f"缩放系数:{format(sizeco,'.3f')} - "
+        w_s = int(w / sizeco)
+        h_s = int(h / sizeco)
     log_info += f"缩放后大小:({w_s},{h_s})"
     print(log_info)
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
@@ -915,7 +922,7 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
 
 # 处理vip图片
 def sm_comp_vip(icon, name, price, level_icon, skinuuid):
-    bg = Image.new(mode='RGBA', size=(standard_length_sm_vip, standard_height_sm_vip))  # 新建一个画布
+    bg = Image.new(mode='RGBA', size=(350, 240))  # 新建一个画布
     # 处理武器图片
     start = time.perf_counter()  #开始计时
     if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
@@ -925,13 +932,14 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
         layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
     end = time.perf_counter()
     log_time = f"[GetWeapen] {format(end - start, '.4f')} "
-    stardard_icon_x = 300  #图像标准宽（要改大小就改这个
-    layer_icon = resize(300, layer_icon)
+    layer_icon = resize(300, layer_icon,150)
     # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
     # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
-    left_position = int((standard_length_sm_vip - stardard_icon_x) / 2)
     # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
-    bg.paste(layer_icon, (left_position, standard_icon_top_blank_vip), layer_icon)
+    w,h = layer_icon.size
+    x = 25 if w == 300 else int((350-w)/2)
+    y = int((180-h)/2) if w == 300 else 15
+    bg.paste(layer_icon, (x,y), layer_icon)
     # bg.paste代表向bg粘贴一张图片
     # 第一个参数是图像layer_icon
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
@@ -945,52 +953,19 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
     end = time.perf_counter()
     log_time += f"- [GetIters] {format(end - start, '.4f')} "
     print(log_time)
-
-    w, h = LEVEL_Icon.size  # 读取武器图片长宽
-    new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
-    new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
-    LEVEL_Icon = LEVEL_Icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    bg.paste(LEVEL_Icon, standard_level_icon_position, LEVEL_Icon)
-
-    name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
-    name_list = name.split(' ')  # 将武器名字分割换行
-    # print(name_list)
-    if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
-        name_list.remove('')
-
-    text = ""
-    if len(name_list[0]) > 5:
-        text = name_list[0] + '\n'  # 如果皮肤名很长就不用加空格
-    else:
-        text = ' '.join(name_list[0]) + '\n'  # 向皮肤名字添加空格增加字间距
-    # interval = len(name_list[0])
-    # print(len(name_list))
-    if len(name_list) > 2:
-        i = 1
-        while i <= len(name_list) - 2:
-            name_list[0] = name_list[0] + ' ' + name_list[i]
-            # print(name_list[0])
-            i += 1
-        interval = len(name_list[0])
-        name_list[1] = name_list[len(name_list) - 1]
-        text = name_list[0] + '\n'
-    if len(name_list) > 1:  # 有些刀皮肤只有一个元素
-        text += '              '  # 添加固定长度的缩进，12个空格
-        if len(name_list[1]) < 4:
-            text += ' '.join(name_list[1])  # 插入第二行字符
-        else:
-            text += name_list[1]  # 单独处理制式手槍（不加空格）
-
+    LEVEL_Icon = LEVEL_Icon.resize((15,15), Image.Resampling.LANCZOS)
+    bg.paste(LEVEL_Icon,(15,370), LEVEL_Icon)
+    text= zhconv.convert(name, 'zh-cn')  # 将名字简体化
     draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
     # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
-    draw.text(standard_text_position,
+    draw.text((15,215),
               text,
-              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 12),
               fill=font_color)
     text = f"{price}"  # 价格
-    draw.text(standard_price_position,
+    draw.text((320,15),
               text,
-              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 12),
               fill=font_color)
     # bg.show() #测试用途，展示图片(linux貌似不可用)
     if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
@@ -2080,61 +2055,61 @@ async def get_daily_shop(msg: Message, *arg):
             x = 0
             y = 0
             is_vip = await vip_ck(msg.author_id)
-            if False:  #暂时不启用这里的错误代码
-                x = 100
-                y = 0
-                bg = copy.deepcopy(bg_main_bw)  #黑底白字的框框
-                ran = random.randint(1, 9999)
-                global shop_img_temp_vip
-                shop_img_temp_vip[ran] = []
-                img_num = 0
+            #if False:  #暂时不启用这里的错误代码
+            x = 50
+            y = 100
+            bg = copy.deepcopy(bg_main_vip)  #黑底白字的框框
+            ran = random.randint(1, 9999)
+            global shop_img_temp_vip
+            shop_img_temp_vip[ran] = []
+            img_num = 0
 
-                for skinuuid in list_shop:
-                    img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
-                    if skinuuid in weapon_icon_temp:
-                        shop_img_temp_vip[ran].append(weapon_icon_temp[skinuuid])
-                    elif os.path.exists(img_path):
-                        shop_img_temp_vip[ran].append(Image.open(img_path))
-                    else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
-                        th.start()
-                    await asyncio.sleep(0.8)  #尝试错开网络请求
-                while True:
-                    img_temp = copy.deepcopy(shop_img_temp_vip)
-                    for i in img_temp[ran]:
-                        shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
-                        bg = bg_comp(bg, i, x, y)
-                        if x == 100:
-                            x += 450
-                        elif x == 550:
-                            x = 100
-                            y += 280
-                        img_num += 1
-                    if img_num >= 4:
-                        break
-                    await asyncio.sleep(0.2)
-            else:
-                if is_vip and (msg.author_id in VipShopBgDict):
-                    vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
-                    if len_VusBg(msg.author_id) > 0:  #如果为0则不执行自定义图片
-                        # 如果图片路径不存在（说明没有缓存）或者图片不是最新(用户修改过图片)则重新获取背景图
-                        if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
-                            bg_vip = Image.open(
-                                io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
-                            imgSize = (1000, 1000)
-                            bg_vip = bg_vip.resize(imgSize)  #进行缩放后保存
-                            bg_vip = bg_vip.convert('RGBA')
-                            # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-                            finalImg = Image.alpha_composite(bg_vip, bg_main_11)
-                            finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
-                            bg_vip = finalImg
-                        else:  #使用缓存好的vip图片
-                            bg_vip = Image.open(vip_bg_path)
-                        bg = copy.deepcopy(bg_vip)
-                    else:  # vip用户但是出现了空list
-                        bg = copy.deepcopy(bg_main)
-                else:  # 普通用户
-                    bg = copy.deepcopy(bg_main)
+            for skinuuid in list_shop:
+                img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
+                if skinuuid in weapon_icon_temp:
+                    shop_img_temp_vip[ran].append(weapon_icon_temp[skinuuid])
+                elif os.path.exists(img_path):
+                    shop_img_temp_vip[ran].append(Image.open(img_path))
+                else:
+                    th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
+                    th.start()
+                await asyncio.sleep(0.8)  #尝试错开网络请求
+            while True:
+                img_temp = [i for i in shop_img_temp_vip[ran]]
+                for i in img_temp:
+                    shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
+                    bg = bg_comp(bg, i, x, y)
+                    if x == 50:
+                        x += 780
+                    elif x == 830:
+                        x = 50
+                        y += 270
+                    img_num += 1
+                if img_num >= 4:
+                    break
+                await asyncio.sleep(0.2)
+            # else:
+            #     if is_vip and (msg.author_id in VipShopBgDict):vip1214.png
+            #         vip_bg_path = f'./log/img_temp_vip/bg/{msg.author_id}.png'
+            #         if len_VusBg(msg.author_id) > 0:  #如果为0则不执行自定义图片
+            #             # 如果图片路径不存在（说明没有缓存）或者图片不是最新(用户修改过图片)则重新获取背景图
+            #             if not os.path.exists(vip_bg_path) or (not VipShopBgDict[msg.author_id]['is_latest']):
+            #                 bg_vip = Image.open(
+            #                     io.BytesIO(requests.get(VipShopBgDict[msg.author_id]["background"][0]).content))
+            #                 imgSize = (1000, 1000)
+            #                 bg_vip = bg_vip.resize(imgSize)  #进行缩放后保存
+            #                 bg_vip = bg_vip.convert('RGBA')
+            #                 # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+            #                 finalImg = Image.alpha_composite(bg_vip, bg_main_11)
+            #                 finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+            #                 bg_vip = finalImg
+            #             else:  #使用缓存好的vip图片
+            #                 bg_vip = Image.open(vip_bg_path)
+            #             bg = copy.deepcopy(bg_vip)
+            #         else:  # vip用户但是出现了空list
+            #             bg = copy.deepcopy(bg_main)
+            #     else:  # 普通用户
+            #         bg = copy.deepcopy(bg_main)
 
                 # 开始后续画图操作
                 ran = random.randint(1, 9999)
