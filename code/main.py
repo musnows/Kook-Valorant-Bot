@@ -790,7 +790,7 @@ font_color = '#ffffff'  # 文字颜色：白色
 
 bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))# 普通用户商店背景
 bg_main_11 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/FjPcmVwDkf0rs0rs.png').content))# vip用户背景框 1-1
-bg_main_vip =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/ORgRzeNWGA0zk0k0.png').content))# vip商店默认背景
+bg_main_vip =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/RRvKmnUjfJ0zk0k0.png').content))# vip商店默认背景
 bg_main_169 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/sAFIce5xsz0zk0k0.png').content))# vip用户背景框 16-9
 
 # 缩放图片，部分皮肤图片大小不正常
@@ -1232,9 +1232,13 @@ async def check_vip_img_task(msg: Message, *arg):
 #计算用户背景图的list大小，避免出现空list的情况
 def len_VusBg(user_id: str):
     """
-        len(VipShopBgDict[user_id]["background"])
+       - len(VipShopBgDict[user_id]["background"])
+       - return 0 if user not in dict 
     """
-    return len(VipShopBgDict[user_id]["background"])
+    if user_id in VipShopBgDict:
+        return len(VipShopBgDict[user_id]["background"])
+    else:
+        return 0
 
 
 #因为下面两个函数都要用，所以直接独立出来
@@ -1406,7 +1410,7 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             icon_num = VipShopBgDict[msg.author_id]["background"][num]
             VipShopBgDict[msg.author_id]["background"][num] = VipShopBgDict[msg.author_id]["background"][0]
             VipShopBgDict[msg.author_id]["background"][0] = icon_num
-            VipShopBgDict[msg.author_id]['status'] = True
+            VipShopBgDict[msg.author_id]['status'] = False #修改图片之后，因为8点bot存储了商店图，所以需要重新获取新的背景
             
             #进行缩放+贴上图后保存
             bg_vip = resize_vip(1280,720,bg_vip)
@@ -2062,7 +2066,7 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
                 #     await msg.reply(f"当前使用的图片违规！请重新上传您的背景图\n{err_str}")
                 print(err_str)#写入文件后打印log信息
                 return {"status":False,"value":f"当前使用的图片违规！请重新上传您的背景图\n{err_str}"}
-            #图没有问题，则缩放后保存
+            #图没有问题，且路径不存在（说明之前没有设置过或者修改了背景图）则缩放后保存
             bg_vip = resize_vip(1280, 720,bg_vip)
             bg_vip = bg_vip.convert('RGBA')
             # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
@@ -2182,14 +2186,21 @@ async def get_daily_shop(msg: Message, *arg):
             #开始画图
             draw_time = time.time()  #计算画图需要的时间
             is_vip = await vip_ck(msg.author_id)
-            if is_vip and (msg.author_id in VipShopBgDict):
+            #每天8点bot遍历完之后会把vip的商店完整图存起来
+            shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
+            #用户在列表中，且状态码为true
+            is_latest = (msg.author_id in VipShopBgDict and VipShopBgDict[msg.author_id]['status'])
+            if is_vip and (os.path.exists(shop_path)) and is_latest:#如果是vip而且path存在,背景图没有更改过
+                bg_vip_shop = Image.open(shop_path)
+                bg = copy.deepcopy(bg_vip_shop)
+            elif (msg.author_id in VipShopBgDict): #商店路径不存在，或者状态码为false
                 ret = await get_daily_shop_vip_img(list_shop,userdict,msg.author_id,is_vip,msg)
                 if ret['status']:
                     bg = ret['value']
                 else:#出现图片违规
                     await msg.reply(ret['value'])
                     return
-            else:#普通用户
+            else:#普通用户，没有自定义图片的vip用户
                 x = 0
                 y = 0
                 bg = copy.deepcopy(bg_main)
@@ -2442,9 +2453,10 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
 
-@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
-async def auto_skin_inform():
-    #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+#@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
+@bot.command(name='test')
+async def auto_skin_inform(msg:Message):
+    logging(msg)
     try:
         print("[BOT.TASK] auto_skin_inform Starting!")  #开始的时候打印一下
         #加载vip用户列表
@@ -2456,39 +2468,71 @@ async def auto_skin_inform():
                 user = await bot.client.fetch_user(vip)
                 if vip in UserAuthDict:
                     if await check_re_auth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
+                        start = time.perf_counter()#开始计时
                         auth = UserAuthDict[vip]
                         userdict = {
                             'auth_user_id': auth.user_id,
                             'access_token': auth.access_token,
                             'entitlements_token': auth.entitlements_token
                         }
+                        a_time = time.time()
                         resp = await fetch_daily_shop(userdict)  # 获取每日商店
                         list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
+                        log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
-                        if await vip_ck(vip):
-                            global UserShopDict
-                            UserShopDict[vip] = {}
-                            UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
-                            UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
-
-                        text = ""
-                        for skinuuid in list_shop:
-                            res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
-                            res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
-                            price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                            text += f"{res_item['data']['displayName']}     - VP {price}\n"
-
-                        cm = CardMessage()  #向用户发送当前的每日商店（文字）
+                        global UserShopDict
+                        UserShopDict[vip] = {}
+                        UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
+                        UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+                        #直接获取商店图片
+                        draw_time = time.time()#计算画图需要的时间
+                        bg_shop_ret = await get_daily_shop_vip_img(list_shop,userdict,vip,True)
+                        if bg_shop_ret['status']:
+                            bg_shop = bg_shop_ret['value']
+                        else:#如果图片没有正常返回，那就发送文字版本
+                            text = ""
+                            for skinuuid in list_shop:
+                                res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+                                res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+                                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                                text += f"{res_item['data']['displayName']}     - VP {price}\n"
+                            cm = CardMessage()  #向用户发送当前的每日商店（文字）
+                            c = Card(color='#fb4b57')
+                            c.append(
+                                Module.Section(Element.Text(f"早上好呀！请查收您的每日商店", Types.Text.KMD),
+                                            Element.Image(src=icon_cm.shot_on_fire, size='sm')))
+                            c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+                            c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
+                            cm.append(c)
+                            await user.send(cm)
+                            continue
+                        
+                        log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
+                        print(log_time)
+                        # bg.save(f"test.png")  #保存到本地
+                        img_shop=f"./log/img_temp_vip/shop/{vip}.png"
+                        bg_shop.save(img_shop, format='PNG')
+                        dailyshop_img_src = await bot_upimg.client.create_asset(img_shop)  # 上传图片
+                        # 结束shop的总计时
+                        end = time.perf_counter()
+                        #结果为浮点数，保留两位小数
+                        using_time = format(end - start, '.2f')
+                        #卡片消息发送图片
+                        cm = CardMessage()
                         c = Card(color='#fb4b57')
                         c.append(
-                            Module.Section(Element.Text(f"早上好呀！请查收您的每日商店", Types.Text.KMD),
-                                           Element.Image(src=icon_cm.shot_on_fire, size='sm')))
-                        c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-                        c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
+                            Module.Header(
+                                f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店"))
+                        c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+                        c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
                         cm.append(c)
                         await user.send(cm)
+                        print(f"[{GetTime()}] Au:{vip} daily_shop reply successful [{using_time}]")
+                    else:#reauthorize failed!
+                        print(f"[BOT.TASK] Vip_Au:{vip} user reauthorize failed")
+                        await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
                 else:  #不在auth里面说明没有登录
                     print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
