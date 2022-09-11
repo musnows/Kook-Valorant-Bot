@@ -37,7 +37,7 @@ cm_send_test = None
 async def get_debug_ch():
     global debug_ch,cm_send_test
     try:
-        cm_send_test = await bot.client.fetch_public_channel('3001307981469706')
+        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
         debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         print("[BOT.TASK] fetch_public_channel success")
     except:
@@ -1333,6 +1333,10 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
             VipShopBgDict[msg.author_id]["background"].append(x3)
 
         cm = await get_vip_shop_bg_cm(msg)
+        #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
+        await bot_upimg.client.send(cm_send_test,cm)
+        print(f"[vip-shop] Au:{msg.author_id} cm_send_test success")
+        #然后阿狸在进行回应
         await msg.reply(cm)
 
         # 修改/新增都需要写入文件
@@ -1394,12 +1398,16 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             return
 
         cm = await get_vip_shop_bg_cm(msg)
+        #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
+        await bot_upimg.client.send(cm_send_test,cm)
+        print(f"[vip-shop] Au:{msg.author_id} cm_send_test success")
+        #然后阿狸在进行回应
         await msg.reply(cm)
-        print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict[msg.author_id]['background'][0]}]")
+        
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
+        print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict[msg.author_id]['background'][0]}]")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] vip_shop_s\n```\n{traceback.format_exc()}\n```"
         print(err_str)
@@ -1440,12 +1448,16 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
             return
 
         cm = await get_vip_shop_bg_cm(msg)
+        #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
+        await bot_upimg.client.send(cm_send_test,cm)
+        print(f"[vip-shop] Au:{msg.author_id} cm_send_test success")
+        #然后阿狸在进行回应
         await msg.reply(cm)
-        print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
+        
         # 修改/新增都需要写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
+        print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] vip_shop_d\n```\n{traceback.format_exc()}\n```"
         print(err_str)
