@@ -30,6 +30,19 @@ headers = {f'Authorization': f"Bot {Botoken}"}
 master_id = '1961572535'
 Debug_ch = '6248953582412867'
 
+#在bot一开机的时候就获取log频道作为全局变量
+debug_ch = None
+cm_send_test = None
+@bot.task.add_date()
+async def get_debug_ch():
+    global debug_ch,cm_send_test
+    try:
+        cm_send_test = await bot.client.fetch_public_channel('3001307981469706')
+        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        print("[BOT.TASK] fetch_public_channel success")
+    except:
+        print("[BOT.TASK] fetch_public_channel failed")
+        os._exit(-1)#出现错误直接退出程序
 
 # 向botmarket通信
 @bot.task.add_interval(minutes=30)
@@ -112,8 +125,8 @@ async def Ahri(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] Ahri - {result}"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(debug_channel, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 # help命令(瓦洛兰特相关)
@@ -165,8 +178,8 @@ async def Vhelp(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] vhelp - {result}"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(debug_channel, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 #################################################################################################
@@ -188,8 +201,8 @@ async def countdown(msg: Message, time: int = 60):
         err_str = f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(debug_channel, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
@@ -203,8 +216,8 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
         err_str = f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        debug_channel = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(debug_channel, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 ################################以下是给用户上色功能的内容########################################
@@ -1130,7 +1143,7 @@ illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
 
 
 async def check_vip_img():
-    debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+    #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
     print("[BOT.TASK] check_vip_img start!")
     try:
         global VipShopBgDict
@@ -1241,7 +1254,7 @@ async def get_vip_shop_bg_cm(msg: Message):
                 #await msg.reply(f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}")
                 VipShopBgDict[msg.author_id]["background"][i] = illegal_img_11 #替换成告示图片
                 VipShopBgDict[msg.author_id]["is_latest"] = False  #需要重新加载图片
-                debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+                #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
                 print(err_str)
                 return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
@@ -2350,8 +2363,8 @@ async def get_bundle(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] get_bundle\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        ch = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(ch, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 #用户选择列表
@@ -2363,7 +2376,7 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
 
 @bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
 async def auto_skin_inform():
-    debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+    #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
     try:
         print("[BOT.TASK] auto_skin_inform Starting!")  #开始的时候打印一下
         #加载vip用户列表
@@ -2622,8 +2635,8 @@ async def list_skin_notify(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        ch = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(ch, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 # 删除已有皮肤通知
@@ -2650,8 +2663,8 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        ch = await bot.client.fetch_public_channel(Debug_ch)
-        await bot.client.send(ch, err_str)
+        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        await bot.client.send(debug_ch, err_str)
 
 
 # 开机的时候打印一次时间，记录重启时间
