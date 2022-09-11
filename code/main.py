@@ -1226,11 +1226,15 @@ async def get_vip_shop_bg_cm(msg: Message):
     if sz > 1:
         c1.append(Module.Divider())
         c1.append(Module.Section(Element.Text('当前未启用的背景图，可用「/vip-shop-s 序号」切换', Types.Text.KMD)))
-        i = 1
+        i = 0
         while (i < sz):
             try:
-                #打开图片进行测试，没有问题就append
+                # 打开图片进行测试，没有问题就append
                 bg_test = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[msg.author_id]["background"][i])))
+                if i==0: #第一张图片只进行打开测试，没有报错就是没有违规，不进行后续的append操作
+                    i += 1
+                    continue 
+                # 插入后续其他图片
                 c1.append(
                     Module.Section(Element.Text(f' [{i}]', Types.Text.KMD),
                                    Element.Image(src=VipShopBgDict[msg.author_id]["background"][i])))
@@ -1240,7 +1244,7 @@ async def get_vip_shop_bg_cm(msg: Message):
                 #把被ban的图片替换成默认的图片，打印url便于日后排错
                 err_str += f"[UnidentifiedImageError] url={VipShopBgDict[msg.author_id]['background'][i]}\n```"
                 #await msg.reply(f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}")
-                VipShopBgDict[msg.author_id]["background"][i] = illegal_img_11
+                VipShopBgDict[msg.author_id]["background"][i] = illegal_img_11 #替换成告示图片
                 VipShopBgDict[msg.author_id]["is_latest"] = False  #需要重新加载图片
                 debug_ch = await bot.client.fetch_public_channel(Debug_ch)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
