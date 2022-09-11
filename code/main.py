@@ -2086,8 +2086,8 @@ async def get_daily_shop(msg: Message, *arg):
                 log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
             else:
                 a_time = time.time()
-                #resp = await fetch_daily_shop(userdict)  #获取每日商店
-                resp = {"SkinsPanelLayout":{"SingleItemOffers":["4875e120-4d7d-aa2a-71c5-c0851c4af00d","5ac106cd-45ef-a26f-2058-f382f20c64db","2607b2c6-45f7-e75e-94f8-58a738773d5c","cdc130c2-4b12-3702-c8f6-5a8920746395"],"SingleItemOffersRemainingDurationInSeconds":60193}}
+                resp = await fetch_daily_shop(userdict)  #获取每日商店
+                #resp = {"SkinsPanelLayout":{"SingleItemOffers":["4875e120-4d7d-aa2a-71c5-c0851c4af00d","5ac106cd-45ef-a26f-2058-f382f20c64db","2607b2c6-45f7-e75e-94f8-58a738773d5c","f35f6e13-4b7b-da38-c0de-5c91fffd584b"],"SingleItemOffersRemainingDurationInSeconds":60193}}#用于测试的假返回值（阴间皮肤）
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                 timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                 timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
@@ -2122,8 +2122,9 @@ async def get_daily_shop(msg: Message, *arg):
                         bg_vip = finalImg
                     else:  #使用缓存好的vip图片
                         bg_vip = Image.open(vip_bg_path)
+                    # 两种情况都需要把vip图片加载到bg中
                     bg = copy.deepcopy(bg_vip)
-                else:  # vip用户但是出现了空list
+                else:# vip用户但是出现了空list，调用默认的16比9图片
                     bg = copy.deepcopy(bg_main_vip)
                 #开始画图
                 x = 50
