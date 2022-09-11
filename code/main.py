@@ -150,7 +150,8 @@ async def Vhelp(msg: Message, *arg):
         help_2 += "「/vip-shop」查看已保存的商店查询diy背景图\n"
         help_2 += "「/vip-shop 图片url」添加商店查询diy背景图\n"
         help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
-        help_2 += "1.目前商店查询背景图diy仅支持1比1的图片，图片url获取：PC端将图片上传到kook→点击图片→底部...处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
+        help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n\n"
+        help_2 += "1.目前商店查询背景图diy仅支持1比1的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
         c3.append(Module.Context(Element.Text("[如果你觉得这些功能还不错，可以发电支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)",Types.Text.KMD)))
         c3.append(Module.Divider())
@@ -1018,7 +1019,7 @@ def skin_uuid_to_comp(skinuuid, ran,is_vip:bool):
 
 #####################################################################################################
 
-from check_vip import create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck,fetch_vip_user
+from check_vip import VipUserDict, create_vip_uuid, using_vip_uuid, vip_time_remain, vip_time_remain_cm, vip_ck,fetch_vip_user
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
@@ -1525,24 +1526,31 @@ async def loading_cookie():
     print("[BOT.TASK] loading cookie start")
     global UserAuthDict,UserTokenDict,UserCookieDict
     # 已保存的登陆用户
-    with open("./log/cookie/UserCookieSave.json", 'r', encoding='utf-8') as frrk:
-        UserCookieDict = json.load(frrk)
+    # with open("./log/cookie/UserCookieSave.json", 'r', encoding='utf-8') as frrk:
+    #     UserCookieDict = json.load(frrk)
+    log_str="[BOT.TASK] cookie path not exists = Au:"
     #遍历用户列表
-    for user,uinfo in UserCookieDict.items():
+    for user,uinfo in VipUserDict.items():
         cookie_path = f"./log/cookie/{user}.cke"
-        auth = RiotAuth()#新建一个对象
-        auth._cookie_jar.load(cookie_path)#加载cookie
-        ret_bool = await auth.reauthorize() #尝试登录
-        if ret_bool: # True登陆成功
-            UserAuthDict[user] = auth  #将对象插入
-            print(f"[BOT.TASK] Au:{user} - load cookie success!")
-            #不用重新修改UserTokenDict里面的游戏名和uuid
-            #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
-            #那么玩家id和uuid都是不会变化的，也没必要重新加载
+        #如果路径存在，那么说明已经保存了这个vip用户的cookie
+        if os.path.exists(cookie_path):
+            auth = RiotAuth()#新建一个对象
+            auth._cookie_jar.load(cookie_path)#加载cookie
+            ret_bool = await auth.reauthorize() #尝试登录
+            if ret_bool: # True登陆成功
+                UserAuthDict[user] = auth  #将对象插入
+                print(f"[BOT.TASK] Au:{user} - load cookie success!")
+                #不用重新修改UserTokenDict里面的游戏名和uuid
+                #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
+                #那么玩家id和uuid都是不会变化的，也没必要重新加载
+            else:
+                print(f"[BOT.TASK] Au:{user} - load cookie failed!")
+                continue
         else:
-            print(f"[BOT.TASK] Au:{user} - load cookie failed!")
+            log_str+=f"({user}) "
             continue
     #结束任务
+    print(log_str)#打印路径不存在的用户
     print("[BOT.TASK] loading cookie finished")
                 
         
@@ -1621,13 +1629,13 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             
         # 如果是vip用户，则保存cookie
         if await vip_ck(msg):
-            global UserCookieDict
-            UserCookieDict[msg.author_id]=GetTime()
+            # global UserCookieDict
+            # UserCookieDict[msg.author_id]=GetTime()
             #用于保存cookie的路径
             cookie_path = f"./log/cookie/{msg.author_id}.cke"
             res_auth._cookie_jar.save(cookie_path)
-            with open("./log/cookie/UserCookieSave.json", 'w', encoding='utf-8') as fw2:
-                json.dump(UserCookieDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            # with open("./log/cookie/UserCookieSave.json", 'w', encoding='utf-8') as fw2:
+            #     json.dump(UserCookieDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         # 全部都搞定了，打印登录信息
         print(
             f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
