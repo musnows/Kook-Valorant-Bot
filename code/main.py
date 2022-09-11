@@ -775,15 +775,10 @@ async def img_requestor(img_url):
 
 font_color = '#ffffff'  # 文字颜色：白色
 
-bg_main = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))  # 普通用户商店背景
-bg_main_11 = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/Mqo43d7eqW0rs0rs.png').content))  # vip用户背景框
-bg_main_vip = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))  # vip商店默认背景
-bg_main_bw = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))  # 黑底白字的背景图
-
+bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))# 普通用户商店背景
+bg_main_11 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/FjPcmVwDkf0rs0rs.png').content))# vip用户背景框 1-1
+bg_main_106 =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/oZR40RDIk60rs0go.png').content))# vip用户背景框 10-6
+bg_main_vip = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-08/WsjGI7PYuf0rs0rs.png').content))# vip商店默认背景
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img):
