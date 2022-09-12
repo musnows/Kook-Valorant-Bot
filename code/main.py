@@ -2070,7 +2070,7 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
         bg_vip = bg_vip.convert('RGBA')
         # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
         finalImg = Image.alpha_composite(bg_vip, bg_main_169)
-        #finalImg.save(vip_bg_path)
+        #finalImg.save(vip_bg_path)#没必要保存单背景图
         bg_vip = finalImg
         #else:  #使用缓存好的vip图片
             #bg_vip = Image.open(vip_bg_path)
@@ -2120,7 +2120,10 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
     rp_c = (f"{rp}")  #rp
-    draw.text((720,666),
+    rp_pos = (720,666)
+    if rp < 100:
+        rp_pos = (733,666)
+    draw.text(rp_pos,
             rp_c,
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
