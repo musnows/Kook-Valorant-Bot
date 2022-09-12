@@ -89,7 +89,7 @@ async def Ahri(msg: Message, *arg):
         c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
         c3.append(Module.Divider())
         c3.append(Module.Header('上号，瓦一把！'))
-        text = "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n"
+        text  = "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n"
         text += "「/dx」 关于DirectX Runtime报错的解决方案\n"
         text += "「/saveid 游戏id」 保存(修改)您的游戏id\n"
         text += "「/myid」 让阿狸说出您的游戏id\n"
@@ -98,7 +98,7 @@ async def Ahri(msg: Message, *arg):
         c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header('和阿狸玩小游戏吧~ '))
-        text = "「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n"
+        text  = "「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n"
         text += "「/countdown 秒数」倒计时，默认60秒\n"
         text += "「/TL 内容」翻译内容，支持多语译中和中译英\n"
         text += "「/TLON」 在本频道打开实时翻译\n"
@@ -138,7 +138,7 @@ async def Vhelp(msg: Message, *arg):
         text += "2.目前查询功能稳定性未知，可能有`封号`风险，建议使用小号测试;\n若担心相关风险，请不要使用如下功能\n"
         c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
-        help_1 = "「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
+        help_1  = "「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
         help_1 += "「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
         help_1 += "「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1 += "「/shop」 查询您的每日商店\n"
@@ -430,7 +430,7 @@ async def translate1(msg: Message, *arg):
 
 
 # 实时翻译栏位
-ListTL = ['0', '0', '0', '0']
+ListTL = ['0', '0', '0', '0','0','0']
 
 
 # 查看目前已经占用的容量
