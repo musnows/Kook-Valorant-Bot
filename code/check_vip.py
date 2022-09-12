@@ -65,11 +65,11 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
     """_summary_
 
     Args:
-        num (int, optional): _description_. Defaults to 10.
-        day (int, optional): _description_. Defaults to 30.
+        num (int): Defaults to 10.
+        day (int): Defaults to 30.
 
     Returns:
-        _type_: _description_
+        str: text for uuid
     """
     global VipUuidDict
     #一次性生成20个
