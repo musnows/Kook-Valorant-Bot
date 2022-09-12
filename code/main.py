@@ -41,7 +41,6 @@ cm_send_test = None
 async def botmarket():
     api = "http://bot.gekj.net/api/v1/online.bot"
     headers = {'uuid': 'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
-    # r = requests.post(api,headers=headers)
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
 
@@ -857,15 +856,6 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
     # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
     # 处理武器level的图片(存到本地dict里面方便调用)
     start = time.perf_counter()  #开始计时
-    # if level_icon not in level_icon_temp:
-    #     if os.path.exists(f'./log/img_temp/level/{level_icon}.png'):
-    #         LEVEL_Icon = Image.open(f'./log/img_temp/level/{skinuuid}.png')
-    #     else:
-    #         LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
-    #         LEVEL_Icon.save(f'./log/img_temp/level/{level_icon}',format='PNG')
-    #     level_icon_temp[level_icon] = LEVEL_Icon
-    # else:
-    #     LEVEL_Icon = level_icon_temp[level_icon]
     if level_icon not in level_icon_temp:
         LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
         level_icon_temp[level_icon] = LEVEL_Icon
@@ -1970,7 +1960,7 @@ async def update_bundle_url(msg: Message):
                     break
 
             if flag != 1:  #不存在创建图片准备上传
-                bg_bundle_icon = Image.open(io.BytesIO(requests.get(b['displayIcon']).content))
+                bg_bundle_icon = Image.open(io.BytesIO(await img_requestor(b['displayIcon'])))
                 imgByteArr = io.BytesIO()
                 bg_bundle_icon.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
