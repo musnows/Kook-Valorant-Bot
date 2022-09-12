@@ -2207,6 +2207,8 @@ async def get_daily_shop_vip_img(list_shop: dict,
     if rp < 100:
         rp_pos = (722, 670)
     draw.text(rp_pos, rp_c, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
+    if ran in shop_img_temp_vip:
+        del shop_img_temp_vip[ran]
     #画完图之后直接执行保存
     bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
     return {"status": True, "value": bg}
@@ -2268,7 +2270,7 @@ async def get_daily_shop(msg: Message, *arg):
 
             #开始画图
             draw_time = time.time()  #计算画图需要的时间
-            is_vip = await vip_ck(msg.author_id)
+            is_vip = await vip_ck(msg.author_id) #判断VIP
             #每天8点bot遍历完之后会把vip的商店完整图存起来
             shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
             #用户在列表中，且状态码为true
@@ -2287,8 +2289,8 @@ async def get_daily_shop(msg: Message, *arg):
                 x = 0
                 y = 0
                 bg = copy.deepcopy(bg_main)
+                ran = random.randint(1, 9999)#生成随机数
                 # 开始后续画图操作
-                ran = random.randint(1, 9999)
                 global shop_img_temp
                 shop_img_temp[ran] = []
                 img_num = 0
@@ -2317,6 +2319,9 @@ async def get_daily_shop(msg: Message, *arg):
                     if img_num >= 4:
                         break
                     await asyncio.sleep(0.2)
+                #循环结束后删除
+                if ran in shop_img_temp:
+                    del shop_img_temp[ran]
 
             # 打印画图耗时
             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
@@ -2326,15 +2331,11 @@ async def get_daily_shop(msg: Message, *arg):
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
             dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
-            if ran in shop_img_temp:
-                del shop_img_temp[ran]
-            elif ran in shop_img_temp_vip:
-                del shop_img_temp_vip[ran]
             # 结束shop的总计时
             end = time.perf_counter()
             #结果为浮点数，保留两位小数
             using_time = format(end - start, '.2f')
-
+            
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(
