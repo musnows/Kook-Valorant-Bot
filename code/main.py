@@ -160,11 +160,13 @@ async def Vhelp(msg: Message, *arg):
         c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
         help_2 = "「/vip-u 激活码」兑换阿狸的vip\n"
         help_2 += "「/vip-c」 查看vip的剩余时间\n"
+        help_2 += "「全新商店返回值」vip用户将获取到16比9的全新商店返回值\n"
         help_2 += "「/vip-shop」查看已保存的商店查询diy背景图\n"
         help_2 += "「/vip-shop 图片url」添加商店查询diy背景图\n"
         help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
-        help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n\n"
-        help_2 += "1.目前商店查询背景图diy仅支持1比1的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
+        help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n"
+        help_2 += "「图片形式的商店提醒」vip用户将在8AM获取道当日的每日商店。阿狸会对这张图片进行缓存，同天使用`/shop`命令的时候，只需要2s即可获取结果，3倍于普通用户的响应速度！\n"
+        help_2 += "1.目前商店查询背景图diy支持16-9的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
         c3.append(
             Module.Context(
@@ -2110,7 +2112,7 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
     rp_c = (f"{rp}")  #rp
-    draw.text((718,666),
+    draw.text((720,666),
             rp_c,
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
