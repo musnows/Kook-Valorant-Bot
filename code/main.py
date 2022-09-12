@@ -2450,13 +2450,10 @@ UserStsDict = {}
 with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
-
-#@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
-@bot.command(name='test')
-async def auto_skin_inform(msg:Message):
-    logging(msg)
+#独立函数，为了封装成命令+定时
+async def auto_skin_notify():
     try:
-        print("[BOT.TASK] auto_skin_inform Starting!")  #开始的时候打印一下
+        print("[BOT.TASK] auto_skin_notify Starting!")  #开始的时候打印一下
         #加载vip用户列表
         with open("./log/VipUser.json", 'r', encoding='utf-8') as frau:
             VipUserD = json.load(frau)
@@ -2526,7 +2523,7 @@ async def auto_skin_inform(msg:Message):
                         c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
                         cm.append(c)
                         await user.send(cm)
-                        print(f"[{GetTime()}] Au:{vip} daily_shop reply successful [{using_time}]")
+                        print(f"[{GetTime()}] Au:{vip} notify_daily_shop successful [{using_time}]")
                     else:#reauthorize failed!
                         print(f"[BOT.TASK] Vip_Au:{vip} user reauthorize failed")
                         await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
@@ -2534,7 +2531,7 @@ async def auto_skin_inform(msg:Message):
                     print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_inform vip_user.send\n```\n{traceback.format_exc()}\n```"
+                err_str = f"ERR! [BOT.TASK] auto_skin_notify vip_user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)#发送消息到debug频道
 
@@ -2562,10 +2559,10 @@ async def auto_skin_inform(msg:Message):
                         target_skin = [val for key, val in skin.items() if key in list_shop]
                         # print(target_skin)
                         for name in target_skin:
-                            print(f"[BOT.TASK] Au:{aid} auto_skin_inform = {name}")
+                            print(f"[BOT.TASK] Au:{aid} auto_skin_notify = {name}")
                             await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
                         # 打印这个说明这个用户正常遍历完了
-                        print(f"[BOT.TASK] Au:{aid} auto_skin_inform = None")
+                        print(f"[BOT.TASK] Au:{aid} auto_skin_notify = None")
                     else:#reauthorize failed!
                         print(f"[BOT.TASK] Vip_Au:{vip} user reauthorize failed")
                         await user.send(f"您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
@@ -2573,19 +2570,30 @@ async def auto_skin_inform(msg:Message):
                     print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
                     await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n```\n{traceback.format_exc()}\n```"
+                err_str = f"ERR! [BOT.TASK] auto_skin_notify user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
         #完成遍历后打印
-        finish_str = "[BOT.TASK] auto_skin_inform Finished!"
+        finish_str = "[BOT.TASK] auto_skin_notify Finished!"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] auto_skin_inform\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{GetTime()}] auto_skin_notify\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
+@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
+async def auto_skin_notify_task():
+    await auto_skin_notify()
+    
+@bot.command(name='notify-test')
+async def auto_skin_notify_cmd(msg:Message,*arg):
+    logging(msg)
+    if msg.author_id == master_id:
+        await auto_skin_notify()
+    else:
+        await msg.reply("您没有权限执行此命令")
 
 #设置提醒（出现xx皮肤）
 @bot.command(name="notify-add", aliases=['notify-a'])
