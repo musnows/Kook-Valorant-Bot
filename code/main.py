@@ -1607,9 +1607,9 @@ async def check_user_login_rate(msg: Message):
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.task.add_date()
-async def loading_cookie():
-    global debug_ch,cm_send_test
+async def loading_channel_cookie():
     try:
+        global debug_ch,cm_send_test
         cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
         debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         print("[BOT.TASK] fetch_public_channel success")
