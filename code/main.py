@@ -2039,34 +2039,42 @@ async def clear_usershopdict():
 
 # 获取每日商店的命令
 async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip:bool=True,msg:Message=None):
-    """returns dict:
+    """save img:
+     - bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
+     
+    returns dict:
      - {"status":False,"value":f"{err_str}"}
      - {"status":True,"value":bg}
     """
-    vip_bg_path = f'./log/img_temp_vip/bg/{user_id}.png'
+    global VipShopBgDict
+    #vip_bg_path = f'./log/img_temp_vip/bg/{user_id}.png'
     if len_VusBg(user_id) > 0: #如果为0则不执行自定义图片（避免空list）
-        # 如果图片路径不存在（说明没有缓存）
-        if not os.path.exists(vip_bg_path):
-            try:#打开图片进行测试
-                bg_vip = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[user_id]["background"][0])))
-            except UnidentifiedImageError as result:
-                err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
-                await replace_illegal_img(user_id,0) #替换图片
-                # if msg != None: 
-                #     await msg.reply(f"当前使用的图片违规！请重新上传您的背景图\n{err_str}")
-                print(err_str)#写入文件后打印log信息
-                return {"status":False,"value":f"当前使用的图片违规！请重新上传您的背景图\n{err_str}"}
-            #图没有问题，且路径不存在（说明之前没有设置过或者修改了背景图）则缩放后保存
-            bg_vip = resize_vip(1280, 720,bg_vip)
-            bg_vip = bg_vip.convert('RGBA')
-            # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-            finalImg = Image.alpha_composite(bg_vip, bg_main_169)
-            finalImg.save(f'./log/img_temp_vip/bg/{user_id}.png')
-            bg_vip = finalImg
-        else:  #使用缓存好的vip图片
-            bg_vip = Image.open(vip_bg_path)
-        # 两种情况都需要把vip图片加载到bg中
-        bg = copy.deepcopy(bg_vip)
+        # 如果背景图片路径不存在（说明没有缓存） 现在因为在前面已经判断过，所以直接执行画图
+        #if not os.path.exists(vip_bg_path):
+        try:#打开图片进行测试
+            bg_vip = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[user_id]["background"][0])))
+            #如果图片打开没有问题，那么修改状态码
+            VipShopBgDict[user_id]['status']=True
+            with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw1:
+                json.dump(VipShopBgDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
+        except UnidentifiedImageError as result:
+            err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
+            await replace_illegal_img(user_id,0) #替换图片
+            # if msg != None: 
+            #     await msg.reply(f"当前使用的图片违规！请重新上传您的背景图\n{err_str}")
+            print(err_str)#写入文件后打印log信息
+            return {"status":False,"value":f"当前使用的图片违规！请重新上传您的背景图\n{err_str}"}
+        
+        #图没有问题，则缩放后保存
+        bg_vip = resize_vip(1280, 720,bg_vip)
+        bg_vip = bg_vip.convert('RGBA')
+        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+        finalImg = Image.alpha_composite(bg_vip, bg_main_169)
+        #finalImg.save(vip_bg_path)
+        bg_vip = finalImg
+        #else:  #使用缓存好的vip图片
+            #bg_vip = Image.open(vip_bg_path)
+        bg = copy.deepcopy(bg_vip)# 两种情况都需要把vip图片加载到bg中
     else:# vip用户但是出现了空list，调用默认的16比9图片
         bg = copy.deepcopy(bg_main_vip)
     #开始画图
@@ -2116,6 +2124,8 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
             rp_c,
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
+    #画完图之后直接执行保存
+    bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
     return {"status":True,"value":bg}
 
 
@@ -2186,7 +2196,7 @@ async def get_daily_shop(msg: Message, *arg):
             elif (msg.author_id in VipShopBgDict): #商店路径不存在，或者状态码为false
                 ret = await get_daily_shop_vip_img(list_shop,userdict,msg.author_id,is_vip,msg)
                 if ret['status']:
-                    bg = ret['value']
+                    bg = ret['value']#获取图片
                 else:#出现图片违规
                     await msg.reply(ret['value'])
                     return
@@ -2501,9 +2511,8 @@ async def auto_skin_inform(msg:Message):
                         
                         log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
                         print(log_time)
-                        # bg.save(f"test.png")  #保存到本地
                         img_shop=f"./log/img_temp_vip/shop/{vip}.png"
-                        bg_shop.save(img_shop, format='PNG')
+                        #bg_shop.save(img_shop, format='PNG')
                         dailyshop_img_src = await bot_upimg.client.create_asset(img_shop)  # 上传图片
                         # 结束shop的总计时
                         end = time.perf_counter()
@@ -2527,8 +2536,9 @@ async def auto_skin_inform(msg:Message):
                     print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_inform vip_user.send\n{result}"
+                err_str = f"ERR! [BOT.TASK] auto_skin_inform vip_user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
+                await bot.client.send(debug_ch, err_str)#发送消息到debug频道
 
         # 再遍历所有用户的皮肤提醒
         for aid, skin in SkinNotifyDict.items():
@@ -2565,8 +2575,9 @@ async def auto_skin_inform(msg:Message):
                     print(f"[BOT.TASK] Au:{aid} user_not_in UserAuthDict")
                     await user.send(f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n{result}"
+                err_str = f"ERR! [BOT.TASK] auto_skin_inform user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
+                await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
         #完成遍历后打印
         finish_str = "[BOT.TASK] auto_skin_inform Finished!"
