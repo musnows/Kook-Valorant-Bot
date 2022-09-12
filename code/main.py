@@ -780,7 +780,7 @@ def resize(standard_x, img, standard_y = ''):
     w, h = img.size
     log_info += f"原始图片大小:({w},{h}) - "
     ratio = w/h
-    if ratio > 1.5:
+    if ratio > standard_x/standard_y:
         sizeco = w / standard_x
         log_info += f"缩放系数:{format(sizeco,'.3f')} - "
         w_s = int(w / sizeco)
@@ -937,13 +937,13 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
         layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
     end = time.perf_counter()
     log_time = f"[GetWeapen] {format(end - start, '.4f')} "
-    layer_icon = resize(300, layer_icon,150)
+    layer_icon = resize(300, layer_icon,130)
     # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
     # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
     # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
     w,h = layer_icon.size
     x = 50 if w == 300 else int((350-w)/2)
-    y = int((210-h)/2) if w == 300 else 30
+    y = int((240-h)/2) if w == 300 else 30
     bg.paste(layer_icon, (x,y), layer_icon)
     # bg.paste代表向bg粘贴一张图片
     # 第一个参数是图像layer_icon
@@ -1393,12 +1393,12 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             VipShopBgDict[msg.author_id]["background"][0] = icon_num
             VipShopBgDict[msg.author_id]['status'] = False #修改图片之后，因为8点bot存储了商店图，所以需要重新获取新的背景
             
-            #进行缩放+贴上图后保存
-            bg_vip = resize_vip(1280,720,bg_vip)
-            bg_vip = bg_vip.convert('RGBA')
-            # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-            finalImg = Image.alpha_composite(bg_vip, bg_main_169)
-            finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+            # #进行缩放+贴上图后保存
+            # bg_vip = resize_vip(1280,720,bg_vip)
+            # bg_vip = bg_vip.convert('RGBA')
+            # # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+            # finalImg = Image.alpha_composite(bg_vip, bg_main_169)
+            # finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
         else:
             await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
@@ -1719,14 +1719,11 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
         # 如果是vip用户，则保存cookie
-        if await vip_ck(msg):
-            # global UserCookieDict
-            # UserCookieDict[msg.author_id]=GetTime()
+        if await vip_ck(msg.author_id):
             #用于保存cookie的路径
             cookie_path = f"./log/cookie/{msg.author_id}.cke"
             res_auth._cookie_jar.save(cookie_path)
-            # with open("./log/cookie/UserCookieSave.json", 'w', encoding='utf-8') as fw2:
-            #     json.dump(UserCookieDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+
         # 全部都搞定了，打印登录信息
         print(
             f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
@@ -2115,7 +2112,7 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
             vp_c,
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
-    rp = 89
+    #rp = 89
     rp_c = (f"{rp}")  #rp
     rp_pos = (710,670)
     if rp < 100:
@@ -2173,7 +2170,7 @@ async def get_daily_shop(msg: Message, *arg):
             else:
                 a_time = time.time()
                 resp = await fetch_daily_shop(userdict)  #获取每日商店
-                #resp = {"SkinsPanelLayout":{"SingleItemOffers":["4875e120-4d7d-aa2a-71c5-c0851c4af00d","5ac106cd-45ef-a26f-2058-f382f20c64db","2607b2c6-45f7-e75e-94f8-58a738773d5c","f35f6e13-4b7b-da38-c0de-5c91fffd584b"],"SingleItemOffersRemainingDurationInSeconds":60193}}#用于测试的假返回值（阴间皮肤）
+                #resp = {"SkinsPanelLayout":{"SingleItemOffers":["4875e120-4d7d-aa2a-71c5-c0851c4af00d","5ac106cd-45ef-a26f-2058-f382f20c64db","c7695ce7-4fc9-1c79-64b3-8c8f9e21571c","f35f6e13-4b7b-da38-c0de-5c91fffd584b"],"SingleItemOffersRemainingDurationInSeconds":60193}}#用于测试的假返回值（阴间皮肤）
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                 timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                 timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
@@ -2193,7 +2190,7 @@ async def get_daily_shop(msg: Message, *arg):
             if is_vip and (os.path.exists(shop_path)) and is_latest:#如果是vip而且path存在,背景图没有更改过
                 bg_vip_shop = Image.open(shop_path)
                 bg = copy.deepcopy(bg_vip_shop)
-            elif (msg.author_id in VipShopBgDict): #商店路径不存在，或者状态码为false
+            elif is_vip and (msg.author_id in VipShopBgDict): #商店路径不存在，或者状态码为false
                 ret = await get_daily_shop_vip_img(list_shop,userdict,msg.author_id,is_vip,msg)
                 if ret['status']:
                     bg = ret['value']#获取图片
