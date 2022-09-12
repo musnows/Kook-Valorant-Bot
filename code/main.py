@@ -2221,7 +2221,7 @@ async def get_daily_shop(msg: Message, *arg):
                     elif os.path.exists(img_path):
                         shop_img_temp[ran].append(Image.open(img_path))
                     else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
+                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
                         th.start()
                     await asyncio.sleep(0.8)  #尝试错开网络请求
                 while True:
@@ -2247,6 +2247,10 @@ async def get_daily_shop(msg: Message, *arg):
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
             dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
+            if ran in shop_img_temp:
+                del shop_img_temp[ran]
+            elif ran in shop_img_temp_vip:
+                del shop_img_temp_vip[ran]
             # 结束shop的总计时
             end = time.perf_counter()
             #结果为浮点数，保留两位小数
