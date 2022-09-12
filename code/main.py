@@ -201,6 +201,9 @@ async def countdown(msg: Message, time: int = 60):
 @bot.command()
 async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
     logging(msg)
+    if t_min >= t_max:#判断范围
+        await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
+        return
     try:
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
@@ -1720,12 +1723,14 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
 
         # 如果是vip用户，则保存cookie
         if await vip_ck(msg.author_id):
-            #用于保存cookie的路径
-            cookie_path = f"./log/cookie/{msg.author_id}.cke"
-            res_auth._cookie_jar.save(cookie_path)
+            cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
+            res_auth._cookie_jar.save(cookie_path)#保存
             global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
             if msg.author_id in VipShopBgDict:
                 VipShopBgDict[msg.author_id]['status']=False
+                #为了保险起见，保存一下状态信息到文件
+                with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw1:
+                    json.dump(VipShopBgDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
 
         # 全部都搞定了，打印登录信息
         print(
