@@ -1001,7 +1001,7 @@ def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
 #####################################################################################################
 
 from check_vip import (VipUserDict, create_vip_uuid, fetch_vip_user, using_vip_uuid, vip_ck, vip_time_remain,
-                       vip_time_remain_cm)
+                       vip_time_remain_cm, vip_time_stamp)
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
@@ -1464,6 +1464,103 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
         cm.append(c)
         await msg.reply(cm)
 
+from endpoints import roll_vip_start
+#用来存放roll的频道/服务器/回应用户的dict
+RollVipDcit={}
+with open("./log/VipRoll.json", 'r', encoding='utf-8') as frau:
+    RollVipDcit = json.load(frau)
+
+# 判断消息的emoji回应，并记录id
+@bot.on_event(EventTypes.ADDED_REACTION)
+async def vip_roll_log(b: Bot, event: Event):
+    global RollVipDcit
+    if event.body['msg_id'] not in RollVipDcit:
+        return
+    else:
+        user_id = event.body['user_id']
+        # 把用户id添加到list中
+        log_str = f"[vip-roll-log] Au:{user_id} roll_msg:{event.body['msg_id']}"
+        if user_id not in RollVipDcit[event.body['msg_id']]['user']:
+            RollVipDcit[event.body['msg_id']]['user'].append(user_id)
+            channel = await bot.client.fetch_public_channel(event.body['channel_id'])
+            await bot.client.send(channel,f"[添加回应]->抽奖参加成功！", temp_target_id=event.body['user_id'])
+            log_str +=" Join"#有join的才是新用户
+        with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
+            json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(log_str)
+        
+# 开启一波抽奖
+@bot.command(name='vip-r',aliases=['vip-roll'])
+async def vip_roll(msg:Message,vday:int=7,vnum:int=5,rday:int=1):
+    logging(msg)
+    if msg.author_id != master_id:
+        await msg.reply(f"您没有权限执行本命令")
+        return
+    # 设置开始抽奖
+    global RollVipDcit
+    cm = roll_vip_start(vnum,vday,rday)
+    roll_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
+    roll_send = await bot.client.send(roll_ch,cm)
+    RollVipDcit[roll_send['msg_id']]={}
+    RollVipDcit[roll_send['msg_id']]['time']= time.time()+rday*86400
+    RollVipDcit[roll_send['msg_id']]['nums']= vnum
+    RollVipDcit[roll_send['msg_id']]['days']= vday
+    RollVipDcit[roll_send['msg_id']]['channel_id']=msg.ctx.channel.id
+    RollVipDcit[roll_send['msg_id']]['guild_id']=msg.ctx.guild.id
+    RollVipDcit[roll_send['msg_id']]['user']=list()
+    with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
+        json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    print(f"[vip-roll] card message send to {msg.ctx.channel.id}")
+    
+@bot.task.add_interval(minutes=1)
+async def vip_roll_task():
+    global RollVipDcit,VipUserDict
+    rollvipdict_temp = copy.deepcopy(RollVipDcit) #临时变量用于修改
+    for msg_id,minfo in RollVipDcit.items():
+        if time.time()<minfo['time']:
+            continue
+        else:
+            print(f"[BOT.TASK] vip_roll_task msg:{msg_id}")
+            vday = RollVipDcit[msg_id]['days']
+            vnum = RollVipDcit[msg_id]['nums']
+            # 结束抽奖
+            log_str=f"```\n[MsgID] {msg_id}\n"
+            # 生成n个随机数
+            result = [random.randint(0,len(RollVipDcit[msg_id]['user'])-1) for i in range(vnum)]
+            for j in result:
+                user_id = RollVipDcit[msg_id]['user'][j]
+                user = await bot.client.fetch_user(user_id)
+                cm = CardMessage()
+                c=Card(Module.Section(Element.Text("恭喜您中奖vip激活码了！", Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda2, size='sm')))
+                c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip", Types.Text.KMD)))
+                c.append(
+                    Module.Countdown(datetime.now() + timedelta(seconds=vip_time_remain(user_id)), mode=Types.CountdownMode.DAY))
+                c.append(Module.Divider())
+                c.append(Module.Section('加入官方服务器，即可获得「阿狸赞助者」身份组', Element.Button('来狸', 'https://kook.top/gpbTwZ',
+                                                                                Types.Click.LINK)))
+                cm.append(c)
+                # 设置用户的时间和个人信息
+                # time_vip = vip_time_stamp(user_id, vday)
+                # VipUserDict[user_id] = {
+                #     'time':time_vip,
+                #     'name_tag':f"{user.username}#{user.identify_num}"
+                # }
+                # await user.send(cm)
+                log_str+=f"[vip-roll] Au:{user_id} get [{vday}]day-vip\n"
+            log_str+="```"
+            await bot.client.send(debug_ch,log_str) #发送此条抽奖信息的结果到debug
+            del rollvipdict_temp[msg_id] #删除此条抽奖信息
+        
+    # 更新抽奖列表(如果有变化)
+    if rollvipdict_temp!=RollVipDcit:
+        RollVipDcit=rollvipdict_temp
+        with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
+            json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        # 更新vip用户列表
+        with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(log_str)# 打印中奖用户作为log
+    
 
 ##############################################################################
 
