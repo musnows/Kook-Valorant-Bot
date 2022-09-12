@@ -156,7 +156,7 @@ async def Vhelp(msg: Message, *arg):
         help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
         help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n"
         help_2 += "「图片形式的商店提醒」vip用户将在8AM获取道当日的每日商店。阿狸会对这张图片进行缓存，同天使用`/shop`命令的时候，只需要2s即可获取结果，3倍于普通用户的响应速度！\n\n"
-        help_2 += "1.目前商店查询背景图diy支持16-9的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
+        help_2 += "1.目前商店查询背景图diy支持16-9的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
         c3.append(
             Module.Context(
