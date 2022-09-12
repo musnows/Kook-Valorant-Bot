@@ -194,7 +194,7 @@ def roll_vip_start(vip_num:int,vip_day:int,roll_day:int):
     cm = CardMessage()
     c = Card()
     c.append(Module.Section(Element.Text(f"添加表情回应，参加抽奖！"), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
-    c.append(Module.Context(Element.Text(f"奖励：{vip_day}天的阿狸vip激活码 | 奖品：{vip_num}个", Types.Text.KMD)))
+    c.append(Module.Context(Element.Text(f"奖励: {vip_day}天阿狸vip激活码   |  奖品: {vip_num}个", Types.Text.KMD)))
     c.append(
         Module.Countdown(datetime.now() + timedelta(seconds=roll_second), mode=Types.CountdownMode.DAY))
     cm.append(c)

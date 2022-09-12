@@ -1525,9 +1525,10 @@ async def vip_roll_task():
             vnum = RollVipDcit[msg_id]['nums']
             # 结束抽奖
             log_str=f"```\n[MsgID] {msg_id}\n"
+            send_str="恭喜 "
             # 生成n个随机数
-            result = [random.randint(0,len(RollVipDcit[msg_id]['user'])-1) for i in range(vnum)]
-            for j in result:
+            ran = random.sample(range(0, len(RollVipDcit[msg_id]['user'])-1),vnum)
+            for j in ran:
                 user_id = RollVipDcit[msg_id]['user'][j]
                 user = await bot.client.fetch_user(user_id)
                 cm = CardMessage()
@@ -1540,15 +1541,26 @@ async def vip_roll_task():
                                                                                 Types.Click.LINK)))
                 cm.append(c)
                 # 设置用户的时间和个人信息
-                # time_vip = vip_time_stamp(user_id, vday)
-                # VipUserDict[user_id] = {
-                #     'time':time_vip,
-                #     'name_tag':f"{user.username}#{user.identify_num}"
-                # }
-                # await user.send(cm)
+                time_vip = vip_time_stamp(user_id, vday)
+                VipUserDict[user_id] = {
+                    'time':time_vip,
+                    'name_tag':f"{user.username}#{user.identify_num}"
+                }
+                await user.send(cm)
                 log_str+=f"[vip-roll] Au:{user_id} get [{vday}]day-vip\n"
+                send_str+=f"(met){user_id}(met) "
+                
             log_str+="```"
+            send_str+="获得了本次奖品！"
             await bot.client.send(debug_ch,log_str) #发送此条抽奖信息的结果到debug
+            #发送结果到抽奖频道
+            roll_ch = await bot.client.fetch_public_channel(RollVipDcit[msg_id]['channel_id'])
+            cm1 = CardMessage()
+            c=Card(Module.Header(f"🎊 阿狸vip {RollVipDcit[msg_id]['days']}天体验卡 🎊"),
+                Module.Section(Element.Text(send_str, Types.Text.KMD)),
+                Module.Context(Element.Text(f"本次抽奖结束，奖励已私信发送", Types.Text.KMD)))
+            cm1.append(c)
+            await bot.client.send(roll_ch,cm1)
             del rollvipdict_temp[msg_id] #删除此条抽奖信息
         
     # 更新抽奖列表(如果有变化)
