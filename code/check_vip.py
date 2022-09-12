@@ -151,9 +151,11 @@ async def using_vip_uuid(msg: Message, uuid1: str,bot:Bot):
     # 发送卡片消息
     c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
     c.append(Module.Context(Element.Text("您的恩情，阿狸会永远铭记。", Types.Text.KMD)))
-    c.append(Module.Divider())
     c.append(
         Module.Countdown(datetime.now() + timedelta(seconds=vip_time_remain(user_id)), mode=Types.CountdownMode.DAY))
+    c.append(Module.Divider())
+    c.append(Module.Section('加入官方服务器，即可获得「阿狸赞助者」身份组', Element.Button('来狸', 'https://kook.top/gpbTwZ',
+                                                                     Types.Click.LINK)))
     cm.append(c)
     await msg.reply(cm)
     print(log_str)
