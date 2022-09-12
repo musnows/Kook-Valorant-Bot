@@ -33,16 +33,6 @@ Debug_ch = '6248953582412867'
 #在bot一开机的时候就获取log频道作为全局变量
 debug_ch = None
 cm_send_test = None
-@bot.task.add_date()
-async def get_debug_ch():
-    global debug_ch,cm_send_test
-    try:
-        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
-        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
-        print("[BOT.TASK] fetch_public_channel success")
-    except:
-        print("[BOT.TASK] fetch_public_channel failed")
-        os._exit(-1)#出现错误直接退出程序
 
 # 向botmarket通信
 @bot.task.add_interval(minutes=30)
@@ -1618,12 +1608,17 @@ async def check_user_login_rate(msg: Message):
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.task.add_date()
 async def loading_cookie():
-    await asyncio.sleep(3)#睡3s避免和开头获取频道的task冲突
+    global debug_ch,cm_send_test
+    try:
+        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
+        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        print("[BOT.TASK] fetch_public_channel success")
+    except:
+        print("[BOT.TASK] fetch_public_channel failed")
+        os._exit(-1)#出现错误直接退出程序
+    
     print("[BOT.TASK] loading cookie start")
-    global UserAuthDict, UserTokenDict, UserCookieDict
-    # 已保存的登陆用户
-    # with open("./log/cookie/UserCookieSave.json", 'r', encoding='utf-8') as frrk:
-    #     UserCookieDict = json.load(frrk)
+    global UserAuthDict
     log_str = "[BOT.TASK] cookie path not exists = Au:"
     #遍历用户列表
     for user, uinfo in VipUserDict.items():
