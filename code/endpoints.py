@@ -175,8 +175,29 @@ async def weather(msg: Message, city: str):
     cm.append(c1)
     await msg.reply(cm)
 
+from upd_msg import icon_cm
+from datetime import datetime,timedelta
 
 
+#抽奖相关代码（开始抽奖）
+def roll_vip_start(vip_num:int,vip_day:int,roll_day:int):
+    """
+    Args:
+        vip_num (int): num of vip uuid
+        vip_day (int): day of vip
+        roll_day (int): day of roll end
 
+    Returns:
+        CardMessage for roll 
+    """
+    roll_second = roll_day*86400
+    cm = CardMessage()
+    c = Card()
+    c.append(Module.Section(Element.Text(f"添加表情回应，参加抽奖！"), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
+    c.append(Module.Context(Element.Text(f"奖励：{vip_day}天的阿狸vip激活码 | 奖品：{vip_num}个", Types.Text.KMD)))
+    c.append(
+        Module.Countdown(datetime.now() + timedelta(seconds=roll_second), mode=Types.CountdownMode.DAY))
+    cm.append(c)
+    return cm
 
 
