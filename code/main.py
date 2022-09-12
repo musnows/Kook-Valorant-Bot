@@ -1723,6 +1723,9 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             #用于保存cookie的路径
             cookie_path = f"./log/cookie/{msg.author_id}.cke"
             res_auth._cookie_jar.save(cookie_path)
+            global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
+            if msg.author_id in VipShopBgDict:
+                VipShopBgDict[msg.author_id]['status']=False
 
         # 全部都搞定了，打印登录信息
         print(
@@ -2062,9 +2065,7 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
         bg_vip = resize_vip(1280, 720,bg_vip)
         bg_vip = bg_vip.convert('RGBA')
         # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-        finalImg = Image.alpha_composite(bg_vip, bg_main_169)
-        #finalImg.save(vip_bg_path)#没必要保存单背景图
-        bg_vip = finalImg
+        bg_vip = Image.alpha_composite(bg_vip, bg_main_169)
         #else:  #使用缓存好的vip图片
             #bg_vip = Image.open(vip_bg_path)
         bg = copy.deepcopy(bg_vip)# 两种情况都需要把vip图片加载到bg中
@@ -2092,6 +2093,7 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
         img_temp = [i for i in shop_img_temp_vip[ran]]
         for i in img_temp:
             shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
+            #i.save(f"./t{x}_{y}.png", format='PNG')
             bg = bg_comp(bg, i, x, y)
             if x == 50:
                 x += 780
