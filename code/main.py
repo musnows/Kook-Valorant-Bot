@@ -1317,7 +1317,8 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
             if not user_ind:
                 VipShopBgDict[msg.author_id] = {}
                 VipShopBgDict[msg.author_id]["background"] = list()
-                VipShopBgDict[msg.author_id]["status"] = True  #因为是新建的用户所以默认为true
+                #新建用户，但是有可能已经缓存了默认的背景图片，所以状态为false（重画）
+                VipShopBgDict[msg.author_id]["status"] = False
             #插入图片
             VipShopBgDict[msg.author_id]["background"].append(x3)
 
