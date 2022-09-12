@@ -190,16 +190,20 @@ async def vip_ck(msg):
     cm.append(c)
     # 检查
     if user_id in VipUserDict:
+        #用户的vip是否过期？
         if time.time() > VipUserDict[user_id]['time']:
             del VipUserDict[user_id]
             #如果是消息，那就发送提示
-            if flag: await msg.reply(cm)
+            if flag: 
+                await msg.reply(cm)
+                print(f"[vip-ck] Au:{user_id} msg.reply(vip out of date!)")
             return False
-        else:
+        else:#没有过期，返回真
             return True
-    else:
-        #如果是消息，那就发送提示
-        if flag: await msg.reply(cm)
+    else:#用户不是vip
+        if flag: #如果是消息，那就发送提示
+            await msg.reply(cm)
+            print(f"[vip-ck] Au:{user_id} msg.reply(not vip)")
         return False
     
 #获取当前vip用户列表
