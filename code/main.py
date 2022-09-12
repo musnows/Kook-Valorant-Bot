@@ -84,7 +84,6 @@ async def Ahri(msg: Message, *arg):
             Module.Context(
                 Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多玩耍方式上线中...",
                              Types.Text.KMD)))
-        #c3.append(Module.Section(Element.Text('用`/hello`来和阿狸打个招呼吧！',Types.Text.KMD))) #实现卡片的markdown文本
         c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
         c3.append(Module.Divider())
         c3.append(Module.Header('上号，瓦一把！'))
@@ -116,7 +115,6 @@ async def Ahri(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] Ahri - {result}"
         print(err_str)
         #发送错误信息到指定频道
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_ch, err_str)
 
 
@@ -172,7 +170,6 @@ async def Vhelp(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] vhelp - {result}"
         print(err_str)
         #发送错误信息到指定频道
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_ch, err_str)
 
 
@@ -194,7 +191,7 @@ async def countdown(msg: Message, time: int = 60):
         err_str = f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        
         await bot.client.send(debug_ch, err_str)
 
 
@@ -212,7 +209,7 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
         err_str = f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        
         await bot.client.send(debug_ch, err_str)
 
 
@@ -2435,7 +2432,6 @@ async def get_bundle(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] get_bundle\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_ch, err_str)
 
 
@@ -2758,7 +2754,6 @@ async def list_skin_notify(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_ch, err_str)
 
 
@@ -2786,7 +2781,6 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-        #debug_ch = await bot.client.fetch_public_channel(Debug_ch)
         await bot.client.send(debug_ch, err_str)
 
 
