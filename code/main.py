@@ -770,8 +770,8 @@ font_color = '#ffffff'  # 文字颜色：白色
 
 bg_main = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))# 普通用户商店背景
 bg_main_11 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/FjPcmVwDkf0rs0rs.png').content))# vip用户背景框 1-1
-bg_main_vip =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/RRvKmnUjfJ0zk0k0.png').content))# vip商店默认背景
-bg_main_169 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/sAFIce5xsz0zk0k0.png').content))# vip用户背景框 16-9
+bg_main_vip =Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/lSj90Xr9yA0zk0k0.png').content))# vip商店默认背景
+bg_main_169 = Image.open(io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-09/rLxOSFB1cC0zk0k0.png').content))# vip用户背景框 16-9
 
 # 缩放图片，部分皮肤图片大小不正常
 def resize(standard_x, img, standard_y = ''):
@@ -2111,14 +2111,15 @@ async def get_daily_shop_vip_img(list_shop:dict,userdict:dict,user_id:str,is_vip
     rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
     draw = ImageDraw.Draw(bg)
     vp_c = (f"{vp}")  #vp
-    draw.text((549,666),
+    draw.text((537,670),
             vp_c,
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
             fill=font_color)
+    rp = 89
     rp_c = (f"{rp}")  #rp
-    rp_pos = (720,666)
+    rp_pos = (710,670)
     if rp < 100:
-        rp_pos = (733,666)
+        rp_pos = (722,670)
     draw.text(rp_pos,
             rp_c,
             font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20),
