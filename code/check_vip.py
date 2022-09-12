@@ -196,9 +196,10 @@ async def vip_ck(msg):
             #如果是消息，那就发送提示
             if flag: 
                 await msg.reply(cm)
-                print(f"[vip-ck] Au:{user_id} msg.reply(vip out of date!)")
+                print(f"[vip-ck] Au:{user_id} msg.reply(vip out of date)")
             return False
         else:#没有过期，返回真
+            print(f"[vip-ck] Au:{user_id} is vip")
             return True
     else:#用户不是vip
         if flag: #如果是消息，那就发送提示

@@ -14,7 +14,7 @@ from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
 from upd_msg import icon_cm, upd_card
-from endpoints import (status_active_game, status_active_music, status_delete, weather)
+from endpoints import (status_active_game, status_active_music, status_delete, weather,caiyun_translate,youdao_translate,is_CN)
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
@@ -150,15 +150,16 @@ async def Vhelp(msg: Message, *arg):
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
-        help_2 = "「/vip-u 激活码」兑换阿狸的vip\n"
+        help_2  = "「/vip-u 激活码」兑换阿狸的vip\n"
         help_2 += "「/vip-c」 查看vip的剩余时间\n"
-        help_2 += "「全新商店返回值」vip用户将获取到16比9的全新商店返回值\n"
+        help_2 += "「全新商店返回值」vip用户将获取到16-9的超帅商店返回值\n"
         help_2 += "「/vip-shop」查看已保存的商店查询diy背景图\n"
         help_2 += "「/vip-shop 图片url」添加商店查询diy背景图\n"
         help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
         help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n"
-        help_2 += "「图片形式的商店提醒」vip用户将在8AM获取当日的每日商店。阿狸会对这张图片进行缓存，同天使用`/shop`命令的时候，只需要2s即可获取结果，3倍于普通用户的响应速度！\n\n"
-        help_2 += "1.目前商店查询背景图diy支持16-9的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景\n2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
+        help_2 += "「图片形式的商店提醒」vip用户将在早8点获取当日的每日商店。阿狸会对这张图片进行缓存，同天使用`/shop`命令的时候，只需要2s即可获取结果，3倍于普通用户的响应速度！\n\n"
+        help_2 += "1.目前商店查询背景图diy支持16-9(横屏)的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景 [教程图](https://s1.ax1x.com/2022/09/12/vXD1Nq.jpg)\n"
+        help_2 +="2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
         c3.append(
             Module.Context(
@@ -202,6 +203,9 @@ async def countdown(msg: Message, time: int = 60):
 @bot.command()
 async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
     logging(msg)
+    if t_min >= t_max:#判断范围
+        await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
+        return
     try:
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
@@ -1716,12 +1720,14 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
 
         # 如果是vip用户，则保存cookie
         if await vip_ck(msg.author_id):
-            #用于保存cookie的路径
-            cookie_path = f"./log/cookie/{msg.author_id}.cke"
-            res_auth._cookie_jar.save(cookie_path)
-            global VipShopBgDict  #因为换了用户，所以需要修改状态码重新获取商店
+            cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
+            res_auth._cookie_jar.save(cookie_path)#保存
+            global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
             if msg.author_id in VipShopBgDict:
-                VipShopBgDict[msg.author_id]['status'] = False
+                VipShopBgDict[msg.author_id]['status']=False
+                #为了保险起见，保存一下状态信息到文件
+                with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw1:
+                    json.dump(VipShopBgDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
 
         # 全部都搞定了，打印登录信息
         print(
@@ -2210,7 +2216,7 @@ async def get_daily_shop(msg: Message, *arg):
                     elif os.path.exists(img_path):
                         shop_img_temp[ran].append(Image.open(img_path))
                     else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
+                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
                         th.start()
                     await asyncio.sleep(0.8)  #尝试错开网络请求
                 while True:
@@ -2236,6 +2242,10 @@ async def get_daily_shop(msg: Message, *arg):
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
             dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
+            if ran in shop_img_temp:
+                del shop_img_temp[ran]
+            elif ran in shop_img_temp_vip:
+                del shop_img_temp_vip[ran]
             # 结束shop的总计时
             end = time.perf_counter()
             #结果为浮点数，保留两位小数
