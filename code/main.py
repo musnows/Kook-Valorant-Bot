@@ -1485,8 +1485,10 @@ async def vip_roll_log(b: Bot, event: Event):
             channel = await bot.client.fetch_public_channel(event.body['channel_id'])
             await bot.client.send(channel,f"[添加回应]->抽奖参加成功！", temp_target_id=event.body['user_id'])
             log_str +=" Join"#有join的才是新用户
-        with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
-            json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            #用户不在才有变动，写入文件
+            with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
+                json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        
         print(log_str)
         
 # 开启一波抽奖
@@ -1525,9 +1527,10 @@ async def vip_roll_task():
             vnum = RollVipDcit[msg_id]['nums']
             # 结束抽奖
             log_str=f"```\n[MsgID] {msg_id}\n"
+            send_str="恭喜 "
             # 生成n个随机数
-            result = [random.randint(0,len(RollVipDcit[msg_id]['user'])-1) for i in range(vnum)]
-            for j in result:
+            ran = random.sample(range(0, len(RollVipDcit[msg_id]['user'])-1),vnum)
+            for j in ran:
                 user_id = RollVipDcit[msg_id]['user'][j]
                 user = await bot.client.fetch_user(user_id)
                 cm = CardMessage()
@@ -1540,15 +1543,26 @@ async def vip_roll_task():
                                                                                 Types.Click.LINK)))
                 cm.append(c)
                 # 设置用户的时间和个人信息
-                # time_vip = vip_time_stamp(user_id, vday)
-                # VipUserDict[user_id] = {
-                #     'time':time_vip,
-                #     'name_tag':f"{user.username}#{user.identify_num}"
-                # }
-                # await user.send(cm)
+                time_vip = vip_time_stamp(user_id, vday)
+                VipUserDict[user_id] = {
+                    'time':time_vip,
+                    'name_tag':f"{user.username}#{user.identify_num}"
+                }
+                await user.send(cm)
                 log_str+=f"[vip-roll] Au:{user_id} get [{vday}]day-vip\n"
+                send_str+=f"(met){user_id}(met) "
+                
             log_str+="```"
+            send_str+="获得了本次奖品！"
             await bot.client.send(debug_ch,log_str) #发送此条抽奖信息的结果到debug
+            #发送结果到抽奖频道
+            roll_ch = await bot.client.fetch_public_channel(RollVipDcit[msg_id]['channel_id'])
+            cm1 = CardMessage()
+            c=Card(Module.Header(f"🎊 阿狸vip {RollVipDcit[msg_id]['days']}天体验卡 🎊"),
+                Module.Section(Element.Text(send_str, Types.Text.KMD)),
+                Module.Context(Element.Text(f"本次抽奖结束，奖励已私信发送", Types.Text.KMD)))
+            cm1.append(c)
+            await bot.client.send(roll_ch,cm1)
             del rollvipdict_temp[msg_id] #删除此条抽奖信息
         
     # 更新抽奖列表(如果有变化)
@@ -2621,7 +2635,7 @@ async def auto_skin_notify():
                     print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_notify vip_user.send\n```\n{traceback.format_exc()}\n```"
+                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} vip_user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
@@ -2662,7 +2676,7 @@ async def auto_skin_notify():
                         f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？"
                     )
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_notify user.send\n```\n{traceback.format_exc()}\n```"
+                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
@@ -2881,6 +2895,27 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         await msg.reply(err_str)
         await bot.client.send(debug_ch, err_str)
 
+
+#当出现某些问题的时候，通知人员
+@bot.command(name="inform-user")
+async def inform_user(msg:Message,channel:str,user:str):
+    logging(msg)
+    if msg.author_id != master_id:
+        await msg.reply(f"您没有权限执行此命令！")
+        return
+    try:
+        au = await bot.client.fetch_user(user)
+        text=f"以下信息来自开发者:\n用户 (met){user}(met) {au.username}#{au.identify_num}，您开启了`皮肤提醒功能`却没有允许阿狸私信您\nkook直接搜用户名搜不到人+您所在服务器没有开公开id无法直接加入，以至于我只能让阿狸在你们服务器发一个消息来提醒您。如果对服务器其他成员有所叨扰，还请海涵。"
+        ch=await bot.client.fetch_public_channel(channel)
+        await bot.client.send(ch,text)
+        log_str=f"[inform-user] bot send to C:{channel} Au:{user}"
+        await msg.reply(log_str)
+        print(log_str)
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] inform-user\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+    
 
 # 开机的时候打印一次时间，记录重启时间
 print(f"Start at: [%s]" % GetTime())
