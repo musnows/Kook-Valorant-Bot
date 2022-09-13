@@ -824,6 +824,7 @@ def resize_vip(standard_x, standard_y, img):
 
 level_icon_temp = {}
 weapon_icon_temp = {}
+weapon_icon_temp_vip = {}
 
 
 def sm_comp(icon, name, price, level_icon, skinuuid):
@@ -911,7 +912,7 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
     # bg.show() #测试用途，展示图片(linux貌似不可用)
     if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
         bg.save(f'./log/img_temp/comp/{skinuuid}.png')
-    global weapon_icon_temp
+    global weapon_icon_temp #普通用户的抽屉
     if skinuuid not in weapon_icon_temp:
         weapon_icon_temp[skinuuid] = bg
     return bg
@@ -961,9 +962,9 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
     # bg.show() #测试用途，展示图片(linux貌似不可用)
     if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
         bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
-    global weapon_icon_temp
-    if skinuuid not in weapon_icon_temp:
-        weapon_icon_temp[skinuuid] = bg
+    global weapon_icon_temp_vip#vip用户的抽屉
+    if skinuuid not in weapon_icon_temp_vip:
+        weapon_icon_temp_vip[skinuuid] = bg
     return bg
 
 
@@ -975,7 +976,6 @@ def bg_comp(bg, img, x, y):
 
 shop_img_temp = {}
 shop_img_temp_vip = {}
-img_save_temp = {}
 
 
 def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
@@ -2171,8 +2171,8 @@ async def get_daily_shop_vip_img(list_shop: dict,
 
     for skinuuid in list_shop:
         img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
-        if skinuuid in weapon_icon_temp:
-            shop_img_temp_vip[ran].append(weapon_icon_temp[skinuuid])
+        if skinuuid in weapon_icon_temp_vip:#vip用户需要用的抽屉
+            shop_img_temp_vip[ran].append(weapon_icon_temp_vip[skinuuid])
         elif os.path.exists(img_path):
             shop_img_temp_vip[ran].append(Image.open(img_path))
         else:
@@ -2297,7 +2297,7 @@ async def get_daily_shop(msg: Message, *arg):
                 # 插入皮肤图片
                 for skinuuid in list_shop:
                     img_path = f'./log/img_temp/comp/{skinuuid}.png'
-                    if skinuuid in weapon_icon_temp:
+                    if skinuuid in weapon_icon_temp:#普通用户需要用的抽屉
                         shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
                     elif os.path.exists(img_path):
                         shop_img_temp[ran].append(Image.open(img_path))
