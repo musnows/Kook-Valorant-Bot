@@ -1485,8 +1485,10 @@ async def vip_roll_log(b: Bot, event: Event):
             channel = await bot.client.fetch_public_channel(event.body['channel_id'])
             await bot.client.send(channel,f"[添加回应]->抽奖参加成功！", temp_target_id=event.body['user_id'])
             log_str +=" Join"#有join的才是新用户
-        with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
-            json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+            #用户不在才有变动，写入文件
+            with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
+                json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        
         print(log_str)
         
 # 开启一波抽奖
@@ -2633,7 +2635,7 @@ async def auto_skin_notify():
                     print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_notify vip_user.send\n```\n{traceback.format_exc()}\n```"
+                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} vip_user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
@@ -2674,7 +2676,7 @@ async def auto_skin_notify():
                         f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？"
                     )
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR! [BOT.TASK] auto_skin_notify user.send\n```\n{traceback.format_exc()}\n```"
+                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
@@ -2893,6 +2895,27 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         await msg.reply(err_str)
         await bot.client.send(debug_ch, err_str)
 
+
+#当出现某些问题的时候，通知人员
+@bot.command(name="inform-user")
+async def inform_user(msg:Message,channel:str,user:str):
+    logging(msg)
+    if msg.author_id != master_id:
+        await msg.reply(f"您没有权限执行此命令！")
+        return
+    try:
+        au = await bot.client.fetch_user(user)
+        text=f"以下信息来自开发者:\n用户 (met){user}(met) {au.username}#{au.identify_num}，您开启了`皮肤提醒功能`却没有允许阿狸私信您\nkook直接搜用户名搜不到人+您所在服务器没有开公开id无法直接加入，以至于我只能让阿狸在你们服务器发一个消息来提醒您。如果对服务器其他成员有所叨扰，还请海涵。"
+        ch=await bot.client.fetch_public_channel(channel)
+        await bot.client.send(ch,text)
+        log_str=f"[inform-user] bot send to C:{channel} Au:{user}"
+        await msg.reply(log_str)
+        print(log_str)
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] inform-user\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
+    
 
 # 开机的时候打印一次时间，记录重启时间
 print(f"Start at: [%s]" % GetTime())
