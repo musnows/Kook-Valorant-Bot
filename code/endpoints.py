@@ -180,7 +180,7 @@ from datetime import datetime,timedelta
 
 
 #抽奖相关代码（开始抽奖）
-def roll_vip_start(vip_num:int,vip_day:int,roll_day:int):
+def roll_vip_start(vip_num:int,vip_day:int,roll_day):
     """
     Args:
         vip_num (int): num of vip uuid

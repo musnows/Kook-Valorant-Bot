@@ -1495,7 +1495,7 @@ async def vip_roll_log(b: Bot, event: Event):
         
 # 开启一波抽奖
 @bot.command(name='vip-r',aliases=['vip-roll'])
-async def vip_roll(msg:Message,vday:int=7,vnum:int=5,rday:int=1):
+async def vip_roll(msg:Message,vday:int=7,vnum:int=5,rday:float=1.0):
     logging(msg)
     if msg.author_id != master_id:
         await msg.reply(f"您没有权限执行本命令")
@@ -1535,6 +1535,13 @@ async def vip_roll_task():
             for j in ran:
                 user_id = RollVipDcit[msg_id]['user'][j]
                 user = await bot.client.fetch_user(user_id)
+                # 设置用户的时间和个人信息
+                time_vip = vip_time_stamp(user_id, vday)
+                VipUserDict[user_id] = {
+                    'time':time_vip,
+                    'name_tag':f"{user.username}#{user.identify_num}"
+                }
+                #创建卡片消息
                 cm = CardMessage()
                 c=Card(Module.Section(Element.Text("恭喜您中奖vip激活码了！", Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda2, size='sm')))
                 c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip", Types.Text.KMD)))
@@ -1544,12 +1551,6 @@ async def vip_roll_task():
                 c.append(Module.Section('加入官方服务器，即可获得「阿狸赞助者」身份组', Element.Button('来狸', 'https://kook.top/gpbTwZ',
                                                                                 Types.Click.LINK)))
                 cm.append(c)
-                # 设置用户的时间和个人信息
-                time_vip = vip_time_stamp(user_id, vday)
-                VipUserDict[user_id] = {
-                    'time':time_vip,
-                    'name_tag':f"{user.username}#{user.identify_num}"
-                }
                 await user.send(cm)
                 log_str+=f"[vip-roll] Au:{user_id} get [{vday}]day-vip\n"
                 send_str+=f"(met){user_id}(met) "
@@ -2933,7 +2934,7 @@ async def inform_user(msg:Message,channel:str,user:str):
     
 
 # 开机的时候打印一次时间，记录重启时间
-print(f"Start at: [%s]" % GetTime())
+print(f"Start at: [%s]" % start_time)
 
 #bot.run()是机器人的起跑线
 bot.run()
