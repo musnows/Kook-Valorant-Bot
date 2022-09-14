@@ -2803,7 +2803,19 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 
             # 先发送一个私聊消息，作为测试（避免有人开了不给私信）
             user_test = await bot.client.fetch_user(msg.author_id)
-            await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
+            try:
+                await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
+            except requester.HTTPRequester.APIRequestFailed as result:
+                err_str = f"ERR! [{GetTime()}] notify-sts\n```\n{result}\n```\nreply to inform user"
+                if '屏蔽' in str(result):#如果用户不允许bot私信，则发送提示信息
+                    await msg.reply(f"阿狸无法向您发起私信，请修改您的隐私设置，或者私聊阿狸使用相关命令\n{err_str}")
+                else:
+                    err_str = f"ERR! [{GetTime()}] notify-sts\n```\n{traceback.format_exc()}\n```\n"
+                    await msg.reply(err_str)
+                    await bot.client.send(debug_ch, err_str)
+                    
+                print(err_str)
+                return
 
             S_skin = UserStsDict[msg.author_id][num]
             if msg.author_id not in SkinNotifyDict:
