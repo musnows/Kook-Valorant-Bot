@@ -1544,7 +1544,7 @@ async def vip_roll_task():
                 #创建卡片消息
                 cm = CardMessage()
                 c=Card(Module.Section(Element.Text("恭喜您中奖vip激活码了！", Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda2, size='sm')))
-                c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip", Types.Text.KMD)))
+                c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip，可用/vhelp查看vip权益", Types.Text.KMD)))
                 c.append(
                     Module.Countdown(datetime.now() + timedelta(seconds=vip_time_remain(user_id)), mode=Types.CountdownMode.DAY))
                 c.append(Module.Divider())
@@ -2936,5 +2936,13 @@ async def inform_user(msg:Message,channel:str,user:str):
 # 开机的时候打印一次时间，记录重启时间
 print(f"Start at: [%s]" % start_time)
 
-#bot.run()是机器人的起跑线
-bot.run()
+try:#bot.run()是机器人的起跑线
+    bot.run()
+except Exception as result:
+    result = str(result)
+    if 'channel_name' in result:
+        pass
+    elif 'message_updated' in result:
+        pass
+    else:
+        print(traceback.format_exc())
