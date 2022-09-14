@@ -48,10 +48,12 @@ async def botmarket():
 ##########################################################################################
 ##########################################################################################
 
-
-def GetTime():  #将获取当前时间封装成函数方便使用
+#将获取当前时间封装成函数方便使用
+def GetTime():  
     return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
+#记录开机时间
+start_time = GetTime()
 
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
@@ -82,7 +84,7 @@ async def Ahri(msg: Message, *arg):
         c3 = Card(
             Module.Header('你可以用下面这些指令呼叫本狸哦！'),
             Module.Context(
-                Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多玩耍方式上线中...",
+                Element.Text(f"开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，开机于 [{start_time}]",
                              Types.Text.KMD)))
         c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
         c3.append(Module.Divider())
