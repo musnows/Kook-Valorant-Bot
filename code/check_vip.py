@@ -220,12 +220,10 @@ async def fetch_vip_user():
             #通过/86400计算出大概的天数
             text +=f"{u}_{ifo['name_tag']}\t = {time}\n"
 
-    
     if vipuserdict_temp != VipUserDict:
-        VipUserDict = vipuserdict_temp
         #将修改存放到文件中
-        with open("./log/VipUuid.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipUuidDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[vip-r] update VipUserDict")
         
     return text
