@@ -1707,45 +1707,6 @@ async def check_user_login_rate(msg: Message):
         return False
 
 
-#在阿狸开机的时候自动加载所有保存过的cookie
-@bot.task.add_date()
-async def loading_channel_cookie():
-    try:
-        global debug_ch, cm_send_test
-        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
-        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
-        print("[BOT.TASK] fetch_public_channel success")
-    except:
-        print("[BOT.TASK] fetch_public_channel failed")
-        os._exit(-1)  #出现错误直接退出程序
-
-    print("[BOT.TASK] loading cookie start")
-    global UserAuthDict
-    log_str = "[BOT.TASK] cookie path not exists = Au:"
-    #遍历用户列表
-    for user, uinfo in VipUserDict.items():
-        cookie_path = f"./log/cookie/{user}.cke"
-        #如果路径存在，那么说明已经保存了这个vip用户的cookie
-        if os.path.exists(cookie_path):
-            auth = RiotAuth()  #新建一个对象
-            auth._cookie_jar.load(cookie_path)  #加载cookie
-            ret_bool = await auth.reauthorize()  #尝试登录
-            if ret_bool:  # True登陆成功
-                UserAuthDict[user] = auth  #将对象插入
-                print(f"[BOT.TASK] Au:{user} - load cookie success!")
-                #不用重新修改UserTokenDict里面的游戏名和uuid
-                #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
-                #那么玩家id和uuid都是不会变化的，也没必要重新加载
-            else:
-                print(f"[BOT.TASK] Au:{user} - load cookie failed!")
-                continue
-        else:
-            log_str += f"({user}) "
-            continue
-    #结束任务
-    print(log_str)  #打印路径不存在的用户
-    print("[BOT.TASK] loading cookie finished")
-
 
 # 登录，保存用户的token
 @bot.command(name='login')
@@ -2933,16 +2894,48 @@ async def inform_user(msg:Message,channel:str,user:str):
         await msg.reply(err_str)
     
 
+
+
+#在阿狸开机的时候自动加载所有保存过的cookie
+@bot.task.add_date()
+async def loading_channel_cookie():
+    try:
+        global debug_ch, cm_send_test
+        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
+        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        print("[BOT.TASK] fetch_public_channel success")
+    except:
+        print("[BOT.TASK] fetch_public_channel failed")
+        os._exit(-1)  #出现错误直接退出程序
+
+    print("[BOT.TASK] loading cookie start")
+    global UserAuthDict
+    log_str = "[BOT.TASK] cookie path not exists = Au:"
+    #遍历用户列表
+    for user, uinfo in VipUserDict.items():
+        cookie_path = f"./log/cookie/{user}.cke"
+        #如果路径存在，那么说明已经保存了这个vip用户的cookie
+        if os.path.exists(cookie_path):
+            auth = RiotAuth()  #新建一个对象
+            auth._cookie_jar.load(cookie_path)  #加载cookie
+            ret_bool = await auth.reauthorize()  #尝试登录
+            if ret_bool:  # True登陆成功
+                UserAuthDict[user] = auth  #将对象插入
+                print(f"[BOT.TASK] Au:{user} - load cookie success!")
+                #不用重新修改UserTokenDict里面的游戏名和uuid
+                #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
+                #那么玩家id和uuid都是不会变化的，也没必要重新加载
+            else:
+                print(f"[BOT.TASK] Au:{user} - load cookie failed!")
+                continue
+        else:
+            log_str += f"({user}) "
+            continue
+    #结束任务
+    print(log_str)  #打印路径不存在的用户
+    print("[BOT.TASK] loading cookie finished")
+
 # 开机的时候打印一次时间，记录重启时间
 print(f"Start at: [%s]" % start_time)
-
-try:#bot.run()是机器人的起跑线
-    bot.run()
-except Exception as result:
-    result = str(result)
-    if 'channel_name' in result:
-        pass
-    elif 'message_updated' in result:
-        pass
-    else:
-        print(traceback.format_exc())
+# 开机
+bot.run()
