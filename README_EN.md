@@ -50,11 +50,16 @@ Recommended to use after the Valorant_Function is stable.
 | `/uinfo`或`/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
 | `/notify-a skin_name` |search for skin name,providing NO for add it into notification |
 | `/notify-l` | show current notify skin |
-| `/notify-d skin_uuid` | delete skin through `skin_uuid` |
+| `/vip-u uuid` | get vip from uuid |
+| `/vip-c` | check remaining time for vip |
+| `/vip-shop` | check current vip-shop background img |
+| `/vip-shop img-url` | add vip-shop background img  |
+| `/vip-shop-s NO.` | switch vip-shop background img using `NO.`,  `NO.` will show at `/vip-shop` |
+| `/vip-shop-d NO.` | delete vip-shop background img using `NO.` |
 
 notify function require user to stay `login`, bot wil fetch your daily shop at `08:02 am GMT+8` .If the skin is in daily shop,bot will send a private message to user.
 
-Because the bot is using in Chinese platform, the `name` only support `zh-TW`
+Because the bot is using in Chinese platform, the skin `name` only support `zh-TW`
 
 | Other        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
@@ -83,6 +88,34 @@ You can find image examples for the functions in [screenshot](./screenshot) flod
 <img src="./screenshot/weather.png" alt="we">
 </details>
 For more guild and information, check out [wiki pages](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)
+
+----
+
+## Breaking Changes at `V0.2.0`
+First Breaking Changes for bot
+## 1. publish vip!
+### 1.1 add vip daily shop reply 
+vip user will get different daily shop reply from bot.
+* normal user get `1000*1000` img
+* vip user get `1280*720` img
+
+[![x987TI.md.png](https://s1.ax1x.com/2022/09/19/x987TI.md.png)](https://imgse.com/i/x987TI)
+
+### 1.2 add special command for vip user
+* `vip-u`: get vip from uuid
+* `vip-c`: check remaining time for vip
+* `vip-l`: list vip user
+* `vip-shop`: vip user can modify their background of daily shop
+
+### 1.3 more great fuctions!
+* vip user will get automatic daily shop reply at `8AM BJS`
+* bot will log vip user daily shop img, next time when vip user use `/shop` command, bot will upload it from local path instead of drawing the img,which will save `2-3s` of response time
+* using `aiohttp cookie_jar` to save vip user cookie, don't need to login again when bot restart because of maintenance。
+
+## 2. other changes
+* `add_date` will fetch `debug_channel` at start,don't need to fetch every time when exception
+* change err reply to card message, bot will update msg instead of replying a new one when using `/shop` or `/uinfo`
+* add `class icon` for easy manage icon-url
 
 ---
 
