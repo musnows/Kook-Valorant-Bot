@@ -1087,7 +1087,7 @@ async def list_vip_user(msg: Message, *arg):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            text = fetch_vip_user()
+            text = await fetch_vip_user()
             cm2 = CardMessage()
             c = Card(Module.Header(f"当前vip用户列表如下"), color='#e17f89')
             c.append(Module.Section(Element.Text(f"```\n{text}```", Types.Text.KMD)))
@@ -1096,7 +1096,7 @@ async def list_vip_user(msg: Message, *arg):
         else:
             await msg.reply("您没有权限操作此命令！")
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] create_vip_uuid\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{GetTime()}] list_vip_user\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
 

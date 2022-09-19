@@ -1,3 +1,4 @@
+import copy
 import uuid
 import json
 import time
@@ -208,13 +209,24 @@ async def vip_ck(msg):
         return False
     
 #获取当前vip用户列表
-def fetch_vip_user():
+async def fetch_vip_user():
+    global VipUserDict
+    vipuserdict_temp = copy.deepcopy(VipUserDict)
     text=""
-    for u,ifo in VipUserDict.items():
-        time = vip_time_remain(u)
-        time = format(time/86400, '.2f')
-        #通过/86400计算出大概的天数
-        text +=f"{u}_{ifo['name_tag']}\t = {time}\n"
+    for u,ifo in vipuserdict_temp.items():
+        if await vip_ck(u):# vip-ck会主动修改dict
+            time = vip_time_remain(u)
+            time = format(time/86400, '.2f')
+            #通过/86400计算出大概的天数
+            text +=f"{u}_{ifo['name_tag']}\t = {time}\n"
+
+    
+    if vipuserdict_temp != VipUserDict:
+        VipUserDict = vipuserdict_temp
+        #将修改存放到文件中
+        with open("./log/VipUuid.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipUuidDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(f"[vip-r] update VipUserDict")
         
     return text
         
