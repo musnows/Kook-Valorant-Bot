@@ -2909,7 +2909,9 @@ async def loading_channel_cookie():
 
     print("[BOT.TASK] loading cookie start")
     global UserAuthDict
-    log_str = "[BOT.TASK] cookie path not exists = Au:"
+    log_str_success = "[BOT.TASK] load cookie success  = Au:"
+    log_str_failed =  "[BOT.TASK] load cookie failed!  = Au:"
+    log_not_exits =   "[BOT.TASK] cookie path not exists = Au:"
     #遍历用户列表
     for user, uinfo in VipUserDict.items():
         cookie_path = f"./log/cookie/{user}.cke"
@@ -2920,18 +2922,22 @@ async def loading_channel_cookie():
             ret_bool = await auth.reauthorize()  #尝试登录
             if ret_bool:  # True登陆成功
                 UserAuthDict[user] = auth  #将对象插入
-                print(f"[BOT.TASK] Au:{user} - load cookie success!")
+                log_str_success +=f"({user})"
+                #print(f"[BOT.TASK] Au:{user} - load cookie success!")
                 #不用重新修改UserTokenDict里面的游戏名和uuid
                 #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
                 #那么玩家id和uuid都是不会变化的，也没必要重新加载
             else:
-                print(f"[BOT.TASK] Au:{user} - load cookie failed!")
+                log_str_failed += f"({user}) "
+                #print(f"[BOT.TASK] Au:{user} - load cookie failed!")
                 continue
         else:
-            log_str += f"({user}) "
+            log_not_exits += f"({user}) "
             continue
     #结束任务
-    print(log_str)  #打印路径不存在的用户
+    print(log_str_success)#打印正常的用户
+    print(log_str_failed) #打印失败的用户
+    print(log_not_exits)  #打印路径不存在的用户
     print("[BOT.TASK] loading cookie finished")
 
 # 开机的时候打印一次时间，记录重启时间
