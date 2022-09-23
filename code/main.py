@@ -1003,7 +1003,7 @@ def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
 #####################################################################################################
 
 from check_vip import (VipUserDict, create_vip_uuid, fetch_vip_user, using_vip_uuid, vip_ck, vip_time_remain,
-                       vip_time_remain_cm, vip_time_stamp)
+                       vip_time_remain_cm, vip_time_stamp, roll_vip_start)
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
@@ -1466,7 +1466,6 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
         cm.append(c)
         await msg.reply(cm)
 
-from endpoints import roll_vip_start
 #用来存放roll的频道/服务器/回应用户的dict
 RollVipDcit={}
 with open("./log/VipRoll.json", 'r', encoding='utf-8') as frau:

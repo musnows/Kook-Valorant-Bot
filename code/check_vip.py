@@ -227,4 +227,25 @@ async def fetch_vip_user():
         print(f"[vip-r] update VipUserDict")
         
     return text
-        
+
+
+# vip抽奖相关代码（卡片消息）
+def roll_vip_start(vip_num:int,vip_day:int,roll_day):
+    """
+    Args:
+        vip_num (int): num of vip uuid
+        vip_day (int): day of vip
+        roll_day (int): day of roll end
+
+    Returns:
+        CardMessage for roll 
+    """
+    roll_second = roll_day*86400
+    cm = CardMessage()
+    c = Card()
+    c.append(Module.Section(Element.Text(f"添加表情回应，参加抽奖！"), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
+    c.append(Module.Context(Element.Text(f"奖励: {vip_day}天阿狸vip激活码   |  奖品: {vip_num}个", Types.Text.KMD)))
+    c.append(
+        Module.Countdown(datetime.now() + timedelta(seconds=roll_second), mode=Types.CountdownMode.DAY))
+    cm.append(c)
+    return cm
