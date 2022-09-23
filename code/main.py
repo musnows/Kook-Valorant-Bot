@@ -9,11 +9,14 @@ from typing import Union
 
 import aiohttp
 import requests
-from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage, PublicChannel, PublicMessage, requester)
+from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
+                 PublicChannel, PublicMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
-from endpoints import (icon_cm, upd_card,status_active_game, status_active_music, status_delete, weather,caiyun_translate,youdao_translate,is_CN)
+from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
+                       status_active_music, status_delete, upd_card, weather,
+                       youdao_translate)
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
@@ -579,11 +582,11 @@ async def uncle(msg: Message):
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
-from val import (authflow, dx123, fetch_buddies_uuid, fetch_bundle_weapen_byname, fetch_bundles_all,
-                 fetch_contract_uuid, fetch_daily_shop, fetch_item_iters, fetch_item_price_all, fetch_item_price_uuid,
-                 fetch_player_contract, fetch_player_loadout, fetch_playercard_uuid, fetch_skinlevel_uuid,
-                 fetch_skins_all, fetch_spary_uuid, fetch_title_uuid, fetch_user_gameID, fetch_valorant_point, kda123,
-                 lead123, myid123, saveid123, saveid_1, saveid_2, skin123, val123)
+from val import (authflow, dx123, fetch_bundle_weapen_byname,
+                 fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
+                 fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
+                 fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
+                 kda123, lead123, myid123, saveid123, saveid_1, saveid_2, val123)
 
 
 # 开始打游戏
@@ -710,14 +713,11 @@ def str2int(s):
 
 # 查询游戏错误码
 @bot.command(name='val', aliases=['van', 'VAN', 'VAL'])
-async def val_err(msg: Message, numS: str = "err"):
+async def val_err(msg: Message, numS: str = "-1",*arg):
     logging(msg)
-    if numS == "err":
-        await msg.reply(f"函数参数错误，请提供正确范围的错误码")
-        return
     try:
-        num = str2int(numS)
-        await val123(msg, num)
+        #num = str2int(numS)
+        await val123(msg, numS)
     except Exception as result:
         await msg.reply(f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
 
@@ -1001,8 +1001,9 @@ def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
 
 #####################################################################################################
 
-from check_vip import (VipUserDict, create_vip_uuid, fetch_vip_user, using_vip_uuid, vip_ck, vip_time_remain,
-                       vip_time_remain_cm, vip_time_stamp, roll_vip_start)
+from check_vip import (VipUserDict, create_vip_uuid, fetch_vip_user,
+                       roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
+                       vip_time_remain_cm, vip_time_stamp)
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
