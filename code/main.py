@@ -13,8 +13,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage, Public
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
-from upd_msg import icon_cm, upd_card
-from endpoints import (status_active_game, status_active_music, status_delete, weather,caiyun_translate,youdao_translate,is_CN)
+from endpoints import (icon_cm, upd_card,status_active_game, status_active_music, status_delete, weather,caiyun_translate,youdao_translate,is_CN)
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
