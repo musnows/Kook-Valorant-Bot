@@ -1542,7 +1542,7 @@ async def vip_roll_task():
                 }
                 #创建卡片消息
                 cm = CardMessage()
-                c=Card(Module.Section(Element.Text("恭喜您中奖vip激活码了！", Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda2, size='sm')))
+                c=Card(Module.Section(Element.Text("恭喜您中奖阿狸vip了！", Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda2, size='sm')))
                 c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip，可用/vhelp查看vip权益", Types.Text.KMD)))
                 c.append(
                     Module.Countdown(datetime.now() + timedelta(seconds=vip_time_remain(user_id)), mode=Types.CountdownMode.DAY))
