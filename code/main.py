@@ -1142,6 +1142,7 @@ async def check_vip_img():
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.powder, size='sm')))
         c.append(Module.Context(Element.Text("多次发送违禁图片会导致阿狸被封，请您慎重选择图片！", Types.Text.KMD)))
         #遍历vip用户的图片
+        log_str_user = "[BOT.TASK] check_vip_img Au:"
         for vip_user, vip_bg in VipShopBgDict.items():
             user = await bot.client.fetch_user(vip_user)
             sz = len(vip_bg["background"])
@@ -1170,11 +1171,13 @@ async def check_vip_img():
                     await bot.client.send(debug_ch, err_str)
 
             # 遍历完一个用户后打印结果
-            print(f"[BOT.TASK] check_vip_img Au:{vip_user} finished!")
+            log_str_user+=f"({vip_user})"
+            #print(f"[BOT.TASK] check_vip_img Au:{vip_user} finished!")
         #所有用户成功遍历后，写入文件
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         #打印
+        print(log_str_user)
         print("[BOT.TASK] check_vip_img finished!")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] check_vip_img\n```\n{traceback.format_exc()}\n```"
