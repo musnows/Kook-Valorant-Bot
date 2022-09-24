@@ -2378,7 +2378,7 @@ async def get_user_card(msg: Message, *arg):
     if arg != ():
         await msg.reply(f"`/uinfo`命令不需要参数。您是否想`/login`？")
         return
-
+    send_msg = None
     try:
         if msg.author_id in UserAuthDict:
             reau = await check_re_auth("玩家装备/通行证", msg)  #重新登录
@@ -2393,7 +2393,7 @@ async def get_user_card(msg: Message, *arg):
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
                 await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                 send_msg = reau
-            else:
+            else: # 如果不需要重新登录，则直接发消息
                 send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
             auth = UserAuthDict[msg.author_id]
@@ -2452,13 +2452,23 @@ async def get_user_card(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        if "Balances" in str(result):
+            text = f"键值错误，需要重新登录"
+            c = Card(color='#fb4b57')
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
+            c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
+            cm2.append(c)
+            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+        else:
+            c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
+            c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
+            c.append(Module.Divider())
+            c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
+                                                                        Types.Click.LINK)))
+            if send_msg != None:  # 非none则执行更新消息，而不是直接发送
+                await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+            else:
+                await msg.reply(cm2)
 
 
 # 获取捆绑包信息(无需登录)
