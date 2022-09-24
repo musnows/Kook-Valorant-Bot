@@ -1858,7 +1858,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
     return value:
      - True: no need to reauthorize / get `user_id` as params & reauhorize success 
      - False: unkown err / reauthorize failed
-     - send_msg: get `Message` as params & reauhorize success
+     - send_msg(dict): get `Message` as params & reauhorize success
     """
     user_id = "[ERR!]"  #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
