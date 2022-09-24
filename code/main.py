@@ -1820,6 +1820,22 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         login_rate_limit['time'] = time.time()
         ret_cm = get_login_rate_cm()  #这里是第一个出现速率限制err的用户
         await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
+    except KeyError as result:
+        print(f"ERR! [{GetTime()}] login - KeyError:{result}")
+        cm = CardMessage()
+        c = Card(color='#fb4b57')
+        if '0' in str(result):
+            text = f"遇到不常见的KeyError，可能👊Api服务器炸了"
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
+            c.append(Module.Context(Element.Text("KeyError, maybe API Offline", Types.Text.KMD)))
+            cm.append(c)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+        else:
+            text = f"遇到未知的KeyError，请[联系](https://kook.top/gpbTwZ)阿狸的主人哦~"
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
+            c.append(Module.Context(Element.Text("Unkown KeyError, please contact bot developer", Types.Text.KMD)))
+            cm.append(c)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except:
         err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
         print(err_str)  #只有不认识的报错消息才打印结果
