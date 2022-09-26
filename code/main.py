@@ -14,10 +14,12 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
 from khl.card import Card, CardMessage, Element, Module, Types
 from khl.command import Rule
 
+from bot_log import logging, log_bot_user_save, log_bot_user_len
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
-                       status_active_music, status_delete, upd_card, weather,
+                       status_active_music, status_delete, guild_list, upd_card, weather,
                        youdao_translate)
 
+# bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 # 用读取来的 config 初始化 bot，字段对应即可
@@ -54,24 +56,12 @@ def GetTime():
 #记录开机时间
 start_time = GetTime()
 
-# 在控制台打印msg内容，用作日志
-def logging(msg: Message):
-    now_time = GetTime()
-    if isinstance(msg, PrivateMessage):
-        print(
-            f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
-        )
-    else:
-        print(
-            f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
-        )
 
-
+# hello命令，一般用于测试阿狸在不在线
 @bot.command(name='hello')
 async def world(msg: Message):
     logging(msg)
     await msg.reply('你好呀~')
-
 
 # help命令
 @bot.command(name='Ahri', aliases=['ahri'])
@@ -2898,9 +2888,24 @@ async def inform_user(msg:Message,channel:str,user:str):
         err_str = f"ERR! [{GetTime()}] inform-user\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
+
     
-
-
+# 显示当前阿狸加入了多少个服务器，以及用户数量
+@bot.command(name='log-list',aliases=['log-l'])
+async def bot_log_list(msg:Message,*arg):
+    logging(msg)
+    try:
+        if msg.author_id == master_id:
+            Glist = await guild_list()
+            Ulist = log_bot_user_len()
+            await msg.reply(f"```\nGuild: {Glist['data']['meta']['total']}\nUser:  {Ulist} \n```")
+            log_bot_user_save() # 保存用户记录信息
+        else:
+            await msg.reply(f"您没有权限执行此命令！")
+    except:
+        err_str = f"ERR! [{GetTime()}] log-list\n```\n{traceback.format_exc()}\n```"
+        await msg.reply(f"{err_str}")
+        print(err_str)
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.task.add_date()
