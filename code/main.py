@@ -2518,11 +2518,15 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
 
 # 检查用户是否在错误用户里面
 async def check_notify_err_user(msg:Message):
+    """Return(bool):
+     - True: user in SkinNotifyDict['err_user']
+     - False: user not in, everythings is good
+    """
     if msg.author_id in SkinNotifyDict['err_user']:
         await msg.reply(f"您之前屏蔽了阿狸，或阿狸无法向您发起私信\n您的皮肤提醒信息已经被`删除`，请在解除对阿狸的屏蔽后重新操作！")
-        return False
-    else:
         return True
+    else:
+        return False
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
