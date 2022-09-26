@@ -11,13 +11,15 @@ import aiohttp
 import requests
 from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
                  PublicChannel, PublicMessage, requester)
-from khl.card import Card, CardMessage, Element, Module, Types
+from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 
+from bot_log import logging, log_bot_list
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
-                       status_active_music, status_delete, upd_card, weather,
+                       status_active_music, status_delete, guild_view, upd_card, weather,
                        youdao_translate)
 
+# bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 # 用读取来的 config 初始化 bot，字段对应即可
@@ -25,13 +27,10 @@ bot = Bot(token=config['token'])
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['img_upload_token'])
 
-Botoken = config['token']
-kook = "https://www.kookapp.cn"
-headers = {f'Authorization': f"Bot {Botoken}"}
-
 # 设置全局变量：机器人开发者id/报错频道
 master_id = '1961572535'
 Debug_ch = '6248953582412867'
+kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 #在bot一开机的时候就获取log频道作为全局变量
 debug_ch = None
@@ -57,27 +56,15 @@ def GetTime():
 #记录开机时间
 start_time = GetTime()
 
-# 在控制台打印msg内容，用作日志
-def logging(msg: Message):
-    now_time = GetTime()
-    if isinstance(msg, PrivateMessage):
-        print(
-            f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
-        )
-    else:
-        print(
-            f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
-        )
 
-
-@bot.command(name='hello')
+# hello命令，一般用于测试阿狸在不在线
+@bot.command(name='hello',aliases=['HELLO'])
 async def world(msg: Message):
     logging(msg)
     await msg.reply('你好呀~')
 
-
 # help命令
-@bot.command(name='Ahri', aliases=['ahri'])
+@bot.command(name='Ahri', aliases=['ahri','阿狸'])
 async def Ahri(msg: Message, *arg):
     logging(msg)
     try:
@@ -182,8 +169,11 @@ async def Vhelp(msg: Message, *arg):
 
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
-async def countdown(msg: Message, time: int = 60):
+async def countdown(msg: Message, time: int = 60,*arg):
     logging(msg)
+    if time<=0 or time>= 90000000:
+        await msg.reply(f"倒计时时间超出范围！")
+        return
     try:
         cm = CardMessage()
         c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55))  # color=(90,59,215) is another available form
@@ -352,7 +342,7 @@ async def thanks_sponser():
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
     async with aiohttp.ClientSession() as session:
-        async with session.post(api, headers=headers) as response:
+        async with session.post(api, headers=kook_headers) as response:
             json_dict = json.loads(await response.text())
 
     #长度相同无需更新
@@ -2545,14 +2535,25 @@ UserStsDict = {}
 with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
+# 检查用户是否在错误用户里面
+async def check_notify_err_user(msg:Message):
+    """Return(bool):
+     - True: user in SkinNotifyDict['err_user']
+     - False: user not in, everythings is good
+    """
+    if msg.author_id in SkinNotifyDict['err_user']:
+        await msg.reply(f"您之前屏蔽了阿狸，或阿狸无法向您发起私信\n您的皮肤提醒信息已经被`删除`，请在解除对阿狸的屏蔽后重新操作！")
+        return True
+    else:
+        return False
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
+    global SkinNotifyDict
     try:
         print("[BOT.TASK] auto_skin_notify Starting!")  #开始的时候打印一下
         #加载vip用户列表
-        with open("./log/VipUser.json", 'r', encoding='utf-8') as frau:
-            VipUserD = json.load(frau)
+        VipUserD = copy.deepcopy(VipUserDict)
         #先遍历vip用户列表，获取vip用户的商店
         for vip, uinfo in VipUserD.items():
             try:
@@ -2632,7 +2633,8 @@ async def auto_skin_notify():
                 await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
         # 再遍历所有用户的皮肤提醒
-        for aid, skin in SkinNotifyDict.items():
+        temp_SkinNotifyDict = copy.deepcopy(SkinNotifyDict)
+        for aid, skin in temp_SkinNotifyDict['data'].items():
             try:
                 user = await bot.client.fetch_user(aid)
                 if aid in UserAuthDict:
@@ -2668,11 +2670,21 @@ async def auto_skin_notify():
                         f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？"
                     )
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{traceback.format_exc()}\n```"
+                err_cur = str(traceback.format_exc())
+                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{err_cur}\n```"
+                if '屏蔽' in err_cur or '无法发起' in err_cur:
+                    del SkinNotifyDict['data'][aid] #直接粗暴解决，删除用户
+                    SkinNotifyDict['err_user'][aid] = GetTime()
+                    
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
         #完成遍历后打印
+        if temp_SkinNotifyDict != SkinNotifyDict:
+            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw1:
+                json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
+            print("[BOT.TASK] save SkinNotifyDict")
+            
         finish_str = "[BOT.TASK] auto_skin_notify Finished!"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
@@ -2704,10 +2716,12 @@ async def add_skin_notify(msg: Message, *arg):
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
         return
     try:
+        if await check_notify_err_user(msg):
+            return
         # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
         vip_status = await vip_ck(msg.author_id)
-        if msg.author_id in SkinNotifyDict and not vip_status:
-            if len(SkinNotifyDict[msg.author_id]) > 2:
+        if msg.author_id in SkinNotifyDict['data'] and not vip_status:
+            if len(SkinNotifyDict['data'][msg.author_id]) > 2:
                 cm = CardMessage()
                 c = Card(color='#fb4b57')
                 c.append(
@@ -2811,12 +2825,12 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
                 return
 
             S_skin = UserStsDict[msg.author_id][num]
-            if msg.author_id not in SkinNotifyDict:
-                SkinNotifyDict[msg.author_id] = {}
-                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            if msg.author_id not in SkinNotifyDict['data']:
+                SkinNotifyDict['data'][msg.author_id] = {}
+                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
             else:  #如果存在了就直接在后面添加
-                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
-            # print(SkinNotifyDict[msg.author_id])
+                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            # print(SkinNotifyDict['data'][msg.author_id])
 
             # 写入文件
             with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
@@ -2858,9 +2872,11 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 async def list_skin_notify(msg: Message, *arg):
     logging(msg)
     try:
-        if msg.author_id in SkinNotifyDict:
+        if await check_notify_err_user(msg):
+            return
+        if msg.author_id in SkinNotifyDict['data']:
             text = "```\n"
-            for skin, name in SkinNotifyDict[msg.author_id].items():
+            for skin, name in SkinNotifyDict['data'][msg.author_id].items():
                 text += skin + ' = ' + name + '\n'
             text += "```\n"
             text += "如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
@@ -2882,12 +2898,14 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
         return
     try:
+        if await check_notify_err_user(msg):
+            return
         global SkinNotifyDict
-        if msg.author_id in SkinNotifyDict:
-            if uuid in SkinNotifyDict[msg.author_id]:
-                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
-                await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
-                del SkinNotifyDict[msg.author_id][uuid]
+        if msg.author_id in SkinNotifyDict['data']:
+            if uuid in SkinNotifyDict['data'][msg.author_id]:
+                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict['data'][msg.author_id][uuid]}")
+                await msg.reply(f"已删除皮肤：`{SkinNotifyDict['data'][msg.author_id][uuid]}`")
+                del SkinNotifyDict['data'][msg.author_id][uuid]
                 # 写入文件
                 with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
                     json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
@@ -2920,9 +2938,46 @@ async def inform_user(msg:Message,channel:str,user:str):
         err_str = f"ERR! [{GetTime()}] inform-user\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
+
     
-
-
+# 显示当前阿狸加入了多少个服务器，以及用户数量
+@bot.command(name='log-list',aliases=['log-l','log'])
+async def bot_log_list(msg:Message,*arg):
+    logging(msg)
+    try:
+        if msg.author_id == master_id:
+            retDict = await log_bot_list(msg)
+            i=1
+            text_name = "No  服务器名\n"
+            text_user = "用户数\n"
+            for gu,ginfo in retDict['data'].items():
+                Gret = await guild_view(gu)
+                Gname = Gret['data']['name']
+                if len(Gname) >10:
+                    Gname = Gname[0,9]
+                    Gname += "…"
+                # 追加text
+                text_name+=f"[{i}]  {Gname}\n"
+                text_user+=f"{len(ginfo)}\n"
+                i+=1
+            
+            cm = CardMessage()
+            c = Card(
+                Module.Header(f"来看看阿狸当前的用户记录吧！"),
+                Module.Context(f"服务器总数: {retDict['guild_total']}  活跃服务器: {retDict['guild_active']}  用户数: {retDict['user_total']}"),
+                Module.Divider(),
+                Module.Section(
+                    Struct.Paragraph(2,
+                               Element.Text(f"{text_name}",Types.Text.KMD),
+                               Element.Text(f"{text_user}",Types.Text.KMD))))
+            cm.append(c)
+            await msg.reply(cm)
+        else:
+            await msg.reply(f"您没有权限执行此命令！")
+    except:
+        err_str = f"ERR! [{GetTime()}] log-list\n```\n{traceback.format_exc()}\n```"
+        await msg.reply(f"{err_str}")
+        print(err_str)
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.task.add_date()

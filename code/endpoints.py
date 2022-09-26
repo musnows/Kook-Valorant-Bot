@@ -9,9 +9,8 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
 #初始化一个bot，下方更新卡片消息需要
 bot = Bot(token=config['token'])
 
-Botoken = config['token']
-kook = "https://www.kookapp.cn"
-headers = {f'Authorization': f"Bot {Botoken}"}
+kook_base_url = "https://www.kookapp.cn"
+kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 ################################翻译############################################
 
@@ -94,38 +93,57 @@ def is_CN(word):
 
 # 让机器人开始打游戏
 async def status_active_game(game: int):
-    url = kook + "/api/v3/game/activity"
+    url = kook_base_url + "/api/v3/game/activity"
     params = {"id": game, "data_type": 1}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=params, headers=headers) as response:
+        async with session.post(url, data=params, headers=kook_headers) as response:
             return json.loads(await response.text())
 
 
 # 让机器人开始听歌
 async def status_active_music(name: str, singer: str):
-    url = kook + "/api/v3/game/activity"
+    url = kook_base_url + "/api/v3/game/activity"
     params = {"data_type": 2, "software": "qqmusic", "singer": singer, "music_name": name}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=params, headers=headers) as response:
+        async with session.post(url, data=params, headers=kook_headers) as response:
             return json.loads(await response.text())
 
 
 # 删除机器人的当前动态
 async def status_delete(d: int):
-    url = kook + "/api/v3/game/delete-activity"
+    url = kook_base_url + "/api/v3/game/delete-activity"
     params = {"data_type": d}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=params, headers=headers) as response:
+        async with session.post(url, data=params, headers=kook_headers) as response:
             return json.loads(await response.text())
             #print(ret)
 
 
 # 获取服务器用户数量用于更新（现在已经移植到了另外一个bot上）
-async def server_status(Gulid_ID: str = "3566823018281801"):
-    url = kook + "/api/v3/guild/user-list"
-    params = {"guild_id": Gulid_ID}
+async def guild_userlist(Guild_ID: str = "3566823018281801"):
+    url = kook_base_url + "/api/v3/guild/user-list"
+    params = {"guild_id": Guild_ID}
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, params=params, headers=headers) as response:
+        async with session.get(url, params=params, headers=kook_headers) as response:
+            ret1 = json.loads(await response.text())
+            #print(ret1)
+            return ret1
+
+# 获取阿狸加入的服务器数量
+async def guild_list():
+    url = kook_base_url + "/api/v3/guild/list"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=kook_headers) as response:
+            ret1 = json.loads(await response.text())
+            #print(ret1)
+            return ret1
+        
+# 获取服务器详情
+async def guild_view(Guild_ID:str):
+    url = kook_base_url + "/api/v3/guild/view"
+    params = {"guild_id": Guild_ID}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
             #print(ret1)
             return ret1
