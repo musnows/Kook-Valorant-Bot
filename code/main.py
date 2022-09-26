@@ -58,13 +58,13 @@ start_time = GetTime()
 
 
 # hello命令，一般用于测试阿狸在不在线
-@bot.command(name='hello')
+@bot.command(name='hello',aliases=['HELLO'])
 async def world(msg: Message):
     logging(msg)
     await msg.reply('你好呀~')
 
 # help命令
-@bot.command(name='Ahri', aliases=['ahri'])
+@bot.command(name='Ahri', aliases=['ahri','阿狸'])
 async def Ahri(msg: Message, *arg):
     logging(msg)
     try:
