@@ -2891,7 +2891,7 @@ async def inform_user(msg:Message,channel:str,user:str):
 
     
 # 显示当前阿狸加入了多少个服务器，以及用户数量
-@bot.command(name='log-list',aliases=['log-l'])
+@bot.command(name='log-list',aliases=['log-l','log'])
 async def bot_log_list(msg:Message,*arg):
     logging(msg)
     try:
