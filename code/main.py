@@ -25,13 +25,10 @@ bot = Bot(token=config['token'])
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['img_upload_token'])
 
-Botoken = config['token']
-kook = "https://www.kookapp.cn"
-headers = {f'Authorization': f"Bot {Botoken}"}
-
 # 设置全局变量：机器人开发者id/报错频道
 master_id = '1961572535'
 Debug_ch = '6248953582412867'
+kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 #在bot一开机的时候就获取log频道作为全局变量
 debug_ch = None
@@ -352,7 +349,7 @@ async def thanks_sponser():
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
     async with aiohttp.ClientSession() as session:
-        async with session.post(api, headers=headers) as response:
+        async with session.post(api, headers=kook_headers) as response:
             json_dict = json.loads(await response.text())
 
     #长度相同无需更新
