@@ -11,12 +11,12 @@ import aiohttp
 import requests
 from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
                  PublicChannel, PublicMessage, requester)
-from khl.card import Card, CardMessage, Element, Module, Types
+from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 
-from bot_log import logging, log_bot_user_save, log_bot_user_len
+from bot_log import logging, log_bot_list
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
-                       status_active_music, status_delete, guild_list, upd_card, weather,
+                       status_active_music, status_delete, guild_view, upd_card, weather,
                        youdao_translate)
 
 # bot的token文件
@@ -2896,10 +2896,32 @@ async def bot_log_list(msg:Message,*arg):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            Glist = await guild_list()
-            Ulist = log_bot_user_len()
-            await msg.reply(f"```\nGuild: {Glist['data']['meta']['total']}\nUser:  {Ulist} \n```")
-            log_bot_user_save() # 保存用户记录信息
+            retDict = await log_bot_list(msg)
+            i=1
+            text_name = "No  服务器名\n"
+            text_user = "用户数\n"
+            for gu,ginfo in retDict['data'].items():
+                Gret = await guild_view(gu)
+                Gname = Gret['data']['name']
+                if len(Gname) >10:
+                    Gname = Gname[0,9]
+                    Gname += "…"
+                # 追加text
+                text_name+=f"[{i}]  {Gname}\n"
+                text_user+=f"{len(ginfo)}\n"
+                i+=1
+            
+            cm = CardMessage()
+            c = Card(
+                Module.Header(f"来看看阿狸当前的用户记录吧！"),
+                Module.Context(f"服务器总数: {retDict['guild_total']}  活跃服务器: {retDict['guild_active']}  用户数: {retDict['user_total']}"),
+                Module.Divider(),
+                Module.Section(
+                    Struct.Paragraph(2,
+                               Element.Text(f"{text_name}",Types.Text.KMD),
+                               Element.Text(f"{text_user}",Types.Text.KMD))))
+            cm.append(c)
+            await msg.reply(cm)
         else:
             await msg.reply(f"您没有权限执行此命令！")
     except:
