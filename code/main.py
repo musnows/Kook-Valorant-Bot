@@ -2604,7 +2604,7 @@ async def auto_skin_notify():
 
         # 再遍历所有用户的皮肤提醒
         temp_SkinNotifyDict = copy.deepcopy(SkinNotifyDict)
-        for aid, skin in temp_SkinNotifyDict.items():
+        for aid, skin in temp_SkinNotifyDict['data'].items():
             try:
                 user = await bot.client.fetch_user(aid)
                 if aid in UserAuthDict:
@@ -2642,13 +2642,19 @@ async def auto_skin_notify():
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{err_cur}\n```"
-                if '屏蔽' in err_cur:
-                    del SkinNotifyDict[aid] #直接粗暴解决，删除用户
+                if '屏蔽' in err_cur or '无法发起' in err_cur:
+                    del SkinNotifyDict['data'][aid] #直接粗暴解决，删除用户
+                    SkinNotifyDict['err_user'][aid] = GetTime()
                     
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
         #完成遍历后打印
+        if temp_SkinNotifyDict != SkinNotifyDict:
+            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw1:
+                json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
+            print("[BOT.TASK] save SkinNotifyDict")
+            
         finish_str = "[BOT.TASK] auto_skin_notify Finished!"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
@@ -2682,8 +2688,8 @@ async def add_skin_notify(msg: Message, *arg):
     try:
         # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
         vip_status = await vip_ck(msg.author_id)
-        if msg.author_id in SkinNotifyDict and not vip_status:
-            if len(SkinNotifyDict[msg.author_id]) > 2:
+        if msg.author_id in SkinNotifyDict['data'] and not vip_status:
+            if len(SkinNotifyDict['data'][msg.author_id]) > 2:
                 cm = CardMessage()
                 c = Card(color='#fb4b57')
                 c.append(
@@ -2787,12 +2793,12 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
                 return
 
             S_skin = UserStsDict[msg.author_id][num]
-            if msg.author_id not in SkinNotifyDict:
-                SkinNotifyDict[msg.author_id] = {}
-                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            if msg.author_id not in SkinNotifyDict['data']:
+                SkinNotifyDict['data'][msg.author_id] = {}
+                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
             else:  #如果存在了就直接在后面添加
-                SkinNotifyDict[msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
-            # print(SkinNotifyDict[msg.author_id])
+                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            # print(SkinNotifyDict['data'][msg.author_id])
 
             # 写入文件
             with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
@@ -2834,9 +2840,9 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 async def list_skin_notify(msg: Message, *arg):
     logging(msg)
     try:
-        if msg.author_id in SkinNotifyDict:
+        if msg.author_id in SkinNotifyDict['data']:
             text = "```\n"
-            for skin, name in SkinNotifyDict[msg.author_id].items():
+            for skin, name in SkinNotifyDict['data'][msg.author_id].items():
                 text += skin + ' = ' + name + '\n'
             text += "```\n"
             text += "如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
@@ -2859,11 +2865,11 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         return
     try:
         global SkinNotifyDict
-        if msg.author_id in SkinNotifyDict:
-            if uuid in SkinNotifyDict[msg.author_id]:
-                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict[msg.author_id][uuid]}")
-                await msg.reply(f"已删除皮肤：`{SkinNotifyDict[msg.author_id][uuid]}`")
-                del SkinNotifyDict[msg.author_id][uuid]
+        if msg.author_id in SkinNotifyDict['data']:
+            if uuid in SkinNotifyDict['data'][msg.author_id]:
+                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict['data'][msg.author_id][uuid]}")
+                await msg.reply(f"已删除皮肤：`{SkinNotifyDict['data'][msg.author_id][uuid]}`")
+                del SkinNotifyDict['data'][msg.author_id][uuid]
                 # 写入文件
                 with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
                     json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
