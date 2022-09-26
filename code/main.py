@@ -2516,6 +2516,13 @@ UserStsDict = {}
 with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
     SkinNotifyDict = json.load(frsi)
 
+# 检查用户是否在错误用户里面
+async def check_notify_err_user(msg:Message):
+    if msg.author_id in SkinNotifyDict['err_user']:
+        await msg.reply(f"您之前屏蔽了阿狸，或阿狸无法向您发起私信\n您的皮肤提醒信息已经被`删除`，请在解除对阿狸的屏蔽后重新操作！")
+        return False
+    else:
+        return True
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
@@ -2686,6 +2693,8 @@ async def add_skin_notify(msg: Message, *arg):
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
         return
     try:
+        if await check_notify_err_user(msg):
+            return
         # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
         vip_status = await vip_ck(msg.author_id)
         if msg.author_id in SkinNotifyDict['data'] and not vip_status:
@@ -2840,6 +2849,8 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 async def list_skin_notify(msg: Message, *arg):
     logging(msg)
     try:
+        if await check_notify_err_user(msg):
+            return
         if msg.author_id in SkinNotifyDict['data']:
             text = "```\n"
             for skin, name in SkinNotifyDict['data'][msg.author_id].items():
@@ -2864,6 +2875,8 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
         return
     try:
+        if await check_notify_err_user(msg):
+            return
         global SkinNotifyDict
         if msg.author_id in SkinNotifyDict['data']:
             if uuid in SkinNotifyDict['data'][msg.author_id]:
