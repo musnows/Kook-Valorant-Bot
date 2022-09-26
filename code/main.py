@@ -2519,11 +2519,11 @@ with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
+    global SkinNotifyDict
     try:
         print("[BOT.TASK] auto_skin_notify Starting!")  #开始的时候打印一下
         #加载vip用户列表
-        with open("./log/VipUser.json", 'r', encoding='utf-8') as frau:
-            VipUserD = json.load(frau)
+        VipUserD = copy.deepcopy(VipUserDict)
         #先遍历vip用户列表，获取vip用户的商店
         for vip, uinfo in VipUserD.items():
             try:
@@ -2603,7 +2603,8 @@ async def auto_skin_notify():
                 await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
         # 再遍历所有用户的皮肤提醒
-        for aid, skin in SkinNotifyDict.items():
+        temp_SkinNotifyDict = copy.deepcopy(SkinNotifyDict)
+        for aid, skin in temp_SkinNotifyDict.items():
             try:
                 user = await bot.client.fetch_user(aid)
                 if aid in UserAuthDict:
@@ -2639,7 +2640,11 @@ async def auto_skin_notify():
                         f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？"
                     )
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{traceback.format_exc()}\n```"
+                err_cur = str(traceback.format_exc())
+                err_str = f"ERR![BOT.TASK] auto_skin_notify Au:{vip} user.send\n```\n{err_cur}\n```"
+                if '屏蔽' in err_cur:
+                    del SkinNotifyDict[aid] #直接粗暴解决，删除用户
+                    
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
