@@ -120,9 +120,9 @@ async def status_delete(d: int):
 
 
 # 获取服务器用户数量用于更新（现在已经移植到了另外一个bot上）
-async def guild_userlist(Gulid_ID: str = "3566823018281801"):
+async def guild_userlist(Guild_ID: str = "3566823018281801"):
     url = kook_base_url + "/api/v3/guild/user-list"
-    params = {"guild_id": Gulid_ID}
+    params = {"guild_id": Guild_ID}
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
@@ -134,6 +134,16 @@ async def guild_list():
     url = kook_base_url + "/api/v3/guild/list"
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=kook_headers) as response:
+            ret1 = json.loads(await response.text())
+            #print(ret1)
+            return ret1
+        
+# 获取服务器详情
+async def guild_view(Guild_ID:str):
+    url = kook_base_url + "/api/v3/guild/view"
+    params = {"guild_id": Guild_ID}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
             #print(ret1)
             return ret1
