@@ -169,8 +169,11 @@ async def Vhelp(msg: Message, *arg):
 
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
-async def countdown(msg: Message, time: int = 60):
+async def countdown(msg: Message, time: int = 60,*arg):
     logging(msg)
+    if time<=0 or time>= 90000000:
+        await msg.reply(f"倒计时时间超出范围！")
+        return
     try:
         cm = CardMessage()
         c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55))  # color=(90,59,215) is another available form
