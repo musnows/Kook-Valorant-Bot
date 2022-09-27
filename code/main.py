@@ -1575,6 +1575,32 @@ async def vip_roll_task():
         with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(log_str)# 打印中奖用户作为log
+
+        
+# 给所有vip用户添加时间，避免出现某些错误的时候浪费vip时间
+@bot.command(name='vip-ta')
+async def vip_time_add(msg:Message,vday:int=1,*arg):
+    logging(msg)
+    if msg.author_id!= master_id:
+        await msg.reply(f"您没有权限执行此命令！")
+        return
+    
+    try:
+        global VipUserDict
+        # 给所有vip用户上天数
+        for vip,vinfo in VipUserDict.items():
+            time_vip = vip_time_stamp(vip, vday)
+            VipUserDict[vip]['time'] = time_vip
+        
+        await msg.reply(f"操作完成，已给所有vip用户增加 `{vday}` 天时长")
+        # 将修改存放到文件中
+        with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(f"[vip_time_add] update VipUserDict")
+    except:
+        err_str = f"ERR! [{GetTime()}] vip_time_add\n```\n{traceback.format_exc()}\n```"
+        await msg.reply(f"{err_str}")
+        print(err_str)
     
 
 ##############################################################################
