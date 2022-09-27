@@ -21,6 +21,7 @@ def log_bot_save():
 # 记录用户信息
 def log_bot_user(user_id:str,guild_id:str,time):
     global BotUserDict
+    BotUserDict['cmd_total']+=1
     # 服务器不存在，新的用户服务器
     if guild_id not in BotUserDict['data']:
         BotUserDict['data'][guild_id] = {}
