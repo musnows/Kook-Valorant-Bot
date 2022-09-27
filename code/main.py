@@ -56,6 +56,12 @@ def GetTime():
 #记录开机时间
 start_time = GetTime()
 
+# 拳头api调用被禁止的时候用这个变量取消所有相关命令
+Login_Forbidden = True
+async def Login_Forbidden_send(msg:Message):
+    print(f"[Login_Forbidden] Au:{msg.author_id} Command Failed")
+    await msg.reply(f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)")
+    
 
 # hello命令，一般用于测试阿狸在不在线
 @bot.command(name='hello',aliases=['HELLO'])
@@ -1710,6 +1716,9 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
     elif arg != ():
         await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
         return
+    elif Login_Forbidden:
+        await Login_Forbidden_send(msg)
+        return
 
     global login_rate_limit
     try:
@@ -1923,6 +1932,9 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
 @bot.command(name="login-t")
 async def test_if_login(msg: Message, *arg):
     logging(msg)
+    if Login_Forbidden:
+        await Login_Forbidden_send(msg)
+        return
     try:
         if msg.author_id in UserAuthDict:
             flag_au = 1
@@ -2207,6 +2219,9 @@ async def get_daily_shop(msg: Message, *arg):
     if arg != ():
         await msg.reply(f"`/shop`命令不需要参数。您是否想`/login`？")
         return
+    elif Login_Forbidden:
+        await Login_Forbidden_send(msg)
+        return
     send_msg = None
     try:
         if msg.author_id in UserAuthDict:
@@ -2386,6 +2401,9 @@ async def get_user_card(msg: Message, *arg):
     logging(msg)
     if arg != ():
         await msg.reply(f"`/uinfo`命令不需要参数。您是否想`/login`？")
+        return
+    elif Login_Forbidden:
+        await Login_Forbidden_send(msg)
         return
     send_msg = None
     try:
@@ -2954,6 +2972,20 @@ async def inform_user(msg:Message,channel:str,user:str):
         print(err_str)
         await msg.reply(err_str)
 
+@bot.command(name='lf')
+async def Login_Forbidden_Change(msg:Message):
+    logging(msg)
+    if msg.author_id == master_id:
+        global Login_Forbidden
+        if Login_Forbidden == True:
+            Login_Forbidden = False
+        else:
+            Login_Forbidden = True
+        
+        await msg.reply(f"Update Login_Forbidden status: {Login_Forbidden}")
+    else:
+        await msg.reply(f"您没有权限执行此命令！")
+        return
     
 # 显示当前阿狸加入了多少个服务器，以及用户数量
 @bot.command(name='log-list',aliases=['log-l','log'])
@@ -3006,6 +3038,10 @@ async def loading_channel_cookie():
         print("[BOT.TASK] fetch_public_channel failed")
         os._exit(-1)  #出现错误直接退出程序
 
+    if Login_Forbidden:
+        print(f"[BOT.TASK] Login_Forbidden: {Login_Forbidden}")
+        return
+    
     print("[BOT.TASK] loading cookie start")
     global UserAuthDict
     log_str_success = "[BOT.TASK] load cookie success  = Au:"
