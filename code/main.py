@@ -2542,8 +2542,23 @@ async def check_notify_err_user(msg:Message):
      - False: user not in, everythings is good
     """
     if msg.author_id in SkinNotifyDict['err_user']:
-        await msg.reply(f"您之前屏蔽了阿狸，或阿狸无法向您发起私信\n您的皮肤提醒信息已经被`删除`，请在解除对阿狸的屏蔽后重新操作！")
-        return True
+        try:
+            user = await bot.client.fetch_user(msg.author_id)
+            await user.send(f"这是一个私聊测试，请忽略此条消息")#先测试是否能发私聊
+            # 可以发起，在err_user列表中删除该用户
+            global SkinNotifyDict
+            del SkinNotifyDict['err_user'][msg.author_id]
+            return False 
+        except:
+            err_cur = str(traceback.format_exc())
+            err_str = f"ERR![{GetTime()}] err_Au:{msg.author_id} user.send\n```\n{err_cur}\n```"
+            if '屏蔽' in err_cur or '无法发起' in err_cur:
+                await msg.reply(f"您之前屏蔽了阿狸，或阿狸无法向您发起私信\n您的皮肤提醒信息已经被`删除`，请在解除对阿狸的屏蔽后重新操作！\n{err_str}")
+            else:
+                err_str+="\n如果此错误多次出现，请[联系](https://kook.top/gpbTwZ)开发者"
+                await msg.reply(err_str)
+            # 不管出现什么错误，都返回True代表无法私信
+            return True
     else:
         return False
 
