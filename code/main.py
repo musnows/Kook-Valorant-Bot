@@ -2541,12 +2541,12 @@ async def check_notify_err_user(msg:Message):
      - True: user in SkinNotifyDict['err_user']
      - False: user not in, everythings is good
     """
+    global SkinNotifyDict
     if msg.author_id in SkinNotifyDict['err_user']:
         try:
             user = await bot.client.fetch_user(msg.author_id)
             await user.send(f"这是一个私聊测试，请忽略此条消息")#先测试是否能发私聊
             # 可以发起，在err_user列表中删除该用户
-            global SkinNotifyDict
             del SkinNotifyDict['err_user'][msg.author_id]
             return False 
         except:
