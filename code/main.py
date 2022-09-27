@@ -57,7 +57,7 @@ def GetTime():
 start_time = GetTime()
 
 # 拳头api调用被禁止的时候用这个变量取消所有相关命令
-Login_Forbidden = True
+Login_Forbidden = False
 async def Login_Forbidden_send(msg:Message):
     print(f"[Login_Forbidden] Au:{msg.author_id} Command Failed")
     await msg.reply(f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)")
