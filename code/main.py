@@ -1953,6 +1953,9 @@ async def test_if_login(msg: Message, *arg):
 @bot.command(name='logout')
 async def logout_authtoken(msg: Message, *arg):
     logging(msg)
+    if Login_Forbidden:
+        await Login_Forbidden_send(msg)
+        return
     try:
         global UserTokenDict, UserAuthDict
         if msg.author_id not in UserAuthDict:  #使用not in判断是否不存在
