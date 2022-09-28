@@ -2104,8 +2104,8 @@ async def update_bundle_url(msg: Message):
 
 
 # 手动更新商店物品和价格
-@bot.command(name='update_spb')
-async def update_skin_price(msg: Message):
+@bot.command(name='update_spb',aliases=['update','upd'])
+async def update_skin_price_bundle(msg: Message):
     logging(msg)
     if msg.author_id == master_id:
         if await update_skins(msg):
