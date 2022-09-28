@@ -2467,7 +2467,7 @@ async def get_user_card(msg: Message, *arg):
                 print(f"ERR![player_card]  Au:{msg.author_id} uuid:{resp['Identity']['PlayerCardID']}")
             if 'data' not in player_title or player_title['status'] != 200:
                 player_title = {'data':{
-                    "displayName":f"未知玩家卡面uuid！\nunknown uuid:{resp['Identity']['PlayerTitleID']}"
+                    "displayName":f"未知玩家卡面uuid！\nUnknow uuid: `{resp['Identity']['PlayerTitleID']}`"
                 }}
                 print(f"ERR![player_title] Au:{msg.author_id} uuid:{resp['Identity']['PlayerTitleID']}")
             #print(player_card,player_title)
