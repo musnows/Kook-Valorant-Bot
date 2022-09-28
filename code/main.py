@@ -2462,6 +2462,15 @@ async def get_user_card(msg: Message, *arg):
             #print(resp)
             player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
             player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
+            if 'data' not in player_card or player_card['status'] != 200:
+                player_card = {'data':{'wideArt':'https://img.kookapp.cn/assets/2022-09/PDlf7DcoUH0ck03k.png'}}
+                print(f"ERR![player_card]  Au:{msg.author_id} uuid:{resp['Identity']['PlayerCardID']}")
+            if 'data' not in player_title or player_title['status'] != 200:
+                player_title = {'data':{
+                    "displayName":f"未知玩家卡面uuid！\nunknown uuid:{resp['Identity']['PlayerTitleID']}"
+                }}
+                print(f"ERR![player_title] Au:{msg.author_id} uuid:{resp['Identity']['PlayerTitleID']}")
+            #print(player_card,player_title)
             if resp['Guns'] == None or resp['Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
                 cm = CardMessage()
                 text = f"状态错误！您是否登录了一个全新账户？"
