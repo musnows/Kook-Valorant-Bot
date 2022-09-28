@@ -136,7 +136,7 @@ async def Vhelp(msg: Message, *arg):
         help_1 += "「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
         help_1 += "「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
         help_1 += "「/shop」 查询您的每日商店\n"
-        help_1 += "「/point」「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
+        help_1 += "「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
         help_1 += "「/notify-a 皮肤名」查询皮肤，并选择指定皮肤加入每日商店提醒\n"
         help_1 += "「/notify-l 」查看当前设置了提醒的皮肤\n"
         help_1 += "「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
