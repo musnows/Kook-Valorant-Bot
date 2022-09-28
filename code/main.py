@@ -89,7 +89,7 @@ async def Ahri(msg: Message, *arg):
         text += "「/saveid 游戏id」 保存(修改)您的游戏id\n"
         text += "「/myid」 让阿狸说出您的游戏id\n"
         text += "「`/vhelp`」瓦洛兰特游戏查询相关功能的帮助\n"
-        text += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)"
+        #text += "[如果你觉得这些功能还不错，可以支持一下阿狸吗?](https://afdian.net/a/128ahri?tab=shop)"
         c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header('和阿狸玩小游戏吧~ '))
