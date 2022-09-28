@@ -1737,10 +1737,10 @@ async def check_user_login_rate(msg: Message):
 async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
     if passwd == 'err' or user == 'err':
-        await msg.reply(f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`")
+        await msg.reply(f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
         return
     elif arg != ():
-        await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`")
+        await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`\n正确用法：`/login 账户 密码`")
         return
     elif Login_Forbidden:
         await Login_Forbidden_send(msg)
