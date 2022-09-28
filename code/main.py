@@ -3001,15 +3001,15 @@ async def bot_log_list(msg:Message,*arg):
             text_name = "No  服务器名\n"
             text_user = "用户数\n"
             for gu,ginfo in retDict['data'].items():
-                Gret = await guild_view(gu)
-                Gname = Gret['data']['name']
+                #Gret = await guild_view(gu)
+                Gname = ginfo['name']
                 if len(Gname) >12:
                     text = Gname[0:11]
                     text += "…"
                     Gname = text
                 # 追加text
                 text_name+=f"[{i}]  {Gname}\n"
-                text_user+=f"{len(ginfo)}\n"
+                text_user+=f"{len(ginfo['user'])}\n"
                 i+=1
             
             cm = CardMessage()

@@ -24,20 +24,20 @@ def log_bot_user(user_id:str,guild_id:str,time):
     BotUserDict['cmd_total']+=1
     # 服务器不存在，新的用户服务器
     if guild_id not in BotUserDict['data']:
-        BotUserDict['data'][guild_id] = {}
-        BotUserDict['data'][guild_id][user_id] = time
+        BotUserDict['data'][guild_id]['user'] = {}
+        BotUserDict['data'][guild_id]['user'][user_id] = time
         BotUserDict['user_total'] += 1
         log_bot_save()
         return "GNAu"
     # 服务器存在，新用户
-    elif user_id not in BotUserDict['data'][guild_id]:
-        BotUserDict['data'][guild_id][user_id] = time
+    elif user_id not in BotUserDict['data'][guild_id]['user']:
+        BotUserDict['data'][guild_id]['user'][user_id] = time
         BotUserDict['user_total'] += 1
         log_bot_save()
         return "NAu"
     # 旧用户更新执行命令的时间，但是不保存文件
     else:
-        BotUserDict['data'][guild_id][user_id] = time
+        BotUserDict['data'][guild_id]['user'][user_id] = time
         return "Au"
 
 # 在控制台打印msg内容，用作日志
@@ -64,7 +64,16 @@ async def log_bot_list(msg:Message):
         BotUserDict['guild_total'] = Glist
         # dict里面保存的服务器，有用户活跃的服务器数量
         BotUserDict['guild_active'] = len(BotUserDict['data'])
+        # 遍历列表，获取服务器名称
+        for gu in BotUserDict['data']:
+            if 'name' not in BotUserDict['data'][gu]:
+                Gret = await guild_view(gu)
+                BotUserDict['data'][gu]['name'] = Gret['data']['name']
+            else:
+                continue
+        # 保存文件
         log_bot_save()
+        print("[log_bot_list] file handling finish, return BotUserDict")
         return BotUserDict
     except:
         err_str = f"ERR! [{GetTime()}] log-list\n```\n{traceback.format_exc()}\n```"
