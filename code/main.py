@@ -2411,6 +2411,153 @@ async def get_daily_shop(msg: Message, *arg):
                 await msg.reply(cm2)
 
 
+# 判断夜市有没有开
+NightMarketOpen = False
+ValItersEmoji ={
+    'Deluxe':'3986996654014459/98pGl6Tixp074074',
+    'Premium':'3986996654014459/ZT2et4zNSa074074',
+    'Select':'3986996654014459/HOGPjGnwoT074074',
+    'Ultra':'3986996654014459/5MPICFpxsa074074',
+    'Exclusive':'3986996654014459/5pj9z3T8sL074074'
+}
+# 获取夜市
+@bot.command(name='night', aliases=['NIGHT'])
+async def get_night_market(msg: Message, *arg):
+    logging(msg)
+    global NightMarketOpen
+    if arg != ():
+        await msg.reply(f"`/night`命令不需要参数。您是否想`/login`？")
+        return
+    elif Login_Forbidden:
+        await Login_Forbidden_send(msg)
+        return
+    elif NightMarketOpen:
+        await msg.reply(f"夜市暂未开放！请等开放了之后再使用本命令哦~")
+        return
+    
+    send_msg = None
+    try:
+        if msg.author_id in UserAuthDict:
+            reau = await check_re_auth("夜市", msg)
+            if reau == False: return  #如果为假说明重新登录失败
+            
+            # 重新获取token成功了再提示正在获取夜市
+            cm = CardMessage()  #卡片侧边栏颜色
+            text = "正在尝试获取您的夜市"
+            c = Card(color='#fb4b57')
+            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.duck, size='sm')))
+            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
+            cm.append(c)
+            if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
+                await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
+                send_msg = reau
+            else:
+                send_msg = await msg.reply(cm)  #记录消息id用于后续更新
+            
+            #计算获取时间
+            start = time.perf_counter() #开始计时
+            auth = UserAuthDict[msg.author_id]
+            userdict = {
+                'auth_user_id': auth.user_id,
+                'access_token': auth.access_token,
+                'entitlements_token': auth.entitlements_token
+            }
+            resp = await fetch_daily_shop(userdict) #获取商店（夜市是相同接口）
+            if "BonusStore" not in resp: # 如果没有这个字段，说明夜市取消了
+                NightMarketOpen = False
+                cm1 = CardMessage()
+                text = f"嗷~ 夜市已关闭 或 Api没能正确返回结果"
+                c = Card(color='#fb4b57')
+                c.append(
+                    Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
+                c.append(Module.Context(Element.Text("night_market closed! 'BonusStore' not in resp", Types.Text.KMD)))
+                cm1.append(c)
+                await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)
+                print("[night_market] night_market closed! 'BonusStore' not in resp")
+                return
+            
+            timeout = resp["BonusStore"]["BonusStoreRemainingDurationInSeconds"] #剩余时间
+            timeout = time.strftime("%d %H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
+            
+            cm2 = CardMessage()
+            c = Card(color='#fb4b57')
+            c.append(
+                Module.Header(
+                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的夜市！"))
+            for Bonus in resp["BonusStore"]["BonusStoreOffers"]:
+                skin = fetch_skin_bylist(Bonus["Offer"]["OfferID"])
+                skin_icon = skin["data"]['levels'][0]["displayIcon"]
+                skin_name = skin["data"]["displayName"]
+                for it in ValSkinList['data']:#查找皮肤的等级
+                    if it['levels'][0]['uuid'] == Bonus["Offer"]["OfferID"]:
+                        res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
+                        break
+                iter_emoji = ValItersEmoji[res_iters['data']['devName']]
+                basePrice = Bonus["Offer"]["Cost"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"] #原价
+                discPercent = Bonus["DiscountPercent"] # 打折百分比
+                discPrice = Bonus["DiscountCosts"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"] #打折后的价格
+                text = f"(emj){res_iters['data']['uuid']}(emj)[{iter_emoji}] {skin_name}\n"
+                text+= f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] {discPrice} ~~{basePrice}~~ {discPercent}%Off"
+                #c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=skin_icon, size='sm')))
+                c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+            
+            # 结束计时
+            end = time.perf_counter()
+            using_time = format(end - start, '.2f')
+            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+            cm2.append(c)
+            print(json.dumps(cm2))
+            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+            print(f"[night_market] Au:{msg.author_id} night_market reply success! [{using_time}]")
+        else:
+            cm = CardMessage()
+            text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
+            c = Card(color='#fb4b57')
+            c.append(
+                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
+            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
+            cm.append(c)
+            await msg.reply(cm)
+            return
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] night\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        cm2 = CardMessage()
+        c = Card(color='#fb4b57')
+        c.append(Module.Header(f"很抱歉，发生了一些错误"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
+        c.append(Module.Divider())
+        c.append(
+            Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+        cm2.append(c)
+        if send_msg != None:  # 非none则执行更新消息，而不是直接发送
+            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+        else:
+            await msg.reply(cm2)
+
+
+# 设置全局变量，打开/关闭夜市
+@bot.command(name='open-nm')
+async def open_night_market(msg: Message, *arg):
+    logging(msg)
+    try:
+        if msg.author_id == master_id:
+            global NightMarketOpen
+            if NightMarketOpen:
+                NightMarketOpen = False
+            else:
+                NightMarketOpen = True
+                
+            await msg.reply(f"夜市状态修改！NightMarketOpen: {NightMarketOpen}")
+        else:
+            await msg.reply("您没有权限执行本命令！")
+    except:
+        err_str = f"ERR! [{GetTime()}] open-nm\n```\n{traceback.format_exc()}\n```"
+        await msg.reply(f"{err_str}")
+        print(err_str)
+        
+
 # 获取vp和r点剩余
 async def get_user_vp(msg: Message, userdict, *arg):
     #userdict = UserTokenDict[msg.author_id]
