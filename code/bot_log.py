@@ -24,6 +24,7 @@ def log_bot_user(user_id:str,guild_id:str,time):
     BotUserDict['cmd_total']+=1
     # 服务器不存在，新的用户服务器
     if guild_id not in BotUserDict['data']:
+        BotUserDict['data'][guild_id] = {} #不能连续创建两个键值！
         BotUserDict['data'][guild_id]['user'] = {}
         BotUserDict['data'][guild_id]['user'][user_id] = time
         BotUserDict['user_total'] += 1
@@ -42,16 +43,20 @@ def log_bot_user(user_id:str,guild_id:str,time):
 
 # 在控制台打印msg内容，用作日志
 def logging(msg: Message):
-    now_time = GetTime()
-    if isinstance(msg, PrivateMessage):
-        print(
-            f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
-        )
-    else:
-        Ustr = log_bot_user(msg.author_id,msg.ctx.guild.id,now_time) # 记录服务器和用户
-        print(
-            f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
-        )
+    try:
+        now_time = GetTime()
+        if isinstance(msg, PrivateMessage):
+            print(
+                f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
+            )
+        else:
+            Ustr = log_bot_user(msg.author_id,msg.ctx.guild.id,now_time) # 记录服务器和用户
+            print(
+                f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
+            )
+    except:
+        err_str = f"ERR! [{GetTime()}] logging\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
 
 # bot用户记录dict处理
 async def log_bot_list(msg:Message):
