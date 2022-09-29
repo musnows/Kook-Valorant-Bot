@@ -2412,7 +2412,7 @@ async def get_daily_shop(msg: Message, *arg):
 
 
 # 判断夜市有没有开
-NightMarketOpen = False
+NightMarketOff = False
 ValItersEmoji ={
     'Deluxe':'3986996654014459/98pGl6Tixp074074',
     'Premium':'3986996654014459/ZT2et4zNSa074074',
@@ -2424,14 +2424,14 @@ ValItersEmoji ={
 @bot.command(name='night', aliases=['NIGHT'])
 async def get_night_market(msg: Message, *arg):
     logging(msg)
-    global NightMarketOpen
+    global NightMarketOff
     if arg != ():
         await msg.reply(f"`/night`命令不需要参数。您是否想`/login`？")
         return
     elif Login_Forbidden:
         await Login_Forbidden_send(msg)
         return
-    elif NightMarketOpen:
+    elif NightMarketOff:
         await msg.reply(f"夜市暂未开放！请等开放了之后再使用本命令哦~")
         return
     
@@ -2464,7 +2464,7 @@ async def get_night_market(msg: Message, *arg):
             }
             resp = await fetch_daily_shop(userdict) #获取商店（夜市是相同接口）
             if "BonusStore" not in resp: # 如果没有这个字段，说明夜市取消了
-                NightMarketOpen = False
+                NightMarketOff = False
                 cm1 = CardMessage()
                 text = f"嗷~ 夜市已关闭 或 Api没能正确返回结果"
                 c = Card(color='#fb4b57')
@@ -2506,7 +2506,7 @@ async def get_night_market(msg: Message, *arg):
             using_time = format(end - start, '.2f')
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             cm2.append(c)
-            print(json.dumps(cm2))
+            #print(json.dumps(cm2))
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
             print(f"[night_market] Au:{msg.author_id} night_market reply success! [{using_time}]")
         else:
@@ -2543,13 +2543,13 @@ async def open_night_market(msg: Message, *arg):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            global NightMarketOpen
-            if NightMarketOpen:
-                NightMarketOpen = False
+            global NightMarketOff
+            if NightMarketOff:
+                NightMarketOff = False
             else:
-                NightMarketOpen = True
+                NightMarketOff = True
                 
-            await msg.reply(f"夜市状态修改！NightMarketOpen: {NightMarketOpen}")
+            await msg.reply(f"夜市状态修改！NightMarketOff: {NightMarketOff}")
         else:
             await msg.reply("您没有权限执行本命令！")
     except:
@@ -2787,6 +2787,12 @@ async def auto_skin_notify():
                         }
                         a_time = time.time()
                         resp = await fetch_daily_shop(userdict)  # 获取每日商店
+                        
+                        # 判断夜市有没有开，只会判断一次
+                        global NightMarketOff #true代表夜市没有开启
+                        if NightMarketOff and "BonusStore" in resp:#夜市字段存在
+                            NightMarketOff = False #夜市开启！
+                        
                         list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
