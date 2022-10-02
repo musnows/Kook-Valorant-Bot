@@ -176,9 +176,12 @@ async def Vhelp(msg: Message, *arg):
 
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
-async def countdown(msg: Message, time: int = 60,*arg):
+async def countdown(msg: Message, time: int = 60,*args):
     logging(msg)
-    if time<=0 or time>= 90000000:
+    if args != ():
+        await msg.reply(f"参数错误，countdown命令只支持1个参数\n正确用法: `/countdown 120` 生成一个120s的倒计时")
+        return
+    elif time<=0 or time>= 90000000:
         await msg.reply(f"倒计时时间超出范围！")
         return
     try:
@@ -198,10 +201,16 @@ async def countdown(msg: Message, time: int = 60,*arg):
 
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
-async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
+async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1,*args):
     logging(msg)
-    if t_min >= t_max:#判断范围
+    if args != ():
+        await msg.reply(f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 2 生成三个1到100之间的随机数\n```")
+        return
+    elif t_min >= t_max:#范围小边界不能大于大边界
         await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
+        return
+    elif t_max>= 90000000:#不允许用户使用太大的数字
+        await msg.reply(f"掷骰子的数据超出范围！")
         return
     try:
         result = [random.randint(t_min, t_max) for i in range(n)]
@@ -210,7 +219,6 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1):
         err_str = f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         #发送错误信息到指定频道
-        
         await bot.client.send(debug_ch, err_str)
 
 
