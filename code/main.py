@@ -1761,13 +1761,13 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
         global UserTokenDict, UserAuthDict
-        if msg.author_id in UserAuthDict:  #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
-            text = "您已经登陆，无需重复操作"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.shaka, size='sm')))
-            c.append(Module.Context(Element.Text("如需重新登录，请先logout退出当前登录", Types.Text.KMD)))
-            cm0.append(c)
-            await msg.reply(cm0)
-            return
+        # if msg.author_id in UserAuthDict:  #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
+        #     text = "您已经登陆，无需重复操作"
+        #     c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.shaka, size='sm')))
+        #     c.append(Module.Context(Element.Text("如需重新登录，请先logout退出当前登录", Types.Text.KMD)))
+        #     cm0.append(c)
+        #     await msg.reply(cm0)
+        #     return
 
         #全局请求超速
         if login_rate_limit['limit']:
@@ -1809,7 +1809,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         c = Card(color='#fb4b57')
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.correct, size='sm')))
-        c.append(Module.Context(Element.Text("当前token失效时间为1h，有任何问题请[点我](https://kook.top/gpbTwZ)", Types.Text.KMD)))
+        c.append(Module.Context(Element.Text("当前token有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
 
