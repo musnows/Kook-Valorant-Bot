@@ -14,7 +14,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 
-from val_bot.code.bot_log import logging, log_bot_list,APIRequestFailed_Handler, BaseException_Handler
+from bot_log import logging, log_bot_list,APIRequestFailed_Handler, BaseException_Handler
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card, weather,
                        youdao_translate)
