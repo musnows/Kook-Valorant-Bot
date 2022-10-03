@@ -590,6 +590,7 @@ async def atAhri(msg: Message, mention_str: str):
             await msg.reply(text)
         else:
             await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri`打开帮助面板，和阿狸一起玩吧！")
+        print(f"[atAhri] Au:{msg.author_id} msg.reply success!")
     except:
         err_str = f"ERR! [{GetTime()}] atAhri\n```\n{traceback.format_exc()}\n```"
         await msg.reply(f"{err_str}")
