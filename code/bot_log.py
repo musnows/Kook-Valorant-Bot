@@ -92,9 +92,13 @@ async def APIRequestFailed_Handler(def_name:str,excp,msg:Message,bot:Bot,send_ms
     print(err_str)
     cm0 = CardMessage()
     c = Card(color='#fb4b57')
-    if "引用不存在" in excp:
-        cur_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
-        await bot.send(cur_ch,cm)
+    if "引用不存在" in excp:#引用不存在的时候，直接向频道或者用户私聊重新发送消息
+        if isinstance(msg, PrivateMessage):
+            cur_user = await bot.client.fetch_user(msg.author_id)
+            await cur_user.send(cm)
+        else:
+            cur_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
+            await bot.send(cur_ch,cm)
         print(f"[APIRequestFailed.Handler] Au:{msg.author_id} 引用不存在, cm_send success!")
     elif "json没有通过验证" in excp:
         print(f"ERR! Au:{msg.author_id} json.dumps(cm)")
