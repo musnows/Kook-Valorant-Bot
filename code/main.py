@@ -3146,7 +3146,7 @@ async def bot_log_list(msg:Message,*arg):
             i=1
             text_name = "No  服务器名\n"
             text_user = "用户数\n"
-            for gu,ginfo in retDict['data'].items():
+            for gu,ginfo in retDict['guild']['data'].items():
                 #Gret = await guild_view(gu)
                 Gname = ginfo['name']
                 if len(Gname) >12:
@@ -3161,7 +3161,7 @@ async def bot_log_list(msg:Message,*arg):
             cm = CardMessage()
             c = Card(
                 Module.Header(f"来看看阿狸当前的用户记录吧！"),
-                Module.Context(f"服务器总数: {retDict['guild_total']}  活跃服务器: {retDict['guild_active']}  用户数: {retDict['user_total']}  cmd: {retDict['cmd_total']}"),
+                Module.Context(f"服务器总数: {retDict['guild']['guild_total']}  活跃服务器: {retDict['guild']['guild_active']}  用户数: {retDict['user']['user_total']}  cmd: {retDict['cmd_total']}"),
                 Module.Divider(),
                 Module.Section(
                     Struct.Paragraph(2,

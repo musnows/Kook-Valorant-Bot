@@ -23,23 +23,26 @@ def log_bot_save():
 def log_bot_user(user_id:str,guild_id:str,time):
     global BotUserDict
     BotUserDict['cmd_total']+=1
+    # 判断用户是否存在于总用户列表中
+    if user_id in BotUserDict['user']['data']:
+        BotUserDict['user']['data'][user_id]+=1
+    else:
+        BotUserDict['user']['data'][user_id]=1
     # 服务器不存在，新的用户服务器
-    if guild_id not in BotUserDict['data']:
-        BotUserDict['data'][guild_id] = {} #不能连续创建两个键值！
-        BotUserDict['data'][guild_id]['user'] = {}
-        BotUserDict['data'][guild_id]['user'][user_id] = time
-        BotUserDict['user_total'] += 1
+    if guild_id not in BotUserDict['guild']['data']:
+        BotUserDict['guild']['data'][guild_id] = {} #不能连续创建两个键值！
+        BotUserDict['guild']['data'][guild_id]['user'] = {}
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
         log_bot_save()
         return "GNAu"
     # 服务器存在，新用户
-    elif user_id not in BotUserDict['data'][guild_id]['user']:
-        BotUserDict['data'][guild_id]['user'][user_id] = time
-        BotUserDict['user_total'] += 1
+    elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
         log_bot_save()
         return "NAu"
     # 旧用户更新执行命令的时间，但是不保存文件
     else:
-        BotUserDict['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
         return "Au"
 
 # 在控制台打印msg内容，用作日志
@@ -67,14 +70,16 @@ async def log_bot_list(msg:Message):
         Glist = await guild_list()
         Glist = Glist['data']['meta']['total']
         # api正常返回结果，赋值给全局变量
-        BotUserDict['guild_total'] = Glist
+        BotUserDict['guild']['guild_total'] = Glist
         # dict里面保存的服务器，有用户活跃的服务器数量
-        BotUserDict['guild_active'] = len(BotUserDict['data'])
+        BotUserDict['guild']['guild_active'] = len(BotUserDict['guild']['data'])
+        # 计算用户总数
+        BotUserDict['user']['user_total'] = len(BotUserDict['user']['data'])
         # 遍历列表，获取服务器名称
-        for gu in BotUserDict['data']:
-            if 'name' not in BotUserDict['data'][gu]:
+        for gu in BotUserDict['guild']['data']:
+            if 'name' not in BotUserDict['guild']['data'][gu]:
                 Gret = await guild_view(gu)
-                BotUserDict['data'][gu]['name'] = Gret['data']['name']
+                BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
             else:
                 continue
         # 保存文件
