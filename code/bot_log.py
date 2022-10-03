@@ -1,8 +1,9 @@
 import json
 import time
 import traceback
-from khl import Message, PrivateMessage
-from endpoints import guild_list, guild_view
+from khl import Message, PrivateMessage, Bot
+from khl.card import Card, CardMessage, Element, Module, Types, Struct
+from endpoints import guild_list, guild_view, upd_card, icon_cm
 
 # 用户数量的记录文件
 with open('./log/BotUserLog.json', 'r', encoding='utf-8') as f:
@@ -84,3 +85,40 @@ async def log_bot_list(msg:Message):
         err_str = f"ERR! [{GetTime()}] log-list\n```\n{traceback.format_exc()}\n```"
         await msg.reply(f"{err_str}")
         print(err_str)
+
+# 出现kook api异常的通用处理
+async def APIRequestFailed_Handler(def_name:str,send_msg,excp,cm:CardMessage,msg:Message,bot:Bot):
+    err_str = f"ERR! [{GetTime()}] {def_name} APIRequestFailed\n{excp}\n"
+    print(err_str)
+    cm0 = CardMessage()
+    c = Card(color='#fb4b57')
+    if "引用不存在" in excp:
+        cur_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
+        await bot.send(cur_ch,cm)
+        print(f"[Exception] Au:{msg.author_id} 引用不存在, cm send successful!")
+    elif "json没有通过验证" in excp:
+        print(f"ERR Au:{msg.author_id} json.dumps(cm)")
+        print(json.dumps(cm))
+        text = f"啊哦，发送的消息出现了一些问题"
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
+        c.append(Module.Context(Element.Text(f"卡片消息json没有通过验证或者不存在", Types.Text.KMD)))
+        cm0.append(c)
+        await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
+
+# 基础错误的处理，带login提示(部分命令不需要这个提示)
+async def LoginException_Handler(def_name:str,send_msg,excp,cm:CardMessage,msg:Message,bot:Bot):
+    err_str = f"ERR! [{GetTime()}] {def_name}\n```\n{excp}\n```"
+    print(err_str)
+    cm0 = CardMessage()
+    c = Card(color='#fb4b57')
+    c.append(Module.Header(f"很抱歉，发生了一些错误"))
+    c.append(Module.Divider())
+    c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
+    c.append(Module.Divider())
+    c.append(
+        Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+    cm0.append(c)
+    if send_msg != None:  # 非none则执行更新消息，而不是直接发送
+        await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
+    else:
+        await msg.reply(cm0)
