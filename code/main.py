@@ -14,7 +14,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 
-from bot_log import logging, log_bot_list
+from bot_log import logging, log_bot_list,APIRequestFailed_Handler, LoginException_Handler
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card, weather,
                        youdao_translate)
@@ -1874,19 +1874,11 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             c.append(Module.Context(Element.Text("Unkown KeyError, please contact bot developer", Types.Text.KMD)))
             cm.append(c)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-    except:
-        err_str = f"ERR! [{GetTime()}] login\n ```\n{traceback.format_exc()}\n```"
-        print(err_str)  #只有不认识的报错消息才打印结果
-        cm = CardMessage()
-        c = Card(color='#fb4b57')
-        c.append(Module.Header(f"很抱歉，发生了未知错误"))
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm.append(c)
-        await msg.reply(cm)
+
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        APIRequestFailed_Handler("login",send_msg,traceback.format_exc(),cm,msg,bot)
+    except Exception as result: # 其他错误
+        LoginException_Handler("login",send_msg,traceback.format_exc(),cm,msg,bot)
 
 
 #重新登录（kook用户id）
@@ -1966,7 +1958,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
 
 # 测试是否已登陆
 @bot.command(name="login-t")
-async def test_if_login(msg: Message, *arg):
+async def login_test(msg: Message, *arg):
     logging(msg)
     if Login_Forbidden:
         await Login_Forbidden_send(msg)
@@ -1979,10 +1971,8 @@ async def test_if_login(msg: Message, *arg):
 
             await msg.reply(
                 f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`")
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] test_if_login\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+    except Exception as result: # 其他错误
+        LoginException_Handler("login-t",None,traceback.format_exc(),None,msg,bot)
 
 
 # 退出登录
@@ -2022,10 +2012,8 @@ async def logout_authtoken(msg: Message, *arg):
         with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw1:
             json.dump(UserTokenDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
         fw1.close()
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] logout\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+    except Exception as result: # 其他错误
+        LoginException_Handler("logout",None,traceback.format_exc(),cm,msg,bot)
 
 
 # 不再使用定时任务，而是把所有更新封装成一个命令。
@@ -2396,29 +2384,22 @@ async def get_daily_shop(msg: Message, *arg):
             cm.append(c)
             await msg.reply(cm)
             return
+        
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        APIRequestFailed_Handler("shop",send_msg,traceback.format_exc(),cm,msg,bot)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
         cm2 = CardMessage()
         c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
+            print(err_str)
             text = f"键值错误，需要重新登录"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
             c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
-            c.append(Module.Header(f"很抱歉，发生了一些错误"))
-            c.append(Module.Divider())
-            c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
-            c.append(Module.Divider())
-            c.append(
-                Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-            cm2.append(c)
-            if send_msg != None:  # 非none则执行更新消息，而不是直接发送
-                await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
-            else:
-                await msg.reply(cm2)
+            LoginException_Handler("shop",send_msg,traceback.format_exc(),cm,msg,bot)
 
 
 # 判断夜市有没有开
@@ -2452,17 +2433,17 @@ async def get_night_market(msg: Message, *arg):
             if reau == False: return  #如果为假说明重新登录失败
             
             # 重新获取token成功了再提示正在获取夜市
-            cm = CardMessage()  #卡片侧边栏颜色
+            cm0 = CardMessage()  #卡片侧边栏颜色
             text = "正在尝试获取您的夜市"
             c = Card(color='#fb4b57')
             c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.duck, size='sm')))
             c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
-            cm.append(c)
+            cm0.append(c)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
-                await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
+                await upd_card(reau['msg_id'], cm0, channel_type=msg.channel_type)
                 send_msg = reau
             else:
-                send_msg = await msg.reply(cm)  #记录消息id用于后续更新
+                send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
             
             #计算获取时间
             start = time.perf_counter() #开始计时
@@ -2489,7 +2470,7 @@ async def get_night_market(msg: Message, *arg):
             timeout = resp["BonusStore"]["BonusStoreRemainingDurationInSeconds"] #剩余时间
             timeout = time.strftime("%d %H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
             
-            cm2 = CardMessage()
+            cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(
                 Module.Header(
@@ -2515,9 +2496,9 @@ async def get_night_market(msg: Message, *arg):
             end = time.perf_counter()
             using_time = format(end - start, '.2f')
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
-            cm2.append(c)
+            cm.append(c)
             #print(json.dumps(cm2))
-            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             print(f"[night_market] Au:{msg.author_id} night_market reply success! [{using_time}]")
         else:
             cm = CardMessage()
@@ -2529,22 +2510,11 @@ async def get_night_market(msg: Message, *arg):
             cm.append(c)
             await msg.reply(cm)
             return
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] night\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(color='#fb4b57')
-        c.append(Module.Header(f"很抱歉，发生了一些错误"))
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行/login操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(
-            Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm2.append(c)
-        if send_msg != None:  # 非none则执行更新消息，而不是直接发送
-            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
-        else:
-            await msg.reply(cm2)
+        
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        APIRequestFailed_Handler("night",send_msg,traceback.format_exc(),cm,msg,bot)
+    except Exception as result: # 其他错误
+        LoginException_Handler("night",send_msg,traceback.format_exc(),cm,msg,bot)
 
 
 # 设置全局变量，打开/关闭夜市
@@ -2670,11 +2640,14 @@ async def get_user_card(msg: Message, *arg):
             await msg.reply(cm)
             return
 
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        APIRequestFailed_Handler("uinfo",send_msg,traceback.format_exc(),cm,msg,bot)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
         cm2 = CardMessage()
-        if "Balances" in str(result):
+        res_str = str(result)
+        if "Identity" in res_str or "Balances" in res_str:
+            print(err_str)
             text = f"键值错误，需要重新登录"
             c = Card(color='#fb4b57')
             c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
@@ -2682,16 +2655,7 @@ async def get_user_card(msg: Message, *arg):
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
-            c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-            c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
-            c.append(Module.Divider())
-            c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                        Types.Click.LINK)))
-            if send_msg != None:  # 非none则执行更新消息，而不是直接发送
-                await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
-            else:
-                await msg.reply(cm2)
-
+            LoginException_Handler("uinfo",send_msg,traceback.format_exc(),cm,msg,bot)
 
 # 获取捆绑包信息(无需登录)
 @bot.command(name='bundle', aliases=['skin'])
