@@ -14,7 +14,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 
-from bot_log import logging, log_bot_list,APIRequestFailed_Handler, LoginException_Handler
+from val_bot.code.bot_log import logging, log_bot_list,APIRequestFailed_Handler, BaseException_Handler
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card, weather,
                        youdao_translate)
@@ -109,8 +109,8 @@ async def Ahri(msg: Message, *arg):
         await msg.reply(cm)
 
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] Ahri - {result}"
-        print(err_str)
+        await BaseException_Handler("ahri",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
+        err_str = f"ERR! [{GetTime()}] ahri\n```\n{traceback.format_exc()}\n```"
         #发送错误信息到指定频道
         await bot.client.send(debug_ch, err_str)
 
@@ -166,8 +166,8 @@ async def Vhelp(msg: Message, *arg):
         await msg.reply(cm)
 
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] vhelp - {result}"
-        print(err_str)
+        await BaseException_Handler("vhelp",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
+        err_str = f"ERR! [{GetTime()}] vhelp\n```\n{traceback.format_exc()}\n```"
         #发送错误信息到指定频道
         await bot.client.send(debug_ch, err_str)
 
@@ -193,10 +193,9 @@ async def countdown(msg: Message, time: int = 60,*args):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
+        await BaseException_Handler("countdown",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
         err_str = f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
         #发送错误信息到指定频道
-        
         await bot.client.send(debug_ch, err_str)
 
 
@@ -205,7 +204,7 @@ async def countdown(msg: Message, time: int = 60,*args):
 async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1,*args):
     logging(msg)
     if args != ():
-        await msg.reply(f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 2 生成三个1到100之间的随机数\n```")
+        await msg.reply(f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 3 生成三个1到100之间的随机数\n```")
         return
     elif t_min >= t_max:#范围小边界不能大于大边界
         await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
@@ -217,8 +216,8 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1,*args)
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
+        await BaseException_Handler("roll",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
         err_str = f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
         #发送错误信息到指定频道
         await bot.client.send(debug_ch, err_str)
 
@@ -549,9 +548,10 @@ async def Weather(msg: Message, city: str = "err"):
     try:
         await weather(msg, city)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] we\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+        await BaseException_Handler("Weather",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
+        err_str = f"ERR! [{GetTime()}] Weather\n```\n{traceback.format_exc()}\n```"
+        #发送错误信息到指定频道
+        await bot.client.send(debug_ch, err_str)
 
 
 # 设置段位角色（暂时没有启用）
@@ -1051,16 +1051,10 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
         ret = await using_vip_uuid(msg, uuid, bot)
 
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] buy_vip_uuid\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        await BaseException_Handler("vip-u",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
+        err_str = f"ERR! [{GetTime()}] vip-u\n```\n{traceback.format_exc()}\n```"
+        #发送错误信息到指定频道
+        await bot.client.send(debug_ch, err_str)
 
 
 # 看vip剩余时间
@@ -1075,16 +1069,10 @@ async def check_vip_timeremain(msg: Message, *arg):
         ret_cm = await vip_time_remain_cm(ret_t)
         await msg.reply(ret_cm)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] ck_vip_timeremain\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+        await BaseException_Handler("vip-c",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
+        err_str = f"ERR! [{GetTime()}] vip-c\n```\n{traceback.format_exc()}\n```"
+        #发送错误信息到指定频道
+        await bot.client.send(debug_ch, err_str)
 
 
 # 看vip用户列表
@@ -1335,30 +1323,11 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         print(f"[vip-shop] Au:{msg.author_id} add ", x3)
 
     except requester.HTTPRequester.APIRequestFailed as result:
-        err_str = f"ERR! [{GetTime()}]  vip_shop_cm\n```\n{result}\n```\n"
-        print(json.dumps(cm))
-        cm1 = CardMessage()
-        c = Card(
-            Module.Header(f"卡片消息json没有通过验证或者不存在"), Module.Divider(),
-            Module.Section(Element.Text(f"图片违规或图片格式有问题，请不要多次重试，会导致阿狸被封！建议加入帮助频道找我康康到底是啥问题\n{err_str}", Types.Text.KMD)),
-            Module.Divider(),
-            Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-        cm1.append(c)
-        await msg.reply(cm1)
+        await APIRequestFailed_Handler("vip_shop",traceback.format_exc(),msg,bot,None,cm)
         VipShopBgDict[msg.author_id]["background"].remove(x3)  #删掉里面的图片
-        print(err_str)
+        print(f"[vip_shop] Au:{msg.author_id} remove(err_img)")
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}]  vip_shop\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm1 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了未知错误"), color='#fb4b57')
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n建议加入帮助频道找我康康到底是啥问题", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm1.append(c)
-        await msg.reply(cm1)
+        await BaseException_Handler("vip_shop",traceback.format_exc(),msg,bot,None,cm,"建议加入帮助频道找我康康到底是啥问题")
 
 
 @bot.command(name="vip-shop-s")
@@ -1412,18 +1381,10 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict[msg.author_id]['background'][0]}]")
+    except requester.HTTPRequester.APIRequestFailed as result:
+        await APIRequestFailed_Handler("vip_shop_s",traceback.format_exc(),msg,bot,None,cm)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] vip_shop_s\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了未知错误"), color='#fb4b57')
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm.append(c)
-        await msg.reply(cm)
+        await BaseException_Handler("vip_shop_s",traceback.format_exc(),msg,bot,None,cm,"您可能需要重新执行操作")
 
 
 @bot.command(name="vip-shop-d")
@@ -1462,18 +1423,10 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
         with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
             json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
+    except requester.HTTPRequester.APIRequestFailed as result:
+        await APIRequestFailed_Handler("vip_shop_d",traceback.format_exc(),msg,bot,None,cm)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] vip_shop_d\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了未知错误"), color='#fb4b57')
-        c.append(Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n\n您可能需要重新执行操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm.append(c)
-        await msg.reply(cm)
+        await BaseException_Handler("vip_shop_d",traceback.format_exc(),msg,bot,None,cm,"您可能需要重新执行操作")
 
 #用来存放roll的频道/服务器/回应用户的dict
 RollVipDcit={}
@@ -1874,11 +1827,10 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             c.append(Module.Context(Element.Text("Unkown KeyError, please contact bot developer", Types.Text.KMD)))
             cm.append(c)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
-        APIRequestFailed_Handler("login",send_msg,traceback.format_exc(),cm,msg,bot)
+        await APIRequestFailed_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result: # 其他错误
-        LoginException_Handler("login",send_msg,traceback.format_exc(),cm,msg,bot)
+        await BaseException_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
 
 
 #重新登录（kook用户id）
@@ -1972,7 +1924,7 @@ async def login_test(msg: Message, *arg):
             await msg.reply(
                 f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`")
     except Exception as result: # 其他错误
-        LoginException_Handler("login-t",None,traceback.format_exc(),None,msg,bot)
+        await BaseException_Handler("login-t",traceback.format_exc(),msg,bot)
 
 
 # 退出登录
@@ -2013,7 +1965,7 @@ async def logout_authtoken(msg: Message, *arg):
             json.dump(UserTokenDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
         fw1.close()
     except Exception as result: # 其他错误
-        LoginException_Handler("logout",None,traceback.format_exc(),cm,msg,bot)
+        await BaseException_Handler("logout",traceback.format_exc(),msg,bot)
 
 
 # 不再使用定时任务，而是把所有更新封装成一个命令。
@@ -2386,7 +2338,7 @@ async def get_daily_shop(msg: Message, *arg):
             return
         
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
-        APIRequestFailed_Handler("shop",send_msg,traceback.format_exc(),cm,msg,bot)
+        await APIRequestFailed_Handler("shop",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
         cm2 = CardMessage()
@@ -2399,7 +2351,7 @@ async def get_daily_shop(msg: Message, *arg):
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
-            LoginException_Handler("shop",send_msg,traceback.format_exc(),cm,msg,bot)
+            await BaseException_Handler("shop",traceback.format_exc(),msg,bot,send_msg,cm)
 
 
 # 判断夜市有没有开
@@ -2512,9 +2464,9 @@ async def get_night_market(msg: Message, *arg):
             return
         
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
-        APIRequestFailed_Handler("night",send_msg,traceback.format_exc(),cm,msg,bot)
+        await APIRequestFailed_Handler("night",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result: # 其他错误
-        LoginException_Handler("night",send_msg,traceback.format_exc(),cm,msg,bot)
+        await BaseException_Handler("night",traceback.format_exc(),msg,bot,send_msg,cm)
 
 
 # 设置全局变量，打开/关闭夜市
@@ -2641,7 +2593,7 @@ async def get_user_card(msg: Message, *arg):
             return
 
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
-        APIRequestFailed_Handler("uinfo",send_msg,traceback.format_exc(),cm,msg,bot)
+        await APIRequestFailed_Handler("uinfo",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
         cm2 = CardMessage()
@@ -2655,7 +2607,7 @@ async def get_user_card(msg: Message, *arg):
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
-            LoginException_Handler("uinfo",send_msg,traceback.format_exc(),cm,msg,bot)
+            await BaseException_Handler("uinfo",traceback.format_exc(),msg,bot,send_msg,cm)
 
 # 获取捆绑包信息(无需登录)
 @bot.command(name='bundle', aliases=['skin'])
