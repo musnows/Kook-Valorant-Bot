@@ -19,8 +19,8 @@ def log_bot_save():
     with open("./log/BotUserLog.json", 'w', encoding='utf-8') as fw2:
         json.dump(BotUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
-# 记录用户信息
-def log_bot_user(user_id:str,guild_id:str,time):
+# 记录私聊的用户信息
+def log_bot_user(user_id:str):
     global BotUserDict
     BotUserDict['cmd_total']+=1
     # 判断用户是否存在于总用户列表中
@@ -28,6 +28,12 @@ def log_bot_user(user_id:str,guild_id:str,time):
         BotUserDict['user']['data'][user_id]+=1
     else:
         BotUserDict['user']['data'][user_id]=1
+
+# 记录服务器中的用户信息
+def log_bot_guild(user_id:str,guild_id:str,time):
+    global BotUserDict
+    # BotUserDict['cmd_total']+=1
+    log_bot_user(user_id)
     # 服务器不存在，新的用户服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {} #不能连续创建两个键值！
@@ -50,11 +56,12 @@ def logging(msg: Message):
     try:
         now_time = GetTime()
         if isinstance(msg, PrivateMessage):
+            log_bot_user(msg.author_id) # 记录用户
             print(
                 f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
         else:
-            Ustr = log_bot_user(msg.author_id,msg.ctx.guild.id,now_time) # 记录服务器和用户
+            Ustr = log_bot_guild(msg.author_id,msg.ctx.guild.id,now_time) # 记录服务器和用户
             print(
                 f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
