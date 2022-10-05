@@ -52,15 +52,15 @@
 | `/vip-shop-d 图片编号` | 删除商店查询的背景图 |
 
 更多vip用户的特殊功能
-~~~
-「全新商店返回值」vip用户将获取到16-9的超帅商店返回值
-「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失
-「图片形式的商店提醒」vip用户将在早8点获取当日的每日商店。阿狸会对这张图片进行缓存，同天使用/shop命令的时候，只需要2s即可获取结果，3倍于普通用户的响应速度！
 
-1.目前商店查询背景图diy支持16-9(横屏)的图片，图片url获取：PC端将图片上传到kook→点击图片→底部...处复制图片链接→使用/vip-shop命令设置背景 教程图
-2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip
-~~~
-每日商店刷枪提醒功能需要用户**保持登录状态**，bot会在每天的`08:02`遍历列表，查看您的商店是否刷出了您想要的皮肤
+>「全新商店返回值」vip用户将获取到16-9的超帅商店返回值
+>「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失
+>「图片形式的商店提醒」vip用户将在早8点获取当日的每日商店。阿狸会对这张图片进行缓存，同天使用/shop命令的时候，只需要2s即可获取结果，3倍于普通用户的响应速度！
+>
+>1.目前商店查询背景图diy支持16-9(横屏)的图片，图片url获取：PC端将图片上传到kook→点击图片→底部...处复制图片链接→使用/vip-shop命令设置背景 教程图
+>2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip
+
+每日商店刷枪提醒功能需要用户**保持登录状态**，bot会在每天的`08:01`遍历列表，查看您的商店是否刷出了您想要的皮肤
 
 | 其他命令    | 功能                                                         |
 | ----------------- | ------------------------------------------------------------ |
@@ -84,9 +84,11 @@
 <details>
 <summary>更多截图</summary>
 <img src="./screenshot/bundle.png" alt="bundle">
+<img src="./screenshot/weather.png" alt="we">
 <img src="./screenshot/lead.png" alt="leaderborad">
 <img src="./screenshot/uinfo.png" alt="uinfo">
-<img src="./screenshot/weather.png" alt="we">
+<img src="./screenshot/night.png" alt="night">
+<img src="./screenshot/vip_daily_shop.png" alt="vip_shop">
 </details>
 
 ----
@@ -120,22 +122,26 @@ pip install -r requirements.txt
 - [ ] 实现查询游戏战绩（需要roit授权）
 - [x] 实现玩家商店刷枪的查询
 - [x] 实现当商店刷新某一把枪的时候提醒玩家
-- [ ] 查看玩家的夜市
+- [x] 查看玩家的夜市
 
 ~~由于很多人在使用类似商店查询软件后被ban，我决定正式停止相关功能的开发~~
 
-咳咳，虽然初步的商店查询功能已经上线，但是其是否`封号`依旧未知！建议使用小号测试，或者不要用相关功能
+咳咳，虽然初步的商店查询功能已经上线，但是其是否`封号`依旧有争论！目前功能已经上线一个月有余，且询问过外网开发者，其表示没有听说过有人因为使用api被封号。
 
-<img src="https://s1.ax1x.com/2022/07/07/jwNGMF.png" width="510px" height="360px"/>
+**如果您担心风险，请不要使用相关功能**！bot的`/vhelp`命令`/login`命令中有相关警告提示，使用即代表您同意了承担风险！
+
+<img src="./screenshot/issue_banned.png" width="580px" height="250px"/>
+
+<img src="https://s1.ax1x.com/2022/07/07/jwNGMF.png" width="350px" height="230px"/>
 
 ----
 
 ## 依赖
 
 由于本人压根没有系统的学过Python，所以本仓库的很多代码都是根据他人教程修改后使用的
-* 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的KOOK-Api库以及使用教程
-* Valorant游戏部分代码基于 [frissyn/valorant.py](https://github.com/frissyn/valorant.py/) 项目
-* Valorant游戏`主要`代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目
+* 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的`kook sdk`以及使用教程
+* Valorant游戏`leaderboard`排行榜获取基于 [frissyn/valorant.py](https://github.com/frissyn/valorant.py/) 提供的`sdk`
+* Valorant游戏主要查询代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目提供的`api文档`
 * 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) 项目
 
 

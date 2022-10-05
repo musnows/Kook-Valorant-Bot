@@ -16,13 +16,11 @@ English | [简体中文](./README.md)
 
 KOOK(once called kaiheila) is a Chinese voice communication software.
 
->Because this bot are only used in Chinese platform,so I didn't write a more detailed Readme in English.Sorry for that
-
-This robot is still at an extremely early stage, and many of the functions I want have not yet been realized.
-
-~~For safety reason, the development of /store and /nightmarket has been canceled~~
+>Because this bot are only used in Chinese platform,so I didn't write a more detail Readme in English.Sorry for that
 
 I just develop basic `/login` and `/shop` to fetch daily shop, hoping it's save for using 
+
+* night market check as `/night` command was publish at `v0.2.4`
 
 ----
 
@@ -99,7 +97,9 @@ vip user will get different daily shop reply from bot.
 * normal user get `1000*1000` img
 * vip user get `1280*720` img
 
-[![x987TI.md.png](https://s1.ax1x.com/2022/09/19/x987TI.md.png)](https://imgse.com/i/x987TI)
+this background can be modified by vip-user,using picture they liked!
+
+<img src="./screenshot/vip_daily_shop.png" alt="vip_shop">
 
 ### 1.2 add special command for vip user
 * `vip-u`: get vip from uuid
