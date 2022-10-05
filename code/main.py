@@ -1588,8 +1588,8 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 
 ##############################################################################
 
-# 预加载用户token(其实已经没用了)
-with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
+# 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
+with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
 # 所有皮肤
 with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
@@ -2226,7 +2226,9 @@ async def get_daily_shop(msg: Message, *arg):
         if msg.author_id in UserAuthDict:
             reau = await check_re_auth("每日商店", msg)
             if reau == False: return  #如果为假说明重新登录失败
-            # 重新获取token成功了再提示正在获取商店
+            # 重新获取token成功，从dict中获取玩家id
+            player_gamename = f"{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+            # 获取玩家id成功了，再提示正在获取商店
             cm = CardMessage()  #卡片侧边栏颜色
             text = "正在尝试获取您的每日商店"
             c = Card(color='#fb4b57')
@@ -2338,9 +2340,7 @@ async def get_daily_shop(msg: Message, *arg):
             
             cm = CardMessage()
             c = Card(color='#fb4b57')
-            c.append(
-                Module.Header(
-                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的每日商店！"))
+            c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
