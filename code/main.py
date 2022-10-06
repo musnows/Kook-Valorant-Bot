@@ -2389,9 +2389,11 @@ async def get_daily_shop(msg: Message, *arg):
                 if rate_sum > SkinRateDict["camp"]["best"]["pit"]:
                     SkinRateDict["camp"]["best"]["pit"] = rate_sum
                     SkinRateDict["camp"]["best"]["skin"] = list_shop
+                    SkinRateDict["camp"]["best"]["kook_id"] = msg.author_id
                 elif rate_sum < SkinRateDict["camp"]["worse"]["pit"]:
                     SkinRateDict["camp"]["worse"]["pit"] = rate_sum
                     SkinRateDict["camp"]["worse"]["skin"] = list_shop
+                    SkinRateDict["camp"]["best"]["kook_id"] = msg.author_id
                     
                 if rate_sum>=0 and rate_sum <=20:
                     rate_lv = "丐帮帮主"
