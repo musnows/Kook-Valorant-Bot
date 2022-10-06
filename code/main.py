@@ -143,6 +143,9 @@ async def Vhelp(msg: Message, *arg):
         help_1 += "「/notify-l 」查看当前设置了提醒的皮肤\n"
         help_1 += "「/notify-d 皮肤uuid」删除不需要提醒的皮肤\n"
         help_1 += "「/logout」取消登录\n"
+        help_1 += "「/rate 皮肤名」查找皮肤，选择指定皮肤进行打分\n"
+        help_1 += "「/rts 序号 打分 吐槽」选中皮肤序号，给该皮肤打个分(0~100) 再吐槽一下!\n"
+        help_1 += "「/kkn」查看昨日评分最高/最低的用户\n"
         c3.append(Module.Section(Element.Text(help_1, Types.Text.KMD)))
         c3.append(Module.Divider())
         c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
