@@ -14,7 +14,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 
-from bot_log import logging, log_bot_list,APIRequestFailed_Handler, BaseException_Handler
+from bot_log import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card, weather,
                        youdao_translate)
@@ -1719,11 +1719,15 @@ async def check_user_login_rate(msg: Message):
 @bot.command(name='login')
 async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
-    if passwd == 'err' or user == 'err':
-        await msg.reply(f"参数不完整，请提供您的账户和密码！\naccout: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
+    log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
+    if not isinstance(msg, PrivateMessage): # 不是私聊的话，禁止调用本命令
+        await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
+        return
+    elif passwd == 'err' or user == 'err':
+        await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
         return
     elif arg != ():
-        await msg.reply(f"您给予了多余的参数！\naccout: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`\n正确用法：`/login 账户 密码`")
+        await msg.reply(f"您给予了多余的参数，请检查后重试\naccount: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`\n正确用法：`/login 账户 密码`")
         return
     elif Login_Forbidden:
         await Login_Forbidden_send(msg)
