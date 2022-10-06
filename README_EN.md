@@ -75,17 +75,21 @@ Because the bot is using in Chinese platform, the skin `name` only support `zh-T
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
-![image](./screenshot/daily_shop.png)
-
-![image](./screenshot/points.png)
+<img src="./screenshot/daily_shop.png" height="400px"> <img src="./screenshot/uinfo.png" weight="300px" height="200px">
 
 <details>
-<summary>More Screenshot</summary>
+<summary>more screenshots</summary>
+
 <img src="./screenshot/bundle.png" alt="bundle">
-<img src="./screenshot/lead.png" alt="leaderborad">
-<img src="./screenshot/uinfo.png" alt="uinfo">
+
 <img src="./screenshot/weather.png" alt="we">
+
+<img src="./screenshot/lead.png" alt="leaderborad">
+
+<img src="./screenshot/night.png" height="300px" alt="night">
+
 </details>
+
 For more guild and information, check out [wiki pages](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)
 
 ----
@@ -100,7 +104,7 @@ vip user will get different daily shop reply from bot.
 
 this background can be modified by vip-user,using picture they liked!
 
-<img src="./screenshot/vip_daily_shop.png" alt="vip_shop">
+<img src="./screenshot/vip_daily_shop.png" height="290px" alt="vip_shop">
 
 ### 1.2 add special command for vip user
 * `vip-u`: get vip from uuid

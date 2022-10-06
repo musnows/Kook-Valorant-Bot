@@ -82,18 +82,20 @@
 
 你可以在[screenshot](./screenshot)文件夹中找到对应的截图示例
 
-![image](./screenshot/daily_shop.png)
-
-![image](./screenshot/points.png)
+<img src="./screenshot/daily_shop.png" height="400px"> <img src="./screenshot/uinfo.png" weight="300px" height="200px">
 
 <details>
 <summary>更多截图</summary>
+
 <img src="./screenshot/bundle.png" alt="bundle">
+
 <img src="./screenshot/weather.png" alt="we">
+
 <img src="./screenshot/lead.png" alt="leaderborad">
-<img src="./screenshot/uinfo.png" alt="uinfo">
-<img src="./screenshot/night.png" alt="night">
-<img src="./screenshot/vip_daily_shop.png" alt="vip_shop">
+
+<img src="./screenshot/night.png" height="300px" alt="night">
+
+<img src="./screenshot/vip_daily_shop.png" height="300px" alt="vip_shop">
 </details>
 
 ----
