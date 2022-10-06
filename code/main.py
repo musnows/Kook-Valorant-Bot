@@ -2384,6 +2384,14 @@ async def get_daily_shop(msg: Message, *arg):
                         Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
             else:
                 rate_sum = rate_total//rate_count
+                #记录当日冠军和屌丝
+                if rate_sum > SkinRateDict["camp"]["best"]["pit"]:
+                    SkinRateDict["camp"]["best"]["pit"] = rate_sum
+                    SkinRateDict["camp"]["best"]["skin"] = list_shop
+                elif rate_sum < SkinRateDict["camp"]["worse"]["pit"]:
+                    SkinRateDict["camp"]["worse"]["pit"] = rate_sum
+                    SkinRateDict["camp"]["worse"]["skin"] = list_shop
+                    
                 if rate_sum>=0 and rate_sum <=20:
                     rate_lv = "丐帮帮主"
                 elif rate_sum>20 and rate_sum <=40:
@@ -2394,13 +2402,13 @@ async def get_daily_shop(msg: Message, *arg):
                     rate_lv = "芜湖起飞"
                 elif rate_sum>80 and rate_sum <=100:
                     rate_lv = "天选之人"
-                c1 = Card(Module.Header(f"{rate_sum}分，{rate_lv}"),
+                c1 = Card(Module.Header(f"综合评分 {rate_sum}，{rate_lv}"),
                         Module.Context(f"以下评论来自其他用户，仅供图一乐"),
                         Module.Divider(),color='#fb4b57')
                 for text in rate_text:
                     c1.append(Module.Section(Element.Text(text,Types.Text.KMD)))
                     c1.append(Module.Divider())
-                c1.append(Module.Context(Element.Text(f"可以使用「/rate 皮肤名」参与评分哦~",Types.Text.KMD)))
+                c1.append(Module.Context(Element.Text(f"可以使用「/rate 皮肤名」参与评分\n或用「/kkn」查看昨日天选之子/丐帮帮主",Types.Text.KMD)))
                 
             cm.append(c1)
             end = time.perf_counter()#计算获取评分的时间
@@ -2740,7 +2748,7 @@ async def get_bundle(msg: Message, *arg):
 
 #用户给皮肤评分的选择列表
 UserRtsDict = {}
-# 给一个皮肤评分
+# 给一个皮肤评分（灵感来自微信小程序”瓦的小卖铺“）
 @bot.command(name="rate", aliases=['评分'])
 async def rate_skin_add(msg: Message, *arg):
     logging(msg)
@@ -2837,11 +2845,13 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = {}
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['name'] = S_skin['skin']['displayName']
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['cmt']  = comment
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['pit']  = point
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['msg_id'] = msg.id
             else:  #用户存在
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = {}
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['name'] = S_skin['skin']['displayName']
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['cmt']  = comment
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['pit']  = point
                 SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['msg_id'] = msg.id
 
             # 写入文件
