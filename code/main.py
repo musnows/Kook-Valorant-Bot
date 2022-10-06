@@ -2345,14 +2345,68 @@ async def get_daily_shop(msg: Message, *arg):
             #结果为浮点数，保留两位小数
             using_time = format(end - start, '.2f')
             
+            #商店的图片
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
+            #提示正在查询
+            c0 = Card(Module.Header(f"正在查询您今日商店皮肤评分……"),
+                        Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
+            cm.append(c0)
+            # 先发送商店
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}]")
+            
+            #皮肤评分和评价
+            rate_text = []
+            rate_count = 0
+            rate_total = 0
+            for sk in list_shop:
+                if sk in SkinRateDict['rate']:
+                    rate_count+=1
+                    rate_total+=SkinRateDict['rate'][sk]['pit']
+                    skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
+                    text=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
+                    if len(SkinRateDict['rate'][sk]['cmt']) == 1:
+                        ran = 0 #元素内只有1个评论，直接选定该评论
+                    else:
+                        ran = random.sample(range(0, len(SkinRateDict['rate'][sk]['cmt'])-1),1)
+                    text+=f"「随机评论」 {SkinRateDict['rate'][sk]['cmt'][ran]}\n"
+                    rate_text.append(text)
+            
+            cm = CardMessage()
+            cm.append(c)
+            if rate_count==0:
+                rate_lv="皮肤评价数据仍待收集…"
+                c1 = Card(Module.Header(f"{rate_lv}"),
+                        Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
+            else:
+                rate_sum = rate_total//rate_count
+                if rate_sum>=0 and rate_sum <=20:
+                    rate_lv = "丐帮帮主"
+                elif rate_sum>20 and rate_sum <=40:
+                    rate_lv = "省钱能手"
+                elif rate_sum>40 and rate_sum <=60:
+                    rate_lv = "差强人意"
+                elif rate_sum>60 and rate_sum <=80:
+                    rate_lv = "芜湖起飞"
+                elif rate_sum>80 and rate_sum <=100:
+                    rate_lv = "天选之人"
+                c1 = Card(Module.Header(f"{rate_sum}分，{rate_lv}"),
+                        Module.Context(f"以下评论来自其他用户，仅供图一乐"),
+                        Module.Divider(),color='#fb4b57')
+                for text in rate_text:
+                    c1.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+                    c1.append(Module.Divider())
+                c1.append(Module.Context(Element.Text(f"可以使用「/rate 皮肤名」参与评分哦~",Types.Text.KMD)))
+                
+            cm.append(c1)
+            end = time.perf_counter()#计算获取评分的时间
+            # 发送消息
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}/{format(end - start, '.2f')}]")
         else:
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
@@ -2691,7 +2745,7 @@ UserRtsDict = {}
 async def rate_skin_add(msg: Message, *arg):
     logging(msg)
     if arg == ():
-        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
+        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`\n正确用法：`/rate 您想评价的皮肤名`")
         return
     try:
         name = " ".join(arg)
@@ -2743,13 +2797,13 @@ async def rate_skin_add(msg: Message, *arg):
 async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",*arg):
     logging(msg)
     if index == "err" or '-' in index:
-        await msg.reply(f"参数不正确！请正确选择您需要评分的皮肤序号")
+        await msg.reply(f"参数不正确！请正确选择您需要评分的皮肤序号\n正确用法：`/rts 序号 评分 吐槽`")
         return
     elif rating == "err" or '-' in rating:
-        await msg.reply(f"参数不正确！请正确提供您给该皮肤的打分，范围0~100")
+        await msg.reply(f"参数不正确！请正确提供您给该皮肤的打分，范围0~100\n正确用法：`/rts 序号 评分 吐槽`")
         return
     elif arg == ():
-        await msg.reply(f"您似乎没有评论此皮肤呢，多少说点什么吧~")
+        await msg.reply(f"您似乎没有评论此皮肤呢，多少说点什么吧~\n正确用法：`/rts 序号 评分 吐槽`")
         return
     try:
         if msg.author_id in UserRtsDict:
@@ -2775,6 +2829,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
                 point = (SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] + float(_rating))/2
             # 设置皮肤的评分和评论
             SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] = point
+            SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['name']=S_skin['skin']['displayName']
             SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['cmt'].append(comment)
             # data内是记录xx用户评论了xx皮肤
             if msg.author_id not in SkinRateDict['data']:
