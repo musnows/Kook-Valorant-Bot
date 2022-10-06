@@ -1603,6 +1603,9 @@ with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
 # 所有物品等级（史诗/传说）
 with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
     ValItersList = json.load(frrk)
+# 皮肤的评价
+with open("./log/ValSkinRate.json", 'r', encoding='utf-8') as frsl:
+    SkinRateDict = json.load(frsl)
 
 
 #从list中获取价格
@@ -2681,6 +2684,135 @@ async def get_bundle(msg: Message, *arg):
         await msg.reply(err_str)
         await bot.client.send(debug_ch, err_str)
 
+#用户给皮肤评分的选择列表
+UserRtsDict = {}
+# 给一个皮肤评分
+@bot.command(name="rate", aliases=['评分'])
+async def rate_skin_add(msg: Message, *arg):
+    logging(msg)
+    if arg == ():
+        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
+        return
+    try:
+        name = " ".join(arg)
+        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
+        sklist = fetch_skin_byname_list(name)
+        if sklist == []:  #空list代表这个皮肤不在里面
+            await msg.reply(f"该皮肤不在列表中，请重新查询！")
+            return
+
+        retlist = list()  #用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
+        for s in sklist:
+            res_price = fetch_item_price_bylist(s['lv_uuid'])
+            if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
+                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                data = {'skin': s, 'price': price}
+                retlist.append(data)
+
+        if retlist == []:  #空list代表这个皮肤没有价格
+            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
+            return
+        
+        UserRtsDict[msg.author_id] = retlist
+        i = 0
+        text = "```\n"  #模拟一个选择表
+        for w in retlist:
+            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}\n"
+            i += 1
+        text += "```"
+        cm = CardMessage()
+        c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
+                 Module.Section(Element.Text(text, Types.Text.KMD)),
+                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分", Types.Text.KMD)))
+        text1  = "```\n/rts 序号 评分 吐槽\n"
+        text1 += "序号：上面列表中的皮肤序号\n"
+        text1 += "评分：给皮肤打分，范围0~100\n"
+        text1 += "吐槽：说说你对这个皮肤的看法\n```\n"
+        text1 += "吐槽的时候请注意文明用语！"
+        c.append(Module.Section(Element.Text(text1, Types.Text.KMD)))
+        cm.append(c)
+        await msg.reply(cm)
+        
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        await APIRequestFailed_Handler("rate",traceback.format_exc(),msg,bot,None,cm)
+    except Exception as result: # 其他错误
+        await BaseException_Handler("rate",traceback.format_exc(),msg,bot,None,cm)
+        
+#选择皮肤（这个命令必须跟着上面的命令用）
+@bot.command(name="rts")
+async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",*arg):
+    logging(msg)
+    if index == "err" or '-' in index:
+        await msg.reply(f"参数不正确！请正确选择您需要评分的皮肤序号")
+        return
+    elif rating == "err" or '-' in rating:
+        await msg.reply(f"参数不正确！请正确提供您给该皮肤的打分，范围0~100")
+        return
+    elif arg == ():
+        await msg.reply(f"您似乎没有评论此皮肤呢，多少说点什么吧~")
+        return
+    try:
+        if msg.author_id in UserRtsDict:
+            _index = str2int(index)  #转成int下标（不能处理负数）
+            _rating = str2int(rating) #转成分数
+            if _index >= len(UserRtsDict[msg.author_id]):  #下标判断，避免越界
+                await msg.reply(f"您的选择越界了！请正确填写序号")
+                return
+            elif _rating <0 or _rating>100:
+                await msg.reply(f"您的评分有误，正确范围为0~100")
+                return
+
+            S_skin = UserRtsDict[msg.author_id][_index]
+            comment = " ".join(arg)#用户对此皮肤的评论
+            # 如果rate里面没有，先创立键值
+            if S_skin['skin']['lv_uuid'] not in SkinRateDict['rate']:
+                SkinRateDict['rate'][S_skin['skin']['lv_uuid']] = {}
+                SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] = 0
+                SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['cmt'] = list()
+            if SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']==0:
+                point = float(_rating)
+            else: #有分数才能计算平均分
+                point = (SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] + float(_rating))/2
+            # 设置皮肤的评分和评论
+            SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] = point
+            SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['cmt'].append(comment)
+            # data内是记录xx用户评论了xx皮肤
+            if msg.author_id not in SkinRateDict['data']:
+                SkinRateDict['data'][msg.author_id] = {}
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = {}
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['name'] = S_skin['skin']['displayName']
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['cmt']  = comment
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['msg_id'] = msg.id
+            else:  #用户存在
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = {}
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['name'] = S_skin['skin']['displayName']
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['cmt']  = comment
+                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['msg_id'] = msg.id
+
+            # 写入文件
+            with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
+                json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+
+            del UserRtsDict[msg.author_id]  #删除选择页面中的list
+            text1 = f"评价成功！{S_skin['skin']['displayName']}"
+            text2 = f"您的评分：{_rating}\n"
+            text2+= f"皮肤平均分：{SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']}\n"
+            text2+= f"您的评语：{comment}"
+            cm = CardMessage()
+            c=Card(Module.Header(text1),
+                   Module.Divider(),
+                   Module.Section(Element.Text(text2,Types.Text.KMD)))
+            cm.append(c)
+            # 设置成功并删除list后，再发送提醒事项设置成功的消息
+            await msg.reply(cm)
+            print(f"[rts] Au:{msg.author_id} ", text1)
+        else:
+            await msg.reply(f"您需要(重新)执行 `/rate` 来查找皮肤\n再使用 `/rts` 进行选择")
+            
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        await APIRequestFailed_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
+    except Exception as result: # 其他错误
+        await BaseException_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
 
 #用户选择列表
 UserStsDict = {}
