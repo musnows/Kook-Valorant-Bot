@@ -46,6 +46,7 @@ Recommended to use after the Valorant_Function is stable.
 | `/login account passwd` | login your `riot_account` to fetch `auth_token` |
 | `/logout` | logout your riot_account |
 | `/shop` | fetch skin at daily shop |
+| `/night` | fetch night market at daily shop |
 | `/uinfo`或`/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
 | `/notify-a skin_name` |search for skin name,providing NO for add it into notification |
 | `/notify-l` | show current notify skin |
