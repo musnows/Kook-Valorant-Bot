@@ -2360,6 +2360,7 @@ async def get_daily_shop(msg: Message, *arg):
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             
             #皮肤评分和评价
+            global SkinRateDict
             rate_text = []
             rate_count = 0
             rate_total = 0
@@ -2878,6 +2879,51 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
         await APIRequestFailed_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
     except Exception as result: # 其他错误
         await BaseException_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
+
+# 查看昨日牛人/屌丝
+@bot.command(name="kkn")
+async def rate_skin_select(msg: Message):
+    logging(msg)
+    try:
+        cm = CardMessage()
+        c=Card(Module.Header(f"来看看昨日天选之子和丐帮帮主吧！"),Module.Divider())
+        # best
+        text=""
+        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {SkinRateDict['camp']['best']['pit']}",Types.Text.KMD)))
+        for sk in SkinRateDict['camp']['best']['skin']:
+            if sk in SkinRateDict['rate']:
+                skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
+                text+=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
+                if len(SkinRateDict['rate'][sk]['cmt']) == 1:
+                    ran = 0 #元素内只有1个评论，直接选定该评论
+                else:
+                    ran = random.sample(range(0, len(SkinRateDict['rate'][sk]['cmt'])-1),1)  
+        c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+        c.append(Module.Divider())
+        # worse
+        text=""
+        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {SkinRateDict['camp']['worse']['pit']}",Types.Text.KMD)))
+        for sk in SkinRateDict['camp']['worse']['skin']:
+            if sk in SkinRateDict['rate']:
+                skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
+                text+=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
+                if len(SkinRateDict['rate'][sk]['cmt']) == 1:
+                    ran = 0 #元素内只有1个评论，直接选定该评论
+                else:
+                    ran = random.sample(range(0, len(SkinRateDict['rate'][sk]['cmt'])-1),1)
+        c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+        cm.append(c)
+        await msg.reply(cm)
+        
+        # 写入文件(这里保存是为了增多保存次数)
+        with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
+            json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        print(f"[kkn] SkinRateDict save success!")
+    except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
+        await APIRequestFailed_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
+    except Exception as result: # 其他错误
+        await BaseException_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
+
 
 #用户选择列表
 UserStsDict = {}
