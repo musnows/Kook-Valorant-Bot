@@ -2718,6 +2718,7 @@ async def auto_skin_notify():
         print("[BOT.TASK.NOTIFY] auto_skin_notify Starting!")  #开始的时候打印一下
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
+        err_count = 0 # 设置一个count来计算出错的用户数量
         log_vip_failed  = f"[BOT.TASK.NOTIFY] reauthorize failed  = VAu: "
         log_vip_not_login = f"[BOT.TASK.NOTIFY] not_in UserAuthDict = VAu: "
         #先遍历vip用户列表，获取vip用户的商店
@@ -2804,10 +2805,16 @@ async def auto_skin_notify():
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_str = f"ERR![BOT.TASK.NOTIFY] VAu:{vip} vip_user.send\n```\n{traceback.format_exc()}\n```"
                 print(err_str)
+                if '屏蔽' in err_cur or '无法发起' in err_cur:
+                    err_count+=1
+                    SkinNotifyDict['err_user'][aid] = GetTime()
+                    err_str+=f"\nadd to ['err_user']"
+                
                 await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
         #打印vip的log信息
         print(log_vip_failed)
         print(log_vip_not_login)
+        
         # 再遍历所有用户的皮肤提醒
         log_failed  =   f"[BOT.TASK.NOTIFY] reauthorize failed  = Au: "
         log_not_login = f"[BOT.TASK.NOTIFY] not_in UserAuthDict = Au: "
@@ -2853,8 +2860,10 @@ async def auto_skin_notify():
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] Au:{aid} user.send\n```\n{err_cur}\n```"
                 if '屏蔽' in err_cur or '无法发起' in err_cur:
+                    err_count+=1
                     del SkinNotifyDict['data'][aid] #直接粗暴解决，删除用户
                     SkinNotifyDict['err_user'][aid] = GetTime()
+                    err_str+=f"\ndel SkinNotifyDict['data'][{aid}],add to ['err_user']"
                     
                 print(err_str)
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
@@ -2868,7 +2877,7 @@ async def auto_skin_notify():
                 json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
             print("[BOT.TASK.NOTIFY] save SkinNotifyDict")
             
-        finish_str = "[BOT.TASK.NOTIFY] auto_skin_notify Finished!"
+        finish_str = f"[BOT.TASK.NOTIFY] auto_skin_notify Finished! [ERR {err_count}]"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
     except Exception as result:
