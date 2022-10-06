@@ -2864,7 +2864,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
             with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
                 json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
-            del UserRtsDict[msg.author_id]  #删除选择页面中的list
+            #del UserRtsDict[msg.author_id]  #删除选择页面中的list
             text1 = f"评价成功！{S_skin['skin']['displayName']}"
             text2 = f"您的评分：{_rating}\n"
             text2+= f"皮肤平均分：{SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']}\n"
@@ -2878,7 +2878,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
             await msg.reply(cm)
             print(f"[rts] Au:{msg.author_id} ", text1)
         else:
-            await msg.reply(f"您需要(重新)执行 `/rate` 来查找皮肤\n再使用 `/rts` 进行选择")
+            await msg.reply(f"您需要执行 `/rate 皮肤名` 来查找皮肤\n再使用 `/rts` 进行选择")
             
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
         await APIRequestFailed_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
