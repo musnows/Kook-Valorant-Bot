@@ -1,9 +1,13 @@
 import json
 import time
 import traceback
+import io
+import requests
 from khl import Message, PrivateMessage, Bot
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from endpoints import guild_list, guild_view, upd_card, icon_cm
+from PIL import Image, ImageDraw, ImageFont
+from copy import deepcopy
 
 # 用户数量的记录文件
 with open('./log/BotUserLog.json', 'r', encoding='utf-8') as f:
@@ -69,6 +73,27 @@ def logging(msg: Message):
         err_str = f"ERR! [{GetTime()}] logging\n```\n{traceback.format_exc()}\n```"
         print(err_str)
 
+# 记录信息的底图
+font_color = '#000000' # 黑色
+log_base_img = Image.open(io.BytesIO(
+    requests.get("https://s1.ax1x.com/2022/10/06/x11HdH.png").content))  # vip用户背景框 16-9
+# 画图，把当前加入的服务器总数等等信息以图片形式显示在README中
+async def log_bot_img():
+    bg = deepcopy(log_base_img)  # 新建一个画布
+    draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
+    # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
+    text_pos=[(185,10),(378,10),(185,55),(378,55)]#左上/右上/左下/右下
+    text_info=[str(BotUserDict['guild']['guild_total']),str(BotUserDict['guild']['guild_active']),str(BotUserDict['user']['user_total']),str(BotUserDict['cmd_total'])]
+    i=0
+    for pos in text_pos:
+        draw.text(pos,text_info[i],
+                font=ImageFont.truetype('./config/MISTRAL.TTF', 22),
+                fill=font_color)
+        i+=1
+    # 保存图片
+    bg.save(f'../screenshot/log.png')
+    print("[log_bot_img] log.png draw finished")
+
 # bot用户记录dict处理
 async def log_bot_list(msg:Message):
     global BotUserDict
@@ -89,7 +114,8 @@ async def log_bot_list(msg:Message):
                 BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
             else:
                 continue
-        # 保存文件
+        # 保存图片和文件
+        await log_bot_img()
         log_bot_save()
         print("[log_bot_list] file handling finish, return BotUserDict")
         return BotUserDict
