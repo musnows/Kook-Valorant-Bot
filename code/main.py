@@ -576,20 +576,20 @@ async def atAhri(msg: Message, mention_str: str):
     try:
         if msg.author_id == master_id:
             text =f"主人有何吩咐呀~\n```\n"
-            text+=f"/Color_Set 发送一个用于设置用户颜色的消息，只能在valorant社区使用\n"
-            text+=f"/Color_Set_GM 在不修改代码的前提下设置上色功能的服务器和监听消息\n"
-            text+=f"/ShutdownTL 关闭所有实时翻译的栏位\n"
-            text+=f"/vip-a 生成新的vip激活码\n"
-            text+=f"/vip-l 查看当前vip用户列表\n"
-            text+=f"/vip-img 检查vip用户的自定义背景图（防止违规图片）\n"
-            text+=f"/vip-r 开启vip抽奖\n"
-            text+=f"/vip-ta 给所有vip用户添加时长\n"
-            text+=f"/upd 手动更新商店物品和价格\n"
-            text+=f"/open-nm 打开/关闭夜市\n"
-            text+=f"/notify-test 执行遍历用户皮肤notify列表\n"
-            text+=f"/inform-user 出现某些问题的时候通知人员（需要修改代码）\n"
-            text+=f"/lf 实际上是Login_Forbidden的缩写，在login函数出错时屏蔽所有需要login的命令\n"
-            text+=f"/log 显示当前阿狸加入的服务器以及用户数量\n```"
+            text+=f"[/Color_Set] 发送一个用于设置用户颜色的消息，只能在valorant社区使用\n"
+            text+=f"[/Color_Set_GM 消息id] 在不修改代码的前提下设置上色功能的服务器和监听消息\n"
+            text+=f"[/ShutdownTL] 关闭所有实时翻译的栏位\n"
+            text+=f"[/vip-a 天数 数量] 生成新的vip激活码\n"
+            text+=f"[/vip-l] 查看当前vip用户列表\n"
+            text+=f"[/vip-img] 检查vip用户的自定义背景图（防止违规图片）\n"
+            text+=f"[/vip-r 天数 数量 抽奖天数] 开启vip抽奖\n"
+            text+=f"[/vip-ta 天数] 给所有vip用户添加时长\n"
+            text+=f"[/upd] 手动更新商店物品和价格\n"
+            text+=f"[/open-nm] 打开/关闭夜市\n"
+            text+=f"[/notify-test] 执行遍历用户皮肤notify列表\n"
+            text+=f"[/inform-user 频道 用户] 出现某些问题的时候通知人员（需要修改代码）\n"
+            text+=f"[/lf] 实际上是Login_Forbidden的缩写，在login函数出错时屏蔽所有需要login的命令\n"
+            text+=f"[/log] 显示当前阿狸加入的服务器以及用户数量\n```"
             await msg.reply(text)
         else:
             await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri`打开帮助面板，和阿狸一起玩吧！")
@@ -2393,10 +2393,12 @@ async def get_daily_shop(msg: Message, *arg):
                     SkinRateDict["cmp"]["best"]["pit"] = rate_sum
                     SkinRateDict["cmp"]["best"]["skin"] = list_shop
                     SkinRateDict["cmp"]["best"]["kook_id"] = msg.author_id
+                    print(f"[shop] update rate-best  Au:{msg.author_id} = {rate_sum}")
                 elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
                     SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
                     SkinRateDict["cmp"]["worse"]["skin"] = list_shop
                     SkinRateDict["cmp"]["worse"]["kook_id"] = msg.author_id
+                    print(f"[shop] update rate-worse Au:{msg.author_id} = {rate_sum}")
                     
                 if rate_sum>=0 and rate_sum <=20:
                     rate_lv = "丐帮帮主"
@@ -3006,7 +3008,7 @@ async def auto_skin_notify():
         SkinRateDict["cmp"]["worse"]["pit"]=100
         print("[BOT.TASK.NOTIFY] SkinRateDict clear, sleep(15)")
         #睡15s再开始遍历（避免时间不准）
-        asyncio.sleep(15)
+        await asyncio.sleep(15)
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
         err_count = 0 # 设置一个count来计算出错的用户数量
