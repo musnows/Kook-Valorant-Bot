@@ -2389,14 +2389,14 @@ async def get_daily_shop(msg: Message, *arg):
             else:
                 rate_sum = rate_total//rate_count
                 #记录当日冠军和屌丝
-                if rate_sum > SkinRateDict["camp"]["best"]["pit"]:
-                    SkinRateDict["camp"]["best"]["pit"] = rate_sum
-                    SkinRateDict["camp"]["best"]["skin"] = list_shop
-                    SkinRateDict["camp"]["best"]["kook_id"] = msg.author_id
-                elif rate_sum < SkinRateDict["camp"]["worse"]["pit"]:
-                    SkinRateDict["camp"]["worse"]["pit"] = rate_sum
-                    SkinRateDict["camp"]["worse"]["skin"] = list_shop
-                    SkinRateDict["camp"]["worse"]["kook_id"] = msg.author_id
+                if rate_sum > SkinRateDict["cmp"]["best"]["pit"]:
+                    SkinRateDict["cmp"]["best"]["pit"] = rate_sum
+                    SkinRateDict["cmp"]["best"]["skin"] = list_shop
+                    SkinRateDict["cmp"]["best"]["kook_id"] = msg.author_id
+                elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
+                    SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
+                    SkinRateDict["cmp"]["worse"]["skin"] = list_shop
+                    SkinRateDict["cmp"]["worse"]["kook_id"] = msg.author_id
                     
                 if rate_sum>=0 and rate_sum <=20:
                     rate_lv = "丐帮帮主"
@@ -2899,8 +2899,8 @@ async def rate_skin_select(msg: Message):
         c=Card(Module.Header(f"来看看昨日天选之子和丐帮帮主吧！"),Module.Divider())
         # best
         text=""
-        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {SkinRateDict['camp']['best']['pit']}",Types.Text.KMD)))
-        for sk in SkinRateDict['camp']['best']['skin']:
+        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {SkinRateDict['kkn']['best']['pit']}",Types.Text.KMD)))
+        for sk in SkinRateDict['kkn']['best']['skin']:
             if sk in SkinRateDict['rate']:
                 skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
                 text+=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
@@ -2912,8 +2912,8 @@ async def rate_skin_select(msg: Message):
         c.append(Module.Divider())
         # worse
         text=""
-        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {SkinRateDict['camp']['worse']['pit']}",Types.Text.KMD)))
-        for sk in SkinRateDict['camp']['worse']['skin']:
+        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {SkinRateDict['kkn']['worse']['pit']}",Types.Text.KMD)))
+        for sk in SkinRateDict['kkn']['worse']['skin']:
             if sk in SkinRateDict['rate']:
                 skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
                 text+=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
@@ -2981,14 +2981,14 @@ async def check_shop_rate(user_id:str,list_shop:list):
     if rate_count !=0:
         rate_sum = rate_total//rate_count#平均分
         #记录冠军和屌丝
-        if rate_sum > SkinRateDict["camp"]["best"]["pit"]:
-            SkinRateDict["camp"]["best"]["pit"] = rate_sum
-            SkinRateDict["camp"]["best"]["skin"] = list_shop
-            SkinRateDict["camp"]["best"]["kook_id"] = user_id
-        elif rate_sum < SkinRateDict["camp"]["worse"]["pit"]:
-            SkinRateDict["camp"]["worse"]["pit"] = rate_sum
-            SkinRateDict["camp"]["worse"]["skin"] = list_shop
-            SkinRateDict["camp"]["worse"]["kook_id"] = user_id
+        if rate_sum > SkinRateDict["cmp"]["best"]["pit"]:
+            SkinRateDict["cmp"]["best"]["pit"] = rate_sum
+            SkinRateDict["cmp"]["best"]["skin"] = list_shop
+            SkinRateDict["cmp"]["best"]["kook_id"] = user_id
+        elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
+            SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
+            SkinRateDict["cmp"]["worse"]["skin"] = list_shop
+            SkinRateDict["cmp"]["worse"]["kook_id"] = user_id
         return True
     else:
         return False
@@ -2997,12 +2997,16 @@ async def check_shop_rate(user_id:str,list_shop:list):
 async def auto_skin_notify():
     global SkinNotifyDict, SkinRateDict
     try:
-        print("[BOT.TASK.NOTIFY] auto_skin_notify Starting!")  #开始的时候打印一下
+        print(f"[BOT.TASK.NOTIFY] auto_skin_notify Start at {GetTime()}")  #开始的时候打印一下
         #清空昨日最好/最差用户的皮肤表
-        SkinRateDict["camp"]["best"]["skin"]=list()
-        SkinRateDict["camp"]["best"]["pit"]=0
-        SkinRateDict["camp"]["worse"]["skin"]=list()
-        SkinRateDict["camp"]["worse"]["pit"]=100
+        SkinRateDict["kkn"] = copy.deepcopy(SkinRateDict["cmp"])
+        SkinRateDict["cmp"]["best"]["skin"]=list()
+        SkinRateDict["cmp"]["best"]["pit"]=0
+        SkinRateDict["cmp"]["worse"]["skin"]=list()
+        SkinRateDict["cmp"]["worse"]["pit"]=100
+        print("[BOT.TASK.NOTIFY] SkinRateDict clear, sleep(15)")
+        #睡15s再开始遍历（避免时间不准）
+        asyncio.sleep(15)
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
         err_count = 0 # 设置一个count来计算出错的用户数量
@@ -3163,7 +3167,7 @@ async def auto_skin_notify():
         # 将当日最高最低用户写入文件
         with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
             json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)            
-        finish_str = f"[BOT.TASK.NOTIFY] auto_skin_notify Finished! [ERR {err_count}]"
+        finish_str = f"[BOT.TASK.NOTIFY] auto_skin_notify Finish at {GetTime()} [ERR {err_count}]"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
     except Exception as result:
@@ -3172,7 +3176,7 @@ async def auto_skin_notify():
         await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
 
-@bot.task.add_cron(hour=8, minute=0, second=30, timezone="Asia/Shanghai")
+@bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
 async def auto_skin_notify_task():
     await auto_skin_notify()
 
