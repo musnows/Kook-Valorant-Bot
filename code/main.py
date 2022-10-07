@@ -2376,7 +2376,7 @@ async def get_daily_shop(msg: Message, *arg):
                     if len(SkinRateDict['rate'][sk]['cmt']) == 1:
                         ran = 0 #元素内只有1个评论，直接选定该评论
                     else:
-                        ran = random.sample(range(0, len(SkinRateDict['rate'][sk]['cmt'])-1),1)
+                        ran = random.randint(0,len(SkinRateDict['rate'][sk]['cmt'])-1)
                     text+=f"「随机评论」 {SkinRateDict['rate'][sk]['cmt'][ran]}\n"
                     rate_text.append(text)
             
@@ -2396,7 +2396,7 @@ async def get_daily_shop(msg: Message, *arg):
                 elif rate_sum < SkinRateDict["camp"]["worse"]["pit"]:
                     SkinRateDict["camp"]["worse"]["pit"] = rate_sum
                     SkinRateDict["camp"]["worse"]["skin"] = list_shop
-                    SkinRateDict["camp"]["best"]["kook_id"] = msg.author_id
+                    SkinRateDict["camp"]["worse"]["kook_id"] = msg.author_id
                     
                 if rate_sum>=0 and rate_sum <=20:
                     rate_lv = "丐帮帮主"
@@ -2993,7 +2993,10 @@ async def auto_skin_notify():
     global SkinNotifyDict, SkinRateDict
     try:
         print("[BOT.TASK.NOTIFY] auto_skin_notify Starting!")  #开始的时候打印一下
+        #清空昨日最好/最差用户的皮肤表
+        SkinRateDict["camp"]["best"]["skin"]=list()
         SkinRateDict["camp"]["best"]["pit"]=0
+        SkinRateDict["camp"]["worse"]["skin"]=list()
         SkinRateDict["camp"]["worse"]["pit"]=100
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
@@ -3164,7 +3167,7 @@ async def auto_skin_notify():
         await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
 
-@bot.task.add_cron(hour=8, minute=1, timezone="Asia/Shanghai")
+@bot.task.add_cron(hour=8, minute=0, second=30, timezone="Asia/Shanghai")
 async def auto_skin_notify_task():
     await auto_skin_notify()
 
