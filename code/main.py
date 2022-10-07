@@ -2962,12 +2962,39 @@ async def check_notify_err_user(msg:Message):
             return True
     else:
         return False
+    
+# 计算用户的得分，插入到当日最高和最低分中
+async def check_shop_rate(user_id:str,list_shop:list):
+    global SkinRateDict
+    rate_count = 0
+    rate_total =0
+    for sk in list_shop:
+        if sk in SkinRateDict['rate']:
+            rate_count+=1
+            rate_total+=SkinRateDict['rate'][sk]['pit']
+    
+    if rate_count !=0:
+        rate_sum = rate_total//rate_count#平均分
+        #记录冠军和屌丝
+        if rate_sum > SkinRateDict["camp"]["best"]["pit"]:
+            SkinRateDict["camp"]["best"]["pit"] = rate_sum
+            SkinRateDict["camp"]["best"]["skin"] = list_shop
+            SkinRateDict["camp"]["best"]["kook_id"] = user_id
+        elif rate_sum < SkinRateDict["camp"]["worse"]["pit"]:
+            SkinRateDict["camp"]["worse"]["pit"] = rate_sum
+            SkinRateDict["camp"]["worse"]["skin"] = list_shop
+            SkinRateDict["camp"]["worse"]["kook_id"] = user_id
+        return True
+    else:
+        return False
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
-    global SkinNotifyDict
+    global SkinNotifyDict, SkinRateDict
     try:
         print("[BOT.TASK.NOTIFY] auto_skin_notify Starting!")  #开始的时候打印一下
+        SkinRateDict["camp"]["best"]["pit"]=0
+        SkinRateDict["camp"]["worse"]["pit"]=100
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
         err_count = 0 # 设置一个count来计算出错的用户数量
@@ -2998,6 +3025,7 @@ async def auto_skin_notify():
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
+                        await check_shop_rate(vip,list_shop)#计算用户商店得分
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
                         global UserShopDict
                         UserShopDict[vip] = {}
@@ -3048,11 +3076,9 @@ async def auto_skin_notify():
                         print(f"[BOT.TASK.NOTIFY] [{GetTime()}] VAu:{vip} notify_shop success [{using_time}]")
                     else:  #reauthorize failed!
                         log_vip_failed+=f"({vip})"
-                        #print(f"[BOT.TASK.NOTIFY] Vip_Au:{vip} user reauthorize failed")
                         await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
                 else:  #不在auth里面说明没有登录
                     log_vip_not_login+=f"({vip})"
-                    #print(f"[BOT.TASK] Vip_Au:{vip} user_not_in UserAuthDict")
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_str = f"ERR![BOT.TASK.NOTIFY] VAu:{vip} vip_user.send\n```\n{traceback.format_exc()}\n```"
@@ -3088,11 +3114,11 @@ async def auto_skin_notify():
                         else:
                             resp = await fetch_daily_shop(userdict)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+                            await check_shop_rate(vip,list_shop)#计算非vip用户商店得分
 
                         # 然后再遍历列表查看是否有提醒皮肤
                         # 关于下面这一行参考 https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
                         target_skin = [val for key, val in skin.items() if key in list_shop]
-                        # print(target_skin)
                         for name in target_skin:
                             print(f"[BOT.TASK.NOTIFY] Au:{aid} auto_skin_notify = {name}")
                             await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
@@ -3100,14 +3126,11 @@ async def auto_skin_notify():
                         print(f"[BOT.TASK.NOTIFY] Au:{aid} auto_skin_notify = None")
                     else:  #reauthorize failed!
                         log_failed+=f"({aid})"
-                        #print(f"[BOT.TASK.NOTIFY] Au:{aid} user reauthorize failed")
                         await user.send(f"您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
                 else:  #不在auth里面说明没有登录
                     log_not_login+=f"({aid})"
-                    #print(f"[BOT.TASK.NOTIFY] Au:{aid} user_not_in UserAuthDict")
                     await user.send(
-                        f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？"
-                    )
+                        f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？")
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] Au:{aid} user.send\n```\n{err_cur}\n```"
@@ -3123,12 +3146,15 @@ async def auto_skin_notify():
         #打印普通用户的log信息
         print(log_failed)
         print(log_not_login)
-        #完成遍历后打印
+        #完成遍历后，如果有删除才重新保存dict
         if temp_SkinNotifyDict != SkinNotifyDict:
             with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw1:
                 json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
             print("[BOT.TASK.NOTIFY] save SkinNotifyDict")
             
+        # 将当日最高最低用户写入文件
+        with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
+            json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)            
         finish_str = f"[BOT.TASK.NOTIFY] auto_skin_notify Finished! [ERR {err_count}]"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
@@ -3162,7 +3188,7 @@ async def add_skin_notify(msg: Message, *arg):
     try:
         if await check_notify_err_user(msg):
             return
-        # 检查用户的提醒栏位（经过测试已经可以用，等vip处理代码写好后再开放）
+        # 检查用户的提醒栏位
         vip_status = await vip_ck(msg.author_id)
         if msg.author_id in SkinNotifyDict['data'] and not vip_status:
             if len(SkinNotifyDict['data'][msg.author_id]) > 2:
