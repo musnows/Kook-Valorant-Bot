@@ -2832,6 +2832,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
 
             S_skin = UserRtsDict[msg.author_id][_index]
             comment = " ".join(arg)#用户对此皮肤的评论
+            text2=""
             # 如果rate里面没有，先创立键值
             if S_skin['skin']['lv_uuid'] not in SkinRateDict['rate']:
                 SkinRateDict['rate'][S_skin['skin']['lv_uuid']] = {}
@@ -2839,8 +2840,12 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
                 SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['cmt'] = list()
             if SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']==0:
                 point = float(_rating)
-            else: #有分数才能计算平均分
+            elif abs(float(_rating)-SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']) <= 32: 
+                #用户的评分和皮肤平均分差值不能超过32，避免有人乱刷分
                 point = (SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] + float(_rating))/2
+            else:#差值过大，不计入皮肤平均值
+                point = SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']
+                text2+=f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
             # 设置皮肤的评分和评论
             SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] = point
             SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['name']=S_skin['skin']['displayName']
@@ -2866,7 +2871,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
 
             #del UserRtsDict[msg.author_id]  #删除选择页面中的list
             text1 = f"评价成功！{S_skin['skin']['displayName']}"
-            text2 = f"您的评分：{_rating}\n"
+            text2+= f"您的评分：{_rating}\n"
             text2+= f"皮肤平均分：{SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']}\n"
             text2+= f"您的评语：{comment}"
             cm = CardMessage()
