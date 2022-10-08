@@ -584,6 +584,7 @@ async def atAhri(msg: Message, mention_str: str):
             text+=f"[/vip-img] 检查vip用户的自定义背景图（防止违规图片）\n"
             text+=f"[/vip-r 天数 数量 抽奖天数] 开启vip抽奖\n"
             text+=f"[/vip-ta 天数] 给所有vip用户添加时长\n"
+            text+=f"[/ckau] 查看已登录的用户个数\n"
             text+=f"[/upd] 手动更新商店物品和价格\n"
             text+=f"[/open-nm] 打开/关闭夜市\n"
             text+=f"[/notify-test] 执行遍历用户皮肤notify列表\n"
