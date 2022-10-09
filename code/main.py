@@ -587,6 +587,7 @@ async def atAhri(msg: Message, mention_str: str):
             text+=f"[/ckau] 查看已登录的用户个数\n"
             text+=f"[/upd] 手动更新商店物品和价格\n"
             text+=f"[/open-nm] 打开/关闭夜市\n"
+            text+=f"[/ban-r 用户id] 禁止用户使用rate相关功能\n"
             text+=f"[/notify-test] 执行遍历用户皮肤notify列表\n"
             text+=f"[/inform-user 频道 用户] 出现某些问题的时候通知人员（需要修改代码）\n"
             text+=f"[/lf] 实际上是Login_Forbidden的缩写，在login函数出错时屏蔽所有需要login的命令\n"
@@ -1654,7 +1655,11 @@ UserCookieDict = {}
 login_dict = {}
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
-
+#检查评分的错误用户（违规用户）
+def check_rate_err_user(user_id:str):
+    """(user_id in SkinRateDict['err_user'])
+    """
+    return (user_id in SkinRateDict['err_user'])
 
 #查询当前有多少用户登录了
 @bot.command(name="ckau")
@@ -2346,83 +2351,85 @@ async def get_daily_shop(msg: Message, *arg):
             dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
             # 结束shop的总计时
             end = time.perf_counter()
-            #结果为浮点数，保留两位小数
+            # 结果为浮点数，保留两位小数
             using_time = format(end - start, '.2f')
             
-            #商店的图片
+            # 商店的图片
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
-            #提示正在查询
-            c0 = Card(Module.Header(f"正在查询您今日商店皮肤评分……"),
-                        Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
-            cm.append(c0)
-            # 先发送商店
-            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+            # 提示正在查询
+            # c0 = Card(Module.Header(f"正在查询您今日商店皮肤评分……"),
+            #             Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
+            # cm.append(c0)
+            # # 先发送商店
+            # await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             
-            #皮肤评分和评价
-            global SkinRateDict
-            rate_text = []
-            rate_count = 0
-            rate_total = 0
-            for sk in list_shop:
-                if sk in SkinRateDict['rate']:
-                    rate_count+=1
-                    rate_total+=SkinRateDict['rate'][sk]['pit']
-                    skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-                    text=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
-                    if len(SkinRateDict['rate'][sk]['cmt']) == 1:
-                        ran = 0 #元素内只有1个评论，直接选定该评论
-                    else:
-                        ran = random.randint(0,len(SkinRateDict['rate'][sk]['cmt'])-1)
-                    text+=f"「随机评论」 {SkinRateDict['rate'][sk]['cmt'][ran]}\n"
-                    rate_text.append(text)
-            
-            cm = CardMessage()
-            cm.append(c)
-            if rate_count==0:
-                rate_lv="皮肤评价数据仍待收集…"
-                c1 = Card(Module.Header(f"{rate_lv}"),
-                        Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
-            else:
-                rate_sum = rate_total//rate_count
-                #记录当日冠军和屌丝
-                if rate_sum > SkinRateDict["cmp"]["best"]["pit"]:
-                    SkinRateDict["cmp"]["best"]["pit"] = rate_sum
-                    SkinRateDict["cmp"]["best"]["skin"] = list_shop
-                    SkinRateDict["cmp"]["best"]["kook_id"] = msg.author_id
-                    print(f"[shop] update rate-best  Au:{msg.author_id} = {rate_sum}")
-                elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
-                    SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
-                    SkinRateDict["cmp"]["worse"]["skin"] = list_shop
-                    SkinRateDict["cmp"]["worse"]["kook_id"] = msg.author_id
-                    print(f"[shop] update rate-worse Au:{msg.author_id} = {rate_sum}")
-                    
-                if rate_sum>=0 and rate_sum <=20:
-                    rate_lv = "丐帮帮主"
-                elif rate_sum>20 and rate_sum <=40:
-                    rate_lv = "省钱能手"
-                elif rate_sum>40 and rate_sum <=60:
-                    rate_lv = "差强人意"
-                elif rate_sum>60 and rate_sum <=80:
-                    rate_lv = "芜湖起飞"
-                elif rate_sum>80 and rate_sum <=100:
-                    rate_lv = "天选之人"
-                c1 = Card(Module.Header(f"综合评分 {rate_sum}，{rate_lv}"),
-                        Module.Context(f"以下评论来自其他用户，仅供图一乐"),
-                        Module.Divider(),color='#fb4b57')
-                for text in rate_text:
-                    c1.append(Module.Section(Element.Text(text,Types.Text.KMD)))
-                    c1.append(Module.Divider())
-                c1.append(Module.Context(Element.Text(f"可以使用「/rate 皮肤名」参与评分\n或用「/kkn」查看昨日天选之子/丐帮帮主",Types.Text.KMD)))
+            #皮肤评分和评价，用户不在err_user里面才显示
+            if not check_rate_err_user(msg.author_id):
+                global SkinRateDict
+                rate_text = []
+                rate_count = 0
+                rate_total = 0
+                for sk in list_shop:
+                    if sk in SkinRateDict['rate']:
+                        rate_count+=1
+                        rate_total+=SkinRateDict['rate'][sk]['pit']
+                        skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
+                        text=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
+                        if len(SkinRateDict['rate'][sk]['cmt']) == 1:
+                            ran = 0 #元素内只有1个评论，直接选定该评论
+                        else:
+                            ran = random.randint(0,len(SkinRateDict['rate'][sk]['cmt'])-1)
+                        text+=f"「随机评论」 {SkinRateDict['rate'][sk]['cmt'][ran]}\n"
+                        rate_text.append(text)
                 
-            cm.append(c1)
-            end = time.perf_counter()#计算获取评分的时间
-            # 发送消息
+                cm = CardMessage()
+                cm.append(c)
+                if rate_count==0:
+                    rate_lv="皮肤评价数据仍待收集…"
+                    c1 = Card(Module.Header(f"{rate_lv}"),
+                            Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
+                else:
+                    rate_sum = rate_total//rate_count
+                    #记录当日冠军和屌丝
+                    if rate_sum > SkinRateDict["cmp"]["best"]["pit"]:
+                        SkinRateDict["cmp"]["best"]["pit"] = rate_sum
+                        SkinRateDict["cmp"]["best"]["skin"] = list_shop
+                        SkinRateDict["cmp"]["best"]["kook_id"] = msg.author_id
+                        print(f"[shop] update rate-best  Au:{msg.author_id} = {rate_sum}")
+                    elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
+                        SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
+                        SkinRateDict["cmp"]["worse"]["skin"] = list_shop
+                        SkinRateDict["cmp"]["worse"]["kook_id"] = msg.author_id
+                        print(f"[shop] update rate-worse Au:{msg.author_id} = {rate_sum}")
+                        
+                    if rate_sum>=0 and rate_sum <=20:
+                        rate_lv = "丐帮帮主"
+                    elif rate_sum>20 and rate_sum <=40:
+                        rate_lv = "省钱能手"
+                    elif rate_sum>40 and rate_sum <=60:
+                        rate_lv = "差强人意"
+                    elif rate_sum>60 and rate_sum <=80:
+                        rate_lv = "芜湖起飞"
+                    elif rate_sum>80 and rate_sum <=100:
+                        rate_lv = "天选之人"
+                    c1 = Card(Module.Header(f"综合评分 {rate_sum}，{rate_lv}"),
+                            Module.Context(f"以下评论来自其他用户，仅供图一乐"),
+                            Module.Divider(),color='#fb4b57')
+                    for text in rate_text:
+                        c1.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+                        c1.append(Module.Divider())
+                    c1.append(Module.Context(Element.Text(f"可以使用「/rate 皮肤名」参与评分\n或用「/kkn」查看昨日天选之子/丐帮帮主",Types.Text.KMD)))
+                    
+                cm.append(c1)
+                end = time.perf_counter()#计算获取评分的时间
+            # 更新消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+            # 结束，打印结果
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}/{format(end - start, '.2f')}]")
         else:
             cm = CardMessage()
@@ -2757,11 +2764,57 @@ async def get_bundle(msg: Message, *arg):
 
 #用户给皮肤评分的选择列表
 UserRtsDict = {}
+# 设置rate的错误用户
+@bot.command(name='ban-r')
+async def set_rate_err_user(msg:Message,user_id:str):
+    global SkinRateDict
+    if msg.author_id != master_id:
+        await msg.reply(f"您没有权限执行此命令！")
+        return
+    if user_id in SkinRateDict['err_user']:
+        await msg.reply(f"该用户已在SkinRateDict['err_user']列表中")
+    elif user_id in SkinRateDict['data']:
+        for skin,info in SkinRateDict['data'][user_id].items():
+            i=0
+            while(i<len(SkinRateDict['rate'][skin]['cmt'])) :
+                #找到这条评论，将其删除
+                if info['cmt'] == SkinRateDict['rate'][skin]['cmt'][i]:
+                    SkinRateDict['rate'][skin]['cmt'].pop(i)
+                    break
+                i+=1
+            #如果删除评论之后，链表为空，说明该链表中只有这一个评论
+            if not SkinRateDict['rate'][skin]['cmt']:#空列表视为false
+                #删除掉这个皮肤的rate
+                del SkinRateDict['rate'][skin]
+                
+        #删除完该用户的所有评论之后，将其放入err_user        
+        temp_user = copy.deepcopy(SkinRateDict['data'][user_id])
+        del SkinRateDict['data'][user_id]
+        SkinRateDict['err_user'][user_id]=temp_user
+        #写入文件
+        with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
+            json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        await msg.reply(f"用户 {user_id} 已被加入SkinRateDict['err_user']列表")
+        print(f"[rate_err_user] add Au:{user_id}, file save success")
+ 
+# 每月1日删除用户
+@bot.task.add_cron(day=1, timezone="Asia/Shanghai")
+async def clear_rate_err_user():
+    global SkinRateDict
+    SkinRateDict['err_user']={}
+    #写入文件
+    with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
+        json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    print(f"[BOT.TASK] clear_rate_err_user at {GetTime()}")
+        
 # 给一个皮肤评分（灵感来自微信小程序”瓦的小卖铺“）
 @bot.command(name="rate", aliases=['评分'])
 async def rate_skin_add(msg: Message, *arg):
     logging(msg)
-    if arg == ():
+    if check_rate_err_user(msg.author_id):
+        await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
+        return
+    elif arg == ():
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`\n正确用法：`/rate 您想评价的皮肤名`")
         return
     try:
@@ -2785,6 +2838,9 @@ async def rate_skin_add(msg: Message, *arg):
             return
         
         UserRtsDict[msg.author_id] = retlist
+        sum = 0
+        if msg.author_id in SkinRateDict['data']:
+            sum = len(SkinRateDict['data'][msg.author_id])
         i = 0
         text = "```\n"  #模拟一个选择表
         for w in retlist:
@@ -2798,8 +2854,9 @@ async def rate_skin_add(msg: Message, *arg):
         text1  = "```\n/rts 序号 评分 吐槽\n"
         text1 += "序号：上面列表中的皮肤序号\n"
         text1 += "评分：给皮肤打分，范围0~100\n"
-        text1 += "吐槽：说说你对这个皮肤的看法\n```\n"
-        text1 += "吐槽的时候请注意文明用语！"
+        text1 += "吐槽：说说你对这个皮肤的看法\n"
+        text1 += "吐槽的时候请注意文明用语！\n```\n"
+        text1 +=f"真不错，您已经评价过了 {sum} 个皮肤"
         c.append(Module.Section(Element.Text(text1, Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
@@ -2813,7 +2870,10 @@ async def rate_skin_add(msg: Message, *arg):
 @bot.command(name="rts")
 async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",*arg):
     logging(msg)
-    if index == "err" or '-' in index:
+    if check_rate_err_user(msg.author_id):
+        await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
+        return
+    elif index == "err" or '-' in index:
         await msg.reply(f"参数不正确！请正确选择您需要评分的皮肤序号\n正确用法：`/rts 序号 评分 吐槽`")
         return
     elif rating == "err" or '-' in rating:
@@ -2834,48 +2894,56 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
                 return
 
             S_skin = UserRtsDict[msg.author_id][_index]
+            skin_uuid = S_skin['skin']['lv_uuid']
             comment = " ".join(arg)#用户对此皮肤的评论
-            text2=""
+            text1="";text2=""
             # 如果rate里面没有，先创立键值
-            if S_skin['skin']['lv_uuid'] not in SkinRateDict['rate']:
-                SkinRateDict['rate'][S_skin['skin']['lv_uuid']] = {}
-                SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] = 0
-                SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['cmt'] = list()
-            if SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']==0:
+            if skin_uuid not in SkinRateDict['rate']:
+                SkinRateDict['rate'][skin_uuid] = {}
+                SkinRateDict['rate'][skin_uuid]['pit'] = 0
+                SkinRateDict['rate'][skin_uuid]['cmt'] = list()
+            if SkinRateDict['rate'][skin_uuid]['pit']==0:
                 point = float(_rating)
-            elif abs(float(_rating)-SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']) <= 32: 
+            elif abs(float(_rating)-SkinRateDict['rate'][skin_uuid]['pit']) <= 32: 
                 #用户的评分和皮肤平均分差值不能超过32，避免有人乱刷分
-                point = (SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] + float(_rating))/2
+                point = (SkinRateDict['rate'][skin_uuid]['pit'] + float(_rating))/2
             else:#差值过大，不计入皮肤平均值
-                point = SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']
+                point = SkinRateDict['rate'][skin_uuid]['pit']
                 text2+=f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
             # 设置皮肤的评分和评论
-            SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit'] = point
-            SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['name']=S_skin['skin']['displayName']
-            SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['cmt'].append(comment)
+            SkinRateDict['rate'][skin_uuid]['pit'] = point
+            SkinRateDict['rate'][skin_uuid]['name']=S_skin['skin']['displayName']
+            SkinRateDict['rate'][skin_uuid]['cmt'].append(comment)
             # data内是记录xx用户评论了xx皮肤
-            if msg.author_id not in SkinRateDict['data']:
+            if msg.author_id in SkinRateDict['data']:
+                #如果用户之前已经评论过这个皮肤，则需要删除之前的评论
+                if skin_uuid in SkinRateDict['data'][msg.author_id]:
+                    i=0
+                    while(i<len(SkinRateDict['rate'][skin_uuid]['cmt'])) :
+                        #找到这条评论，将其删除
+                        if SkinRateDict['data'][msg.author_id][skin_uuid]['cmt'] == SkinRateDict['rate'][skin_uuid]['cmt'][i]:
+                            SkinRateDict['rate'][skin_uuid]['cmt'].pop(i)
+                            text1+="更新"
+                            break
+                        i+=1
+            else:#用户不存在，创建用户的dict
                 SkinRateDict['data'][msg.author_id] = {}
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = {}
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['name'] = S_skin['skin']['displayName']
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['cmt']  = comment
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['pit']  = point
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['msg_id'] = msg.id
-            else:  #用户存在
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = {}
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['name'] = S_skin['skin']['displayName']
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['cmt']  = comment
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['pit']  = point
-                SkinRateDict['data'][msg.author_id][S_skin['skin']['lv_uuid']]['msg_id'] = msg.id
+            #无论用户在不在，都设置键值
+            SkinRateDict['data'][msg.author_id][skin_uuid] = {}
+            SkinRateDict['data'][msg.author_id][skin_uuid]['name'] = S_skin['skin']['displayName']
+            SkinRateDict['data'][msg.author_id][skin_uuid]['cmt']  = comment
+            SkinRateDict['data'][msg.author_id][skin_uuid]['pit']  = point
+            SkinRateDict['data'][msg.author_id][skin_uuid]['time']  = GetTime()
+            SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
 
             # 写入文件
             with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
                 json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
             #del UserRtsDict[msg.author_id]  #删除选择页面中的list
-            text1 = f"评价成功！{S_skin['skin']['displayName']}"
+            text1+= f"评价成功！{S_skin['skin']['displayName']}"
             text2+= f"您的评分：{_rating}\n"
-            text2+= f"皮肤平均分：{SkinRateDict['rate'][S_skin['skin']['lv_uuid']]['pit']}\n"
+            text2+= f"皮肤平均分：{SkinRateDict['rate'][skin_uuid]['pit']}\n"
             text2+= f"您的评语：{comment}"
             cm = CardMessage()
             c=Card(Module.Header(text1),
@@ -2897,6 +2965,9 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
 @bot.command(name="kkn")
 async def rate_skin_select(msg: Message):
     logging(msg)
+    if check_rate_err_user(msg.author_id):
+        await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
+        return
     try:
         cm = CardMessage()
         c=Card(Module.Header(f"来看看昨日天选之子和丐帮帮主吧！"),Module.Divider())
@@ -2907,10 +2978,6 @@ async def rate_skin_select(msg: Message):
             if sk in SkinRateDict['rate']:
                 skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
                 text+=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
-                if len(SkinRateDict['rate'][sk]['cmt']) == 1:
-                    ran = 0 #元素内只有1个评论，直接选定该评论
-                else:
-                    ran = random.sample(range(0, len(SkinRateDict['rate'][sk]['cmt'])-1),1)  
         c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
         c.append(Module.Divider())
         # worse
@@ -2920,10 +2987,6 @@ async def rate_skin_select(msg: Message):
             if sk in SkinRateDict['rate']:
                 skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
                 text+=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
-                if len(SkinRateDict['rate'][sk]['cmt']) == 1:
-                    ran = 0 #元素内只有1个评论，直接选定该评论
-                else:
-                    ran = random.sample(range(0, len(SkinRateDict['rate'][sk]['cmt'])-1),1)
         c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
