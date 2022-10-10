@@ -2119,25 +2119,12 @@ def shop_time_remain():
     #print(timeout)
     return timeout
 
-
-def isSame_Authuuid(msg: Message):  #判断uuid是否相等
+#判断uuid是否相等
+def isSame_Authuuid(msg: Message):  
     return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
 
-
-#每天早上8点准时清除商店dict
-@bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
-async def clear_usershopdict():
-    global UserShopDict
-    UserShopDict = {}
-    print("[BOT.TASK] clear UserShopDict finished")
-
-
-# 获取每日商店的命令
-async def get_daily_shop_vip_img(list_shop: dict,
-                                 userdict: dict,
-                                 user_id: str,
-                                 is_vip: bool = True,
-                                 msg: Message = None):
+# 获取vip用户每日商店的图片
+async def get_daily_shop_vip_img(list_shop: dict,userdict: dict,user_id: str,is_vip: bool = True, msg: Message = None):
     """save img:
      - bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
      
@@ -3061,18 +3048,20 @@ async def check_shop_rate(user_id:str,list_shop:list):
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
-    global SkinNotifyDict, SkinRateDict
+    global SkinNotifyDict, SkinRateDict, UserShopDict
     try:
-        print(f"[BOT.TASK.NOTIFY] auto_skin_notify Start at {GetTime()}")  #开始的时候打印一下
+        print(f"[BOT.TASK.NOTIFY] Start at {GetTime()}")  #开始的时候打印一下
+        UserShopDict = {}#清空用户的商店
         #清空昨日最好/最差用户的皮肤表
         SkinRateDict["kkn"] = copy.deepcopy(SkinRateDict["cmp"])
         SkinRateDict["cmp"]["best"]["skin"]=list()
         SkinRateDict["cmp"]["best"]["pit"]=0
         SkinRateDict["cmp"]["worse"]["skin"]=list()
         SkinRateDict["cmp"]["worse"]["pit"]=100
-        print("[BOT.TASK.NOTIFY] SkinRateDict clear, sleep(15)")
+        print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(15)")
         #睡15s再开始遍历（避免时间不准）
         await asyncio.sleep(15)
+        print("[BOT.TASK.NOTIFY] auto_skin_notify Start")
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
         err_count = 0 # 设置一个count来计算出错的用户数量
@@ -3105,7 +3094,6 @@ async def auto_skin_notify():
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
                         await check_shop_rate(vip,list_shop)#计算用户商店得分
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
-                        global UserShopDict
                         UserShopDict[vip] = {}
                         UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
                         UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
@@ -3233,7 +3221,7 @@ async def auto_skin_notify():
         # 将当日最高最低用户写入文件
         with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
             json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)            
-        finish_str = f"[BOT.TASK.NOTIFY] auto_skin_notify Finish at {GetTime()} [ERR {err_count}]"
+        finish_str = f"[BOT.TASK.NOTIFY] Finish at {GetTime()} [ERR {err_count}]"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
     except Exception as result:
