@@ -1745,20 +1745,12 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         await Login_Forbidden_send(msg)
         return
 
-    global login_rate_limit
+    global login_rate_limit, UserTokenDict, UserAuthDict
     try:
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
-        global UserTokenDict, UserAuthDict
-        # if msg.author_id in UserAuthDict:  #用in判断dict是否存在这个键，如果用户id已有，则不进行操作
-        #     text = "您已经登陆，无需重复操作"
-        #     c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.shaka, size='sm')))
-        #     c.append(Module.Context(Element.Text("如需重新登录，请先logout退出当前登录", Types.Text.KMD)))
-        #     cm0.append(c)
-        #     await msg.reply(cm0)
-        #     return
 
-        #全局请求超速
+        # 全局请求超速
         if login_rate_limit['limit']:
             time_stap = time.time()
             time_diff = time_stap - login_rate_limit['time']
@@ -1770,7 +1762,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             else:  #超过240s，解除限制
                 login_rate_limit['limit'] = False
                 login_rate_limit['time'] = time_stap
-
+        # 用户请求超速
         if await check_user_login_rate(msg):
             print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
             return
@@ -1781,7 +1773,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm0.append(c)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
-        # 不在AuthDict中才进行获取token的操作（耗时)
+        # 获取用户的token
         res_auth = await authflow(user, passwd)
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id}  #先创建基本信息 dict[键] = 值
         userdict = {
@@ -1869,7 +1861,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         await BaseException_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
 
 
-#重新登录（kook用户id）
+# 重新登录
 async def login_re_auth(kook_user_id: str):
     base_print = f"[{GetTime()}] Au:{kook_user_id} = "
     print(base_print + "auth_token failure,trying reauthorize()")
@@ -1953,7 +1945,6 @@ async def login_test(msg: Message, *arg):
         return
     try:
         if msg.author_id in UserAuthDict:
-            flag_au = 1
             reau = await check_re_auth("测试登录", msg)
             if reau == False: return  #如果为假说明重新登录失败
 
