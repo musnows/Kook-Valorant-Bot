@@ -1775,7 +1775,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
 
         # 获取用户的token
         res_auth = await authflow(user, passwd)
-        UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id}  #先创建基本信息 dict[键] = 值
+        UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
             'auth_user_id': res_auth.user_id,
             'access_token': res_auth.access_token,
@@ -1795,7 +1795,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
 
         # 修改/新增都需要写入文件
-        with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw2:
+        with open("./log/UserAuthID.json", 'w', encoding='utf-8') as fw2:
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
         # 如果是vip用户，则保存cookie
@@ -1987,8 +1987,8 @@ async def logout_authtoken(msg: Message, *arg):
         await msg.reply(cm)
 
         #最后重新执行写入
-        del UserTokenDict[msg.author_id]
-        with open("./log/UserAuth.json", 'w', encoding='utf-8') as fw1:
+        #del UserTokenDict[msg.author_id] # 没必要删除此键值
+        with open("./log/UserAuthID.json", 'w', encoding='utf-8') as fw1:
             json.dump(UserTokenDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
         fw1.close()
     except Exception as result: # 其他错误
@@ -2320,7 +2320,7 @@ async def get_daily_shop(msg: Message, *arg):
                     del shop_img_temp[ran]
 
             # 打印画图耗时
-            log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
+            log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}"
             print(log_time)
             # bg.save(f"test.png")  #保存到本地
             imgByteArr = io.BytesIO()
@@ -2339,12 +2339,6 @@ async def get_daily_shop(msg: Message, *arg):
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
-            # 提示正在查询
-            # c0 = Card(Module.Header(f"正在查询您今日商店皮肤评分……"),
-            #             Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
-            # cm.append(c0)
-            # # 先发送商店
-            # await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             
             #皮肤评分和评价，用户不在err_user里面才显示
             if not check_rate_err_user(msg.author_id):
@@ -3111,7 +3105,7 @@ async def auto_skin_notify():
                             await user.send(cm)
                             continue
 
-                        log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}"
+                        log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
                         print(log_time)
                         img_shop = f"./log/img_temp_vip/shop/{vip}.png"
                         #bg_shop.save(img_shop, format='PNG')
@@ -3136,9 +3130,10 @@ async def auto_skin_notify():
                         await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
                 else:  #不在auth里面说明没有登录
                     log_vip_not_login+=f"({vip})"
-                    await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~")
+                    await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~\n[注] 如果您在早8:10之后收到此条消息，请忽略。开发者在进行bug测试")
             except Exception as result:  #这个是用来获取单个用户的问题的
-                err_str = f"ERR![BOT.TASK.NOTIFY] VAu:{vip} vip_user.send\n```\n{traceback.format_exc()}\n```"
+                err_cur = str(traceback.format_exc())
+                err_str = f"ERR![BOT.TASK.NOTIFY] VAu:{vip} vip_user.send\n```\n{err_cur}\n```"
                 print(err_str)
                 if '屏蔽' in err_cur or '无法发起' in err_cur:
                     err_count+=1
@@ -3187,7 +3182,7 @@ async def auto_skin_notify():
                 else:  #不在auth里面说明没有登录
                     log_not_login+=f"({aid})"
                     await user.send(
-                        f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n悄悄话: 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？")
+                        f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n[悄悄话] 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？\n[注] 如果您在早8:10之后收到此条消息，请忽略。开发者在进行bug测试")
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] Au:{aid} user.send\n```\n{err_cur}\n```"
