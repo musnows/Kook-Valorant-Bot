@@ -3135,8 +3135,8 @@ async def auto_skin_notify():
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] VAu:{vip} vip_user.send\n```\n{err_cur}\n```"
                 print(err_str)
+                err_count+=1
                 if '屏蔽' in err_cur or '无法发起' in err_cur:
-                    err_count+=1
                     SkinNotifyDict['err_user'][aid] = GetTime()
                     err_str+=f"\nadd to ['err_user']"
                 
@@ -3186,8 +3186,8 @@ async def auto_skin_notify():
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] Au:{aid} user.send\n```\n{err_cur}\n```"
+                err_count+=1
                 if '屏蔽' in err_cur or '无法发起' in err_cur:
-                    err_count+=1
                     del SkinNotifyDict['data'][aid] #直接粗暴解决，删除用户
                     SkinNotifyDict['err_user'][aid] = GetTime()
                     err_str+=f"\ndel SkinNotifyDict['data'][{aid}],add to ['err_user']"
