@@ -56,6 +56,9 @@ Recommended to use after the Valorant_Function is stable.
 | `/vip-shop img-url` | add vip-shop background img  |
 | `/vip-shop-s NO.` | switch vip-shop background img using `NO.`,  `NO.` will show at `/vip-shop` |
 | `/vip-shop-d NO.` | delete vip-shop background img using `NO.` |
+|`/rate skin_name`|search skin by name for /rts|
+|`/rts NO. point comment`|select skin_no. to rate a point(0~100) and leave a comment to it|
+|`/kkn`|checkout yesterday's heighest/lowest rate_point of daily shop |
 
 notify function require user to stay `login`, bot wil fetch your daily shop at `08:02 am GMT+8` .If the skin is in daily shop,bot will send a private message to user.
 
