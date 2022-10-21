@@ -2811,24 +2811,32 @@ async def rate_skin_add(msg: Message, *arg):
         
         UserRtsDict[msg.author_id] = retlist
         sum = 0
-        if msg.author_id in SkinRateDict['data']:
+        usrin = msg.author_id in SkinRateDict['data']
+        if usrin:
             sum = len(SkinRateDict['data'][msg.author_id])
         i = 0
         text = "```\n"  #模拟一个选择表
         for w in retlist:
-            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}\n"
+            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}"
             i += 1
+            if usrin and w['skin']['lv_uuid'] in SkinRateDict['data'][msg.author_id]:
+                text+=" √\n"
+            elif w['skin']['lv_uuid'] in SkinRateDict['rate']:
+                text+=" +\n"
+            else:
+                text+=" -\n"
+            
         text += "```"
         cm = CardMessage()
         c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
                  Module.Section(Element.Text(text, Types.Text.KMD)),
-                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分", Types.Text.KMD)))
+                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分; √代表您已评价过该皮肤，+代表已有玩家评价，-代表无人评价\n", Types.Text.KMD)))
         text1  = "```\n/rts 序号 评分 吐槽\n"
         text1 += "序号：上面列表中的皮肤序号\n"
         text1 += "评分：给皮肤打分，范围0~100\n"
         text1 += "吐槽：说说你对这个皮肤的看法\n"
         text1 += "吐槽的时候请注意文明用语！\n```\n"
-        text1 +=f"真不错，您已经评价过了 {sum} 个皮肤"
+        text1 +=f"您已经评价过了 {sum} 个皮肤"
         c.append(Module.Section(Element.Text(text1, Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
