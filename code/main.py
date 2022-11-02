@@ -13,6 +13,7 @@ from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
                  PublicChannel, PublicMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
+from aiohttp import client_exceptions
 
 from bot_log import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
 from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
@@ -1839,6 +1840,18 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         login_rate_limit['time'] = time.time()
         ret_cm = get_login_rate_cm()  #这里是第一个出现速率限制err的用户
         await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
+    except client_exceptions.ClientResponseError as result:
+        err_str = f"[Login] aiohttp ERR!\n{traceback.format_exc()}\n"
+        if 'auth.riotgames.com' in str(result):
+            global Login_Forbidden
+            Login_Forbidden = True
+            err_str+= f"[Login] 403 err! set Login_Forbidden = True"
+        else:
+            err_str+= f"[Login] Unkown aiohttp ERR!"
+        
+        print(err_str)
+        await bot.client.send(debug_ch,err_str)
+        await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
     except KeyError as result:
         print(f"ERR! [{GetTime()}] login - KeyError:{result}")
         cm = CardMessage()
@@ -1927,12 +1940,26 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             return send_msg  #返回发送出去的消息（用于更新）
 
         return ret  #返回假
+    
+    except client_exceptions.ClientResponseError as result:
+        err_str = f"[Ckeck_re_auth] aiohttp ERR!\n{traceback.format_exc()}\n"
+        if 'auth.riotgames.com' in str(result):
+            global Login_Forbidden
+            Login_Forbidden = True
+            err_str+= f"[Ckeck_re_auth] 403 err! set Login_Forbidden = True"
+        else:
+            err_str+= f"[Ckeck_re_auth] Unkown aiohttp ERR!"
+        
+        print(err_str)
+        await bot.client.send(debug_ch,err_str)
+        return False
     except Exception as result:
         if 'httpStatus' in str(result):
             print(f"[Ckeck_re_auth] Au:{user_id} No need to reauthorize [{result}]")
             return True
         else:
             print(f"[Ckeck_re_auth] Unkown ERR!\n{traceback.format_exc()}")
+            await bot.client.send(debug_ch,f"[Ckeck_re_auth] Unkown ERR!\n{traceback.format_exc()}")
             return False
 
 
