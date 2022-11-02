@@ -1733,6 +1733,7 @@ async def check_user_login_rate(msg: Message):
 async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
     log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
+    global Login_Forbidden
     if not isinstance(msg, PrivateMessage): # 不是私聊的话，禁止调用本命令
         await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
         return
@@ -1843,7 +1844,6 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
     except client_exceptions.ClientResponseError as result:
         err_str = f"[Login] aiohttp ERR!\n{traceback.format_exc()}\n"
         if 'auth.riotgames.com' in str(result):
-            global Login_Forbidden
             Login_Forbidden = True
             err_str+= f"[Login] 403 err! set Login_Forbidden = True"
         else:
