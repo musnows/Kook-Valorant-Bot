@@ -102,6 +102,30 @@
 <img src="./screenshot/vip_daily_shop.png" height="300px" alt="vip_shop">
 </details>
 
+### valorant-api
+
+这个api是利用python写的小代码，主要还是复用了阿狸主代码中给商店画图的部分，支持自定义背景图
+
+```
+https://api.outpost54.club/shop-img?token=密钥&account=账户&passwd=密码&img_src=自定义背景图的url
+
+因为该功能没啥人用，在这里提供一个测试密钥
+da4ec652-4a25-11ed-bff2-525400c9274f
+```
+api后台不会记录您的账户信息，如果请求`/shop-img`接口，图片将直接跳转到kook的图床；如果请求`/shop-url`接口，图片将以json（内含url）的方式返回
+
+> 咳咳，白嫖了kook的图床
+
+```json
+{
+    "code": 0, 
+    "message": "https://img.kookapp.cn/attachments/2022-12/16/gsvlSyfweq0zk0k0.png", 
+    "info": "商店图片获取成功"
+}
+```
+
+<img src="./screenshot/val_api_img.png" height="300px" alt="vip_shop">
+
 ----
 
 ## 如何使用？
@@ -127,12 +151,12 @@ pip install -r requirements.txt
 下面是一些未来的计划
 
 - [x] 增加保存用户游戏id的功能
-- [x] 添加自动给新用户上色功能
-- [x] 学习接入`ValorantClientApi`
+- [x] 添加自动给新用户上色功能（目前只有kook的valorant服务器能用）
 - [ ] 实现查询游戏战绩（需要roit授权）
 - [x] 实现玩家商店刷枪的查询
 - [x] 实现当商店刷新某一把枪的时候提醒玩家
 - [x] 查看玩家的夜市
+- [ ] 以类似抽卡的方式，用按钮、图片等等方式显示用户的夜市
 
 ~~由于很多人在使用类似商店查询软件后被ban，我决定正式停止相关功能的开发~~
 
@@ -141,8 +165,6 @@ pip install -r requirements.txt
 **如果您担心风险，请不要使用相关功能**！bot的`/vhelp`命令`/login`命令中有相关警告提示，使用即代表您同意了承担风险！
 
 <img src="./screenshot/issue_banned.png" width="580px" height="250px"/>
-
-<img src="https://s1.ax1x.com/2022/07/07/jwNGMF.png" width="350px" height="230px"/>
 
 ----
 
