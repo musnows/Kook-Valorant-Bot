@@ -3517,7 +3517,7 @@ async def bot_log_list(msg:Message,*arg):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            # retDict = await log_bot_list(msg)
+            retDict = await log_bot_list(msg)
             # i=1
             # text_name = "No  服务器名\n"
             # text_user = "用户数\n"

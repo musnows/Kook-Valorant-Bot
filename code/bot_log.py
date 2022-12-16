@@ -75,8 +75,7 @@ def logging(msg: Message):
 
 # 记录信息的底图
 font_color = '#000000' # 黑色
-log_base_img = Image.open(io.BytesIO(
-    requests.get("https://s1.ax1x.com/2022/10/06/x11HdH.png").content))  # vip用户背景框 16-9
+log_base_img = Image.open("../screenshot/log_base.png") 
 # 画图，把当前加入的服务器总数等等信息以图片形式显示在README中
 async def log_bot_img():
     bg = deepcopy(log_base_img)  # 新建一个画布
