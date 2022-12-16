@@ -3172,7 +3172,7 @@ async def auto_skin_notify():
                 print(err_str)
                 err_count+=1
                 if '屏蔽' in err_cur or '无法发起' in err_cur:
-                    SkinNotifyDict['err_user'][aid] = GetTime()
+                    SkinNotifyDict['err_user'][vip] = GetTime()
                     err_str+=f"\nadd to ['err_user']"
                 
                 await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
