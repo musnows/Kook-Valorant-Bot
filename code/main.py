@@ -158,7 +158,7 @@ async def Vhelp(msg: Message, *arg):
         help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
         help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n"
         help_2 += "「早八商店提醒」阿狸将在早8点获取vip用户的每日商店并私聊发图给用户，同时会对这张图片进行缓存，当天使用`/shop`命令的时候，只需2s获取结果，三倍于普通用户的响应速度！\n\n"
-        help_2 += "1.目前商店查询diy背景图支持16-9(横屏)的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景 [教程图](https://s1.ax1x.com/2022/09/12/vXD1Nq.jpg)\n"
+        help_2 += "1.目前商店查询diy背景图支持16-9(横屏)的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景 [教程图](https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png)\n"
         help_2 +="2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
         c3.append(Module.Section(Element.Text(help_2, Types.Text.KMD)))
         c3.append(
@@ -602,12 +602,6 @@ async def atAhri(msg: Message, mention_str: str):
         await msg.reply(f"{err_str}")
         print(err_str)
 
-# for Bilibili Up @uncle艾登
-@bot.command()
-async def uncle(msg: Message):
-    logging(msg)
-    await msg.reply(
-        '本狸才不喜欢`又硬又细`的人呢~\n[https://s1.ax1x.com/2022/06/24/jFGjHA.png](https://s1.ax1x.com/2022/06/24/jFGjHA.png)')
 
 
 ###########################################################################################

@@ -20,7 +20,7 @@ bot = Bot(token=config['token'])
 
 # 没啥用的中二病指令
 async def kda123(msg: Message):
-    await msg.reply('本狸就是女王！\n[https://s1.ax1x.com/2022/07/03/jGFl0U.jpg](https://s1.ax1x.com/2022/07/03/jGFl0U.jpg)')
+    await msg.reply('本狸就是女王！\n[https://img.kookapp.cn/assets/2022-12/qUM3Yvz1fw1c00u0.jpg](https://img.kookapp.cn/assets/2022-12/qUM3Yvz1fw1c00u0.jpg)')
 
 
 # 查询皮肤！只支持English皮肤名
