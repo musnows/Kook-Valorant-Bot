@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Union
 
 import aiohttp
+import khl
 import requests
 from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
                  PublicChannel, PublicMessage, requester)
@@ -45,6 +46,11 @@ async def botmarket():
     headers = {'uuid': 'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
+
+@bot.task.add_interval(minutes=5)
+async def log_img_refresh():
+    fake_msg = khl.Message()
+    await log_bot_list(fake_msg)
 
 
 ##########################################################################################
@@ -3537,11 +3543,7 @@ async def bot_log_list(msg:Message,*arg):
             #                    Element.Text(f"{text_name}",Types.Text.KMD),
             #                    Element.Text(f"{text_user}",Types.Text.KMD))))
             c = Card(Module.Header(f"来看看阿狸当前的用户记录吧！"))
-            imgByteArr = io.BytesIO()
-            bg = Image.open("../screenshot/log.png")
-            bg.save(imgByteArr, format='PNG')
-            imgByte = imgByteArr.getvalue()
-            log_img_src = await bot_upimg.client.create_asset(imgByte) 
+            log_img_src = await bot_upimg.client.create_asset("../screenshot/log.png")
             c.append(Module.Container(Element.Image(src=log_img_src)))
             cm.append(c)
             await msg.reply(cm)
