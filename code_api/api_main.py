@@ -1,4 +1,6 @@
 import json
+
+import aiofiles
 from aiohttp import web
 from riot_auth import auth_exceptions, RiotAuth
 from img_handler import *
@@ -130,6 +132,17 @@ async def get_dailshop_img(request):
         return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
         return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':'未知错误'},ensure_ascii=False), content_type='application/json')
+
+@routes.get('/log_bot_img')
+async def get_bot_log_img(request):
+    print(f"[{GetTime()}] [request] /log_bot_img")
+    try:
+        async with aiofiles.open(f'../screenshot/log.png','rb') as f:
+            return web.Response(body=await f.read(),status=200, content_type=f'image/png')
+    except:
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':'未知错误'},ensure_ascii=False), content_type='application/json')
+
+
 
 
 if __name__ == '__main__':
