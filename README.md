@@ -16,7 +16,7 @@
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
 [![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 
-<img src="./screenshot/log.png" height="55px">
+<img src="https://api.outpost54.club/log_bot_img" height="55px" alt="机器人加入服务器及调用数量">
 </div>
 
 ## 功能
