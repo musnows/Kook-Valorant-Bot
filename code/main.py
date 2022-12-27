@@ -1943,7 +1943,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
     
     except client_exceptions.ClientResponseError as result:
         err_str = f"[Ckeck_re_auth] aiohttp ERR!\n{traceback.format_exc()}\n"
-        if 'auth.riotgames.com' in str(result):
+        if 'auth.riotgames.com' and '403' in str(result):
             global Login_Forbidden
             Login_Forbidden = True
             err_str+= f"[Ckeck_re_auth] 403 err! set Login_Forbidden = True"
