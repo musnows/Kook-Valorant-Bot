@@ -47,7 +47,7 @@ class SSLAdapter(HTTPAdapter):
 class EzAuth:
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers = OrderedDict({"User-Agent": f"RiotClient/58.0.0.4640299.4552318 %s (Windows;10;;Professional, x64)","Accept-Language": "en-US,en;q=0.9","Accept": "application/json, text/plain, */*"})
+        self.session.headers = OrderedDict({"User-Agent": f"{RiotClient} %s (Windows;10;;Professional, x64)","Accept-Language": "en-US,en;q=0.9","Accept": "application/json, text/plain, */*"})
         self.session.mount('https://', SSLAdapter()) 
         #self.p = self.print()
     
