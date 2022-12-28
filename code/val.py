@@ -1,10 +1,6 @@
 # encoding: utf-8:
 import json
-import time
-
 import aiohttp
-import requests
-import valorant
 from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
@@ -13,56 +9,6 @@ with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 bot = Bot(token=config['token'])
-
-
-##########################################################################################
-##########################################################################################
-
-# 没啥用的中二病指令
-async def kda123(msg: Message):
-    await msg.reply('本狸就是女王！\n[https://img.kookapp.cn/assets/2022-12/qUM3Yvz1fw1c00u0.jpg](https://img.kookapp.cn/assets/2022-12/qUM3Yvz1fw1c00u0.jpg)')
-
-
-# 查询皮肤！只支持English皮肤名
-async def skin123(msg: Message, name: str):
-    try:
-        # 读取valorant api的key
-        with open('./config/valorant.json', 'r', encoding='utf-8') as f:
-            config = json.load(f)
-        client = valorant.Client(config['token'], locale=None)
-        skins = client.get_skins()
-        #name = input("Search a Valorant Skin Collection: ")
-        results = skins.find_all(name=lambda x: name.lower() in x.lower())
-        cm = CardMessage()
-        c1 = Card(Module.Header('查询到你想看的皮肤了！'), Module.Context('还想查其他皮肤吗...'))
-        c1.append(Module.Divider())
-        for skin in results:
-            c1.append(Module.Section(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-TW']})"))
-            #print(f"\t{skin.name.ljust(21)} ({skin.localizedNames['zh-CN']})")
-        cm.append(c1)
-        await msg.reply(cm)
-    except Exception as result:
-        await msg.reply("未知错误 %s" % result)
-
-
-# 获取排行榜上的玩家，默认获取前15位胜场超过10的玩家
-async def lead123(msg: Message, sz: int, num: int):
-    try:
-        with open('./config/valorant.json', 'r', encoding='utf-8') as f:
-            config = json.load(f)
-        client = valorant.Client(config['token'], locale=None, region='ap', route='asia')
-        lb = client.get_leaderboard(size=sz)
-        players = lb.players.get_all(numberOfWins=num)  # 筛选出胜场超过num的
-        cm = CardMessage()
-        c1 = Card(Module.Header('查询到你想看的排行榜了！'), Module.Context('什么？你也上榜了嘛...'))
-        c1.append(Module.Divider())
-        for p in lb.players:
-            c1.append(Module.Section(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)"))
-            #print(f"#{p.leaderboardRank} - {p.gameName} ({p.numberOfWins} wins)")
-        cm.append(c1)
-        await msg.reply(cm)
-    except Exception as result:
-        await msg.reply("未知错误 %s" % result)
 
 
 ####################################保存用户的游戏ID操作#######################################
@@ -385,7 +331,7 @@ async def fetch_skinlevel_uuid(id):
 
 
 
-##############################################################################################
+#######################################通行证#######################################################
 
 # 获取不同奖励的信息
 async def get_reward(reward):

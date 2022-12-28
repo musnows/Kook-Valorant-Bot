@@ -618,7 +618,7 @@ from val import (authflow, dx123, fetch_bundle_weapen_byname,
                  fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
                  fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
                  fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
-                 kda123, lead123, myid123, saveid123, saveid_1, saveid_2, val123)
+                myid123, saveid123, saveid_1, saveid_2, val123)
 
 
 # 开始打游戏
@@ -656,20 +656,6 @@ async def sleeping(msg: Message, d: int = 1):
     elif d == 2:
         await msg.reply(f"{ret['message']}，阿狸摘下了耳机~")
     #await bot.client.stop_playing_game()
-
-
-# 中二病
-@bot.command(name='kda')
-async def kda(msg: Message):
-    logging(msg)
-    await kda123(msg)
-
-
-# 查询排行榜
-@bot.command()
-async def lead(msg: Message, sz: int = 15, num: int = 10):
-    logging(msg)
-    await lead123(msg, sz, num)
 
 
 # 存储用户游戏id
