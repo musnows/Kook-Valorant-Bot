@@ -1651,11 +1651,11 @@ async def login_re_auth(kook_user_id: str):
     base_print = f"[{GetTime()}] Au:{kook_user_id} = "
     print(base_print + "auth_token failure,trying reauthorize()")
     global UserAuthDict
-    auth = UserAuthDict[kook_user_id]
+    auth = UserAuthDict[kook_user_id]['auth']
     #用cookie重新登录,会返回一个bool是否成功
     ret = await auth.reauthorize()
     if ret:  #会返回一个bool是否成功,成功了重新赋值
-        UserAuthDict[kook_user_id] = auth
+        UserAuthDict[kook_user_id]['auth'] = auth
         print(base_print + "reauthorize() Successful!")
     else:
         print(base_print + "reauthorize() Failed! T-T")  #失败打印
@@ -1673,10 +1673,10 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
     """
     user_id = "[ERR!]"  #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
-        if UserAuthDict[msg.author_id]['2fa']:
-            return True
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
-        auth = UserAuthDict[user_id]
+        if UserAuthDict[user_id]['2fa']:
+            return True
+        auth = UserAuthDict[user_id]['auth']
         userdict = {
             'auth_user_id': auth.user_id,
             'access_token': auth.access_token,
@@ -1821,7 +1821,7 @@ async def update_price(msg: Message):
         reau = await check_re_auth("物品价格", msg)
         if reau == False: return  #如果为假说明重新登录失败
         # 调用api获取价格列表
-        auth = UserAuthDict[msg.author_id]
+        auth = UserAuthDict[msg.author_id]['auth']
         userdict = {
             'auth_user_id': auth.user_id,
             'access_token': auth.access_token,
@@ -2868,7 +2868,7 @@ async def auto_skin_notify():
                 if vip in UserAuthDict:
                     if await check_re_auth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
                         start = time.perf_counter()  #开始计时
-                        auth = UserAuthDict[vip]
+                        auth = UserAuthDict[vip]['auth']
                         userdict = {
                             'auth_user_id': auth.user_id,
                             'access_token': auth.access_token,
@@ -2963,7 +2963,7 @@ async def auto_skin_notify():
                 user = await bot.client.fetch_user(aid)
                 if aid in UserAuthDict:
                     if await check_re_auth("定时获取玩家商店", aid) == True:  # 重新登录,如果为假说明重新登录失败
-                        auth = UserAuthDict[aid]
+                        auth = UserAuthDict[aid]['auth']
                         userdict = {
                             'auth_user_id': auth.user_id,
                             'access_token': auth.access_token,
@@ -3358,7 +3358,7 @@ async def loading_channel_cookie():
             auth._cookie_jar.load(cookie_path)  #加载cookie
             ret_bool = await auth.reauthorize()  #尝试登录
             if ret_bool:  # True登陆成功
-                UserAuthDict[user] = auth  #将对象插入
+                UserAuthDict[user] = { "auth":auth,"2fa":False}  #将对象插入
                 log_str_success +=f"({user})"
                 #print(f"[BOT.TASK] Au:{user} - load cookie success!")
                 #不用重新修改UserTokenDict里面的游戏名和uuid
