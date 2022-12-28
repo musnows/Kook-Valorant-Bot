@@ -723,32 +723,13 @@ async def myid(msg: Message, *args):
         await msg.reply(err_str)
 
 
-# str转int
-from functools import reduce
-
-
-def str2int(s):
-    return reduce(lambda x, y: x * 10 + y,
-                  map(lambda s: {
-                      '0': 0,
-                      '1': 1,
-                      '2': 2,
-                      '3': 3,
-                      '4': 4,
-                      '5': 5,
-                      '6': 6,
-                      '7': 7,
-                      '8': 8,
-                      '9': 9
-                  }[s], s))
-
 
 # 查询游戏错误码
 @bot.command(name='val', aliases=['van', 'VAN', 'VAL'])
 async def val_err(msg: Message, numS: str = "-1",*arg):
     logging(msg)
     try:
-        #num = str2int(numS)
+        #num = int(numS)
         await val123(msg, numS)
     except Exception as result:
         await msg.reply(f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
@@ -1370,7 +1351,7 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             await msg.reply("您尚未自定义商店背景图！")
             return
 
-        num = str2int(num)
+        num = int(num)
         if num < len(VipShopBgDict[msg.author_id]["background"]):
             try:  #打开用户需要切换的图片
                 bg_vip = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[msg.author_id]["background"][num])))
@@ -1426,7 +1407,7 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
             await msg.reply("您尚未自定义商店背景图！")
             return
 
-        num = str2int(num)
+        num = int(num)
         if num < len(VipShopBgDict[msg.author_id]["background"]) and num > 0:
             # 删除图片
             del_img_url = VipShopBgDict[msg.author_id]["background"][num]
@@ -2891,8 +2872,8 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
         return
     try:
         if msg.author_id in UserRtsDict:
-            _index = str2int(index)  #转成int下标（不能处理负数）
-            _rating = str2int(rating) #转成分数
+            _index = int(index)  #转成int下标（不能处理负数）
+            _rating = int(rating) #转成分数
             if _index >= len(UserRtsDict[msg.author_id]):  #下标判断，避免越界
                 await msg.reply(f"您的选择越界了！请正确填写序号")
                 return
@@ -3359,7 +3340,7 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
     try:
         global SkinNotifyDict
         if msg.author_id in UserStsDict:
-            num = str2int(n)  #转成int下标（不能处理负数）
+            num = int(n)  #转成int下标（不能处理负数）
             if num >= len(UserStsDict[msg.author_id]):  #下标判断，避免越界
                 await msg.reply(f"您的选择越界了！请正确填写序号")
                 return
