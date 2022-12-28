@@ -138,7 +138,8 @@ async def get_bot_log_img(request):
     print(f"[{GetTime()}] [request] /log_bot_img")
     try:
         async with aiofiles.open(f'../screenshot/log.png','rb') as f:
-            return web.Response(body=await f.read(),status=200, content_type=f'image/png')
+            #return web.Response(body=await f.read(),status=200, content_type=f'image/png')
+            return web.Response(headers={"Access-Control-Allow-Origin": "*"},body=await f.read(),status=200, content_type=f'image/png')
     except:
         return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':'未知错误'},ensure_ascii=False), content_type='application/json')
 
