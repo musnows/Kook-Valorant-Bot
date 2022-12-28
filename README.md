@@ -103,6 +103,8 @@
 
 ### valorant-api
 
+> api源码见 [code_api](./code_api/)
+
 这个api是利用python写的小代码，主要还是复用了阿狸主代码中给商店画图的部分，支持自定义背景图
 
 ```
@@ -129,7 +131,7 @@ api后台不会记录您的账户信息，如果请求`/shop-img`接口，图片
 
 ## 如何使用？
 
-保证你的Linux中`Python`版本高于`3.8`，执行下面的安装库命令
+保证你的Windows/Linux中`Python`版本高于`3.8`，执行下面的安装库命令
 
 ~~~
 pip install -r requirements.txt
