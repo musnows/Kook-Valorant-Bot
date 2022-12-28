@@ -21,6 +21,11 @@ from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFail
 from endpoints.other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
+from endpoints.val import (authflow,auth2fa, dx123, fetch_bundle_weapen_byname,
+                 fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
+                 fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
+                 fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
+                myid_main, saveid_main, saveid_all, val_errcode)
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -401,13 +406,6 @@ async def Weather(msg: Message, city: str = "err"):
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
-
-from endpoints.val import (authflow, dx123, fetch_bundle_weapen_byname,
-                 fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
-                 fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
-                 fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
-                myid_main, saveid_main, saveid_all, val_errcode)
-
 
 # 开始打游戏
 @bot.command()
@@ -1478,8 +1476,8 @@ async def check_user_login_rate(msg: Message):
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', *arg):
-    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login")
+async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=False,*arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa}")
     log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden
     if not isinstance(msg, PrivateMessage): # 不是私聊的话，禁止调用本命令
@@ -1524,7 +1522,11 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
         # 获取用户的token
-        res_auth = await authflow(user, passwd)
+        res_auth = None
+        if not tfa:
+            res_auth = await authflow(user, passwd)
+        else:
+            res_auth = await auth2fa(msg,user,passwd)
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
             'auth_user_id': res_auth.user_id,
@@ -1534,13 +1536,17 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         res_gameid = await fetch_user_gameID(userdict)  # 获取用户玩家id
         UserTokenDict[msg.author_id]['GameName'] = res_gameid[0]['GameName']
         UserTokenDict[msg.author_id]['TagLine'] = res_gameid[0]['TagLine']
-        UserAuthDict[msg.author_id] = res_auth  #将对象插入
+        UserAuthDict[msg.author_id] = { "auth":res_auth,"2fa":tfa}  #将对象插入
+
+        info_text = "当前token有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
+        if tfa:
+            info_text = "由于后台实现的限制，您每次登录的时候都需要提供验证码，见谅T.T\n有任何问题请[点我](https://kook.top/gpbTwZ)"
 
         cm = CardMessage()
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         c = Card(color='#fb4b57')
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.correct, size='sm')))
-        c.append(Module.Context(Element.Text("当前token有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)", Types.Text.KMD)))
+        c.append(Module.Context(Element.Text(info_text, Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
 
@@ -1549,7 +1555,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
         # 如果是vip用户，则保存cookie
-        if await vip_ck(msg.author_id):
+        if await vip_ck(msg.author_id) and not tfa:
             cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
             res_auth._cookie_jar.save(cookie_path)#保存
             global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
@@ -1575,7 +1581,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotMultifactorError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
-        text = f"当前不支持开启了`邮箱双重验证`的账户"
+        text = f"若您开始了邮箱双重验证，请使用「/login 账户 密码 1」来登录"
         cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
@@ -1621,6 +1627,24 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
     except Exception as result: # 其他错误
         await BaseException_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
 
+from endpoints.EzAuth import User2faCode
+
+@bot.command(name='tfa')
+async def auth_2fa(msg:Message,tfa:str,*arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /2fa")
+    if len(tfa)!=6:
+        await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：{tfa}")
+        return
+    
+    try:
+        global User2faCode
+        User2faCode[msg.author_id]['vcode'] = tfa
+        User2faCode[msg.author_id]['status'] = True
+        await msg.reply(f"两步验证码获取成功，请等待……") 
+
+    except Exception as result: # 其他错误
+        await BaseException_Handler("login",traceback.format_exc(),msg,bot)
+
 
 # 重新登录
 async def login_re_auth(kook_user_id: str):
@@ -1649,6 +1673,8 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
     """
     user_id = "[ERR!]"  #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
+        if UserAuthDict[msg.author_id]['2fa']:
+            return True
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
         auth = UserAuthDict[user_id]
         userdict = {
@@ -2013,7 +2039,7 @@ async def get_daily_shop(msg: Message, *arg):
             #计算获取每日商店要多久
             start = time.perf_counter()  #开始计时
             #从auth的dict中获取对象
-            auth = UserAuthDict[msg.author_id]
+            auth = UserAuthDict[msg.author_id]['auth']
             userdict = {
                 'auth_user_id': auth.user_id,
                 'access_token': auth.access_token,
@@ -2251,7 +2277,7 @@ async def get_night_market(msg: Message, *arg):
             
             #计算获取时间
             start = time.perf_counter() #开始计时
-            auth = UserAuthDict[msg.author_id]
+            auth = UserAuthDict[msg.author_id]['auth']
             userdict = {
                 'auth_user_id': auth.user_id,
                 'access_token': auth.access_token,
@@ -2383,7 +2409,7 @@ async def get_user_card(msg: Message, *arg):
             else: # 如果不需要重新登录，则直接发消息
                 send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
-            auth = UserAuthDict[msg.author_id]
+            auth = UserAuthDict[msg.author_id]['auth']
             userdict = {
                 'auth_user_id': auth.user_id,
                 'access_token': auth.access_token,

@@ -52,7 +52,7 @@ async def myid_main(msg: Message):
         await msg.reply(f"狸狸不知道你的游戏id呢，用`/saveid`告诉我吧！\n```\n/saveid 你的游戏id```\n目前狸狸已经记下了`{countD}`个小伙伴的id喽！")
 
 
-##########################################################################################
+####################################  err code  ################################################
 
 # 预加载文件
 with open("./log/ValErrCode.json", 'r', encoding='utf-8') as frgm:
@@ -75,12 +75,10 @@ async def dx123(msg: Message):
     )
 
 
-####################################################################################################
-###################https://github.com/HeyM1ke/ValorantClientAPI#####################################
-####################################################################################################
+###################################### Riot Auth ######################################################
 
 import riot_auth
-
+from endpoints.EzAuth import EzAuth
 
 # 获取拳头的token
 # 此部分代码来自 https://github.com/floxay/python-riot-auth
@@ -93,6 +91,16 @@ async def authflow(user: str, passwd: str):
     # print(f"Entitlements Token: {auth.entitlements_token}\n",f"User ID: {auth.user_id}")
     return auth
 
+# 两步验证的用户
+async def auth2fa(msg:Message,user:str,passwd:str):
+    auth = EzAuth()
+    await auth.authorize(user,passwd,msg=msg)
+    return auth
+
+
+####################################################################################################
+###################https://github.com/HeyM1ke/ValorantClientAPI#####################################
+####################################################################################################
 
 #获取用户游戏id(从使用对象修改成使用文件中的内容)
 async def fetch_user_gameID(auth):
