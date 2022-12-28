@@ -3371,33 +3371,33 @@ async def bot_log_list(msg:Message,*arg):
     try:
         if msg.author_id == master_id:
             retDict = await log_bot_list(msg)
-            # i=1
-            # text_name = "No  服务器名\n"
-            # text_user = "用户数\n"
-            # for gu,ginfo in retDict['guild']['data'].items():
-            #     #Gret = await guild_view(gu)
-            #     Gname = ginfo['name']
-            #     if len(Gname) >12:
-            #         text = Gname[0:11]
-            #         text += "…"
-            #         Gname = text
-            #     # 追加text
-            #     text_name+=f"[{i}]  {Gname}\n"
-            #     text_user+=f"{len(ginfo['user'])}\n"
-            #     i+=1
+            i=1
+            text_name = "No  服务器名\n"
+            text_user = "用户数\n"
+            for gu,ginfo in retDict['guild']['data'].items():
+                #Gret = await guild_view(gu)
+                Gname = ginfo['name']
+                if len(Gname) >12:
+                    text = Gname[0:11]
+                    text += "…"
+                    Gname = text
+                # 追加text
+                text_name+=f"[{i}]  {Gname}\n"
+                text_user+=f"{len(ginfo['user'])}\n"
+                i+=1
             
             cm = CardMessage()
-            # c = Card(
-            #     Module.Header(f"来看看阿狸当前的用户记录吧！"),
-            #     Module.Context(f"服务器总数: {retDict['guild']['guild_total']}  活跃服务器: {retDict['guild']['guild_active']}  用户数: {retDict['user']['user_total']}  cmd: {retDict['cmd_total']}"),
-            #     Module.Divider(),
-            #     Module.Section(
-            #         Struct.Paragraph(2,
-            #                    Element.Text(f"{text_name}",Types.Text.KMD),
-            #                    Element.Text(f"{text_user}",Types.Text.KMD))))
-            c = Card(Module.Header(f"来看看阿狸当前的用户记录吧！"))
+            c = Card(
+                Module.Header(f"来看看阿狸当前的用户记录吧！"),
+                Module.Context(f"服务器总数: {retDict['guild']['guild_total']}  活跃服务器: {retDict['guild']['guild_active']}  用户数: {retDict['user']['user_total']}  cmd: {retDict['cmd_total']}"),
+                Module.Divider())
             log_img_src = await bot_upimg.client.create_asset("../screenshot/log.png")
             c.append(Module.Container(Element.Image(src=log_img_src)))
+            c.append(
+                Module.Section(
+                    Struct.Paragraph(2,
+                               Element.Text(f"{text_name[:5000]}",Types.Text.KMD),
+                               Element.Text(f"{text_user[:5000]}",Types.Text.KMD))))#限制字数才能发出来
             cm.append(c)
             await msg.reply(cm)
         else:
