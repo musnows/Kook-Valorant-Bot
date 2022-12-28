@@ -42,12 +42,11 @@ Recommended to use after the Valorant_Function is stable.
 | `/saveid`       | save or change user's game ID                                |
 | `/myid`         | show user's game ID                                          |
 | `/bundle name`    | search for skin bundles                                            |
-| `/lead 30 20`   | show leaderboard of `ap`.the top 30 gamers more than 20 wins |
 | `/login account passwd` | login your `riot_account` to fetch `auth_token` |
 | `/logout` | logout your riot_account |
 | `/shop` | fetch skin at daily shop |
 | `/night` | fetch night market at daily shop |
-| `/uinfo`或`/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
+| `/uinfo` or `/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
 | `/notify-a skin_name` |search for skin name,providing NO for add it into notification |
 | `/notify-l` | show current notify skin |
 | `/vip-u uuid` | get vip from uuid |
