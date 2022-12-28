@@ -2,7 +2,7 @@ import json
 import aiohttp
 import urllib.request
 import urllib.parse
-from khl import  Bot,Message,ChannelPrivacyTypes
+from khl import  Bot,Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key

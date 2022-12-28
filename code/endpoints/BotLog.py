@@ -1,11 +1,9 @@
 import json
 import time
 import traceback
-import io
-import requests
 from khl import Message, PrivateMessage, Bot
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
-from endpoints import guild_list, guild_view, upd_card, icon_cm
+from endpoints.KookApi import guild_list, guild_view, upd_card, icon_cm
 from PIL import Image, ImageDraw, ImageFont
 from copy import deepcopy
 

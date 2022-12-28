@@ -5,7 +5,7 @@ import time
 from khl import Message,Bot
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
-from endpoints import icon_cm
+from endpoints.KookApi import icon_cm
 
 Debug_ch = '6248953582412867'
 #获取uuid

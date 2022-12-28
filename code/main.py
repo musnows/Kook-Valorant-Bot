@@ -16,10 +16,11 @@ from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 from aiohttp import client_exceptions
 
-from bot_log import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
-from endpoints import (caiyun_translate, icon_cm, is_CN, status_active_game,
-                       status_active_music, status_delete, guild_view, upd_card, weather,
-                       youdao_translate)
+from endpoints.help import help_main,help_val,help_develop
+from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
+from endpoints.other import  weather
+from endpoints.KookApi import (icon_cm, status_active_game,
+                       status_active_music, status_delete, guild_view, upd_card)
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -75,8 +76,6 @@ async def Login_Forbidden_send(msg:Message):
 async def world(msg: Message):
     logging(msg)
     await msg.reply('你好呀~')
-
-from help import help_main,help_val,help_develop
 
 # help命令,触发指令为 `/Ahri`,因为help指令和其他机器人冲突
 @bot.command(name='Ahri', aliases=['ahri','阿狸'])
@@ -326,7 +325,7 @@ async def thanks_sponser():
 
 ######################################## Translate ################################################
 
-from translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
+from endpoints.translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 
 # 普通翻译指令
 @bot.command(name='TL', aliases=['tl'])
@@ -403,7 +402,7 @@ async def Weather(msg: Message, city: str = "err"):
 ####################################以下是游戏相关代码区#####################################
 ###########################################################################################
 
-from val import (authflow, dx123, fetch_bundle_weapen_byname,
+from endpoints.val import (authflow, dx123, fetch_bundle_weapen_byname,
                  fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
                  fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
                  fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
@@ -780,9 +779,9 @@ def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
         shop_img_temp[ran].append(img)
 
 
-#####################################################################################################
+###########################################vip######################################################
 
-from check_vip import (VipUserDict, create_vip_uuid, fetch_vip_user,
+from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
                        vip_time_remain_cm, vip_time_stamp)
 
