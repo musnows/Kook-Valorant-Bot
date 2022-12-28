@@ -618,7 +618,7 @@ from val import (authflow, dx123, fetch_bundle_weapen_byname,
                  fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
                  fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
                  fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
-                myid123, saveid123, saveid_1, saveid_2, val123)
+                myid_main, saveid_main, saveid_all, val_errcode)
 
 
 # 开始打游戏
@@ -667,26 +667,19 @@ async def saveid(msg: Message, *args):
         return
     try:
         game_id = " ".join(args)  #避免用户需要输入双引号
-        await saveid123(msg, game_id)
+        await saveid_main(msg, game_id)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] saveid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
 
 
-# 存储id的help命令
-@bot.command(name='saveid1')
-async def saveid1(msg: Message):
-    logging(msg)
-    await saveid_1(msg)
-
-
 # 已保存id总数
-@bot.command(name='saveid2')
-async def saveid2(msg: Message):
+@bot.command(name='saveid-a')
+async def saveid_all(msg: Message):
     logging(msg)
     try:
-        await saveid_2(msg)
+        await saveid_all(msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] saveid2 = {result}"
         print(err_str)
@@ -702,7 +695,7 @@ async def myid(msg: Message, *args):
         return
 
     try:
-        await myid123(msg)
+        await myid_main(msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] myid\n```\n{traceback.format_exc()}\n```"
         print(err_str)
@@ -716,7 +709,7 @@ async def val_err(msg: Message, numS: str = "-1",*arg):
     logging(msg)
     try:
         #num = int(numS)
-        await val123(msg, numS)
+        await val_errcode(msg, numS)
     except Exception as result:
         await msg.reply(f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
 

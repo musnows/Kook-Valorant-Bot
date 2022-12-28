@@ -19,7 +19,7 @@ with open("./log/game_idsave.json", 'r', encoding='utf-8') as frgm:
 
 
 #保存用户id
-async def saveid123(msg: Message, game_id: str):
+async def saveid_main(msg: Message, game_id: str):
     global GameIdDict
     flag = 0
     # 如果用户id已有，则进行修改
@@ -36,22 +36,14 @@ async def saveid123(msg: Message, game_id: str):
     with open("./log/game_idsave.json", 'w', encoding='utf-8') as fw2:
         json.dump(GameIdDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
-
-# 让阿狸记住游戏id的help指令
-async def saveid_1(msg: Message):
-    await msg.reply(
-        "基本方式看图就行啦！如果你的id之中有空格，需要用**英文的单引号**括起来哦！就像这样: `/saveid '你的id'`\n[https://s1.ax1x.com/2022/06/27/jV2qqe.png](https://s1.ax1x.com/2022/06/27/jV2qqe.png)\n注：阿狸升级以后已经不需要用单引号括起来了"
-    )
-
-
 # 显示已有id的个数
-async def saveid_2(msg: Message):
+async def saveid_all(msg: Message):
     countD = len(GameIdDict)
     await msg.reply(f"目前狸狸已经记下了`{countD}`个小伙伴的id喽~")
 
 
 # 实现读取用户游戏ID并返回
-async def myid123(msg: Message):
+async def myid_main(msg: Message):
     if msg.author_id in GameIdDict.keys():
         flag = 1  #找到了对应用户的id
         await msg.reply(f'游戏id: ' + GameIdDict[msg.author_id])
@@ -67,7 +59,7 @@ with open("./log/ValErrCode.json", 'r', encoding='utf-8') as frgm:
     ValErrDict = json.load(frgm)
 
 # 查询游戏错误码
-async def val123(msg: Message, num: str = "-1"):
+async def val_errcode(msg: Message, num: str = "-1"):
     if num == "-1":
         await msg.reply('目前支持查询的错误信息有：\n```\n0-1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002,9003\n```\n注：van和val错误码都可用本命令查询')
     elif num in ValErrDict:
