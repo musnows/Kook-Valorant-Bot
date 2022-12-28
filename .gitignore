@@ -2,6 +2,6 @@ config.json
 valorant.json
 caiyun.json
 
-*/__pycache__/
+__pycache__/
 */log/
 *.log
