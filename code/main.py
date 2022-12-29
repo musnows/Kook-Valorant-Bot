@@ -53,11 +53,6 @@ async def botmarket():
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
 
-@bot.task.add_interval(minutes=5)
-async def log_img_refresh():
-    fake_msg = khl.Message()
-    await log_bot_list(fake_msg)
-
 
 ##########################################################################################
 ##########################################################################################
