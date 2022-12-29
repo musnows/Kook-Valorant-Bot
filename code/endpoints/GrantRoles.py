@@ -97,7 +97,6 @@ async def Color_SetMsg(bot:Bot,msg:Message):
 with open("./log/sponsor_roles.json", 'r', encoding='utf-8') as frsp:
     SponsorDict = json.load(frsp)
 
-
 # 检查文件中是否有这个助力者的id
 def check_sponsor(it: dict):
     global SponsorDict
@@ -117,7 +116,7 @@ def check_sponsor(it: dict):
 async def THX_Sponser(bot:Bot,kook_headers:str):
     print("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
-    api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
+    api = f"https://www.kaiheila.cn/api/v3/guild/user-list?guild_id={EmojiDict['guild_id']}&role_id={EmojiDict['sp_role_id']}"
     async with aiohttp.ClientSession() as session:
         async with session.post(api, headers=kook_headers) as response:
             json_dict = json.loads(await response.text())
