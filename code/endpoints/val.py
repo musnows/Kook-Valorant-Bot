@@ -37,7 +37,7 @@ async def saveid_main(msg: Message, game_id: str):
         json.dump(GameIdDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
 # 显示已有id的个数
-async def saveid_all(msg: Message):
+async def saveid_count(msg: Message):
     countD = len(GameIdDict)
     await msg.reply(f"目前狸狸已经记下了`{countD}`个小伙伴的id喽~")
 

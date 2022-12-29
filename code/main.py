@@ -26,7 +26,7 @@ from endpoints.val import (authflow,auth2fa, dx123, fetch_bundle_weapen_byname,
                  fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
                  fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
                  fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
-                myid_main, saveid_main, saveid_all, val_errcode)
+                myid_main, saveid_main, saveid_count, val_errcode)
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -335,7 +335,7 @@ async def saveid(msg: Message, *args):
 async def saveid_all(msg: Message):
     logging(msg)
     try:
-        await saveid_all(msg)
+        await saveid_count(msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] saveid2 = {result}"
         print(err_str)
