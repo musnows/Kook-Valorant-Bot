@@ -75,8 +75,10 @@ class EzAuth:
         else:
             await msg.reply(f"请使用「/tfa 验证码」命令键入您的邮箱验证码")
             global User2faCode
-            User2faCode[msg.author_id]= {'vcode':'','status':False}
+            User2faCode[msg.author_id]= {'vcode':'','status':False,'start_time':time.time()}
             while(not User2faCode[msg.author_id]['status']):
+                if (time.time()-User2faCode[msg.author_id]['start_time'])>600:
+                    break# 超过10分钟，以无效处理
                 await asyncio.sleep(0.2)
             
             if User2faCode[msg.author_id]['status']:
@@ -100,6 +102,8 @@ class EzAuth:
                 else:
                     print(F"{Fore.RED}[ERROR] {Fore.RESET} {msg.author_id} 2fa unkown")
                     raise Exception("unkown auth err")
+            #获取完毕后删除，避免用户多次2fa
+            del User2faCode[msg.author_id]
 
         self.access_token = tokens[0]
         self.id_token = tokens[1]

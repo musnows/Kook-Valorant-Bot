@@ -1509,12 +1509,15 @@ async def auth_2fa(msg:Message,tfa:str,*arg):
     
     try:
         global User2faCode
-        User2faCode[msg.author_id]['vcode'] = tfa
-        User2faCode[msg.author_id]['status'] = True
-        await msg.reply(f"两步验证码获取成功，请等待……") 
+        if msg.author_id in User2faCode:
+            User2faCode[msg.author_id]['vcode'] = tfa
+            User2faCode[msg.author_id]['status'] = True
+            await msg.reply(f"两步验证码获取成功，请等待……") 
+        else:
+            await msg.reply(f"您不在2fa用户列表中，请重新login")
 
     except Exception as result: # 其他错误
-        await BaseException_Handler("login",traceback.format_exc(),msg,bot)
+        await BaseException_Handler("tfa",traceback.format_exc(),msg,bot)
 
 
 # 重新登录
