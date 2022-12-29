@@ -1,5 +1,6 @@
 import json
 import time
+import aiohttp
 from khl import Bot,Message,PublicMessage,Event
 from khl.card import Card, CardMessage, Element, Module, Types
 
@@ -89,3 +90,47 @@ async def Color_SetMsg(bot:Bot,msg:Message):
     # 让bot给卡片消息添加对应emoji回应
     for emoji in EmojiDict['data']:
         await setMSG.add_reaction(emoji)
+
+#########################################感谢助力者###############################################
+
+# 预加载文件
+with open("./log/sponsor_roles.json", 'r', encoding='utf-8') as frsp:
+    SponsorDict = json.load(frsp)
+
+
+# 检查文件中是否有这个助力者的id
+def check_sponsor(it: dict):
+    global SponsorDict
+    flag = 0
+    # 需要先保证原有txt里面没有保存该用户的id，才进行追加
+    if it['id'] in SponsorDict.keys():
+        flag = 1
+        return flag
+
+    #原有txt内没有该用户信息，进行追加操作
+    SponsorDict[it['id']] = it['nickname']
+    with open("./log/sponsor_roles.json", 'w', encoding='utf-8') as fw2:
+        json.dump(SponsorDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+
+    return flag
+
+async def THX_Sponser(bot:Bot,kook_headers:str):
+    print("[BOT.TASK] thanks_sponser start!")
+    #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
+    api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(api, headers=kook_headers) as response:
+            json_dict = json.loads(await response.text())
+
+    #长度相同无需更新
+    sz = len(SponsorDict)
+    if json_dict['data']['meta']['total'] == sz:
+        print(f"[BOT.TASK] No new sponser, same_len [{sz}]")
+        return
+
+    for its in json_dict['data']['items']:
+        if check_sponsor(its) == 0:
+            channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
+            await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
+            print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
+    print("[BOT.TASK] thanks_sponser finished!")

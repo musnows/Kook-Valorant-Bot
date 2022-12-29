@@ -21,7 +21,7 @@ from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFail
 from endpoints.other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
-from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg)
+from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.val import (authflow,auth2fa, dx123, fetch_bundle_weapen_byname,
                  fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
                  fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
@@ -193,53 +193,10 @@ async def Color_Set(msg: Message):
     if msg.author_id == master_id:
         await Color_SetMsg(bot,msg)
 
-#########################################感谢助力者###############################################
-
-# 预加载文件
-with open("./log/sponsor_roles.json", 'r', encoding='utf-8') as frsp:
-    SponsorDict = json.load(frsp)
-
-
-# 检查文件中是否有这个助力者的id
-def check_sponsor(it: dict):
-    global SponsorDict
-    flag = 0
-    # 需要先保证原有txt里面没有保存该用户的id，才进行追加
-    if it['id'] in SponsorDict.keys():
-        flag = 1
-        return flag
-
-    #原有txt内没有该用户信息，进行追加操作
-    SponsorDict[it['id']] = it['nickname']
-    with open("./log/sponsor_roles.json", 'w', encoding='utf-8') as fw2:
-        json.dump(SponsorDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
-    return flag
-
-
 # 感谢助力者（每天19点进行检查）
 @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
 async def thanks_sponser():
-    print("[BOT.TASK] thanks_sponser start!")
-    #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
-    api = "https://www.kaiheila.cn/api/v3/guild/user-list?guild_id=3566823018281801&role_id=1454428"
-    async with aiohttp.ClientSession() as session:
-        async with session.post(api, headers=kook_headers) as response:
-            json_dict = json.loads(await response.text())
-
-    #长度相同无需更新
-    sz = len(SponsorDict)
-    if json_dict['data']['meta']['total'] == sz:
-        print(f"[BOT.TASK] No new sponser, same_len [{sz}]")
-        return
-
-    for its in json_dict['data']['items']:
-        if check_sponsor(its) == 0:
-            channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
-            await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
-            print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
-    print("[BOT.TASK] thanks_sponser finished!")
-
+    await THX_Sponser(bot,kook_headers)
 
 ######################################## Translate ################################################
 
