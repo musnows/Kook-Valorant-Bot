@@ -504,19 +504,20 @@ def sm_comp(icon, name, price, level_icon, skinuuid):
     # 处理武器level的图片(存到本地dict里面方便调用)
     start = time.perf_counter()  #开始计时
     if level_icon not in level_icon_temp:
-        LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
-        level_icon_temp[level_icon] = LEVEL_Icon
+        LevelIcon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器等级图片
+        level_icon_temp[level_icon] = LevelIcon
     else:
-        LEVEL_Icon = level_icon_temp[level_icon]
+        LevelIcon = level_icon_temp[level_icon]
     end = time.perf_counter()
     log_time += f"- [GetIters] {format(end - start, '.4f')} "
     print(log_time)
 
-    w, h = LEVEL_Icon.size  # 读取武器图片长宽
+    w, h = LevelIcon.size  # 读取武器等级图片长宽
     new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
     new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
-    LEVEL_Icon = LEVEL_Icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    bg.paste(LEVEL_Icon, standard_level_icon_position, LEVEL_Icon)
+    LevelIcon = LevelIcon.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    LevelIcon = LevelIcon.convert('RGBA')
+    bg.paste(LevelIcon, standard_level_icon_position, LevelIcon)
 
     name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
     name_list = name.split(' ')  # 将武器名字分割换行
@@ -593,15 +594,16 @@ def sm_comp_vip(icon, name, price, level_icon, skinuuid):
     # 处理武器level的图片(存到本地dict里面方便调用)
     start = time.perf_counter()  #开始计时
     if level_icon not in level_icon_temp:
-        LEVEL_Icon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器图片
-        level_icon_temp[level_icon] = LEVEL_Icon
+        LevelIcon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器等级的图片
+        level_icon_temp[level_icon] = LevelIcon
     else:
-        LEVEL_Icon = level_icon_temp[level_icon]
+        LevelIcon = level_icon_temp[level_icon]
     end = time.perf_counter()
     log_time += f"- [GetIters] {format(end - start, '.4f')} "
     print(log_time)
-    LEVEL_Icon = LEVEL_Icon.resize((25, 25), Image.Resampling.LANCZOS)
-    bg.paste(LEVEL_Icon, (368, 11), LEVEL_Icon)
+    LevelIcon = LevelIcon.resize((25, 25), Image.Resampling.LANCZOS)
+    LevelIcon = LevelIcon.convert('RGBA')
+    bg.paste(LevelIcon, (368, 11), LevelIcon)
     text = zhconv.convert(name, 'zh-cn')  # 将名字简体化
     draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
     # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
