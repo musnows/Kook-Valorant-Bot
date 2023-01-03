@@ -12,7 +12,7 @@ English | [简体中文](./README.md)
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
 [![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 
-<img src="https://api.outpost54.club/log_bot_img" height="55px" alt="Bot Log Image">
+<img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
 
 KOOK(once called kaiheila) is a Chinese voice communication software.
@@ -59,9 +59,11 @@ Recommended to use after the Valorant_Function is stable.
 |`/rts NO. point comment`|select skin_no. to rate a point(0~100) and leave a comment to it|
 |`/kkn`|checkout yesterday's heighest/lowest rate_point of daily shop |
 
-notify function require user to stay `login`, bot wil fetch your daily shop at `08:02 am GMT+8` .If the skin is in daily shop,bot will send a private message to user.
+notify function require user to stay `login`, bot wil fetch your daily shop at `08:01AM GMT+8` .If the skin is in daily shop, bot will send a private message to user.
 
-Because the bot is using in Chinese platform, the skin `name` only support `zh-TW`
+If the user is a vip, the bot will also send the full picture of the store on that day through private message.
+
+>Because the bot is only using in Chinese platform, the skin `name` only support `zh-TW`
 
 | Other        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
@@ -78,14 +80,14 @@ Because the bot is using in Chinese platform, the skin `name` only support `zh-T
 
 You can find image examples for the functions in [screenshot](./screenshot) floder.
 
-<img src="./screenshot/daily_shop.png" height="400px"> <img src="./screenshot/uinfo.png" weight="300px" height="200px">
+<img src="./screenshot/daily_shop.png" height="400px" alt="shop_img"> <img src="./screenshot/uinfo.png" weight="300px" height="200px" alt="vp_rp">
 
 <details>
 <summary>more screenshots</summary>
 
 <img src="./screenshot/bundle.png" alt="bundle">
 
-<img src="./screenshot/weather.png" alt="we">
+<img src="./screenshot/weather.png" alt="weather">
 
 <img src="./screenshot/lead.png" alt="leaderborad">
 
@@ -129,14 +131,14 @@ this background can be modified by vip-user,using picture they liked!
 
 ## About
 
-Since I have not studied python, many codes in this repo are modified and used according to others' tutorials
+Many codes in this repo are modified and used according to others' tutorials
 * KOOK_api base on [khl.py](https://github.com/TWT233/khl.py)
 * ValorantGameApi base on [frissyn/valorant.py](https://github.com/frissyn/valorant.py/)
 * Main fetch_code base on [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI)
 * Fetch riot_auth_token base on [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth)
 
 
-### Thanks🎁
+### Special Thanks🎁
 * [@DeeChael](https://github.com/DeeChael) for helping me debug
 * [@Edint386](https://github.com/Edint386) for adding PIL_code for `/shop` 
 * [@staciax](https://github.com/staciax) for [Valorant-DiscordBot/issues/74](https://github.com/staciax/Valorant-DiscordBot/issues/74)
