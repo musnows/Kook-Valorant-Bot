@@ -1469,10 +1469,12 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         ret_cm = get_login_rate_cm()  #这里是第一个出现速率限制err的用户
         await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
-        err_str = f"[Login] aiohttp ERR!\n{traceback.format_exc()}\n"
-        if 'auth.riotgames.com' in str(result):
+        err_str = f"[Login] aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
+        if 'auth.riotgames.com' and '403' in str(result):
             Login_Forbidden = True
             err_str+= f"[Login] 403 err! set Login_Forbidden = True"
+        elif '404' in str(result):
+            err_str+= f"[Login] 404 err! network err, try again"
         else:
             err_str+= f"[Login] Unkown aiohttp ERR!"
         
@@ -1551,7 +1553,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
     try:
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
         if UserAuthDict[user_id]['2fa']:
-            return True
+            return True #先判断是否为2fa账户，如果是，那就不进行reauthrize操作
         auth = UserAuthDict[user_id]['auth']
         userdict = {
             'auth_user_id': auth.user_id,
@@ -1559,7 +1561,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             'entitlements_token': auth.entitlements_token
         }
         resp = await fetch_valorant_point(userdict)
-        # print('[Ckeck_re_auth]', resp)
+        # print('[Check_re_auth]', resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
         test = resp['httpStatus']
@@ -1592,24 +1594,26 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
         return ret  #返回假
     
     except client_exceptions.ClientResponseError as result:
-        err_str = f"[Ckeck_re_auth] aiohttp ERR!\n{traceback.format_exc()}\n"
+        err_str = f"[Check_re_auth] aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
         if 'auth.riotgames.com' and '403' in str(result):
             global Login_Forbidden
             Login_Forbidden = True
-            err_str+= f"[Ckeck_re_auth] 403 err! set Login_Forbidden = True"
+            err_str+= f"[Check_re_auth] 403 err! set Login_Forbidden = True"
+        elif '404' in str(result):
+            err_str+= f"[Check_re_auth] 404 err! network err, try again"
         else:
-            err_str+= f"[Ckeck_re_auth] Unkown aiohttp ERR!"
+            err_str+= f"[Check_re_auth] Unkown aiohttp ERR!"
         
         print(err_str)
         await bot.client.send(debug_ch,err_str)
         return False
     except Exception as result:
         if 'httpStatus' in str(result):
-            print(f"[Ckeck_re_auth] Au:{user_id} No need to reauthorize [{result}]")
+            print(f"[Check_re_auth] Au:{user_id} No need to reauthorize [{result}]")
             return True
         else:
-            print(f"[Ckeck_re_auth] Unkown ERR!\n{traceback.format_exc()}")
-            await bot.client.send(debug_ch,f"[Ckeck_re_auth] Unkown ERR!\n{traceback.format_exc()}")
+            print(f"[Check_re_auth] Unkown ERR!\n{traceback.format_exc()}")
+            await bot.client.send(debug_ch,f"[Check_re_auth] Unkown ERR!\n{traceback.format_exc()}")
             return False
 
 
