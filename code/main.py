@@ -37,8 +37,8 @@ bot = Bot(token=config['token'])
 bot_upimg = Bot(token=config['img_upload_token'])
 
 # 设置全局变量：机器人开发者id/报错频道
-master_id = '1961572535'
-Debug_ch = '6248953582412867'
+master_id = config['master_id']
+Debug_ch = config['debug_ch']
 kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 #在bot一开机的时候就获取log频道作为全局变量

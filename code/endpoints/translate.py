@@ -6,10 +6,10 @@ from khl import  Bot,Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key
-with open('./config/caiyun.json', 'r', encoding='utf-8') as f:
+with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 # 彩云key
-CyKey = config['token']
+CyKey = config['caiyun']
 
 # youdao code is from https://github.com/Chinese-boy/Many-Translaters
 def youdao_translate(txt: str):
