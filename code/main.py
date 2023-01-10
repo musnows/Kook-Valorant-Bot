@@ -648,12 +648,6 @@ def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
 
 ###########################################vip######################################################
 
-
-# 加载文件中的uuid
-with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
-    VipUuidDict = json.load(frrk)
-
-
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
 async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
