@@ -23,6 +23,11 @@ from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.val import *
+from endpoints.Gtime import GetTime
+from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
+                       roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
+                       vip_time_remain_cm, vip_time_stamp)
+
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -53,10 +58,6 @@ async def botmarket():
 
 ##########################################################################################
 ##########################################################################################
-
-#将获取当前时间封装成函数方便使用
-def GetTime():  
-    return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
 #记录开机时间
 start_time = GetTime()
@@ -647,9 +648,6 @@ def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
 
 ###########################################vip######################################################
 
-from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
-                       roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
-                       vip_time_remain_cm, vip_time_stamp)
 
 # 加载文件中的uuid
 with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
@@ -688,7 +686,7 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
         return
     try:
         #把bot传过去是为了让阿狸在有人成兑换激活码之后发送消息到log频道
-        ret = await using_vip_uuid(msg, uuid, bot)
+        ret = await using_vip_uuid(msg, uuid, bot,debug_ch)
 
     except Exception as result:
         await BaseException_Handler("vip-u",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")

@@ -3,6 +3,7 @@ import time
 import aiohttp
 from khl import Bot,Message,PublicMessage,Event
 from khl.card import Card, CardMessage, Element, Module, Types
+from endpoints.Gtime import GetTime
 
 # 预加载文件
 with open("./log/color_idsave.json", 'r', encoding='utf-8') as frcl:
@@ -10,10 +11,6 @@ with open("./log/color_idsave.json", 'r', encoding='utf-8') as frcl:
 
 with open("./config/color_emoji.json", 'r', encoding='utf-8') as fremoji:
     EmojiDict = json.load(fremoji)
-
-#将获取当前时间封装成函数方便使用
-def GetTime():  
-    return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid: str, emoji: str):
