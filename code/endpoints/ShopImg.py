@@ -269,11 +269,10 @@ def bg_comp(bg, img, x, y):
     return bg
 
 # 获取16比9的每日商店的图片
-async def get_shop_img_169(list_shop: dict,player_uuid:str,vp:str,rp:str,bg_img_src="err"):
+async def get_shop_img_169(list_shop: dict,vp:str,rp:str,bg_img_src="err"):
     """ args:
      - list_shop: user daily shop skin dict
      - bg_img_src: background img url
-     - player_uuid: riot player uuid
 
     returns dict:
      - {"status":False,"value":"err_str"}
@@ -355,11 +354,10 @@ async def get_shop_img_169(list_shop: dict,player_uuid:str,vp:str,rp:str,bg_img_
 
 
 # 1-1商店画图
-async def get_shop_img_11(list_shop:dict,player_uuid:str,bg_img_src="err"):
+async def get_shop_img_11(list_shop:dict,bg_img_src="err"):
     """ args:
      - list_shop: user daily shop skin dict
      - bg_img_src: background img url
-     - player_uuid: riot player uuid
 
     returns dict:
      - {"status":False,"value":"err_str"}
