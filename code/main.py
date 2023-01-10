@@ -28,7 +28,7 @@ from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
                        vip_time_remain_cm, vip_time_stamp)
 from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
-from endpoints.ShopRate import get_shop_rate_cm,check_shop_rate
+from endpoints.ShopRate import SkinRateDict,get_shop_rate_cm,check_shop_rate
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -1202,9 +1202,6 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
 with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
-# 皮肤的评价
-with open("./log/ValSkinRate.json", 'r', encoding='utf-8') as frsl:
-    SkinRateDict = json.load(frsl)
 
 
 # 用来存放auth对象（无法直接保存到文件）
