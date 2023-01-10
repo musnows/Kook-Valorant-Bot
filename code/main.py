@@ -16,17 +16,18 @@ from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 from aiohttp import client_exceptions
 
-from endpoints.help import help_main,help_val,help_develop
+from endpoints.Help import help_main,help_val,help_develop
 from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
-from endpoints.other import  weather
+from endpoints.Other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
-from endpoints.val import *
+from endpoints.Val import *
 from endpoints.Gtime import GetTime
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
                        vip_time_remain_cm, vip_time_stamp)
+from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 
 
 # bot的token文件
@@ -196,8 +197,6 @@ async def thanks_sponser():
     await THX_Sponser(bot,kook_headers)
 
 ######################################## Translate ################################################
-
-from endpoints.translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 
 # 普通翻译指令
 @bot.command(name='TL', aliases=['tl'])
