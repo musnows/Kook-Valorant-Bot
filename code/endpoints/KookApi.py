@@ -5,6 +5,8 @@ from khl import Bot,ChannelPrivacyTypes
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
+# 下方更新卡片消息需要bot
+bot = Bot(token=config['token'])
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
 kook_headers = {f'Authorization': f"Bot {config['token']}"}
