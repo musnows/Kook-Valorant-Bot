@@ -1,7 +1,6 @@
 import asyncio
 import copy
 import io
-import json
 import os
 import random
 import threading
@@ -13,23 +12,38 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from endpoints.Val import *
 from endpoints.Gtime import *
 
-#bot_token='1/MTMxMjU=/Utb3x1c2V2KpqruGAGJUOA==' #机器人token，用来上传图片到kook
 
-font_color = '#ffffff'  # 文字颜色：白色
-
+font_color = '#ffffff' # 文字颜色：白色
 #用于临时存放图片的dict
-shop_img_temp = {}
-weapon_icon_temp = {}
+shop_img_temp_11 = {}
+shop_img_temp_169 = {}
+weapon_icon_temp_11 = {}
+weapon_icon_temp_169 = {}
 skin_level_icon_temp = {}
-# 图片透明背景框
-bg_main_169_WithOutLogo = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-10/uFfgpWWlDy0zk0k0.png').content))
-# 图片透明背景框,有水印
-bg_main_169 = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/rLxOSFB1cC0zk0k0.png').content)) 
 
-default_bg_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
-default_bg_169 = "https://img.kookapp.cn/assets/2022-09/CVWFac7CJG0zk0k0.png"
+bg_main_169 = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/lSj90Xr9yA0zk0k0.png').content)) # 16-9 商店默认背景
+bg_main_11 = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content)) # 1-1 商店默认背景
+bg_window_169_WithOutLogo = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-10/uFfgpWWlDy0zk0k0.png').content)) # 16-9 图片透明背景框，无水印
+bg_window_169 = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/rLxOSFB1cC0zk0k0.png').content)) # 16-9 图片透明背景框,有水印
+bg_window_11 = Image.open(io.BytesIO(
+    requests.get('https://img.kookapp.cn/assets/2022-09/FjPcmVwDkf0rs0rs.png').content)) # 1-1 透明背景框, 有水印
+
+
+standard_length = 1000  #图片默认边长
+# 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
+# 所有的数都  * standard_length / 1000 是为了当标准边长变动时这些参数会按照比例缩放
+standard_length_sm = int(standard_length / 2)  # 组成四宫格小图的边长
+stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
+stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
+standard_icon_top_blank = int(180 * standard_length / 1000)  # 枪距离图片顶部的像素
+standard_text_position = (int(124 * standard_length / 1000), int(317 * standard_length / 1000))  # 默认文字位置
+standard_price_position = (int(280 * standard_length / 1000), int(120 * standard_length / 1000))  # 皮肤价格文字位置
+standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
+standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
 # # 用户背景图片文件
 # with open("./log/UserShopBg.json", 'r', encoding='utf-8') as frpr:
@@ -64,7 +78,7 @@ def resize_skin(standard_x, img, standard_y=''):
     return img
 
 # 将16比9的背景图片缩放到标准大小
-def resize_169(standard_x, standard_y, img):
+def resize_standard(standard_x, standard_y, img):
     w, h = img.size
     log_info = "[resize_169] "
     log_info += f"原始图片大小:({w},{h}) - "
@@ -140,22 +154,113 @@ def sm_comp_169(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
     # 判断该皮肤图片的本地路径是否存在，如果不存在，则保存到本地
     if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
         bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
-    global weapon_icon_temp #皮肤图片的抽屉
-    if skinuuid not in weapon_icon_temp:
-        weapon_icon_temp[skinuuid] = bg
+    global weapon_icon_temp_169 #皮肤图片的抽屉
+    if skinuuid not in weapon_icon_temp_169:
+        weapon_icon_temp_169[skinuuid] = bg
+    return bg
+
+# 1比1的单个武器图片生成
+def sm_comp_11(skin_icon, skin_name, price, skin_level_icon, skinuuid):
+    bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
+    # 处理皮肤图片
+    start = time.perf_counter()  #开始计时
+    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
+        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开皮肤图片
+    else:
+        layer_icon = Image.open(io.BytesIO(requests.get(skin_icon).content))  # 打开皮肤图片
+        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
+    end = time.perf_counter()
+    log_time = f"[GetWeapen] {format(end - start, '.4f')} "
+
+    stardard_icon_x = 300  #图像标准宽（要改大小就改这个
+    layer_icon = resize_skin(300, layer_icon)
+    # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
+    left_position = int((standard_length_sm - stardard_icon_x) / 2)
+    # 用小图的宽度减去皮肤图片的宽度再除以二 得到皮肤图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
+    bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)# bg.paste代表向bg粘贴一张图片
+
+    # 处理武器level的图片(存到本地dict里面方便调用)
+    start = time.perf_counter()  #开始计时
+    if skin_level_icon not in skin_level_icon_temp:
+        level_icon = Image.open(io.BytesIO(requests.get(skin_level_icon).content))  # 打开武器等级图片
+        skin_level_icon_temp[skin_level_icon] = level_icon
+    else:
+        level_icon = skin_level_icon_temp[skin_level_icon]
+    end = time.perf_counter()
+    log_time += f"- [GetIters] {format(end - start, '.4f')} "
+    print(log_time) # 打印获取皮肤和皮肤等级用了多久时间
+
+    w, h = level_icon.size  # 读取武器等级图片长宽
+    new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
+    new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
+    level_icon = level_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    level_icon = level_icon.convert('RGBA')
+    bg.paste(level_icon, standard_level_icon_position, level_icon)
+
+    name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
+    name_list = name.split(' ')  # 将武器名字分割换行
+    # print(name_list)
+    if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
+        name_list.remove('')
+
+    text = ""
+    if len(name_list[0]) > 5:
+        text = name_list[0] + '\n'  # 如果皮肤名很长就不用加空格
+    else:
+        text = ' '.join(name_list[0]) + '\n'  # 向皮肤名字添加空格增加字间距
+    # 判断皮肤名字有几个分割
+    if len(name_list) > 2:
+        i = 1
+        while i <= len(name_list) - 2:
+            name_list[0] = name_list[0] + ' ' + name_list[i]
+            # print(name_list[0])
+            i += 1
+        interval = len(name_list[0])
+        name_list[1] = name_list[len(name_list) - 1]
+        text = name_list[0] + '\n'
+    if len(name_list) > 1:  # 有些刀皮肤只有一个元素
+        text += '              '  # 添加固定长度的缩进，12个空格
+        if len(name_list[1]) < 4:
+            text += ' '.join(name_list[1])  # 插入第二行字符
+        else:
+            text += name_list[1]  # 单独处理制式手槍（不加空格）
+
+    draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
+    # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
+    draw.text(standard_text_position,
+              text,
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              fill=font_color)
+    text = f"{price}"  # 价格
+    draw.text(standard_price_position,
+              text,
+              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
+              fill=font_color)
+    # bg.show() #测试用途，展示图片(linux貌似不可用)
+    if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
+        bg.save(f'./log/img_temp/comp/{skinuuid}.png')
+    global weapon_icon_temp_11 # 1-1图片的抽屉
+    if skinuuid not in weapon_icon_temp_11:
+        weapon_icon_temp_11[skinuuid] = bg
     return bg
 
 # 在本地文件中查找皮肤的图片，并插入到temp中
-def skin_uuid_to_comp(skinuuid, ran):
+def skin_uuid_to_comp(skinuuid, ran,is_169:bool):
     res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
     res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
     price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] # 取出价格
     res_iters = fetch_skin_iters_bylist(skinuuid) # 在本地文件中查找皮肤等级
     # 画单个皮肤的图片
-    img = sm_comp_169(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+    if is_169:
+        img = sm_comp_169(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
                         res_iters['data']['displayIcon'], skinuuid)
-    global shop_img_temp  # 这里是把处理好的图片存到当前执行用户的临时库中
-    shop_img_temp[ran].append(img) 
+        global shop_img_temp_169  # 这里是把处理好的图片存到当前执行用户的临时库中
+        shop_img_temp_169[ran].append(img) 
+    else:
+        img = sm_comp_11(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+                      res_iters['data']['displayIcon'], skinuuid)
+        global shop_img_temp_11  #这里是把处理好的图片存到本地
+        shop_img_temp_11[ran].append(img)
 
 # 往底图的指定位置粘贴单个皮肤的图片
 def bg_comp(bg, img, x, y):
@@ -164,7 +269,7 @@ def bg_comp(bg, img, x, y):
     return bg
 
 # 获取16比9的每日商店的图片
-async def get_shop_img_169(list_shop: dict,player_uuid:str,vp:str,rp:str,bg_img_src=default_bg_169):
+async def get_shop_img_169(list_shop: dict,player_uuid:str,vp:str,rp:str,bg_img_src="err"):
     """ args:
      - list_shop: user daily shop skin dict
      - bg_img_src: background img url
@@ -174,42 +279,51 @@ async def get_shop_img_169(list_shop: dict,player_uuid:str,vp:str,rp:str,bg_img_
      - {"status":False,"value":"err_str"}
      - {"status":True,"value":bg}
     """
-    # 背景图缩放后保存
-    bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
-    bg_img = resize_169(1280, 720, bg_img)
-    bg_img = bg_img.convert('RGBA')
-    # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-    bg_img = Image.alpha_composite(bg_img, bg_main_169)
-    bg = copy.deepcopy(bg_img)  # 两种情况都需要把背景图图片加载到bg中
-    #开始画图
+    bg_img = bg_main_169 # 默认的带框底图
+    # 有自定义背景图，背景图缩放后保存
+    if bg_img_src !="err":
+        try:  #打开图片进行测试
+            bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
+        except UnidentifiedImageError as result:
+            err_str = f"ERR! [{GetTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
+            print(err_str)  #写入文件后打印log信息
+            return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
+        # 打开成功
+        bg_img = resize_standard(1280, 720, bg_img) #缩放到720p
+        bg_img = bg_img.convert('RGBA')
+        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+        bg_img = Image.alpha_composite(bg_img, bg_window_169) #把框粘贴到自定义背景图上
+    # 两种情况都需要把背景图图片加载到bg中
+    bg = copy.deepcopy(bg_img)  
+    # 开始画图
     x = 50
     y = 100
     ran = 0 # 设立ran的基准值为0
-    global shop_img_temp 
+    global shop_img_temp_169 
     #循环判断创建的随机值在不在其中，如果在，那就还需要继续生成，直到产生一个不在其中的 
-    while(ran in shop_img_temp): 
+    while(ran in shop_img_temp_169): 
         ran = random.randint(1, 9999) # 创建一个1-9999的随机值
     
     # 创建键值，用于保存多线程的返回值
-    shop_img_temp[ran] = [] 
+    shop_img_temp_169[ran] = [] 
     # 开始遍历4个皮肤uuid
     for skinuuid in list_shop:
         img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
-        if skinuuid in weapon_icon_temp:# 16-9需要用的全局变量
-            shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
+        if skinuuid in weapon_icon_temp_169:# 16-9需要用的全局变量
+            shop_img_temp_169[ran].append(weapon_icon_temp_169[skinuuid])
         elif os.path.exists(img_path):# 全局变量里面没有，要去本地路径里面找
-            shop_img_temp[ran].append(Image.open(img_path))
+            shop_img_temp_169[ran].append(Image.open(img_path))
         else: # 都没有，画图
             th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran))
             th.start()
         await asyncio.sleep(0.7) # 睡一会，尝试错开网络请求
 
-    # 开始粘贴获取到的4个武器图片
+    # 开始粘贴获取到的4个皮肤图片
     img_num = 0
     while True:
-        img_temp = [i for i in shop_img_temp[ran]]
+        img_temp = [i for i in shop_img_temp_169[ran]]
         for i in img_temp:
-            shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
+            shop_img_temp_169[ran].pop(shop_img_temp_169[ran].index(i))
             #i.save(f"./t{x}_{y}.png", format='PNG')
             bg = bg_comp(bg, i, x, y)
             if x == 50:
@@ -233,8 +347,81 @@ async def get_shop_img_169(list_shop: dict,player_uuid:str,vp:str,rp:str,bg_img_
         rp_pos = (722, 670)
     draw.text(rp_pos, rp_c, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
     # 删除用于获取返回值的临时键值
-    if ran in shop_img_temp:
-        del shop_img_temp[ran]
+    if ran in shop_img_temp_169:
+        del shop_img_temp_169[ran]
     # 画完图之后返回结果
-    bg.save(f"./{player_uuid}.png",format='PNG')
+    # bg.save(f"./{player_uuid}.png",format='PNG')
+    return {"status": True, "value": bg}
+
+
+# 1-1商店画图
+async def get_shop_img_11(list_shop:dict,player_uuid:str,bg_img_src="err"):
+    """ args:
+     - list_shop: user daily shop skin dict
+     - bg_img_src: background img url
+     - player_uuid: riot player uuid
+
+    returns dict:
+     - {"status":False,"value":"err_str"}
+     - {"status":True,"value":bg}
+    """
+    bg_img = bg_main_11
+    # 有自定义背景图，背景图缩放后保存
+    if bg_img_src !="err":
+        try:  #打开图片进行测试
+            bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
+        except UnidentifiedImageError as result:
+            err_str = f"ERR! [{GetTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
+            print(err_str)  #写入文件后打印log信息
+            return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
+        # 打开成功
+        bg_img = resize_standard(1000, 1000, bg_img) #缩放到1000*1000 必须有，否则报错images do not match
+        bg_img = bg_img.convert('RGBA')
+        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+        bg_img = Image.alpha_composite(bg_img, bg_window_11) #把框粘贴到自定义背景图上
+    # 两种情况都需要把背景图图片加载到bg中
+    bg = copy.deepcopy(bg_img)
+    # 开始画图
+    x = 0
+    y = 0
+    ran = 0 #生成随机数
+    # 开始后续画图操作
+    global shop_img_temp_11
+    #循环判断创建的随机值在不在其中，如果在，那就还需要继续生成，直到产生一个不在其中的 
+    while(ran in shop_img_temp_11): 
+        ran = random.randint(1, 9999) # 创建一个1-9999的随机值
+    
+    shop_img_temp_11[ran] = []
+    # 插入皮肤图片
+    for skinuuid in list_shop:
+        img_path = f'./log/img_temp/comp/{skinuuid}.png'
+        if skinuuid in weapon_icon_temp_11:# 1-1需要用的抽屉
+            shop_img_temp_11[ran].append(weapon_icon_temp_11[skinuuid])
+        elif os.path.exists(img_path):
+            shop_img_temp_11[ran].append(Image.open(img_path))
+        else:
+            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
+            th.start()
+        await asyncio.sleep(0.8)  #尝试错开网络请求
+    # 粘贴到主图上
+    img_num = 0
+    while True:
+        img_temp = copy.deepcopy(shop_img_temp_11)
+        for i in img_temp[ran]:
+            shop_img_temp_11[ran].pop(shop_img_temp_11[ran].index(i))
+            bg = bg_comp(bg, i, x, y)
+            if x == 0:
+                x += standard_length_sm
+            elif x == standard_length_sm:
+                x = 0
+                y += standard_length_sm
+            img_num += 1
+        if img_num >= 4:
+            break
+        await asyncio.sleep(0.2)
+    #循环结束后删除
+    if ran in shop_img_temp_11:
+        del shop_img_temp_11[ran]
+    # 画完图之后返回结果
+    #bg.save(f"./{player_uuid}11.png",format='PNG')
     return {"status": True, "value": bg}
