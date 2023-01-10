@@ -22,11 +22,7 @@ from endpoints.other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
-from endpoints.val import (authflow,auth2fa, dx123, fetch_bundle_weapen_byname,
-                 fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
-                 fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
-                 fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
-                myid_main, saveid_main, saveid_count, val_errcode)
+from endpoints.val import *
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -1215,55 +1211,9 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
 with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
-# 所有皮肤
-with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
-    ValSkinList = json.load(frsk)
-# 所有商品价格
-with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
-    ValPriceList = json.load(frpr)
-# 所有捆绑包的图片
-with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
-    ValBundleList = json.load(frbu)
-# 所有物品等级（史诗/传说）
-with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
-    ValItersList = json.load(frrk)
 # 皮肤的评价
 with open("./log/ValSkinRate.json", 'r', encoding='utf-8') as frsl:
     SkinRateDict = json.load(frsl)
-
-
-#从list中获取价格
-def fetch_item_price_bylist(item_id):
-    for item in ValPriceList['Offers']:  #遍历查找指定uuid
-        if item_id == item['OfferID']:
-            return item
-
-
-#从list中获取等级(这个需要手动更新)
-def fetch_item_iters_bylist(iter_id):
-    for iter in ValItersList['data']:  #遍历查找指定uuid
-        if iter_id == iter['uuid']:
-            res = {'data': iter}  #所以要手动创建一个带data的dict作为返回值
-            return res
-
-
-#从list中获取皮肤
-def fetch_skin_bylist(item_id):
-    res = {}  #下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
-    for item in ValSkinList['data']:  #遍历查找指定uuid
-        if item_id == item['levels'][0]['uuid']:
-            res['data'] = item  #所以要手动创建一个带data的dict作为返回值
-            return res
-
-
-#从list中，通过皮肤名字获取皮肤列表
-def fetch_skin_byname_list(name):
-    wplist = list()  #包含该名字的皮肤list
-    for skin in ValSkinList['data']:
-        if name in skin['displayName']:
-            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
-            wplist.append(data)
-    return wplist
 
 
 # 用来存放auth对象（无法直接保存到文件）
