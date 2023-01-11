@@ -1873,7 +1873,6 @@ async def get_daily_shop(msg: Message, *arg):
             else:
                 a_time = time.time()
                 resp = await fetch_daily_shop(userdict)  #获取每日商店
-                #resp = {"SkinsPanelLayout":{"SingleItemOffers":["4875e120-4d7d-aa2a-71c5-c0851c4af00d","5ac106cd-45ef-a26f-2058-f382f20c64db","c7695ce7-4fc9-1c79-64b3-8c8f9e21571c","f35f6e13-4b7b-da38-c0de-5c91fffd584b"],"SingleItemOffersRemainingDurationInSeconds":60193}}#用于测试的假返回值（阴间皮肤）
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                 timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                 timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
@@ -1985,10 +1984,11 @@ async def get_daily_shop(msg: Message, *arg):
         cm2 = CardMessage()
         c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
-            print(err_str)
+            print(err_str,resp)
             text = f"键值错误，需要重新登录"
+            btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
-            c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
+            c.append(Module.Context(Element.Text(btext, Types.Text.KMD)))
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
