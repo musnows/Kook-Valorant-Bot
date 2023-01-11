@@ -9,7 +9,7 @@ from re import compile
 from colorama import Fore
 import time
 import asyncio
-from riot_auth import auth_exceptions
+from riot_auth import auth_exceptions,RiotAuth
 
 from khl import Message
 
@@ -199,3 +199,24 @@ class EzAuth:
         return userdict
 
 #EzAuth(username="",password="")
+
+
+###################################### Riot Auth ######################################################
+
+
+# 获取拳头的token
+# 此部分代码来自 https://github.com/floxay/python-riot-auth
+async def authflow(user: str, passwd: str):
+    CREDS = user, passwd
+    auth = RiotAuth()
+    await auth.authorize(*CREDS)
+    # await auth.reauthorize()
+    # print(f"Access Token Type: {auth.token_type}\n",f"Access Token: {auth.access_token}\n")
+    # print(f"Entitlements Token: {auth.entitlements_token}\n",f"User ID: {auth.user_id}")
+    return auth
+
+# 两步验证的用户
+async def auth2fa(msg:Message,user:str,passwd:str):
+    auth = EzAuth()
+    await auth.authorize(user,passwd,msg=msg)
+    return auth

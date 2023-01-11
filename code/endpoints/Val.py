@@ -75,28 +75,6 @@ async def dx123(msg: Message):
     )
 
 
-###################################### Riot Auth ######################################################
-
-import riot_auth
-from endpoints.EzAuth import EzAuth
-
-# 获取拳头的token
-# 此部分代码来自 https://github.com/floxay/python-riot-auth
-async def authflow(user: str, passwd: str):
-    CREDS = user, passwd
-    auth = riot_auth.RiotAuth()
-    await auth.authorize(*CREDS)
-    # await auth.reauthorize()
-    # print(f"Access Token Type: {auth.token_type}\n",f"Access Token: {auth.access_token}\n")
-    # print(f"Entitlements Token: {auth.entitlements_token}\n",f"User ID: {auth.user_id}")
-    return auth
-
-# 两步验证的用户
-async def auth2fa(msg:Message,user:str,passwd:str):
-    auth = EzAuth()
-    await auth.authorize(user,passwd,msg=msg)
-    return auth
-
 ###################################### local files search ######################################################
 
 # 所有皮肤

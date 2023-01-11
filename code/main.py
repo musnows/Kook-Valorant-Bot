@@ -23,6 +23,7 @@ from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.Val import *
+from endpoints.EzAuth import auth2fa,authflow
 from endpoints.Gtime import GetTime,GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
