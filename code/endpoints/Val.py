@@ -161,7 +161,7 @@ async def fetch_daily_shop(u):
     return res
 
 
-# 获取vp和r点
+# Api获取玩家的vp和r点
 async def fetch_valorant_point(u):
     url = "https://pd.ap.a.pvp.net/store/v1/wallet/" + u['auth_user_id']
     headers = {
@@ -174,6 +174,12 @@ async def fetch_valorant_point(u):
             res = json.loads(await response.text())
     return res
 
+# 获取vp和r点的dict
+async def fetch_vp_rp_dict(u):
+    resp = await fetch_valorant_point(u)
+    vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
+    rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+    return {'vp':vp,'rp':rp}
 
 # 获取商品价格（所有）
 async def fetch_item_price_all(u):
