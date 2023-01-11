@@ -1,13 +1,27 @@
 import json
 import time
+import threading
 import aiofiles
-from endpoints.EzAuth import RiotAuth,EzAuth,auth_exceptions,auth2fa
+from endpoints.EzAuth import auth_exceptions,auth2fa,auth2faWait,Get2faWait_Key
 from endpoints.ApiToken import token_ck,ApiTokenDict,save_token_files
 from endpoints.Gtime import GetTime
 from endpoints.KookApi import kook_create_asset
 from endpoints.Val import fetch_daily_shop,fetch_vp_rp_dict
 from endpoints.ShopImg import get_shop_img_11,get_shop_img_169
 
+TOKEN_RATE_LIMITED = 10
+# bot的token文件
+with open('./config/config.json', 'r', encoding='utf-8') as f:
+    config = json.load(f)
+# 之前没有处理完毕的2fa用户信息
+with open("./log/Api2fa.json", 'r', encoding='utf-8') as frpr:
+    Api2faDict = json.load(frpr)
+# 用来给kook上传文件的bot token
+api_bot_token = config['api_bot_token']
+
+# 默认的背景图
+img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
+img_bak_11 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 
 # 检测速率（一分钟只允许10次）
 async def check_token_rate(token:str):
@@ -19,16 +33,16 @@ async def check_token_rate(token:str):
         if ApiTokenDict['data'][token]['rate_nums']==0:#初次使用
             ApiTokenDict['data'][token]['rate_time']=cur_time
             ApiTokenDict['data'][token]['rate_nums']=1
-            save_token_files()
+            save_token_files("token init use")
             return {'status':True,'message':'first use','info':'一切正常'}
         elif time_diff <=60:#时间在60s以内
-            if ApiTokenDict['data'][token]['rate_nums']>10:
+            if ApiTokenDict['data'][token]['rate_nums']>TOKEN_RATE_LIMITED:
                 return {'status':False,'message': 'token rate limited!','info':'速率限制，请稍后再试'}
             else:#没有引发速率限制
                 ApiTokenDict['data'][token]['rate_nums']+=1
                 return {'status':True,'message':'time_diff <= 60, in rate','info':'一切正常'}
         else:#时间超过60
-            save_token_files()
+            save_token_files("rate check")
             ApiTokenDict['data'][token]['rate_time']=cur_time
             ApiTokenDict['data'][token]['rate_nums']=0
             return {'status':True,'message':'time_diff > 60','info':'一切正常'}
@@ -42,7 +56,7 @@ async def base_img_request(request):
     params = request.rel_url.query
     if 'account' not in params or 'passwd' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
-        return {'code': 400, 'message': 'params needed: account/passwd','info':'缺少参数！示例: /shop-img?token=你购买的api凭证&account=Riot账户&passwd=Riot密码&img_src=可选参数，自定义背景图'}
+        return {'code': 400, 'message': 'params needed: token/account/passwd','info':'缺少参数！示例: /shop-img?token=你购买的api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）'}
 
     account=params['account']
     passwd=params['passwd']
@@ -52,39 +66,37 @@ async def base_img_request(request):
         return {'code': 200, 'message': ck_ret['message'],'info':ck_ret['info']}
     
     #默认背景
-    img_src = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
+    img_src = img_bak_169
     if 'img_src' in params:
         img_src = params['img_src']
     try:
-        auth = await auth2fa(account,passwd)
-    except auth_exceptions.RiotAuthenticationError as result:
-        print(f"ERR! [{GetTime()}] login - {result}")
-        text = f"账户密码错误 {result}"
-        return {'code': 200, 'message': 'riot_auth.auth_exceptions.RiotAuthenticationError','info':text}
-    except auth_exceptions.RiotMultifactorError as result:
-        print(f"ERR! [{GetTime()}] login - {result}")
-        text = f"当前不支持开启了`邮箱双重验证`的账户  {result}"
-        return {'code': 200, 'message':'riot_auth.auth_exceptions.RiotMultifactorError','info': text}
+        key = await Get2faWait_Key()
+        # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
+        th = threading.Thread(target=auth2fa, args=(account,passwd,key))
+        th.start()
+        resw = await auth2faWait(key=key) # 随后主执行流来这里等待
+        res_auth = resw['auth']
     except auth_exceptions.RiotRatelimitError as result:
         print(f"ERR! [{GetTime()}] login - riot_auth.riot_auth.auth_exceptions.RiotRatelimitError")
         return {'code': 200, 'message': "riot_auth.auth_exceptions.RiotRatelimitError",'info':'riot登录api超速，请稍后重试'}
+    except Exception as result:
+        print(f"ERR! [{GetTime()}] login - {result}")
+        return {'code': 200, 'message': f"{result}",'info':'riot登录错误，详见message'}
     
-    print(f'[{GetTime()}] [riot_auth] user auth success')
+    print(f'[{GetTime()}] [Api] k:{key} - user auth success')
     userdict = {
-        'auth_user_id': auth.user_id,
-        'access_token': auth.access_token,
-        'entitlements_token': auth.entitlements_token
+        'auth_user_id': res_auth.user_id,
+        'access_token': res_auth.access_token,
+        'entitlements_token': res_auth.entitlements_token
     }
     resp = await fetch_daily_shop(userdict)  #获取每日商店
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = await fetch_vp_rp_dict(userdict)
-    vp = res_vprp['vp']
-    rp = res_vprp['rp']
-    ret = await get_shop_img_169(list_shop,vp=vp,rp=rp,bg_img_src=img_src)
+    res_vprp = await fetch_vp_rp_dict(userdict) # 获取vp和r点
+    ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
     if ret['status']:
         bg = ret['value']
-        img_src_ret = await kook_create_asset(bg)  # 上传图片
+        img_src_ret = await kook_create_asset(api_bot_token,bg) # 上传图片
         if img_src_ret['code']==0:
             print(f'[{GetTime()}] [Api] kook_create_asset success')
             dailyshop_img_src = img_src_ret['data']['url']

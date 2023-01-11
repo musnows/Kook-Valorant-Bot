@@ -12,11 +12,11 @@ def get_uuid():
     return get_timestamp_uuid
 
 
-def save_token_files():
+def save_token_files(text=''):
     global ApiTokenDict
     with open("./log/UserToken.json", 'w', encoding='utf-8') as fw2:
         json.dump(ApiTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print("[Token] files saved!")
+    print(f"[token] files saved! {text}")
 
 # 生成uuid
 def create_token_uuid(num: int = 10, day: int = 30):
@@ -47,7 +47,7 @@ def create_token_uuid(num: int = 10, day: int = 30):
         i -= 1
 
     # 更新uuid
-    save_token_files()
+    save_token_files("token create")
 
     text = ""
     for uuid in NewUuid:
@@ -70,7 +70,7 @@ async def token_ck(token:str):
         if time.time() > ApiTokenDict['data'][token]['od_time']:
             del ApiTokenDict['data'][token]
             # 更新uuid
-            save_token_files()
+            save_token_files("token expire")
             print(f"[token-ck] T:{token} out of date")
             return False
         else:#没有过期，返回真
