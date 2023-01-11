@@ -237,13 +237,14 @@ def auth2fa(user:str,passwd:str,key:str):
     auth.authorize(user,passwd,key=key)
 
 # 轮询检测的等待
-async def auth2faWait(key,msg):
+async def auth2faWait(key,msg=None):
     while True:
         if key in User2faCode:
             # 如果status为假，代表是2fa用户
             if not User2faCode[key]['status']:
                 print(f"[auth2faWait] k:{key} 2fa wait")
-                await msg.reply(f"您开启了邮箱双重验证，请使用「/tfa {key} 邮箱码」的方式验证\n栗子：若邮箱验证码为114514，那么您应该键入 `/tfa {key} 114514`")
+                if msg != None:
+                    await msg.reply(f"您开启了邮箱双重验证，请使用「/tfa {key} 邮箱码」的方式验证\n栗子：若邮箱验证码为114514，那么您应该键入 `/tfa {key} 114514`")
             
             # 开始循环检测status状态
             while(not User2faCode[key]['status']):
@@ -267,8 +268,8 @@ async def auth2faWait(key,msg):
                 print(f"[auth2faWait] k:{key} 2fa wait success,del key")
                 return ret
             else: # 否则登陆失败
-                print(f"[auth2faWait] k:{key} 2fa wait failed")
-                raise auth_exceptions.RiotAuthenticationError
+                print(f"[auth2faWait] k:{key} 2fa wait failed") # 因为默认给出的是账户密码错误，而2fa不会是这个问题
+                raise Exception("[auth2faWait] 2fa wait failed, auth_failure")
         # key值不在，睡一会后再看看
         await asyncio.sleep(0.2)
 
