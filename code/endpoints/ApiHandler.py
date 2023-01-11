@@ -21,7 +21,7 @@ api_bot_token = config['api_bot_token']
 
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
-img_bak_11 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
+img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 
 # 检测速率（一分钟只允许10次）
 async def check_token_rate(token:str):
@@ -54,6 +54,7 @@ async def check_token_rate(token:str):
 # 基本操作
 async def base_img_request(request):
     params = request.rel_url.query
+    print(params)
     if 'account' not in params or 'passwd' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
         return {'code': 400, 'message': 'params needed: token/account/passwd','info':'缺少参数！示例: /shop-img?token=你购买的api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）'}
@@ -65,10 +66,6 @@ async def base_img_request(request):
     if not ck_ret['status']: 
         return {'code': 200, 'message': ck_ret['message'],'info':ck_ret['info']}
     
-    #默认背景
-    img_src = img_bak_169
-    if 'img_src' in params:
-        img_src = params['img_src']
     try:
         key = await Get2faWait_Key()
         # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
@@ -93,7 +90,21 @@ async def base_img_request(request):
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
     res_vprp = await fetch_vp_rp_dict(userdict) # 获取vp和r点
-    ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
+
+    # 自定义背景
+    if 'img_src' in params:
+        img_src = params['img_src']
+    else:
+        img_src = img_bak_169 # 默认背景16-9
+        if 'img_ratio'in params and params['img_ratio']=='1':
+            img_src = img_bak_11 # 默认背景1-1
+
+    # 开始画图
+    if 'img_ratio' in params and params['img_ratio']=='1':
+        ret = await get_shop_img_11(list_shop,bg_img_src=img_src)
+    else:
+        ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
+    
     if ret['status']:
         bg = ret['value']
         img_src_ret = await kook_create_asset(api_bot_token,bg) # 上传图片

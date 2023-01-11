@@ -1,4 +1,5 @@
 import json
+import traceback
 from aiohttp import web
 from endpoints.Gtime import GetTime
 from endpoints.ApiHandler import base_img_request
@@ -25,7 +26,7 @@ async def get_dailshop_img(request):
         else:
             return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
-        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':'未知错误'},ensure_ascii=False), content_type='application/json')
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
     
 # 获取图片url
 @routes.get('/shop-url')
@@ -35,7 +36,7 @@ async def get_dailshop_img(request):
         ret = await base_img_request(request)
         return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
-        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':'未知错误'},ensure_ascii=False), content_type='application/json')
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
 
 
 
