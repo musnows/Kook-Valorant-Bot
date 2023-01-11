@@ -138,6 +138,7 @@ class EzAuth:
             },
             'auth': self
         }
+        print(f"[EzAuth] k:{key} auth success")
 
 
     def get_entitlement_token(self):
