@@ -2150,6 +2150,7 @@ async def auto_skin_notify():
                 user = await bot.client.fetch_user(vip)
                 if vip in UserAuthDict:
                     if await check_re_auth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
+                        shop_text = "err"
                         start = time.perf_counter()  #开始计时
                         auth = UserAuthDict[vip]['auth']
                         userdict = {
@@ -2157,7 +2158,7 @@ async def auto_skin_notify():
                             'access_token': auth.access_token,
                             'entitlements_token': auth.entitlements_token
                         }
-                        a_time = time.time()
+                        a_time = time.time() # 获取token的时间
                         resp = await fetch_daily_shop(userdict)  # 获取每日商店
                         
                         # 判断夜市有没有开，只会判断一次
@@ -2175,7 +2176,7 @@ async def auto_skin_notify():
                         UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
                         UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                         #直接获取商店图片
-                        draw_time = time.time()  #计算画图需要的时间
+                        draw_time = time.time()  #开始计算画图需要的时间
                         img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
                         play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
                         vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
@@ -2188,38 +2189,36 @@ async def auto_skin_notify():
                             bg_shop.save(img_shop_path, format='PNG')
                             VipShopBgDict['cache_time'] = time.time() #设置图片缓存的时间
                         else:  #如果图片没有正常返回，那就发送文字版本
-                            text = ""
+                            shop_text = ""
                             for skinuuid in list_shop:
                                 res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
                                 res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
                                 price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                                text += f"{res_item['data']['displayName']}     - VP {price}\n"
-                            cm = CardMessage()  #向用户发送当前的每日商店（文字）
-                            c = Card(color='#fb4b57')
-                            c.append(
-                                Module.Section(Element.Text(f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店", Types.Text.KMD),
-                                               Element.Image(src=icon_cm.shot_on_fire, size='sm')))
-                            c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-                            c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
-                            cm.append(c)
-                            await user.send(cm)
-                            continue
+                                shop_text += f"{res_item['data']['displayName']}     - VP {price}\n"
+                            print(f"[BOT.TASK.NOTIFY] VAu:{vip} test img err, using text")
 
+                        # 打印日志
                         log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
                         print(log_time)
                         dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
-                        # 结束shop的总计时
-                        end = time.perf_counter()
-                        #结果为浮点数，保留两位小数
-                        using_time = format(end - start, '.2f')
-                        #卡片消息发送图片
+                        # 结束shop的总计时 结果为浮点数，保留两位小数
+                        using_time = format(time.perf_counter() - start, '.2f')
+                        #卡片消息发送图片或者text
                         cm = CardMessage()
                         c = Card(color='#fb4b57')
-                        c.append(
-                            Module.Header(
-                                f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店"))
-                        c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
-                        c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
+                        if shop_text == "err":
+                            c.append(
+                                Module.Header(
+                                    f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店"))
+                            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+                            c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
+                        else:
+                            c.append(
+                            Module.Section(Element.Text(f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']}", Types.Text.KMD),
+                                            Element.Image(src=icon_cm.shot_on_fire, size='sm')))
+                            c.append(Module.Section(Element.Text(shop_text, Types.Text.KMD)))
+                            c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
+                        # 发送
                         cm.append(c)
                         await user.send(cm)
                         print(f"[BOT.TASK.NOTIFY] [{GetTime()}] VAu:{vip} notify_shop success [{using_time}]")
@@ -2302,7 +2301,10 @@ async def auto_skin_notify():
                 json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
             print("[BOT.TASK.NOTIFY] save SkinNotifyDict")
             
-        # 将当日最高最低用户写入文件
+        # 将cache time写入文件
+        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)  
+        # 将当日评分最高最低用户写入文件   
         with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
             json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)            
         finish_str = f"[BOT.TASK.NOTIFY] Finish at {GetTime()} [ERR {err_count}]"
