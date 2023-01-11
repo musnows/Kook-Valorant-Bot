@@ -61,6 +61,15 @@ def bg_comp(bg, img, x, y):
     bg.paste(img, position, img) 
     return bg
 
+# 获取武器皮肤的图片
+def get_weapon_img(skinuuid:str,skin_icon:str):
+    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
+        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开本地皮肤图片
+    else:
+        layer_icon = Image.open(io.BytesIO(requests.get(skin_icon).content))  # 打开url皮肤图片
+        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
+    return layer_icon
+
 # 缩放皮肤图片，部分皮肤图片大小不正常
 def resize_skin(standard_x, img, standard_y=''):
     standard_y = standard_x if standard_y == '' else standard_y
@@ -114,11 +123,7 @@ def sm_comp_169(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
     bg = Image.new(mode='RGBA', size=(400, 240))  # 新建一个画布
     # 处理皮肤图片
     start = time.perf_counter()  #开始计时
-    if os.path.exists(f'./log/img_temp_vip/weapon/{skinuuid}.png'):
-        layer_icon = Image.open(f'./log/img_temp_vip/weapon/{skinuuid}.png')  # 打开皮肤图片
-    else:
-        layer_icon = Image.open(io.BytesIO(requests.get(skin_img_url).content))  # 打开皮肤图片
-        layer_icon.save(f'./log/img_temp_vip/weapon/{skinuuid}.png', format='PNG')
+    layer_icon = get_weapon_img(skinuuid=skinuuid,skin_icon=skin_img_url)
     end = time.perf_counter() # 结束获取皮肤图片计时
     log_time = f"[GetWeapen] {format(end - start, '.4f')} "# 记录获取皮肤图片用时
 
@@ -166,15 +171,11 @@ def sm_comp_169(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
     return bg
 
 # 1比1的单个武器图片生成
-def sm_comp_11(skin_icon, skin_name, price, skin_level_icon, skinuuid):
+def sm_comp_11(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
     bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
     # 处理皮肤图片
     start = time.perf_counter()  #开始计时
-    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
-        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开皮肤图片
-    else:
-        layer_icon = Image.open(io.BytesIO(requests.get(skin_icon).content))  # 打开皮肤图片
-        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
+    layer_icon = get_weapon_img(skinuuid=skinuuid,skin_icon=skin_img_url)
     end = time.perf_counter()
     log_time = f"[GetWeapen] {format(end - start, '.4f')} "
 
@@ -250,7 +251,10 @@ def sm_comp_11(skin_icon, skin_name, price, skin_level_icon, skinuuid):
         weapon_icon_temp_11[skinuuid] = bg
     return bg
 
-# 在本地文件中查找皮肤的图片，并插入到temp中
+
+####################################################################################################
+
+# 在本地文件中查找皮肤的图片，没有图片就执行画图，并插入到temp中
 def skin_uuid_to_comp(skinuuid, ran,is_169=False):
     res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
     res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
@@ -350,7 +354,7 @@ async def get_shop_img_169(list_shop: dict,vp:str,rp:str,bg_img_src="err"):
     if ran in shop_img_temp_169:
         del shop_img_temp_169[ran]
     # 画完图之后返回结果
-    # bg.save(f"./{player_uuid}.png",format='PNG')
+    # bg.save(f"./2222.png",format='PNG')
     return {"status": True, "value": bg}
 
 
@@ -422,5 +426,5 @@ async def get_shop_img_11(list_shop:dict,bg_img_src="err"):
     if ran in shop_img_temp_11:
         del shop_img_temp_11[ran]
     # 画完图之后返回结果
-    #bg.save(f"./{player_uuid}11.png",format='PNG')
+    # bg.save(f"./11111.png",format='PNG')
     return {"status": True, "value": bg}
