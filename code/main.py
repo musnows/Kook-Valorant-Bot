@@ -7,11 +7,11 @@ import time
 import traceback
 from datetime import datetime, timedelta
 from typing import Union
-
 import aiohttp
 import copy
 import zhconv
 import asyncio
+import threading
 from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
                  PublicChannel, PublicMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
@@ -27,7 +27,7 @@ from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.Val import *
-from endpoints.EzAuth import auth2fa,authflow
+from endpoints.EzAuth import auth2fa,authflow,auth2faWait,Get2faWait_Key
 from endpoints.Gtime import GetTime,GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
@@ -1022,7 +1022,7 @@ async def check_user_login_rate(msg: Message):
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=False,*arg):
+async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=0,*arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa}")
     log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden
@@ -1072,7 +1072,16 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         if not tfa:
             res_auth = await authflow(user, passwd)
         else:
-            res_auth = await auth2fa(msg,user,passwd)
+            try:
+                key = await Get2faWait_Key()
+                # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
+                th = threading.Thread(target=auth2fa, args=(user,passwd,key))
+                th.start()
+                resw = await auth2faWait(key=key,msg=msg) # 随后主执行流来这里等待
+                res_auth = resw['auth']
+            except:
+                await msg.reply(f"出现错误，请重试或联系阿狸的作者\n```\n{traceback.format_exc()}\n```")
+                return
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
             'auth_user_id': res_auth.user_id,
@@ -1123,7 +1132,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         c = Card(color='#fb4b57')
         text = f"当前的账户密码真的对了吗？"
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.dont_do_that, size='sm')))
-        c.append(Module.Context(Element.Text("Make sure username and password are correct", Types.Text.KMD)))
+        c.append(Module.Context(Element.Text(f"Make sure username and password are correct\n`{result}`", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotMultifactorError as result:
@@ -1132,7 +1141,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-        c.append(Module.Context(Element.Text("Multi-factor authentication is not currently supported", Types.Text.KMD)))
+        c.append(Module.Context(Element.Text("Please use `/login accout passwd 1` for 2fa", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotRatelimitError as result:
@@ -1179,7 +1188,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
 from endpoints.EzAuth import User2faCode
 
 @bot.command(name='tfa')
-async def auth_2fa(msg:Message,tfa:str,*arg):
+async def auth_2fa(msg:Message,key:str,tfa:str,*arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /2fa")
     if len(tfa)!=6:
         await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：{tfa}")
@@ -1187,12 +1196,13 @@ async def auth_2fa(msg:Message,tfa:str,*arg):
     
     try:
         global User2faCode
-        if msg.author_id in User2faCode:
-            User2faCode[msg.author_id]['vcode'] = tfa
-            User2faCode[msg.author_id]['status'] = True
+        key = int(key)
+        if key in User2faCode:
+            User2faCode[key]['vcode'] = tfa
+            User2faCode[key]['2fa_status'] = True
             await msg.reply(f"两步验证码获取成功，请等待……") 
         else:
-            await msg.reply(f"您不在2fa用户列表中，请重新login")
+            await msg.reply(f"第二个参数key值错误，请确认您的输入，或重新login")
 
     except Exception as result: # 其他错误
         await BaseException_Handler("tfa",traceback.format_exc(),msg,bot)
