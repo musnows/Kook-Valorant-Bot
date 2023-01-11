@@ -251,7 +251,7 @@ def sm_comp_11(skin_icon, skin_name, price, skin_level_icon, skinuuid):
     return bg
 
 # 在本地文件中查找皮肤的图片，并插入到temp中
-def skin_uuid_to_comp(skinuuid, ran,is_169:bool):
+def skin_uuid_to_comp(skinuuid, ran,is_169=False):
     res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
     res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
     price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] # 取出价格
@@ -314,7 +314,7 @@ async def get_shop_img_169(list_shop: dict,vp:str,rp:str,bg_img_src="err"):
         elif os.path.exists(img_path):# 全局变量里面没有，要去本地路径里面找
             shop_img_temp_169[ran].append(Image.open(img_path))
         else: # 都没有，画图
-            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran))
+            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran,1))
             th.start()
         await asyncio.sleep(0.7) # 睡一会，尝试错开网络请求
 
@@ -380,10 +380,10 @@ async def get_shop_img_11(list_shop:dict,bg_img_src="err"):
         bg_img = Image.alpha_composite(bg_img, bg_window_11) #把框粘贴到自定义背景图上
     # 两种情况都需要把背景图图片加载到bg中
     bg = copy.deepcopy(bg_img)
-    # 开始画图
+    # 开始画图,初始化变量
     x = 0
     y = 0
-    ran = 0 #生成随机数
+    ran = 0 # 随机数基准值
     # 开始后续画图操作
     global shop_img_temp_11
     #循环判断创建的随机值在不在其中，如果在，那就还需要继续生成，直到产生一个不在其中的 
