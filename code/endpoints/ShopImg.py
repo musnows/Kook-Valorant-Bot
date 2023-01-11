@@ -55,10 +55,16 @@ async def img_requestor(img_url):
         async with session.get(img_url) as r:
             return await r.read()
 
-# 缩放图片，部分皮肤图片大小不正常
+# 往底图的指定位置粘贴单个皮肤的图片
+def bg_comp(bg, img, x, y):
+    position = (x, y)
+    bg.paste(img, position, img) 
+    return bg
+
+# 缩放皮肤图片，部分皮肤图片大小不正常
 def resize_skin(standard_x, img, standard_y=''):
     standard_y = standard_x if standard_y == '' else standard_y
-    log_info = "[resize] "
+    log_info = "[resize_skin] "
     w, h = img.size
     log_info += f"原始图片大小:({w},{h}) - "
     ratio = w / h
@@ -77,10 +83,10 @@ def resize_skin(standard_x, img, standard_y=''):
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
     return img
 
-# 将16比9的背景图片缩放到标准大小
+# 将背景图片缩放到标准大小，否则粘贴的时候大小不统一会报错
 def resize_standard(standard_x, standard_y, img):
     w, h = img.size
-    log_info = "[resize_169] "
+    log_info = "[resize_std] "
     log_info += f"原始图片大小:({w},{h}) - "
     ratio = w / h
     if ratio <= 1.78:
@@ -197,7 +203,7 @@ def sm_comp_11(skin_icon, skin_name, price, skin_level_icon, skinuuid):
     level_icon = level_icon.convert('RGBA')
     bg.paste(level_icon, standard_level_icon_position, level_icon)
 
-    name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
+    name = zhconv.convert(skin_name, 'zh-cn')  # 将名字简体化
     name_list = name.split(' ')  # 将武器名字分割换行
     # print(name_list)
     if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
@@ -262,11 +268,6 @@ def skin_uuid_to_comp(skinuuid, ran,is_169:bool):
         global shop_img_temp_11  #这里是把处理好的图片存到本地
         shop_img_temp_11[ran].append(img)
 
-# 往底图的指定位置粘贴单个皮肤的图片
-def bg_comp(bg, img, x, y):
-    position = (x, y)
-    bg.paste(img, position, img) 
-    return bg
 
 # 获取16比9的每日商店的图片
 async def get_shop_img_169(list_shop: dict,vp:str,rp:str,bg_img_src="err"):
