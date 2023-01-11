@@ -1864,25 +1864,24 @@ async def get_daily_shop(msg: Message, *arg):
                 'entitlements_token': auth.entitlements_token
             }
             log_time = ""
-            global UserShopDict
-            if msg.author_id in UserShopDict and isSame_Authuuid(msg):
-                a_time = time.time()
-                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = shop_time_remain()
+            a_time = time.time()
+            global UserShopDict # UserShopDict每天早八会被清空，如果用户在里面且玩家id一样，那么说明已经获取过当日商店了
+            if msg.author_id in UserShopDict and isSame_Authuuid(msg): #直接使用本地已有的当日商店
+                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
+                timeout = shop_time_remain() # 通过当前时间计算商店剩余时间
                 log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
             else:
-                a_time = time.time()
-                resp = await fetch_daily_shop(userdict)  #获取每日商店
+                resp = await fetch_daily_shop(userdict)  #本地没有，api获取每日商店
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
-                timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
-                #需要设置uuid来保证是同一个用户
+                timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] # 剩余时间
+                timeout = time.strftime("%H:%M:%S", time.gmtime(timeout)) # 将秒数转为标准时间
+                # 需要设置uuid来保证是同一个用户，方便同日的下次查询
                 UserShopDict[msg.author_id] = {}
                 UserShopDict[msg.author_id]["auth_user_id"] = UserTokenDict[msg.author_id]["auth_user_id"]
                 UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                 log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
 
-            #开始画图
+            # 开始画图
             draw_time = time.time()  #计算画图需要的时间
             is_vip = await vip_ck(msg.author_id) #判断VIP
             #每天8点bot遍历完之后会把vip的商店完整图存起来
