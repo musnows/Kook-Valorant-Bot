@@ -5,3 +5,4 @@ caiyun.json
 __pycache__/
 */log/
 *.log
+btest.py
