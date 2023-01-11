@@ -30,6 +30,7 @@ from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
 from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 from endpoints.ShopRate import SkinRateDict,get_shop_rate_cm,check_shop_rate
 from endpoints.ShopImg import get_shop_img_11,get_shop_img_169
+from endpoints.LocalFileUpd import update_bundle_url,update_price,update_skins
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -1213,7 +1214,9 @@ UserCookieDict = {}
 login_dict = {}
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
-#检查评分的错误用户（违规用户）
+#用来存放用户每天的商店（早八会清空）
+UserShopDict = {}
+#检查皮肤评分的错误用户（违规用户）
 def check_rate_err_user(user_id:str):
     """(user_id in SkinRateDict['err_user'])
     """
@@ -1615,91 +1618,6 @@ async def logout_authtoken(msg: Message, *arg):
         await BaseException_Handler("logout",traceback.format_exc(),msg,bot)
 
 
-# 不再使用定时任务，而是把所有更新封装成一个命令。
-async def update_skins(msg: Message):
-    try:
-        global ValSkinList
-        skins = await fetch_skins_all()
-        ValSkinList = skins
-        # 写入文件
-        with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        print(f"[{GetTime()}] update_skins finished!")
-        return True
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_skins\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        return False
-
-
-#因为下方获取物品价格的操作需要authtoken，自动更新容易遇到token失效的情况
-async def update_price(msg: Message):
-    try:
-        global ValPriceList
-        reau = await check_re_auth("物品价格", msg)
-        if reau == False: return  #如果为假说明重新登录失败
-        # 调用api获取价格列表
-        auth = UserAuthDict[msg.author_id]['auth']
-        userdict = {
-            'auth_user_id': auth.user_id,
-            'access_token': auth.access_token,
-            'entitlements_token': auth.entitlements_token
-        }
-        prices = await fetch_item_price_all(userdict)
-        ValPriceList = prices  # 所有价格的列表
-        # 写入文件
-        with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        print(f"[{GetTime()}] update_item_price finished!")
-        return True
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_price\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        return False
-
-
-# 更新捆绑包
-async def update_bundle_url(msg: Message):
-    try:
-        global ValBundleList
-        resp = await fetch_bundles_all()  #从官方获取最新list
-        if len(resp['data']) == len(ValBundleList):  #长度相同代表没有更新
-            print(f"[{GetTime()}] len is the same, doesn't need update!")
-            await msg.reply("BundleList_len相同，无需更新")
-            return
-
-        for b in resp['data']:
-            flag = 0
-            for local_B in ValBundleList:  #不在
-                if b['uuid'] == local_B['uuid']:  #相同代表存在无需更新
-                    flag = 1  #找到了，无需更新
-                    break
-
-            if flag != 1:  #不存在创建图片准备上传
-                bg_bundle_icon = Image.open(io.BytesIO(await img_requestor(b['displayIcon'])))
-                imgByteArr = io.BytesIO()
-                bg_bundle_icon.save(imgByteArr, format='PNG')
-                imgByte = imgByteArr.getvalue()
-                print(f"Uploading - {b['displayName']}")
-                bundle_img_src = await bot_upimg.client.create_asset(imgByte)
-                print(f"{b['displayName']} - url: {bundle_img_src}")
-                b['displayIcon2'] = bundle_img_src  #修改url
-                ValBundleList.append(b)  #插入
-
-        with open("./log/ValBundle.json", 'w', encoding='utf-8') as fw1:
-            json.dump(ValBundleList, fw1, indent=2, sort_keys=True, ensure_ascii=False)
-
-        print(f"[{GetTime()}] update_bundle_url finished!")
-        return True
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_bundle_url\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        return False
-
-
 # 手动更新商店物品和价格
 @bot.command(name='update_spb',aliases=['update','upd'])
 async def update_skin_price_bundle(msg: Message):
@@ -1707,14 +1625,17 @@ async def update_skin_price_bundle(msg: Message):
     if msg.author_id == master_id:
         if await update_skins(msg):
             await msg.reply(f"成功更新：商店皮肤")
-        if await update_price(msg):
-            await msg.reply(f"成功更新：物品价格")
-        if await update_bundle_url(msg):
+        if await update_bundle_url(msg,bot_upimg):
             await msg.reply(f"成功更新：捆绑包")
-
-
-#用来存放用户每天的商店
-UserShopDict = {}
+        # 获取物品价格需要登录
+        auth = UserAuthDict[msg.author_id]['auth']
+        userdict = {
+            'auth_user_id': auth.user_id,
+            'access_token': auth.access_token,
+            'entitlements_token': auth.entitlements_token
+        }
+        if await update_price(msg,userdict):
+            await msg.reply(f"成功更新：物品价格")
 
 
 #计算当前时间和明天早上8点的差值
