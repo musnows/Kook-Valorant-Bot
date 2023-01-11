@@ -1076,16 +1076,13 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         if not tfa:
             res_auth = await authflow(user, passwd)
         else:
-            try:
-                key = await Get2faWait_Key()
-                # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
-                th = threading.Thread(target=auth2fa, args=(user,passwd,key))
-                th.start()
-                resw = await auth2faWait(key=key,msg=msg) # 随后主执行流来这里等待
-                res_auth = resw['auth']
-            except:
-                await msg.reply(f"出现错误，请重试或联系阿狸的作者\n```\n{traceback.format_exc()}\n```")
-                return
+            key = await Get2faWait_Key()
+            # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
+            th = threading.Thread(target=auth2fa, args=(user,passwd,key))
+            th.start()
+            resw = await auth2faWait(key=key,msg=msg) # 随后主执行流来这里等待
+            res_auth = resw['auth']
+        # 如果没有抛出异常，那就是完成登录了
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
             'auth_user_id': res_auth.user_id,
