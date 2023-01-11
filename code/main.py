@@ -23,12 +23,13 @@ from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.Val import *
-from endpoints.Gtime import GetTime
+from endpoints.Gtime import GetTime,GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
                        vip_time_remain_cm, vip_time_stamp)
 from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 from endpoints.ShopRate import SkinRateDict,get_shop_rate_cm,check_shop_rate
+from endpoints.ShopImg import get_shop_img_11,get_shop_img_169
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -1823,6 +1824,15 @@ async def get_daily_shop_vip_img(list_shop: dict,userdict: dict,user_id: str,is_
     bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
     return {"status": True, "value": bg}
 
+# 判断缓存好的图片是否可用
+def is_CacheLatest(kook_user_id:str):
+    # 判断vip用户是否在背景图中，且没有 切换登录用户/切换背景图
+    if kook_user_id in VipShopBgDict:
+        is_Status = VipShopBgDict[kook_user_id]['status'] # 如果有切换登录用户/背景图，此为false
+        # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
+        is_Today = (VipShopBgDict[kook_user_id]['cache_time']-GetTimeStampOf8AM())>=0 
+        return is_Today and is_Status # 有一个为false，结果就是false
+    return False 
 
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
@@ -1883,60 +1893,31 @@ async def get_daily_shop(msg: Message, *arg):
 
             # 开始画图
             draw_time = time.time()  #计算画图需要的时间
-            is_vip = await vip_ck(msg.author_id) #判断VIP
-            #每天8点bot遍历完之后会把vip的商店完整图存起来
+            is_vip = await vip_ck(msg.author_id) #判断用户是否为VIP
+            img_ret = {'status':True,'value':None}
+            # 每天8点bot遍历完之后会把vip的商店结果图存起来
             shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
-            #用户在列表中，且状态码为true
-            is_latest = (msg.author_id in VipShopBgDict and VipShopBgDict[msg.author_id]['status'])
-            if is_vip and (os.path.exists(shop_path)) and is_latest:  #如果是vip而且path存在,背景图没有更改过
-                bg_vip_shop = Image.open(shop_path)
+            # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
+            if is_vip and (os.path.exists(shop_path)) and is_CacheLatest(msg.author_id):  
+                bg_vip_shop = Image.open(shop_path) #直接使用本地已经画好的图片
                 bg = copy.deepcopy(bg_vip_shop)
-            elif is_vip and (msg.author_id in VipShopBgDict):  #商店路径不存在，或者状态码为false
-                ret = await get_daily_shop_vip_img(list_shop, userdict, msg.author_id, is_vip, msg)
-                if ret['status']:
-                    bg = ret['value']  #获取图片
-                else:  #出现图片违规
-                    await msg.reply(ret['value'])
-                    return
-            else:  #普通用户，没有自定义图片的vip用户
-                x = 0
-                y = 0
-                bg = copy.deepcopy(bg_main)
-                ran = random.randint(1, 9999)#生成随机数
-                # 开始后续画图操作
-                global shop_img_temp
-                shop_img_temp[ran] = []
-                img_num = 0
-                # 插入皮肤图片
-                for skinuuid in list_shop:
-                    img_path = f'./log/img_temp/comp/{skinuuid}.png'
-                    if skinuuid in weapon_icon_temp:#普通用户需要用的抽屉
-                        shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
-                    elif os.path.exists(img_path):
-                        shop_img_temp[ran].append(Image.open(img_path))
-                    else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
-                        th.start()
-                    await asyncio.sleep(0.8)  #尝试错开网络请求
-                while True:
-                    img_temp = copy.deepcopy(shop_img_temp)
-                    for i in img_temp[ran]:
-                        shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
-                        bg = bg_comp(bg, i, x, y)
-                        if x == 0:
-                            x += standard_length_sm
-                        elif x == standard_length_sm:
-                            x = 0
-                            y += standard_length_sm
-                        img_num += 1
-                    if img_num >= 4:
-                        break
-                    await asyncio.sleep(0.2)
-                #循环结束后删除
-                if ran in shop_img_temp:
-                    del shop_img_temp[ran]
+                img_ret['value'] = bg # 放入返回值
+            elif is_vip and (msg.author_id in VipShopBgDict): #本地缓存路径不存在，或者缓存过期
+                play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
+                vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
+                rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+                img_ret = await get_shop_img_169(list_shop,vp=vp,rp=rp,bg_img_src=VipShopBgDict[msg.author_id]["background"][0])
+            else:# 普通用户/没有自定义图片的vip用户
+                img_ret = await get_shop_img_11(list_shop)
 
-            # 打印画图耗时
+            if img_ret['status']: #true
+                bg = img_ret['value'] #获取图片
+            else:  #出现背景图片违规或其他问题
+                await msg.reply(img_ret['value'])
+                print(f"[GetShopImg] Au:{msg.author_id} {img_ret['value']}")
+                return
+
+            # 获取图片成功，打印画图耗时
             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}"
             print(log_time)
             # bg.save(f"test.png")  #保存到本地
@@ -1947,24 +1928,24 @@ async def get_daily_shop(msg: Message, *arg):
             # 结束shop的总计时
             end = time.perf_counter()
             # 结果为浮点数，保留两位小数
-            using_time = format(end - start, '.2f')
+            shop_using_time = format(end - start, '.2f')
             
             # 商店的图片
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
-            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {shop_using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
             
-            #皮肤评分和评价，用户不在err_user里面才显示
+            #皮肤评分和评价，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
             if not check_rate_err_user(msg.author_id):
                 cm = await get_shop_rate_cm(list_shop,msg.author_id,cm=cm)
                 end = time.perf_counter()#计算获取评分的时间
             # 更新消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             # 结束，打印结果
-            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}/{format(end - start, '.2f')}]")
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{shop_using_time}/{format(end - start, '.2f')}]")
         else:
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
