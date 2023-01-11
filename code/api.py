@@ -2,7 +2,7 @@ import json
 import traceback
 from aiohttp import web
 from endpoints.Gtime import GetTime
-from endpoints.ApiHandler import base_img_request
+from endpoints.ApiHandler import base_img_request,tfa_code_requeset
 
 # 初始化节点
 routes = web.RouteTableDef()
@@ -22,7 +22,7 @@ async def get_dailshop_img(request):
     try:
         ret = await base_img_request(request)
         if ret['code']==0:
-            return web.Response(headers={'Location': ret['message']},status=303)
+            return web.Response(headers={'Location': ret['message']},status=303) # 303是直接跳转到图片
         else:
             return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
@@ -38,8 +38,15 @@ async def get_dailshop_img(request):
     except:
         return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
 
-
-
+@routes.post('/tfa')
+async def get_dailshop_img(request):
+    print(f"[{GetTime()}] [request] /tfa")
+    try:
+        ret = await tfa_code_requeset(request)
+        return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
+    except:
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
+    
 
 print(f"[API Start] starting at {GetTime()}")
 app = web.Application()
