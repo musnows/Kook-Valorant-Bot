@@ -27,7 +27,7 @@ from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.Val import *
-from endpoints.EzAuth import auth2fa,authflow,auth2faWait,Get2faWait_Key
+from endpoints.EzAuth import auth2fa,authflow,auth2faWait,Get2faWait_Key,User2faCode
 from endpoints.Gtime import GetTime,GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
                        roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
@@ -1018,6 +1018,21 @@ async def check_user_login_rate(msg: Message):
         login_dict[msg.author_id] = {'time': time.time(), 'nums': 1}
         return False
 
+# 全局请求超速
+async def check_global_login_rate(msg:Message):   
+    if login_rate_limit['limit']:
+        time_stap = time.time()
+        time_diff = time_stap - login_rate_limit['time']
+        if time_diff <= 240.0:  #240s内无法使用login
+            ret_cm = get_login_rate_cm(time_diff)
+            await msg.reply(ret_cm)
+            print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
+            return False
+        else:  #超过240s，解除限制
+            login_rate_limit['limit'] = False
+            login_rate_limit['time'] = time_stap
+            return True
+    return True
 
 
 # 登录，保存用户的token
@@ -1044,20 +1059,9 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
 
-        # 全局请求超速
-        if login_rate_limit['limit']:
-            time_stap = time.time()
-            time_diff = time_stap - login_rate_limit['time']
-            if time_diff <= 240.0:  #240s内无法使用login
-                ret_cm = get_login_rate_cm(time_diff)
-                await msg.reply(ret_cm)
-                print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
-                return
-            else:  #超过240s，解除限制
-                login_rate_limit['limit'] = False
-                login_rate_limit['time'] = time_stap
-        # 用户请求超速
-        if await check_user_login_rate(msg):
+        if await check_global_login_rate(msg):# 全局请求超速
+            return
+        if await check_user_login_rate(msg):# 用户请求超速
             print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
             return
 
@@ -1185,7 +1189,6 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
     except Exception as result: # 其他错误
         await BaseException_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
 
-from endpoints.EzAuth import User2faCode
 
 @bot.command(name='tfa')
 async def auth_2fa(msg:Message,key:str,tfa:str,*arg):
@@ -1200,7 +1203,7 @@ async def auth_2fa(msg:Message,key:str,tfa:str,*arg):
         if key in User2faCode:
             User2faCode[key]['vcode'] = tfa
             User2faCode[key]['2fa_status'] = True
-            await msg.reply(f"两步验证码获取成功，请等待……") 
+            await msg.reply(f"两步验证码 `{tfa}` 获取成功，请等待……") 
         else:
             await msg.reply(f"第二个参数key值错误，请确认您的输入，或重新login")
 

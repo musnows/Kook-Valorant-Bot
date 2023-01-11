@@ -70,12 +70,13 @@ class EzAuth:
         elif "auth_failure" in r.text:
             print(F"[EzAuth] k:{key} auth_failure, NOT EXIST")
             User2faCode[key]= {'status':False,'err':"auth_failure, NOT EXIST"}
-            raise auth_exceptions.RiotAuthenticationError
+            raise Exception("auth_failure")
 
         elif 'rate_limited' in r.text:
             print(F"[EzAuth] k:{key} auth rate limited")
-            User2faCode[key]= {'status':False,'err':"auth rate limited"}
-            raise auth_exceptions.RiotRatelimitError
+            User2faCode[key]= {'status':False,'err':"auth rate_limited"}
+            raise Exception("auth rate_limited")
+        
         else:# 到此处一般是需要邮箱验证的用户
             print(f"[EzAuth] k:{key} 2fa user")
             User2faCode[key]= {'vcode':'','status':False,'start_time':time.time(),'2fa_status':False,'err':None}
@@ -103,7 +104,7 @@ class EzAuth:
                 elif "auth_failure" in r.text:
                     print(F"[EzAuth] k:{key} auth_failure") # banned (?)
                     User2faCode[key]['err']="2fa auth_failue"
-                    raise auth_exceptions.RiotAuthenticationError
+                    raise Exception("2fa auth_failure")
                 else:
                     print(F"[EzAuth] k:{key} 2fa unkown")
                     User2faCode[key]['err']="auth_failue, maybe wrong 2fa code"
@@ -236,31 +237,39 @@ def auth2fa(user:str,passwd:str,key:str):
 
 # 轮询检测的等待
 async def auth2faWait(key,msg):
-    try:
-        while True:
-            if key in User2faCode:
-                # 如果status为假，代表是2fa用户
-                if not User2faCode[key]['status']:
-                    print(f"[auth2faWait] k:{key} 2fa wait")
-                    await msg.reply(f"您开启了邮箱双重验证，请使用「/tfa {key} 邮箱码」的方式验证\n栗子：若邮箱验证码为114514，那么您应该键入 `/tfa {key} 114514`")
-                # 如果key值在内部，则开始判断status状态
-                while(not User2faCode[key]['status']):
-                    if (time.time()-User2faCode[key]['start_time'])>TFA_TIME_LIMIT:
-                        break # 超过10分钟，以无效处理
-                    await asyncio.sleep(0.3)
-                # 如果退出且为真，代表登录成功了
-                if User2faCode[key]['status']:
-                    ret = copy.deepcopy(User2faCode[key])
+    while True:
+        if key in User2faCode:
+            # 如果status为假，代表是2fa用户
+            if not User2faCode[key]['status']:
+                print(f"[auth2faWait] k:{key} 2fa wait")
+                await msg.reply(f"您开启了邮箱双重验证，请使用「/tfa {key} 邮箱码」的方式验证\n栗子：若邮箱验证码为114514，那么您应该键入 `/tfa {key} 114514`")
+            
+            # 开始循环检测status状态
+            while(not User2faCode[key]['status']):
+                # 这里 -3s 是为了让该线程更晚获取到信息，要在auth线程break之后才删除键值
+                if (time.time()-User2faCode[key]['start_time']-3)>TFA_TIME_LIMIT: 
                     del User2faCode[key]
-                    print(f"[auth2faWait] k:{key} 2fa wait success,del key")
-                    return ret
-                else:
-                    print(f"[auth2faWait] k:{key} 2fa wait failed")
-                    raise auth_exceptions.RiotAuthenticationError
-            # key值不在，睡一会后再看看
-            await asyncio.sleep(0.2)
-    except Exception as result:
-        print(f"[auth2faWait] k:{key} {result}")
+                    break # 超过10分钟，以无效处理
+                # 不为none，出现错误
+                if User2faCode[key]['err'] != None:
+                    if 'rate_limited' in User2faCode[key]['err']:
+                        raise auth_exceptions.RiotRatelimitError
+                    else:
+                        raise Exception(User2faCode[key]['err'])
+                # 睡一会再检测
+                await asyncio.sleep(0.3)
+
+            # 如果退出且为真，代表登录成功了
+            if User2faCode[key]['status']:
+                ret = copy.deepcopy(User2faCode[key])
+                del User2faCode[key]
+                print(f"[auth2faWait] k:{key} 2fa wait success,del key")
+                return ret
+            else: # 否则登陆失败
+                print(f"[auth2faWait] k:{key} 2fa wait failed")
+                raise auth_exceptions.RiotAuthenticationError
+        # key值不在，睡一会后再看看
+        await asyncio.sleep(0.2)
 
 async def Get2faWait_Key():
     ran = random.randint(1, 9999)
