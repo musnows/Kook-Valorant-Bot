@@ -1,7 +1,7 @@
 import json
 import time
 import threading
-import aiofiles
+import traceback
 from endpoints.EzAuth import auth_exceptions,auth2fa,auth2faWait,Get2faWait_Key,User2faCode
 from endpoints.ApiToken import token_ck,ApiTokenDict,save_token_files
 from endpoints.Gtime import GetTime
@@ -78,7 +78,7 @@ async def base_img_request(request):
         print(f"ERR! [{GetTime()}] login - riot_auth.riot_auth.auth_exceptions.RiotRatelimitError")
         return {'code': 200, 'message': "riot_auth.auth_exceptions.RiotRatelimitError",'info':'riot登录api超速，请稍后重试'}
     except Exception as result:
-        print(f"ERR! [{GetTime()}] login - {result}")
+        print(f"ERR! [{GetTime()}] login\n{traceback.format_exc()}")
         return {'code': 200, 'message': f"{result}",'info':'riot登录错误，详见message'}
     
     print(f'[{GetTime()}] [Api] k:{key} - user auth success')

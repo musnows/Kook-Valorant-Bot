@@ -14,7 +14,7 @@ def get_uuid():
 
 def save_token_files(text=''):
     global ApiTokenDict
-    with open("./log/UserToken.json", 'w', encoding='utf-8') as fw2:
+    with open("./log/ApiToken.json", 'w', encoding='utf-8') as fw2:
         json.dump(ApiTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
     print(f"[token] files saved! {text}")
 
