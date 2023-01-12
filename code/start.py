@@ -1,6 +1,4 @@
 import asyncio
-import sys
-import aiohttp
 from aiohttp import web
 from main import bot
 from api import app
