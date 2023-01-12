@@ -47,7 +47,6 @@ bot_upimg = Bot(token=config['img_upload_token'])
 
 # 设置全局变量：机器人开发者id/报错频道
 master_id = config['master_id']
-Debug_ch = config['debug_ch']
 kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 #在bot一开机的时候就获取log频道作为全局变量
@@ -2634,11 +2633,12 @@ async def bot_log_list(msg:Message,*arg):
 async def loading_channel_cookie():
     try:
         global debug_ch, cm_send_test
-        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
-        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        cm_send_test = await bot_upimg.client.fetch_public_channel(config["img_upload_channel"])
+        debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
         print("[BOT.TASK] fetch_public_channel success")
     except:
         print("[BOT.TASK] fetch_public_channel failed")
+        print(traceback.format_exc())
         os._exit(-1)  #出现错误直接退出程序
 
     if Login_Forbidden:
@@ -2679,6 +2679,6 @@ async def loading_channel_cookie():
     print("[BOT.TASK] loading cookie finished")
 
 # 开机的时候打印一次时间，记录重启时间
-print(f"Start at: [%s]" % start_time)
+print(f"[BOT] Start at: [%s]" % start_time)
 # 开机
-bot.run()
+# bot.run()

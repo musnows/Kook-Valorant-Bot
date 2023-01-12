@@ -51,4 +51,4 @@ async def get_dailshop_img(request):
 print(f"[API Start] starting at {GetTime()}")
 app = web.Application()
 app.add_routes(routes)
-web.run_app(app, host='127.0.0.1', port=14725)
+# web.run_app(app, host='127.0.0.1', port=14725)
