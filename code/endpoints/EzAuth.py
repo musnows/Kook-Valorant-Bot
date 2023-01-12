@@ -68,13 +68,13 @@ class EzAuth:
             tokens = [token,token_id]
 
         elif "auth_failure" in r.text:
-            print(F"[EzAuth] k:{key} auth_failure, NOT EXIST")
-            User2faCode[key]= {'status':False,'err':"auth_failure, NOT EXIST"}
+            print(F"[EzAuth] k:{key} auth_failure, USER NOT EXIST")
+            User2faCode[key]= {'status':False,'err':"auth_failure, NOT EXIST",'start_time':time.time()}
             raise Exception("auth_failure")
 
         elif 'rate_limited' in r.text:
             print(F"[EzAuth] k:{key} auth rate limited")
-            User2faCode[key]= {'status':False,'err':"auth rate_limited"}
+            User2faCode[key]= {'status':False,'err':"auth rate_limited",'start_time':time.time()}
             raise Exception("auth rate_limited")
         
         else:# 到此处一般是需要邮箱验证的用户
@@ -248,16 +248,17 @@ async def auth2faWait(key,msg=None):
             
             # 开始循环检测status状态
             while(not User2faCode[key]['status']):
-                # 这里 -3s 是为了让该线程更晚获取到信息，要在auth线程break之后才删除键值
-                if (time.time()-User2faCode[key]['start_time']-3)>TFA_TIME_LIMIT: 
-                    del User2faCode[key]
-                    break # 超过10分钟，以无效处理
                 # 不为none，出现错误
                 if User2faCode[key]['err'] != None:
                     if 'rate_limited' in User2faCode[key]['err']:
                         raise auth_exceptions.RiotRatelimitError
                     else:
                         raise Exception(User2faCode[key]['err'])
+                # 这里 -3s 是为了让该线程更晚获取到信息，要在auth线程break之后才删除键值
+                if (time.time()-User2faCode[key]['start_time']-3)>TFA_TIME_LIMIT: 
+                    del User2faCode[key]
+                    break # 超过10分钟，以无效处理
+
                 # 睡一会再检测
                 await asyncio.sleep(0.3)
 
