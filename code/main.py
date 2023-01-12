@@ -1467,12 +1467,13 @@ async def get_daily_shop(msg: Message, *arg):
             # 开始画图
             draw_time = time.time()  #计算画图需要的时间
             is_vip = await vip_ck(msg.author_id) #判断用户是否为VIP
-            img_ret = {'status':True,'value':None,'upload_flag':True}
+            img_ret = {'status':True,'value':None}
+            upload_flag=True
             # 每天8点bot遍历完之后会把vip的商店结果图存起来
             shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
             # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
             if is_vip and (os.path.exists(shop_path)) and is_CacheLatest(msg.author_id):  
-                img_ret['upload_flag'] = False #有缓存图，直接使用本地已有链接
+                upload_flag=False #有缓存图，直接使用本地已有链接
                 dailyshop_img_src = VipShopBgDict[msg.author_id]['cache_img']
             elif is_vip and (msg.author_id in VipShopBgDict): #本地缓存路径不存在，或者缓存过期
                 play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
@@ -1493,7 +1494,7 @@ async def get_daily_shop(msg: Message, *arg):
             # 获取图片成功，打印画图耗时
             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}"
             print(log_time)
-            if img_ret['upload_flag']:
+            if upload_flag:
                 imgByteArr = io.BytesIO()
                 bg.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
