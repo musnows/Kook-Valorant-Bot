@@ -1403,7 +1403,8 @@ def is_CacheLatest(kook_user_id:str):
         is_Status = VipShopBgDict[kook_user_id]['status'] # 如果有切换登录用户/背景图，此为false
         # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
         is_Today = (VipShopBgDict[kook_user_id]['cache_time']-GetTimeStampOf8AM())>=0 
-        return is_Today and is_Status # 有一个为false，结果就是false
+        is_Key = ('cache_img' in VipShopBgDict[kook_user_id]) # 键值是否存在
+        return is_Today and is_Status and is_Key# 有一个为false，结果就是false
     return False 
 
 # 获取每日商店的命令
@@ -1466,14 +1467,13 @@ async def get_daily_shop(msg: Message, *arg):
             # 开始画图
             draw_time = time.time()  #计算画图需要的时间
             is_vip = await vip_ck(msg.author_id) #判断用户是否为VIP
-            img_ret = {'status':True,'value':None}
+            img_ret = {'status':True,'value':None,'upload_flag':True}
             # 每天8点bot遍历完之后会把vip的商店结果图存起来
             shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
             # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
             if is_vip and (os.path.exists(shop_path)) and is_CacheLatest(msg.author_id):  
-                bg_vip_shop = Image.open(shop_path) #直接使用本地已经画好的图片
-                bg = copy.deepcopy(bg_vip_shop)
-                img_ret['value'] = bg # 放入返回值
+                img_ret['upload_flag'] = False #有缓存图，直接使用本地已有链接
+                dailyshop_img_src = VipShopBgDict[msg.author_id]['cache_img']
             elif is_vip and (msg.author_id in VipShopBgDict): #本地缓存路径不存在，或者缓存过期
                 play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
                 vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
@@ -1493,15 +1493,16 @@ async def get_daily_shop(msg: Message, *arg):
             # 获取图片成功，打印画图耗时
             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}"
             print(log_time)
-            # bg.save(f"test.png")  #保存到本地
-            imgByteArr = io.BytesIO()
-            bg.save(imgByteArr, format='PNG')
-            imgByte = imgByteArr.getvalue()
-            dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
-            # 结束shop的总计时
-            end = time.perf_counter()
-            # 结果为浮点数，保留两位小数
-            shop_using_time = format(end - start, '.2f')
+            if img_ret['upload_flag']:
+                imgByteArr = io.BytesIO()
+                bg.save(imgByteArr, format='PNG')
+                imgByte = imgByteArr.getvalue()
+                dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
+                if is_vip: #vip缓存图片
+                    VipShopBgDict[msg.author_id]['cache_img'] = dailyshop_img_src #设置图片url
+                    VipShopBgDict[msg.author_id]['cache_time'] = time.time() #设置图片缓存的时间
+            # 结束shop的总计时，结果为浮点数，保留两位小数
+            shop_using_time = format(time.perf_counter() - start, '.2f')
             
             # 商店的图片
             cm = CardMessage()
@@ -2196,7 +2197,7 @@ async def auto_skin_notify():
                         if img_ret['status']:
                             bg_shop = img_ret['value']
                             bg_shop.save(img_shop_path, format='PNG')
-                            VipShopBgDict['cache_time'] = time.time() #设置图片缓存的时间
+                            VipShopBgDict[vip]['cache_time'] = time.time() #设置图片缓存的时间
                         else:  #如果图片没有正常返回，那就发送文字版本
                             shop_text = ""
                             for skinuuid in list_shop:
@@ -2210,6 +2211,7 @@ async def auto_skin_notify():
                         log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
                         print(log_time)
                         dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
+                        VipShopBgDict[vip]['cache_img'] = dailyshop_img_src # 缓存图片url
                         # 结束shop的总计时 结果为浮点数，保留两位小数
                         using_time = format(time.perf_counter() - start, '.2f')
                         #卡片消息发送图片或者text
