@@ -2198,6 +2198,11 @@ async def auto_skin_notify():
                         if img_ret['status']:
                             bg_shop = img_ret['value']
                             bg_shop.save(img_shop_path, format='PNG')
+                            # 打印画图日志
+                            log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
+                            print(log_time)
+                            dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
+                            VipShopBgDict[vip]['cache_img'] = dailyshop_img_src # 缓存图片url
                             VipShopBgDict[vip]['cache_time'] = time.time() #设置图片缓存的时间
                         else:  #如果图片没有正常返回，那就发送文字版本
                             shop_text = ""
@@ -2208,11 +2213,7 @@ async def auto_skin_notify():
                                 shop_text += f"{res_item['data']['displayName']}     - VP {price}\n"
                             print(f"[BOT.TASK.NOTIFY] VAu:{vip} test img err, using text")
 
-                        # 打印日志
-                        log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
-                        print(log_time)
-                        dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
-                        VipShopBgDict[vip]['cache_img'] = dailyshop_img_src # 缓存图片url
+                        
                         # 结束shop的总计时 结果为浮点数，保留两位小数
                         using_time = format(time.perf_counter() - start, '.2f')
                         #卡片消息发送图片或者text
