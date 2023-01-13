@@ -1052,18 +1052,16 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
     elif Login_Forbidden:
         await Login_Forbidden_send(msg)
         return
-
-    global login_rate_limit, UserTokenDict, UserAuthDict
     try:
+        global login_rate_limit, UserTokenDict, UserAuthDict
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
 
-        if await check_global_login_rate(msg):# 全局请求超速
-            return
-        if await check_user_login_rate(msg):# 用户请求超速
-            print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
-            return
-
+        # if await check_global_login_rate(msg):# 全局请求超速
+        #     return
+        # if await check_user_login_rate(msg):# 用户请求超速
+        #     print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
+        #     return
         text = "正在尝试获取您的riot账户token"
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.val_logo_gif, size='sm')))
         c.append(Module.Context(Element.Text("小憩一下，很快就好啦！", Types.Text.KMD)))
