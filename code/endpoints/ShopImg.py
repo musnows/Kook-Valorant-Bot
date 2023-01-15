@@ -98,7 +98,7 @@ def resize_standard(standard_x, standard_y, img):
     log_info = "[resize_std] "
     log_info += f"原始图片大小:({w},{h}) - "
     ratio = w / h
-    if ratio <= 1.78:
+    if ratio <= standard_x/standard_y:
         sizeco = w / standard_x
         log_info += f"缩放系数:{format(sizeco,'.3f')} - "
         w_s = int(w / sizeco)
