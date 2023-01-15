@@ -101,29 +101,15 @@
 
 ### valorant-shop-img-api
 
-> api源码见 [code_api](./code_api/)
+> Api源码见 [api.py](./code/api.py)
+>
+> Api文档见 [docs/valorant-shop-img-api.md](./docs/valorant-shop-img-api.md)
 
-这个api是利用python写的小代码，主要还是复用了阿狸主代码中给商店画图的部分，支持自定义背景图
+这个Api是基于aiohttp写的，主要还是复用了阿狸主代码中给商店画图的部分，支持自定义背景图，邮箱双重验证；
 
-```
-https://val.outpost54.top/shop-img?token=密钥&account=账户&passwd=密码&img_src=自定义背景图的url
+fork本仓库，您可以将Api部署到您的本地进行测试，或直接套用Api到您的其他语言的项目上！
 
-提供一个测试密钥
-da4ec652-4a25-11ed-bff2-525400c9274f
-```
-api后台不会记录您的账户信息，如果请求`/shop-img`接口，图片将直接跳转到kook的图床；如果请求`/shop-url`接口，图片将以json（内含url）的方式返回
-
-> 咳咳，白嫖了kook的图床
-
-以下为请求 `/shop-url` 接口的返回格式示例，只有返回code为0才为正确返回；由于该接口的特殊性，暂不支持2fa用户
-
-```json
-{
-    "code": 0, 
-    "message": "https://img.kookapp.cn/attachments/2022-12/16/gsvlSyfweq0zk0k0.png", 
-    "info": "商店图片获取成功"
-}
-```
+Api请求返回示例图：
 
 <img src="./screenshot/val_api_img.png" height="300px" alt="api_shop_img">
 
@@ -160,6 +146,7 @@ pip install -r requirements.txt
 - [x] 邮箱验证2fa登录
 - [ ] 通行证、每日任务的查询
 - [ ] 以类似抽卡的方式，用按钮、图片等等方式显示用户的夜市
+- [ ] Api增加使用Riot Token调用的接口，方便本地管理登录信息，调用api画图
 
 ~~由于很多人在使用类似商店查询软件后被ban，我决定正式停止相关功能的开发~~
 

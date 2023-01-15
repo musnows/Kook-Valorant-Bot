@@ -3,8 +3,8 @@ import json
 import time
 
 # 所有token
-with open("./log/UserToken.json", 'r', encoding='utf-8') as frpr:
-    UserTokenDict = json.load(frpr)
+with open("./log/ApiToken.json", 'r', encoding='utf-8') as frpr:
+    ApiTokenDict = json.load(frpr)
 
 #获取uuid
 def get_uuid():
@@ -12,29 +12,27 @@ def get_uuid():
     return get_timestamp_uuid
 
 
-def save_token_files():
-    global UserTokenDict
+def save_token_files(text=''):
+    global ApiTokenDict
     with open("./log/UserToken.json", 'w', encoding='utf-8') as fw2:
-        json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print("[Token] files saved!")
+        json.dump(ApiTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    print(f"[token] files saved! {text}")
 
 # 生成uuid
 def create_token_uuid(num: int = 10, day: int = 30):
-    """_summary_
-
-    Args:
+    """Args:
         num (int): Defaults to 10.
         day (int): Defaults to 30.
 
     Returns:
         str: text for uuid
     """
-    global UserTokenDict
+    global ApiTokenDict
     i = num
     NewUuid = list()  #当前创建的新uuid
     while (i > 0):
         uuid = str(get_uuid())
-        UserTokenDict['data'][uuid] = {
+        ApiTokenDict['data'][uuid] = {
             'days': day, 
             'prime': False,
             'od_time': time.time()+day*86400,
@@ -44,12 +42,12 @@ def create_token_uuid(num: int = 10, day: int = 30):
             'sum':0
         }
         if day > 3000: #永久会员
-            UserTokenDict['data'][uuid]['prime'] = True
+            ApiTokenDict['data'][uuid]['prime'] = True
         NewUuid.append(uuid)
         i -= 1
 
     # 更新uuid
-    save_token_files()
+    save_token_files("token create")
 
     text = ""
     for uuid in NewUuid:
@@ -57,9 +55,6 @@ def create_token_uuid(num: int = 10, day: int = 30):
 
     print(f"[token] create_token_uuid - num:{num} - day:{day}")
     return text
-
-# text = create_token_uuid(1,5)
-# print(text)
 
 # 检查用户token是否失效或者不是token
 async def token_ck(token:str):
@@ -69,13 +64,13 @@ async def token_ck(token:str):
         * False: not token
     """
     # 检查
-    global UserTokenDict
-    if token in UserTokenDict['data']:
+    global ApiTokenDict
+    if token in ApiTokenDict['data']:
         #用户的token是否过期？
-        if time.time() > UserTokenDict['data'][token]['od_time']:
-            del UserTokenDict['data'][token]
+        if time.time() > ApiTokenDict['data'][token]['od_time']:
+            del ApiTokenDict['data'][token]
             # 更新uuid
-            save_token_files()
+            save_token_files("token expire")
             print(f"[token-ck] T:{token} out of date")
             return False
         else:#没有过期，返回真
@@ -84,3 +79,8 @@ async def token_ck(token:str):
     else:#token不在
         print(f"[token-ck] T:{token} not token")
         return False
+
+
+# 在此处手动添加token
+# text = create_token_uuid(1,5)
+# print(text)

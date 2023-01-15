@@ -1,32 +1,41 @@
 # encoding: utf-8:
 import json
 import os
+import io
 import random
 import time
 import traceback
 from datetime import datetime, timedelta
 from typing import Union
-
 import aiohttp
-import khl
-import requests
+import copy
+import zhconv
+import asyncio
+import threading
 from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage,
                  PublicChannel, PublicMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 from aiohttp import client_exceptions
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合成图片
+from riot_auth import RiotAuth, auth_exceptions
 
-from endpoints.help import help_main,help_val,help_develop
+from endpoints.Help import help_main,help_val,help_develop
 from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
-from endpoints.other import  weather
+from endpoints.Other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, guild_view, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
-from endpoints.val import (authflow,auth2fa, dx123, fetch_bundle_weapen_byname,
-                 fetch_bundles_all, fetch_daily_shop, fetch_item_price_all,
-                 fetch_player_loadout, fetch_playercard_uuid, fetch_skins_all,
-                 fetch_title_uuid, fetch_user_gameID, fetch_valorant_point,
-                myid_main, saveid_main, saveid_count, val_errcode)
+from endpoints.Val import *
+from endpoints.EzAuth import auth2fa,authflow,auth2faWait,Get2faWait_Key,User2faCode
+from endpoints.Gtime import GetTime,GetTimeStampOf8AM
+from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
+                       roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
+                       vip_time_remain_cm, vip_time_stamp)
+from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
+from endpoints.ShopRate import SkinRateDict,get_shop_rate_cm,check_shop_rate
+from endpoints.ShopImg import get_shop_img_11,get_shop_img_169,img_requestor
+from endpoints.LocalFileUpd import update_bundle_url,update_price,update_skins
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
@@ -38,7 +47,6 @@ bot_upimg = Bot(token=config['img_upload_token'])
 
 # 设置全局变量：机器人开发者id/报错频道
 master_id = config['master_id']
-Debug_ch = config['debug_ch']
 kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 #在bot一开机的时候就获取log频道作为全局变量
@@ -57,10 +65,6 @@ async def botmarket():
 
 ##########################################################################################
 ##########################################################################################
-
-#将获取当前时间封装成函数方便使用
-def GetTime():  
-    return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
 #记录开机时间
 start_time = GetTime()
@@ -199,8 +203,6 @@ async def thanks_sponser():
     await THX_Sponser(bot,kook_headers)
 
 ######################################## Translate ################################################
-
-from endpoints.translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 
 # 普通翻译指令
 @bot.command(name='TL', aliases=['tl'])
@@ -376,289 +378,7 @@ async def dx(msg: Message):
     logging(msg)
     await dx123(msg)
 
-
-###########################################################################################
-###########################################################################################
-
-import asyncio
-#多出来的import
-import copy
-import io  # 用于将 图片url 转换成可被打开的二进制
-import threading
-
-import zhconv  # 用于繁体转简体（因为部分字体不支持繁体
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合成图片
-from riot_auth import RiotAuth, auth_exceptions
-
-standard_length = 1000  #图片默认边长
-# 用math.floor 是用来把float转成int 我也不晓得为啥要用 但是不用会报错（我以前不用也不会）
-# 所有的数都  * standard_length / 1000 是为了当标准边长变动时这些参数会按照比例缩放
-standard_length_sm = int(standard_length / 2)  # 组成四宫格小图的边长
-stardard_blank_sm = 60 * standard_length / 1000  # 小图左边的留空
-stardard_icon_resize_ratio = 0.59 * standard_length / 1000  # 枪的默认缩放
-standard_icon_top_blank = int(180 * standard_length / 1000)  # 枪距离图片顶部的像素
-standard_text_position = (int(124 * standard_length / 1000), int(317 * standard_length / 1000))  # 默认文字位置
-standard_price_position = (int(280 * standard_length / 1000), int(120 * standard_length / 1000))  # 皮肤价格文字位置
-standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
-standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
-
-
-async def img_requestor(img_url):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(img_url) as r:
-            return await r.read()
-
-
-font_color = '#ffffff'  # 文字颜色：白色
-
-bg_main = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content))  # 普通用户商店背景
-bg_main_11 = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/FjPcmVwDkf0rs0rs.png').content))  # vip用户背景框 1-1
-bg_main_vip = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/lSj90Xr9yA0zk0k0.png').content))  # vip商店默认背景
-bg_main_169 = Image.open(io.BytesIO(
-    requests.get('https://img.kookapp.cn/assets/2022-09/rLxOSFB1cC0zk0k0.png').content))  # vip用户背景框 16-9
-
-
-# 缩放图片，部分皮肤图片大小不正常
-def resize(standard_x, img, standard_y=''):
-    standard_y = standard_x if standard_y == '' else standard_y
-    log_info = "[shop] "
-    w, h = img.size
-    log_info += f"原始图片大小:({w},{h}) - "
-    ratio = w / h
-    if ratio > standard_x / standard_y:
-        sizeco = w / standard_x
-        log_info += f"缩放系数:{format(sizeco,'.3f')} - "
-        w_s = int(w / sizeco)
-        h_s = int(h / sizeco)
-    else:
-        sizeco = h / standard_y
-        log_info += f"缩放系数:{format(sizeco,'.3f')} - "
-        w_s = int(w / sizeco)
-        h_s = int(h / sizeco)
-    log_info += f"缩放后大小:({w_s},{h_s})"
-    print(log_info)
-    img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
-    return img
-
-
-# 将图片修改到标准大小
-def resize_vip(standard_x, standard_y, img):
-    w, h = img.size
-    log_info = "[resize_vip] "
-    log_info += f"原始图片大小:({w},{h}) - "
-    ratio = w / h
-    if ratio <= 1.78:
-        sizeco = w / standard_x
-        log_info += f"缩放系数:{format(sizeco,'.3f')} - "
-        w_s = int(w / sizeco)
-        h_s = int(h / sizeco)
-        log_info += f"缩放后大小:({w_s},{h_s})"
-        blank = (h_s - standard_y) / 2
-        img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
-        img = img.crop((0, blank, w_s, h_s - blank))
-    else:
-        sizeco = h / standard_y
-        log_info += f"缩放系数:{format(sizeco,'.3f')} - "
-        w_s = int(w / sizeco)
-        h_s = int(h / sizeco)
-        log_info += f"缩放后大小:({w_s},{h_s})"
-        blank = (w_s - standard_x) / 2
-        img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
-        img = img.crop((blank, 0, w_s - blank, h_s))
-    return img
-
-
-level_icon_temp = {}
-weapon_icon_temp = {}
-weapon_icon_temp_vip = {}
-
-
-def sm_comp(icon, name, price, level_icon, skinuuid):
-    bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
-    # 处理武器图片
-    start = time.perf_counter()  #开始计时
-
-    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
-        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
-    else:
-        layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
-        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
-    end = time.perf_counter()
-    log_time = f"[GetWeapen] {format(end - start, '.4f')} "
-    # w, h = layer_icon.size  # 读取武器图片长宽
-    # new_w = int(w * stardard_icon_resize_ratio)  # 按比例缩放的长
-    # new_h = int(h * stardard_icon_resize_ratio)  # 按比例缩放的宽
-    stardard_icon_x = 300  #图像标准宽（要改大小就改这个
-    layer_icon = resize(300, layer_icon)
-    # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
-    left_position = int((standard_length_sm - stardard_icon_x) / 2)
-    # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
-    bg.paste(layer_icon, (left_position, standard_icon_top_blank), layer_icon)
-    # bg.paste代表向bg粘贴一张图片
-    # 第一个参数是图像layer_icon
-    # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
-    # 处理武器level的图片(存到本地dict里面方便调用)
-    start = time.perf_counter()  #开始计时
-    if level_icon not in level_icon_temp:
-        LevelIcon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器等级图片
-        level_icon_temp[level_icon] = LevelIcon
-    else:
-        LevelIcon = level_icon_temp[level_icon]
-    end = time.perf_counter()
-    log_time += f"- [GetIters] {format(end - start, '.4f')} "
-    print(log_time)
-
-    w, h = LevelIcon.size  # 读取武器等级图片长宽
-    new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
-    new_h = int(h * standard_level_icon_reszie_ratio)  # 按比例缩放的宽
-    LevelIcon = LevelIcon.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    LevelIcon = LevelIcon.convert('RGBA')
-    bg.paste(LevelIcon, standard_level_icon_position, LevelIcon)
-
-    name = zhconv.convert(name, 'zh-cn')  # 将名字简体化
-    name_list = name.split(' ')  # 将武器名字分割换行
-    # print(name_list)
-    if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
-        name_list.remove('')
-
-    text = ""
-    if len(name_list[0]) > 5:
-        text = name_list[0] + '\n'  # 如果皮肤名很长就不用加空格
-    else:
-        text = ' '.join(name_list[0]) + '\n'  # 向皮肤名字添加空格增加字间距
-    # interval = len(name_list[0])
-    # print(len(name_list))
-    if len(name_list) > 2:
-        i = 1
-        while i <= len(name_list) - 2:
-            name_list[0] = name_list[0] + ' ' + name_list[i]
-            # print(name_list[0])
-            i += 1
-        interval = len(name_list[0])
-        name_list[1] = name_list[len(name_list) - 1]
-        text = name_list[0] + '\n'
-    if len(name_list) > 1:  # 有些刀皮肤只有一个元素
-        text += '              '  # 添加固定长度的缩进，12个空格
-        if len(name_list[1]) < 4:
-            text += ' '.join(name_list[1])  # 插入第二行字符
-        else:
-            text += name_list[1]  # 单独处理制式手槍（不加空格）
-
-    draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
-    # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
-    draw.text(standard_text_position,
-              text,
-              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
-              fill=font_color)
-    text = f"{price}"  # 价格
-    draw.text(standard_price_position,
-              text,
-              font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
-              fill=font_color)
-    # bg.show() #测试用途，展示图片(linux貌似不可用)
-    if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
-        bg.save(f'./log/img_temp/comp/{skinuuid}.png')
-    global weapon_icon_temp #普通用户的抽屉
-    if skinuuid not in weapon_icon_temp:
-        weapon_icon_temp[skinuuid] = bg
-    return bg
-
-
-# 处理vip图片
-def sm_comp_vip(icon, name, price, level_icon, skinuuid):
-    bg = Image.new(mode='RGBA', size=(400, 240))  # 新建一个画布
-    # 处理武器图片
-    start = time.perf_counter()  #开始计时
-    if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
-        layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开武器图片
-    else:
-        layer_icon = Image.open(io.BytesIO(requests.get(icon).content))  # 打开武器图片
-        layer_icon.save(f'./log/img_temp/weapon/{skinuuid}.png', format='PNG')
-    end = time.perf_counter()
-    log_time = f"[GetWeapen] {format(end - start, '.4f')} "
-    layer_icon = resize(300, layer_icon, 130)
-    # layer_icon = layer_icon.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    # 按缩放比例后的长宽进行resize（resize就是将图像原长宽拉伸到新长宽） Image.Resampling.LANCZOS 是一种处理方式
-    # 用小图的宽度减去武器图片的宽度再除以二 得到武器图片x轴坐标  y轴坐标 是固定值 standard_icon_top_blank
-    w, h = layer_icon.size
-    x = 50 if w == 300 else int((350 - w) / 2)
-    y = int((240 - h) / 2) if w == 300 else 30
-    bg.paste(layer_icon, (x, y), layer_icon)
-    # bg.paste代表向bg粘贴一张图片
-    # 第一个参数是图像layer_icon
-    # 第二个参数(left_position, standard_icon_top_blank)就是刚刚算出来的 x,y 坐标 最后一个layer_icon是蒙版
-    # 处理武器level的图片(存到本地dict里面方便调用)
-    start = time.perf_counter()  #开始计时
-    if level_icon not in level_icon_temp:
-        LevelIcon = Image.open(io.BytesIO(requests.get(level_icon).content))  # 打开武器等级的图片
-        level_icon_temp[level_icon] = LevelIcon
-    else:
-        LevelIcon = level_icon_temp[level_icon]
-    end = time.perf_counter()
-    log_time += f"- [GetIters] {format(end - start, '.4f')} "
-    print(log_time)
-    LevelIcon = LevelIcon.resize((25, 25), Image.Resampling.LANCZOS)
-    LevelIcon = LevelIcon.convert('RGBA')
-    bg.paste(LevelIcon, (368, 11), LevelIcon)
-    text = zhconv.convert(name, 'zh-cn')  # 将名字简体化
-    draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
-    # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
-    draw.text((15, 205), text, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 25), fill=font_color)
-    text = f"{price}"  # 价格
-    draw.text((320, 13), text, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
-    # bg.show() #测试用途，展示图片(linux貌似不可用)
-    if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
-        bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
-    global weapon_icon_temp_vip#vip用户的抽屉
-    if skinuuid not in weapon_icon_temp_vip:
-        weapon_icon_temp_vip[skinuuid] = bg
-    return bg
-
-
-def bg_comp(bg, img, x, y):
-    position = (x, y)
-    bg.paste(img, position, img)  #如sm—comp中一样，向bg粘贴img
-    return bg
-
-
-shop_img_temp = {}
-shop_img_temp_vip = {}
-
-
-def skin_uuid_to_comp(skinuuid, ran, is_vip: bool):
-    res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
-    res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
-    price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-    for it in ValSkinList['data']:
-        if it['levels'][0]['uuid'] == skinuuid:
-            res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
-            break
-    if is_vip:
-        img = sm_comp_vip(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
-                          res_iters['data']['displayIcon'], skinuuid)
-        global shop_img_temp_vip  #这里是把处理好的图片存到本地
-        shop_img_temp_vip[ran].append(img)
-    else:
-        img = sm_comp(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
-                      res_iters['data']['displayIcon'], skinuuid)
-        global shop_img_temp  #这里是把处理好的图片存到本地
-        shop_img_temp[ran].append(img)
-
-
 ###########################################vip######################################################
-
-from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
-                       roll_vip_start, using_vip_uuid, vip_ck, vip_time_remain,
-                       vip_time_remain_cm, vip_time_stamp)
-
-# 加载文件中的uuid
-with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
-    VipUuidDict = json.load(frrk)
-
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -692,7 +412,7 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
         return
     try:
         #把bot传过去是为了让阿狸在有人成兑换激活码之后发送消息到log频道
-        ret = await using_vip_uuid(msg, uuid, bot)
+        ret = await using_vip_uuid(msg, uuid, bot,debug_ch)
 
     except Exception as result:
         await BaseException_Handler("vip-u",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
@@ -1215,55 +935,6 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
 with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
     UserTokenDict = json.load(frau)
-# 所有皮肤
-with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
-    ValSkinList = json.load(frsk)
-# 所有商品价格
-with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
-    ValPriceList = json.load(frpr)
-# 所有捆绑包的图片
-with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
-    ValBundleList = json.load(frbu)
-# 所有物品等级（史诗/传说）
-with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
-    ValItersList = json.load(frrk)
-# 皮肤的评价
-with open("./log/ValSkinRate.json", 'r', encoding='utf-8') as frsl:
-    SkinRateDict = json.load(frsl)
-
-
-#从list中获取价格
-def fetch_item_price_bylist(item_id):
-    for item in ValPriceList['Offers']:  #遍历查找指定uuid
-        if item_id == item['OfferID']:
-            return item
-
-
-#从list中获取等级(这个需要手动更新)
-def fetch_item_iters_bylist(iter_id):
-    for iter in ValItersList['data']:  #遍历查找指定uuid
-        if iter_id == iter['uuid']:
-            res = {'data': iter}  #所以要手动创建一个带data的dict作为返回值
-            return res
-
-
-#从list中获取皮肤
-def fetch_skin_bylist(item_id):
-    res = {}  #下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
-    for item in ValSkinList['data']:  #遍历查找指定uuid
-        if item_id == item['levels'][0]['uuid']:
-            res['data'] = item  #所以要手动创建一个带data的dict作为返回值
-            return res
-
-
-#从list中，通过皮肤名字获取皮肤列表
-def fetch_skin_byname_list(name):
-    wplist = list()  #包含该名字的皮肤list
-    for skin in ValSkinList['data']:
-        if name in skin['displayName']:
-            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
-            wplist.append(data)
-    return wplist
 
 
 # 用来存放auth对象（无法直接保存到文件）
@@ -1274,7 +945,9 @@ UserCookieDict = {}
 login_dict = {}
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
-#检查评分的错误用户（违规用户）
+#用来存放用户每天的商店（早八会清空）
+UserShopDict = {}
+#检查皮肤评分的错误用户（违规用户）
 def check_rate_err_user(user_id:str):
     """(user_id in SkinRateDict['err_user'])
     """
@@ -1344,11 +1017,26 @@ async def check_user_login_rate(msg: Message):
         login_dict[msg.author_id] = {'time': time.time(), 'nums': 1}
         return False
 
+# 全局请求超速
+async def check_global_login_rate(msg:Message):   
+    if login_rate_limit['limit']:
+        time_stap = time.time()
+        time_diff = time_stap - login_rate_limit['time']
+        if time_diff <= 240.0:  #240s内无法使用login
+            ret_cm = get_login_rate_cm(time_diff)
+            await msg.reply(ret_cm)
+            print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
+            return False
+        else:  #超过240s，解除限制
+            login_rate_limit['limit'] = False
+            login_rate_limit['time'] = time_stap
+            return True
+    return True
 
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=False,*arg):
+async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=0,*arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa}")
     log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden
@@ -1370,20 +1058,9 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
 
-        # 全局请求超速
-        if login_rate_limit['limit']:
-            time_stap = time.time()
-            time_diff = time_stap - login_rate_limit['time']
-            if time_diff <= 240.0:  #240s内无法使用login
-                ret_cm = get_login_rate_cm(time_diff)
-                await msg.reply(ret_cm)
-                print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
-                return
-            else:  #超过240s，解除限制
-                login_rate_limit['limit'] = False
-                login_rate_limit['time'] = time_stap
-        # 用户请求超速
-        if await check_user_login_rate(msg):
+        if await check_global_login_rate(msg):# 全局请求超速
+            return
+        if await check_user_login_rate(msg):# 用户请求超速
             print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
             return
 
@@ -1398,7 +1075,13 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         if not tfa:
             res_auth = await authflow(user, passwd)
         else:
-            res_auth = await auth2fa(msg,user,passwd)
+            key = await Get2faWait_Key()
+            # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
+            th = threading.Thread(target=auth2fa, args=(user,passwd,key))
+            th.start()
+            resw = await auth2faWait(key=key,msg=msg) # 随后主执行流来这里等待
+            res_auth = resw['auth']
+        # 如果没有抛出异常，那就是完成登录了
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
             'auth_user_id': res_auth.user_id,
@@ -1449,7 +1132,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         c = Card(color='#fb4b57')
         text = f"当前的账户密码真的对了吗？"
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.dont_do_that, size='sm')))
-        c.append(Module.Context(Element.Text("Make sure username and password are correct", Types.Text.KMD)))
+        c.append(Module.Context(Element.Text(f"Make sure username and password are correct\n`{result}`", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotMultifactorError as result:
@@ -1458,7 +1141,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-        c.append(Module.Context(Element.Text("Multi-factor authentication is not currently supported", Types.Text.KMD)))
+        c.append(Module.Context(Element.Text("Please use `/login accout passwd 1` for 2fa", Types.Text.KMD)))
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotRatelimitError as result:
@@ -1502,10 +1185,9 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
     except Exception as result: # 其他错误
         await BaseException_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
 
-from endpoints.EzAuth import User2faCode
 
 @bot.command(name='tfa')
-async def auth_2fa(msg:Message,tfa:str,*arg):
+async def auth_2fa(msg:Message,key:str,tfa:str,*arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /2fa")
     if len(tfa)!=6:
         await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：{tfa}")
@@ -1513,12 +1195,13 @@ async def auth_2fa(msg:Message,tfa:str,*arg):
     
     try:
         global User2faCode
-        if msg.author_id in User2faCode:
-            User2faCode[msg.author_id]['vcode'] = tfa
-            User2faCode[msg.author_id]['status'] = True
-            await msg.reply(f"两步验证码获取成功，请等待……") 
+        key = int(key)
+        if key in User2faCode:
+            User2faCode[key]['vcode'] = tfa
+            User2faCode[key]['2fa_status'] = True
+            await msg.reply(f"两步验证码 `{tfa}` 获取成功，请等待……") 
         else:
-            await msg.reply(f"您不在2fa用户列表中，请重新login")
+            await msg.reply(f"第二个参数key值错误，请确认您的输入，或重新login")
 
     except Exception as result: # 其他错误
         await BaseException_Handler("tfa",traceback.format_exc(),msg,bot)
@@ -1676,91 +1359,6 @@ async def logout_authtoken(msg: Message, *arg):
         await BaseException_Handler("logout",traceback.format_exc(),msg,bot)
 
 
-# 不再使用定时任务，而是把所有更新封装成一个命令。
-async def update_skins(msg: Message):
-    try:
-        global ValSkinList
-        skins = await fetch_skins_all()
-        ValSkinList = skins
-        # 写入文件
-        with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        print(f"[{GetTime()}] update_skins finished!")
-        return True
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_skins\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        return False
-
-
-#因为下方获取物品价格的操作需要authtoken，自动更新容易遇到token失效的情况
-async def update_price(msg: Message):
-    try:
-        global ValPriceList
-        reau = await check_re_auth("物品价格", msg)
-        if reau == False: return  #如果为假说明重新登录失败
-        # 调用api获取价格列表
-        auth = UserAuthDict[msg.author_id]['auth']
-        userdict = {
-            'auth_user_id': auth.user_id,
-            'access_token': auth.access_token,
-            'entitlements_token': auth.entitlements_token
-        }
-        prices = await fetch_item_price_all(userdict)
-        ValPriceList = prices  # 所有价格的列表
-        # 写入文件
-        with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        print(f"[{GetTime()}] update_item_price finished!")
-        return True
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_price\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        return False
-
-
-# 更新捆绑包
-async def update_bundle_url(msg: Message):
-    try:
-        global ValBundleList
-        resp = await fetch_bundles_all()  #从官方获取最新list
-        if len(resp['data']) == len(ValBundleList):  #长度相同代表没有更新
-            print(f"[{GetTime()}] len is the same, doesn't need update!")
-            await msg.reply("BundleList_len相同，无需更新")
-            return
-
-        for b in resp['data']:
-            flag = 0
-            for local_B in ValBundleList:  #不在
-                if b['uuid'] == local_B['uuid']:  #相同代表存在无需更新
-                    flag = 1  #找到了，无需更新
-                    break
-
-            if flag != 1:  #不存在创建图片准备上传
-                bg_bundle_icon = Image.open(io.BytesIO(await img_requestor(b['displayIcon'])))
-                imgByteArr = io.BytesIO()
-                bg_bundle_icon.save(imgByteArr, format='PNG')
-                imgByte = imgByteArr.getvalue()
-                print(f"Uploading - {b['displayName']}")
-                bundle_img_src = await bot_upimg.client.create_asset(imgByte)
-                print(f"{b['displayName']} - url: {bundle_img_src}")
-                b['displayIcon2'] = bundle_img_src  #修改url
-                ValBundleList.append(b)  #插入
-
-        with open("./log/ValBundle.json", 'w', encoding='utf-8') as fw1:
-            json.dump(ValBundleList, fw1, indent=2, sort_keys=True, ensure_ascii=False)
-
-        print(f"[{GetTime()}] update_bundle_url finished!")
-        return True
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_bundle_url\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
-        return False
-
-
 # 手动更新商店物品和价格
 @bot.command(name='update_spb',aliases=['update','upd'])
 async def update_skin_price_bundle(msg: Message):
@@ -1768,14 +1366,17 @@ async def update_skin_price_bundle(msg: Message):
     if msg.author_id == master_id:
         if await update_skins(msg):
             await msg.reply(f"成功更新：商店皮肤")
-        if await update_price(msg):
-            await msg.reply(f"成功更新：物品价格")
-        if await update_bundle_url(msg):
+        if await update_bundle_url(msg,bot_upimg):
             await msg.reply(f"成功更新：捆绑包")
-
-
-#用来存放用户每天的商店
-UserShopDict = {}
+        # 获取物品价格需要登录
+        auth = UserAuthDict[msg.author_id]['auth']
+        userdict = {
+            'auth_user_id': auth.user_id,
+            'access_token': auth.access_token,
+            'entitlements_token': auth.entitlements_token
+        }
+        if await update_price(msg,userdict):
+            await msg.reply(f"成功更新：物品价格")
 
 
 #计算当前时间和明天早上8点的差值
@@ -1795,96 +1396,15 @@ def shop_time_remain():
 def isSame_Authuuid(msg: Message):  
     return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
 
-# 获取vip用户每日商店的图片
-async def get_daily_shop_vip_img(list_shop: dict,userdict: dict,user_id: str,is_vip: bool = True, msg: Message = None):
-    """save img:
-     - bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
-     
-    returns dict:
-     - {"status":False,"value":f"{err_str}"}
-     - {"status":True,"value":bg}
-    """
-    global VipShopBgDict
-    #vip_bg_path = f'./log/img_temp_vip/bg/{user_id}.png'
-    if len_VusBg(user_id) > 0:  #如果为0则不执行自定义图片（避免空list）
-        # 如果背景图片路径不存在（说明没有缓存） 现在因为在前面已经判断过，所以直接执行画图
-        #if not os.path.exists(vip_bg_path):
-        try:  #打开图片进行测试
-            bg_vip = Image.open(io.BytesIO(await img_requestor(VipShopBgDict[user_id]["background"][0])))
-            #如果图片打开没有问题，那么修改状态码
-            VipShopBgDict[user_id]['status'] = True
-            with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw1:
-                json.dump(VipShopBgDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
-        except UnidentifiedImageError as result:
-            err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
-            await replace_illegal_img(user_id, 0)  #替换图片
-            # if msg != None:
-            #     await msg.reply(f"当前使用的图片违规！请重新上传您的背景图\n{err_str}")
-            print(err_str)  #写入文件后打印log信息
-            return {"status": False, "value": f"当前使用的图片违规！请重新上传您的背景图\n{err_str}"}
-
-        #图没有问题，则缩放后保存
-        bg_vip = resize_vip(1280, 720, bg_vip)
-        bg_vip = bg_vip.convert('RGBA')
-        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-        bg_vip = Image.alpha_composite(bg_vip, bg_main_169)
-        #else:  #使用缓存好的vip图片
-        #bg_vip = Image.open(vip_bg_path)
-        bg = copy.deepcopy(bg_vip)  # 两种情况都需要把vip图片加载到bg中
-    else:  # vip用户但是出现了空list，调用默认的16比9图片
-        bg = copy.deepcopy(bg_main_vip)
-    #开始画图
-    x = 50
-    y = 100
-    ran = random.randint(1, 9999)
-    global shop_img_temp_vip
-    shop_img_temp_vip[ran] = []
-    img_num = 0
-
-    for skinuuid in list_shop:
-        img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
-        if skinuuid in weapon_icon_temp_vip:#vip用户需要用的抽屉
-            shop_img_temp_vip[ran].append(weapon_icon_temp_vip[skinuuid])
-        elif os.path.exists(img_path):
-            shop_img_temp_vip[ran].append(Image.open(img_path))
-        else:
-            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, is_vip))
-            th.start()
-        await asyncio.sleep(0.8)  #尝试错开网络请求
-    while True:
-        img_temp = [i for i in shop_img_temp_vip[ran]]
-        for i in img_temp:
-            shop_img_temp_vip[ran].pop(shop_img_temp_vip[ran].index(i))
-            #i.save(f"./t{x}_{y}.png", format='PNG')
-            bg = bg_comp(bg, i, x, y)
-            if x == 50:
-                x += 780
-            elif x == 830:
-                x = 50
-                y += 279
-            img_num += 1
-        if img_num >= 4:
-            break
-        await asyncio.sleep(0.2)
-    #vip用户写入vp和r点
-    play_currency = await fetch_valorant_point(userdict)
-    vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
-    rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
-    draw = ImageDraw.Draw(bg)
-    vp_c = (f"{vp}")  #vp
-    draw.text((537, 670), vp_c, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
-    #rp = 89
-    rp_c = (f"{rp}")  #rp
-    rp_pos = (710, 670)
-    if rp < 100:
-        rp_pos = (722, 670)
-    draw.text(rp_pos, rp_c, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
-    if ran in shop_img_temp_vip:
-        del shop_img_temp_vip[ran]
-    #画完图之后直接执行保存
-    bg.save(f"./log/img_temp_vip/shop/{user_id}.png", format='PNG')
-    return {"status": True, "value": bg}
-
+# 判断缓存好的图片是否可用
+def is_CacheLatest(kook_user_id:str):
+    # 判断vip用户是否在背景图中，且没有 切换登录用户/切换背景图
+    if kook_user_id in VipShopBgDict:
+        is_Status = VipShopBgDict[kook_user_id]['status'] # 如果有切换登录用户/背景图，此为false
+        # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
+        is_Today = (VipShopBgDict[kook_user_id]['cache_time']-GetTimeStampOf8AM())>=0 
+        return is_Today and is_Status # 有一个为false，结果就是false
+    return False 
 
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
@@ -1926,81 +1446,51 @@ async def get_daily_shop(msg: Message, *arg):
                 'entitlements_token': auth.entitlements_token
             }
             log_time = ""
-            global UserShopDict
-            if msg.author_id in UserShopDict and isSame_Authuuid(msg):
-                a_time = time.time()
-                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = shop_time_remain()
+            a_time = time.time()
+            global UserShopDict # UserShopDict每天早八会被清空，如果用户在里面且玩家id一样，那么说明已经获取过当日商店了
+            if msg.author_id in UserShopDict and isSame_Authuuid(msg): #直接使用本地已有的当日商店
+                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"] # 商店刷出来的4把枪
+                timeout = shop_time_remain() # 通过当前时间计算商店剩余时间
                 log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
             else:
-                a_time = time.time()
-                resp = await fetch_daily_shop(userdict)  #获取每日商店
-                #resp = {"SkinsPanelLayout":{"SingleItemOffers":["4875e120-4d7d-aa2a-71c5-c0851c4af00d","5ac106cd-45ef-a26f-2058-f382f20c64db","c7695ce7-4fc9-1c79-64b3-8c8f9e21571c","f35f6e13-4b7b-da38-c0de-5c91fffd584b"],"SingleItemOffersRemainingDurationInSeconds":60193}}#用于测试的假返回值（阴间皮肤）
+                resp = await fetch_daily_shop(userdict)  #本地没有，api获取每日商店
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
-                timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
-                #需要设置uuid来保证是同一个用户
+                timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"] # 剩余时间
+                timeout = time.strftime("%H:%M:%S", time.gmtime(timeout)) # 将秒数转为标准时间
+                # 需要设置uuid来保证是同一个用户，方便同日的下次查询
                 UserShopDict[msg.author_id] = {}
                 UserShopDict[msg.author_id]["auth_user_id"] = UserTokenDict[msg.author_id]["auth_user_id"]
                 UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                 log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
 
-            #开始画图
+            # 开始画图
             draw_time = time.time()  #计算画图需要的时间
-            is_vip = await vip_ck(msg.author_id) #判断VIP
-            #每天8点bot遍历完之后会把vip的商店完整图存起来
+            is_vip = await vip_ck(msg.author_id) #判断用户是否为VIP
+            img_ret = {'status':True,'value':None}
+            # 每天8点bot遍历完之后会把vip的商店结果图存起来
             shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
-            #用户在列表中，且状态码为true
-            is_latest = (msg.author_id in VipShopBgDict and VipShopBgDict[msg.author_id]['status'])
-            if is_vip and (os.path.exists(shop_path)) and is_latest:  #如果是vip而且path存在,背景图没有更改过
-                bg_vip_shop = Image.open(shop_path)
+            # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
+            if is_vip and (os.path.exists(shop_path)) and is_CacheLatest(msg.author_id):  
+                bg_vip_shop = Image.open(shop_path) #直接使用本地已经画好的图片
                 bg = copy.deepcopy(bg_vip_shop)
-            elif is_vip and (msg.author_id in VipShopBgDict):  #商店路径不存在，或者状态码为false
-                ret = await get_daily_shop_vip_img(list_shop, userdict, msg.author_id, is_vip, msg)
-                if ret['status']:
-                    bg = ret['value']  #获取图片
-                else:  #出现图片违规
-                    await msg.reply(ret['value'])
-                    return
-            else:  #普通用户，没有自定义图片的vip用户
-                x = 0
-                y = 0
-                bg = copy.deepcopy(bg_main)
-                ran = random.randint(1, 9999)#生成随机数
-                # 开始后续画图操作
-                global shop_img_temp
-                shop_img_temp[ran] = []
-                img_num = 0
-                # 插入皮肤图片
-                for skinuuid in list_shop:
-                    img_path = f'./log/img_temp/comp/{skinuuid}.png'
-                    if skinuuid in weapon_icon_temp:#普通用户需要用的抽屉
-                        shop_img_temp[ran].append(weapon_icon_temp[skinuuid])
-                    elif os.path.exists(img_path):
-                        shop_img_temp[ran].append(Image.open(img_path))
-                    else:
-                        th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
-                        th.start()
-                    await asyncio.sleep(0.8)  #尝试错开网络请求
-                while True:
-                    img_temp = copy.deepcopy(shop_img_temp)
-                    for i in img_temp[ran]:
-                        shop_img_temp[ran].pop(shop_img_temp[ran].index(i))
-                        bg = bg_comp(bg, i, x, y)
-                        if x == 0:
-                            x += standard_length_sm
-                        elif x == standard_length_sm:
-                            x = 0
-                            y += standard_length_sm
-                        img_num += 1
-                    if img_num >= 4:
-                        break
-                    await asyncio.sleep(0.2)
-                #循环结束后删除
-                if ran in shop_img_temp:
-                    del shop_img_temp[ran]
+                img_ret['value'] = bg # 放入返回值
+            elif is_vip and (msg.author_id in VipShopBgDict): #本地缓存路径不存在，或者缓存过期
+                play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
+                vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
+                rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+                background_img = ('err' if msg.author_id not in VipShopBgDict else VipShopBgDict[msg.author_id]["background"][0])
+                img_ret = await get_shop_img_169(list_shop,vp=vp,rp=rp,bg_img_src=background_img)
+            else:# 普通用户/没有自定义图片的vip用户
+                img_ret = await get_shop_img_11(list_shop)
 
-            # 打印画图耗时
+            if img_ret['status']: #true
+                bg = img_ret['value'] #获取图片
+            else:  #出现背景图片违规或其他问题
+                await msg.reply(img_ret['value'])
+                print(f"[GetShopImg] Au:{msg.author_id} {img_ret['value']}")
+                return
+
+            # 获取图片成功，打印画图耗时
             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}"
             print(log_time)
             # bg.save(f"test.png")  #保存到本地
@@ -2011,79 +1501,24 @@ async def get_daily_shop(msg: Message, *arg):
             # 结束shop的总计时
             end = time.perf_counter()
             # 结果为浮点数，保留两位小数
-            using_time = format(end - start, '.2f')
+            shop_using_time = format(end - start, '.2f')
             
             # 商店的图片
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
-            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {shop_using_time}s"))
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
             
-            #皮肤评分和评价，用户不在err_user里面才显示
+            #皮肤评分和评价，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
             if not check_rate_err_user(msg.author_id):
-                global SkinRateDict
-                rate_text = []
-                rate_count = 0
-                rate_total = 0
-                for sk in list_shop:
-                    if sk in SkinRateDict['rate']:
-                        rate_count+=1
-                        rate_total+=SkinRateDict['rate'][sk]['pit']
-                        skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-                        text=f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n"%skin_name
-                        if len(SkinRateDict['rate'][sk]['cmt']) == 1:
-                            ran = 0 #元素内只有1个评论，直接选定该评论
-                        else:
-                            ran = random.randint(0,len(SkinRateDict['rate'][sk]['cmt'])-1)
-                        text+=f"「随机评论」 {SkinRateDict['rate'][sk]['cmt'][ran]}\n"
-                        rate_text.append(text)
-                
-                cm = CardMessage()
-                cm.append(c)
-                if rate_count==0:
-                    rate_lv="皮肤评价数据仍待收集…"
-                    c1 = Card(Module.Header(f"{rate_lv}"),
-                            Module.Context(f"你可以使用「/rate 皮肤名」参与评分哦！"),color='#fb4b57')
-                else:
-                    rate_sum = rate_total//rate_count
-                    #记录当日冠军和屌丝
-                    if rate_sum > SkinRateDict["cmp"]["best"]["pit"]:
-                        SkinRateDict["cmp"]["best"]["pit"] = rate_sum
-                        SkinRateDict["cmp"]["best"]["skin"] = list_shop
-                        SkinRateDict["cmp"]["best"]["kook_id"] = msg.author_id
-                        print(f"[shop] update rate-best  Au:{msg.author_id} = {rate_sum}")
-                    elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
-                        SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
-                        SkinRateDict["cmp"]["worse"]["skin"] = list_shop
-                        SkinRateDict["cmp"]["worse"]["kook_id"] = msg.author_id
-                        print(f"[shop] update rate-worse Au:{msg.author_id} = {rate_sum}")
-                        
-                    if rate_sum>=0 and rate_sum <=20:
-                        rate_lv = "丐帮帮主"
-                    elif rate_sum>20 and rate_sum <=40:
-                        rate_lv = "省钱能手"
-                    elif rate_sum>40 and rate_sum <=60:
-                        rate_lv = "差强人意"
-                    elif rate_sum>60 and rate_sum <=80:
-                        rate_lv = "芜湖起飞"
-                    elif rate_sum>80 and rate_sum <=100:
-                        rate_lv = "天选之人"
-                    c1 = Card(Module.Header(f"综合评分 {rate_sum}，{rate_lv}"),
-                            Module.Context(f"以下评论来自其他用户，仅供图一乐"),
-                            Module.Divider(),color='#fb4b57')
-                    for text in rate_text:
-                        c1.append(Module.Section(Element.Text(text,Types.Text.KMD)))
-                        c1.append(Module.Divider())
-                    c1.append(Module.Context(Element.Text(f"可以使用「/rate 皮肤名」参与评分\n或用「/kkn」查看昨日天选之子/丐帮帮主",Types.Text.KMD)))
-                    
-                cm.append(c1)
+                cm = await get_shop_rate_cm(list_shop,msg.author_id,cm=cm)
                 end = time.perf_counter()#计算获取评分的时间
             # 更新消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             # 结束，打印结果
-            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{using_time}/{format(end - start, '.2f')}]")
+            print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{shop_using_time}/{format(end - start, '.2f')}]")
         else:
             cm = CardMessage()
             text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
@@ -2102,10 +1537,11 @@ async def get_daily_shop(msg: Message, *arg):
         cm2 = CardMessage()
         c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
-            print(err_str)
+            print(err_str,resp)
             text = f"键值错误，需要重新登录"
+            btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
-            c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
+            c.append(Module.Context(Element.Text(btext, Types.Text.KMD)))
             cm2.append(c)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
@@ -2695,30 +2131,6 @@ async def check_notify_err_user(msg:Message):
     else:
         return False
     
-# 计算用户的得分，插入到当日最高和最低分中
-async def check_shop_rate(user_id:str,list_shop:list):
-    global SkinRateDict
-    rate_count = 0
-    rate_total =0
-    for sk in list_shop:
-        if sk in SkinRateDict['rate']:
-            rate_count+=1
-            rate_total+=SkinRateDict['rate'][sk]['pit']
-    
-    if rate_count !=0:
-        rate_sum = rate_total//rate_count#平均分
-        #记录冠军和屌丝
-        if rate_sum > SkinRateDict["cmp"]["best"]["pit"]:
-            SkinRateDict["cmp"]["best"]["pit"] = rate_sum
-            SkinRateDict["cmp"]["best"]["skin"] = list_shop
-            SkinRateDict["cmp"]["best"]["kook_id"] = user_id
-        elif rate_sum < SkinRateDict["cmp"]["worse"]["pit"]:
-            SkinRateDict["cmp"]["worse"]["pit"] = rate_sum
-            SkinRateDict["cmp"]["worse"]["skin"] = list_shop
-            SkinRateDict["cmp"]["worse"]["kook_id"] = user_id
-        return True
-    else:
-        return False
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
@@ -2747,6 +2159,7 @@ async def auto_skin_notify():
                 user = await bot.client.fetch_user(vip)
                 if vip in UserAuthDict:
                     if await check_re_auth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
+                        shop_text = "err"
                         start = time.perf_counter()  #开始计时
                         auth = UserAuthDict[vip]['auth']
                         userdict = {
@@ -2754,7 +2167,7 @@ async def auto_skin_notify():
                             'access_token': auth.access_token,
                             'entitlements_token': auth.entitlements_token
                         }
-                        a_time = time.time()
+                        a_time = time.time() # 获取token的时间
                         resp = await fetch_daily_shop(userdict)  # 获取每日商店
                         
                         # 判断夜市有没有开，只会判断一次
@@ -2772,51 +2185,55 @@ async def auto_skin_notify():
                         UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
                         UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                         #直接获取商店图片
-                        draw_time = time.time()  #计算画图需要的时间
-                        bg_shop_ret = await get_daily_shop_vip_img(list_shop, userdict, vip, True)
-                        if bg_shop_ret['status']:
-                            bg_shop = bg_shop_ret['value']
+                        draw_time = time.time()  #开始计算画图需要的时间
+                        img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
+                        play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
+                        vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
+                        rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+                        # 设置用户背景图，如果在则用，否则返回err
+                        background_img = ('err' if vip not in VipShopBgDict else VipShopBgDict[vip]["background"][0])
+                        img_ret = await get_shop_img_169(list_shop,vp=vp,rp=rp,bg_img_src=background_img)
+                        if img_ret['status']:
+                            bg_shop = img_ret['value']
+                            bg_shop.save(img_shop_path, format='PNG')
+                            VipShopBgDict['cache_time'] = time.time() #设置图片缓存的时间
                         else:  #如果图片没有正常返回，那就发送文字版本
-                            text = ""
+                            shop_text = ""
                             for skinuuid in list_shop:
                                 res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
                                 res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
                                 price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                                text += f"{res_item['data']['displayName']}     - VP {price}\n"
-                            cm = CardMessage()  #向用户发送当前的每日商店（文字）
-                            c = Card(color='#fb4b57')
-                            c.append(
-                                Module.Section(Element.Text(f"早上好呀！请查收您的每日商店", Types.Text.KMD),
-                                               Element.Image(src=icon_cm.shot_on_fire, size='sm')))
-                            c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-                            c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
-                            cm.append(c)
-                            await user.send(cm)
-                            continue
+                                shop_text += f"{res_item['data']['displayName']}     - VP {price}\n"
+                            print(f"[BOT.TASK.NOTIFY] VAu:{vip} test img err, using text")
 
+                        # 打印日志
                         log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
                         print(log_time)
-                        img_shop = f"./log/img_temp_vip/shop/{vip}.png"
-                        #bg_shop.save(img_shop, format='PNG')
-                        dailyshop_img_src = await bot_upimg.client.create_asset(img_shop)  # 上传图片
-                        # 结束shop的总计时
-                        end = time.perf_counter()
-                        #结果为浮点数，保留两位小数
-                        using_time = format(end - start, '.2f')
-                        #卡片消息发送图片
+                        dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
+                        # 结束shop的总计时 结果为浮点数，保留两位小数
+                        using_time = format(time.perf_counter() - start, '.2f')
+                        #卡片消息发送图片或者text
                         cm = CardMessage()
                         c = Card(color='#fb4b57')
-                        c.append(
-                            Module.Header(
-                                f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店"))
-                        c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
-                        c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
+                        if shop_text == "err":
+                            c.append(
+                                Module.Header(
+                                    f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店"))
+                            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
+                            c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
+                        else:
+                            c.append(
+                            Module.Section(Element.Text(f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']}", Types.Text.KMD),
+                                            Element.Image(src=icon_cm.shot_on_fire, size='sm')))
+                            c.append(Module.Section(Element.Text(shop_text, Types.Text.KMD)))
+                            c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
+                        # 发送
                         cm.append(c)
                         await user.send(cm)
                         print(f"[BOT.TASK.NOTIFY] [{GetTime()}] VAu:{vip} notify_shop success [{using_time}]")
                     else:  #reauthorize failed!
                         log_vip_failed+=f"({vip})"
-                        await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
+                        await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：cookie登录有效期约为2-3天")
                 else:  #不在auth里面说明没有登录
                     log_vip_not_login+=f"({vip})"
                     await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~\n[注] 如果您在早8:10之后收到此条消息，请忽略。开发者在进行bug测试")
@@ -2867,7 +2284,7 @@ async def auto_skin_notify():
                         print(f"[BOT.TASK.NOTIFY] Au:{aid} auto_skin_notify = None")
                     else:  #reauthorize failed!
                         log_failed+=f"({aid})"
-                        await user.send(f"您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：这是无可避免的小概率事件")
+                        await user.send(f"您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：cookie登录有效期约为2-3天")
                 else:  #不在auth里面说明没有登录
                     log_not_login+=f"({aid})"
                     await user.send(
@@ -2893,7 +2310,10 @@ async def auto_skin_notify():
                 json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
             print("[BOT.TASK.NOTIFY] save SkinNotifyDict")
             
-        # 将当日最高最低用户写入文件
+        # 将cache time写入文件
+        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
+            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)  
+        # 将当日评分最高最低用户写入文件   
         with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
             json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)            
         finish_str = f"[BOT.TASK.NOTIFY] Finish at {GetTime()} [ERR {err_count}]"
@@ -3213,11 +2633,12 @@ async def bot_log_list(msg:Message,*arg):
 async def loading_channel_cookie():
     try:
         global debug_ch, cm_send_test
-        cm_send_test = await bot_upimg.client.fetch_public_channel('3001307981469706')
-        debug_ch = await bot.client.fetch_public_channel(Debug_ch)
+        cm_send_test = await bot_upimg.client.fetch_public_channel(config["img_upload_channel"])
+        debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
         print("[BOT.TASK] fetch_public_channel success")
     except:
         print("[BOT.TASK] fetch_public_channel failed")
+        print(traceback.format_exc())
         os._exit(-1)  #出现错误直接退出程序
 
     if Login_Forbidden:
@@ -3258,6 +2679,6 @@ async def loading_channel_cookie():
     print("[BOT.TASK] loading cookie finished")
 
 # 开机的时候打印一次时间，记录重启时间
-print(f"Start at: [%s]" % start_time)
+print(f"[BOT] Start at: [%s]" % start_time)
 # 开机
-bot.run()
+# bot.run()

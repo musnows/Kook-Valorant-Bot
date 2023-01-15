@@ -7,13 +7,11 @@ from endpoints.KookApi import guild_list, guild_view, upd_card, icon_cm
 from PIL import Image, ImageDraw, ImageFont
 from copy import deepcopy
 
+from endpoints.Gtime import GetTime
+
 # 用户数量的记录文件
 with open('./log/BotUserLog.json', 'r', encoding='utf-8') as f:
     BotUserDict = json.load(f)
-
-#将获取当前时间封装成函数方便使用
-def GetTime():  
-    return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
 # 保存用户的log文件
 # 因为logging的使用很频繁，所以不需要经常保存

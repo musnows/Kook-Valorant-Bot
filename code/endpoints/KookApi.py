@@ -1,12 +1,13 @@
 import json
 import aiohttp
-from khl import  Bot,Message,ChannelPrivacyTypes
+import io
+from khl import Bot,ChannelPrivacyTypes
 
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
-#初始化一个bot，下方更新卡片消息需要
+# 下方更新卡片消息需要bot
 bot = Bot(token=config['token'])
-
+# kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
 kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
@@ -68,6 +69,21 @@ async def guild_view(Guild_ID:str):
             ret1 = json.loads(await response.text())
             #print(ret1)
             return ret1
+
+# 上传图片到kook
+async def kook_create_asset(bot_token:str,bg):
+    imgByteArr = io.BytesIO()
+    bg.save(imgByteArr, format='PNG')
+    imgByte = imgByteArr.getvalue()
+    data = aiohttp.FormData()
+    data.add_field('file',imgByte)
+    url = "https://www.kookapp.cn/api/v3/asset/create"
+    kook_headers = {f'Authorization': f"Bot {bot_token}"}
+    body = {'file':data}
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=kook_headers,data=data) as response:
+            res = json.loads(await response.text())
+    return res
 
 ##########################################icon##############################################
 

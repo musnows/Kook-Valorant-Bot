@@ -75,28 +75,58 @@ async def dx123(msg: Message):
     )
 
 
-###################################### Riot Auth ######################################################
+###################################### local files search ######################################################
 
-import riot_auth
-from endpoints.EzAuth import EzAuth
+# 所有皮肤
+with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
+    ValSkinList = json.load(frsk)
+# 所有商品价格
+with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
+    ValPriceList = json.load(frpr)
+# 所有捆绑包的图片
+with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
+    ValBundleList = json.load(frbu)
+# 所有物品等级（史诗/传说）
+with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
+    ValItersList = json.load(frrk)
 
-# 获取拳头的token
-# 此部分代码来自 https://github.com/floxay/python-riot-auth
-async def authflow(user: str, passwd: str):
-    CREDS = user, passwd
-    auth = riot_auth.RiotAuth()
-    await auth.authorize(*CREDS)
-    # await auth.reauthorize()
-    # print(f"Access Token Type: {auth.token_type}\n",f"Access Token: {auth.access_token}\n")
-    # print(f"Entitlements Token: {auth.entitlements_token}\n",f"User ID: {auth.user_id}")
-    return auth
+#从list中获取价格
+def fetch_item_price_bylist(item_id):
+    for item in ValPriceList['Offers']:  #遍历查找指定uuid
+        if item_id == item['OfferID']:
+            return item
 
-# 两步验证的用户
-async def auth2fa(msg:Message,user:str,passwd:str):
-    auth = EzAuth()
-    await auth.authorize(user,passwd,msg=msg)
-    return auth
 
+#从list中获取等级(这个需要手动更新)
+def fetch_item_iters_bylist(iter_id):
+    for iter in ValItersList['data']:  #遍历查找指定uuid
+        if iter_id == iter['uuid']:
+            res = {'data': iter}  #所以要手动创建一个带data的dict作为返回值
+            return res
+
+#从list中获取皮肤
+def fetch_skin_bylist(item_id):
+    res = {}  #下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
+    for item in ValSkinList['data']:  #遍历查找指定uuid
+        if item_id == item['levels'][0]['uuid']:
+            res['data'] = item  #所以要手动创建一个带data的dict作为返回值
+            return res
+
+#从list中，通过皮肤名字获取皮肤列表
+def fetch_skin_byname_list(name):
+    wplist = list()  #包含该名字的皮肤list
+    for skin in ValSkinList['data']:
+        if name in skin['displayName']:
+            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
+            wplist.append(data)
+    return wplist
+
+#从list中通过皮肤lv0uuid获取皮肤等级
+def fetch_skin_iters_bylist(item_id):
+    for it in ValSkinList['data']:
+        if it['levels'][0]['uuid'] == item_id:
+            res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
+            return res_iters
 
 ####################################################################################################
 ###################https://github.com/HeyM1ke/ValorantClientAPI#####################################
@@ -131,7 +161,7 @@ async def fetch_daily_shop(u):
     return res
 
 
-# 获取vp和r点
+# Api获取玩家的vp和r点
 async def fetch_valorant_point(u):
     url = "https://pd.ap.a.pvp.net/store/v1/wallet/" + u['auth_user_id']
     headers = {
@@ -144,6 +174,12 @@ async def fetch_valorant_point(u):
             res = json.loads(await response.text())
     return res
 
+# 获取vp和r点的dict
+async def fetch_vp_rp_dict(u):
+    resp = await fetch_valorant_point(u)
+    vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
+    rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+    return {'vp':vp,'rp':rp}
 
 # 获取商品价格（所有）
 async def fetch_item_price_all(u):
