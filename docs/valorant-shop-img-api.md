@@ -142,29 +142,19 @@ import requests
 
 url = "https://val.outpost54.top/shop-url"
 params = {
-    "token":"你的api-token",
+    "token":"api-token",
     "account": "拳头账户",
     "passwd": "拳头密码",
     "img-src": "https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg"
 }
-res = requests.get(url,params=params,verify=False)
+res = requests.get(url,params=params)
 print(res.json())
 ~~~
 
-由于ssl证书原因，您使用的时候可能会遇到下面的报错，请忽略。
+运行即可获得商店返回结果
 
-~~~
-/home/muxue/.local/lib/python3.10/site-packages/urllib3/connectionpool.py:1045: InsecureRequestWarning: Unverified HTTPS request is being made to host 'val.outpost54.top'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/1.26.x/advanced-usage.html#ssl-warnings
-  warnings.warn(
-~~~
+~~~~
+{'code': 0, 'message': 'https://img.kookapp.cn/attachments/2023-01/15/mLjpR95mZ20rs0rs.png', 'info': '商店图片获取成功'}
+~~~~
 
-网站使用的是`JOYSSL`提供的ssl证书，直接访问**不会**报不安全。本人很菜，不知道这里的报错是啥原因
-
-可以用下面的办法解除这个报错
-
-~~~python
-from urllib3.connectionpool import InsecureRequestWarning
-import urllib3
-urllib3.disable_warnings(InsecureRequestWarning)
-~~~
 
