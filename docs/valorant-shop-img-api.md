@@ -13,7 +13,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 | ---------- | --------------------- | -------- |
 | /shop-img  | 直接返回并跳转商店的图片  | 正常   |
 | /shop-url  | 以`json`格式返回商店图片url  | 正常   |
-| /tfa  | 邮箱验证接口，需和/shop-url接口配合使用 | 正常   |
+| /tfa  | 邮箱验证接口，需和`/shop-url`接口配合使用 | 正常   |
 
 
 ## 1.使用示例
@@ -51,7 +51,11 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 
 结果示例图（16-9）
 
-<img src="https://img.kookapp.cn/assets/2023-01/2Vffq4s9rX1ry0zj.png" alt="16-9-img-result">
+<img src="https://img.kookapp.cn/assets/2023-01/2Vffq4s9rX1ry0zj.png" weight="400px" alt="16-9-img-result">
+
+结果示例图（1-1）
+
+<img src="https://img.kookapp.cn/attachments/2023-01/15/JR3hnXIab60rs0rs.png" weight="300px" hight ="300px" alt="1-1-img-result">
 
 ## 2.注意事项
 
