@@ -107,7 +107,7 @@ async def base_img_request(request):
         res_vprp = await fetch_vp_rp_dict(userdict) # 只有16-9的图片需获取vp和r点
         ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
     # 打印计时
-    print("[IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
+    print(f"[{GetTime()}] [IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
 
     start = time.perf_counter()
     if ret['status']:
