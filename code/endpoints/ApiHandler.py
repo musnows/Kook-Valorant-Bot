@@ -90,7 +90,6 @@ async def base_img_request(request):
     resp = await fetch_daily_shop(userdict)  #获取每日商店
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = await fetch_vp_rp_dict(userdict) # 获取vp和r点
 
     # 自定义背景
     if 'img_src' in params:
@@ -105,6 +104,7 @@ async def base_img_request(request):
     if 'img_ratio' in params and params['img_ratio']=='1':
         ret = await get_shop_img_11(list_shop,bg_img_src=img_src)
     else:
+        res_vprp = await fetch_vp_rp_dict(userdict) # 只有16-9的图片需获取vp和r点
         ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
     # 打印计时
     print("[IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
