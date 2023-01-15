@@ -153,6 +153,7 @@ def sm_comp_169(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
     
     # 缩放皮肤等级图标
     level_icon = level_icon.resize((25, 25), Image.Resampling.LANCZOS)
+    level_icon = level_icon.convert('RGBA')
     bg.paste(level_icon, (368, 11), level_icon) # 在指定位置粘贴皮肤等级图标
     text = zhconv.convert(skin_name, 'zh-cn')  # 将名字简体化
     draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
