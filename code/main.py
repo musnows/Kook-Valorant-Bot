@@ -1079,7 +1079,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
             th = threading.Thread(target=auth2fa, args=(user,passwd,key))
             th.start()
             resw = await auth2faWait(key=key,msg=msg) # 随后主执行流来这里等待
-            res_auth = resw['auth']
+            res_auth = await resw['auth'].get_RiotAuth() # 直接获取RiotAuth对象
         # 如果没有抛出异常，那就是完成登录了
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
@@ -1234,8 +1234,8 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
     user_id = "[ERR!]"  #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
-        if UserAuthDict[user_id]['2fa']:
-            return True #先判断是否为2fa账户，如果是，那就不进行reauthrize操作
+        # if UserAuthDict[user_id]['2fa']:
+        #     return True #先判断是否为2fa账户，如果是，那就不进行reauthrize操作
         auth = UserAuthDict[user_id]['auth']
         userdict = {
             'auth_user_id': auth.user_id,

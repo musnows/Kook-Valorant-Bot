@@ -11,6 +11,7 @@ import asyncio
 import copy
 import random
 from riot_auth import auth_exceptions,RiotAuth
+from http.cookies import SimpleCookie
 
 RiotClient = "RiotClient/62.0.1.4852117.4789131"
 User2faCode = {}
@@ -115,6 +116,7 @@ class EzAuth:
 
         self.base_headers = {'User-Agent': f"{RiotClient} %s (Windows;10;;Professional, x64)",'Authorization': f'Bearer {self.access_token}',}
         self.session.headers.update(self.base_headers)
+        self.cookie = self.session.cookies
 
         self.entitlements_token = self.get_entitlement_token()
         self.emailverifed = self.get_emailverifed()
@@ -214,7 +216,22 @@ class EzAuth:
         }
         return userdict
 
-#EzAuth(username="",password="")
+    def get_CookieDict(self):
+        # cookie转换成dict
+        ck_dict = requests.utils.dict_from_cookiejar(self.cookie)
+        return ck_dict
+
+    async def get_RiotAuth(self):
+        # cookie dict导入到SimpleCookie
+        Scookie = SimpleCookie(self.get_CookieDict())
+        rauth = RiotAuth()
+        # 更新cookie
+        rauth._cookie_jar.update_cookies(Scookie)
+        ret = await rauth.reauthorize() # 测试登录
+        if ret:
+            return rauth
+        else: #失败返回None
+            raise Exception('EzAuth change to RiotAuth failed')
 
 
 ###################################### Riot Auth ######################################################
