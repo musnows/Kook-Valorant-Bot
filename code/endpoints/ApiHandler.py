@@ -13,12 +13,9 @@ TOKEN_RATE_LIMITED = 10
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
-# 之前没有处理完毕的2fa用户信息
-with open("./log/Api2fa.json", 'r', encoding='utf-8') as frpr:
-    Api2faDict = json.load(frpr)
 # 用来给kook上传文件的bot token
 api_bot_token = config['api_bot_token']
-
+Api2faDict = {} # 保存2fa用户登录的过程信息
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
