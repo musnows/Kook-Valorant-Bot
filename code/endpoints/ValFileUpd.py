@@ -12,10 +12,9 @@ async def update_skins(msg: Message):
     try:
         global ValSkinList
         skins = await fetch_skins_all()
-        ValSkinList = skins
+        ValSkinList.value = skins
         # 写入文件
-        with open("./log/ValSkin.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValSkinList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        ValSkinList.save()
         print(f"[{GetTime()}] update_skins finished!")
         return True
     except Exception as result:
@@ -53,9 +52,7 @@ async def update_bundle_url(msg: Message,bot_upimg:Bot):
                 b['displayIcon2'] = bundle_img_src  #修改url
                 ValBundleList.append(b)  #插入
 
-        with open("./log/ValBundle.json", 'w', encoding='utf-8') as fw1:
-            json.dump(ValBundleList, fw1, indent=2, sort_keys=True, ensure_ascii=False)
-
+        ValBundleList.save()
         print(f"[{GetTime()}] update_bundle_url finished!")
         return True
     except Exception as result:
@@ -70,10 +67,9 @@ async def update_price(msg: Message,userdict):
         global ValPriceList
         # 调用api获取价格列表
         prices = await fetch_item_price_all(userdict)
-        ValPriceList = prices  # 所有价格的列表
+        ValPriceList.value = prices  # 所有价格的列表
         # 写入文件
-        with open("./log/ValPrice.json", 'w', encoding='utf-8') as fw2:
-            json.dump(ValPriceList, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        ValPriceList.save()
         print(f"[{GetTime()}] update_item_price finished!")
         return True
     except Exception as result:
