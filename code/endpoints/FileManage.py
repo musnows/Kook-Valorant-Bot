@@ -50,6 +50,12 @@ class FileManage:
         return self.value.__iter__()
     def __next__(self):
         return self.value.__next__()
+    # 比较==
+    def __eq__(self,i):
+        return self.value.__eq__(i)
+    # 比较!=
+    def __ne__(self,i):
+        return self.value.__ne__(i)
 
     # 获取成员
     def get_instance(self):
