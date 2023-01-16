@@ -1,6 +1,9 @@
 import json
 import aiofiles
 import traceback
+from Gtime import GetTime
+
+FileList = []
 
 def open_file(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -20,9 +23,13 @@ class FileManage:
     def __init__(self,path:str) -> None:
         with open(path, 'r', encoding='utf-8') as f:
             tmp = json.load(f)
-        self.value = tmp
-        self.type = type(tmp)
-        self.path = path
+        self.value = tmp       # 值
+        self.type = type(tmp)  # 值的类型
+        self.path = path       # 值的文件路径
+        #将自己存全局变量里面
+        global FileList
+        FileList.append(self)
+    
     # 操作符重载
     def __getitem__(self,index):
         return self.value[index]
@@ -67,14 +74,15 @@ VipShopBgDict = FileManage("./log/VipUserShopBg.json") # vip 背景图设置；�
 RollVipDcit = FileManage("./log/VipRoll.json")         # vip 抽奖信息
 
 
-FileList = [config,BotUserDict,ApiTokenDict,ColorIdDict,EmojiDict,SponsorDict,
-            ValErrDict,ValSkinList,ValPriceList,ValBundleList,ValItersList,
-            SkinRateDict,SkinNotifyDict,GameIdDict,UserTokenDict,
-            VipUuidDict,VipUserDict,VipShopBgDict,RollVipDcit]
 # 保存所有文件
 async def Save_All_File():
+    log_text ='[Save.All.File] '
     for i in FileList:
         try:
             await i.save_aio()
+            log_text+=f"({i.path}) "
         except:
-            print(f"ERR! [Save.All.File] {i.path}\n{traceback.format_exc()}")
+            print(f"ERR! [{GetTime()}] [Save.All.File] {i.path}\n{traceback.format_exc()}")
+
+    log_text+=f"save success at [{GetTime()}]"
+    print(log_text)

@@ -11,8 +11,7 @@ from endpoints.ShopImg import get_shop_img_11,get_shop_img_169
 
 TOKEN_RATE_LIMITED = 10
 # bot的token文件
-with open('./config/config.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
+from endpoints.FileManage import config
 # 用来给kook上传文件的bot token
 api_bot_token = config['api_bot_token']
 Api2faDict = {} # 保存2fa用户登录的过程信息
