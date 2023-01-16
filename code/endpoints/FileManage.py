@@ -102,7 +102,7 @@ UserTokenDict = FileManage("./log/UserAuthID.json")     # riot用户游戏id和u
 VipUuidDict = FileManage("./log/VipUuid.json")         # vip uuid文件
 VipUserDict = FileManage("./log/VipUser.json")         # vip 用户列表
 VipShopBgDict = FileManage("./log/VipUserShopBg.json") # vip 背景图设置；商店图缓存
-RollVipDcit = FileManage("./log/VipRoll.json")         # vip 抽奖信息
+VipRollDcit = FileManage("./log/VipRoll.json")         # vip 抽奖信息
 
 
 # 保存所有文件
