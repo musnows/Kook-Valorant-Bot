@@ -13,7 +13,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 | ---------- | --------------------- | -------- |
 | /shop-img  | 直接返回并跳转商店的图片  | 正常   |
 | /shop-url  | 以`json`格式返回商店图片url  | 正常   |
-| /tfa  | 邮箱验证接口，需和/shop-url接口配合使用 | 正常   |
+| /tfa  | 邮箱验证接口，需和`/shop-url`接口配合使用 | 正常   |
 
 
 ## 1.使用示例
@@ -51,7 +51,11 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 
 结果示例图（16-9）
 
-<img src="https://img.kookapp.cn/assets/2023-01/2Vffq4s9rX1ry0zj.png" alt="16-9-img-result">
+<img src="https://img.kookapp.cn/assets/2023-01/2Vffq4s9rX1ry0zj.png" weight="400px" alt="16-9-img-result">
+
+结果示例图（1-1）
+
+<img src="https://img.kookapp.cn/attachments/2023-01/15/JR3hnXIab60rs0rs.png" weight="300px" hight ="300px" alt="1-1-img-result">
 
 ## 2.注意事项
 
@@ -138,29 +142,19 @@ import requests
 
 url = "https://val.outpost54.top/shop-url"
 params = {
-    "token":"你的api-token",
+    "token":"api-token",
     "account": "拳头账户",
     "passwd": "拳头密码",
     "img-src": "https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg"
 }
-res = requests.get(url,params=params,verify=False)
+res = requests.get(url,params=params)
 print(res.json())
 ~~~
 
-由于ssl证书原因，您使用的时候可能会遇到下面的报错，请忽略。
+运行即可获得商店返回结果
 
-~~~
-/home/muxue/.local/lib/python3.10/site-packages/urllib3/connectionpool.py:1045: InsecureRequestWarning: Unverified HTTPS request is being made to host 'val.outpost54.top'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/1.26.x/advanced-usage.html#ssl-warnings
-  warnings.warn(
-~~~
+~~~~
+{'code': 0, 'message': 'https://img.kookapp.cn/attachments/2023-01/15/mLjpR95mZ20rs0rs.png', 'info': '商店图片获取成功'}
+~~~~
 
-网站使用的是`JOYSSL`提供的ssl证书，直接访问**不会**报不安全。本人很菜，不知道这里的报错是啥原因
-
-可以用下面的办法解除这个报错
-
-~~~python
-from urllib3.connectionpool import InsecureRequestWarning
-import urllib3
-urllib3.disable_warnings(InsecureRequestWarning)
-~~~
 

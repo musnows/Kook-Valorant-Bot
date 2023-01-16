@@ -1,7 +1,7 @@
 import json
 import time
 import threading
-import aiofiles
+import traceback
 from endpoints.EzAuth import auth_exceptions,auth2fa,auth2faWait,Get2faWait_Key,User2faCode
 from endpoints.ApiToken import token_ck,ApiTokenDict,save_token_files
 from endpoints.Gtime import GetTime
@@ -78,7 +78,7 @@ async def base_img_request(request):
         print(f"ERR! [{GetTime()}] login - riot_auth.riot_auth.auth_exceptions.RiotRatelimitError")
         return {'code': 200, 'message': "riot_auth.auth_exceptions.RiotRatelimitError",'info':'riot登录api超速，请稍后重试'}
     except Exception as result:
-        print(f"ERR! [{GetTime()}] login - {result}")
+        print(f"ERR! [{GetTime()}] login\n{traceback.format_exc()}")
         return {'code': 200, 'message': f"{result}",'info':'riot登录错误，详见message'}
     
     print(f'[{GetTime()}] [Api] k:{key} - user auth success')
@@ -90,7 +90,6 @@ async def base_img_request(request):
     resp = await fetch_daily_shop(userdict)  #获取每日商店
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = await fetch_vp_rp_dict(userdict) # 获取vp和r点
 
     # 自定义背景
     if 'img_src' in params:
@@ -105,9 +104,10 @@ async def base_img_request(request):
     if 'img_ratio' in params and params['img_ratio']=='1':
         ret = await get_shop_img_11(list_shop,bg_img_src=img_src)
     else:
+        res_vprp = await fetch_vp_rp_dict(userdict) # 只有16-9的图片需获取vp和r点
         ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
     # 打印计时
-    print("[IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
+    print(f"[{GetTime()}] [IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
 
     start = time.perf_counter()
     if ret['status']:

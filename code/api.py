@@ -26,7 +26,9 @@ async def get_dailshop_img(request):
         else:
             return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
-        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
+        err_cur = traceback.format_exc()
+        print(f"[{GetTime()}] [Api] ERR in /shop-img\n{err_cur}")
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{err_cur}'},ensure_ascii=False), content_type='application/json')
     
 # 获取图片url
 @routes.get('/shop-url')
@@ -36,7 +38,9 @@ async def get_dailshop_img(request):
         ret = await base_img_request(request)
         return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
-        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
+        err_cur = traceback.format_exc()
+        print(f"[{GetTime()}] [Api] ERR in /shop-url\n{err_cur}")
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{err_cur}'},ensure_ascii=False), content_type='application/json')
 
 @routes.post('/tfa')
 async def get_dailshop_img(request):
@@ -45,7 +49,9 @@ async def get_dailshop_img(request):
         ret = await tfa_code_requeset(request)
         return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
-        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{traceback.format_exc()}'},ensure_ascii=False), content_type='application/json')
+        err_cur = traceback.format_exc()
+        print(f"[{GetTime()}] [Api] ERR in /tfa\n{err_cur}")
+        return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{err_cur}'},ensure_ascii=False), content_type='application/json')
     
 
 print(f"[API Start] starting at {GetTime()}")

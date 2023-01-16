@@ -1,6 +1,7 @@
 import uuid
 import json
 import time
+from endpoints.Gtime import GetTime
 
 # 所有token
 with open("./log/ApiToken.json", 'r', encoding='utf-8') as frpr:
@@ -14,9 +15,9 @@ def get_uuid():
 
 def save_token_files(text=''):
     global ApiTokenDict
-    with open("./log/UserToken.json", 'w', encoding='utf-8') as fw2:
+    with open("./log/ApiToken.json", 'w', encoding='utf-8') as fw2:
         json.dump(ApiTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    print(f"[token] files saved! {text}")
+    print(f"[{GetTime()}] [API token] files saved! [{text}]")
 
 # 生成uuid
 def create_token_uuid(num: int = 10, day: int = 30):
@@ -53,7 +54,7 @@ def create_token_uuid(num: int = 10, day: int = 30):
     for uuid in NewUuid:
         text += f"{uuid}" + "\n"
 
-    print(f"[token] create_token_uuid - num:{num} - day:{day}")
+    print(f"[{GetTime()}] [token] create_token_uuid - num:{num} - day:{day}")
     return text
 
 # 检查用户token是否失效或者不是token
@@ -71,13 +72,13 @@ async def token_ck(token:str):
             del ApiTokenDict['data'][token]
             # 更新uuid
             save_token_files("token expire")
-            print(f"[token-ck] T:{token} out of date")
+            print(f"[{GetTime()}] [token-ck] T:{token} out of date")
             return False
         else:#没有过期，返回真
-            print(f"[token-ck] T:{token} is token")
+            print(f"[{GetTime()}] [token-ck] T:{token} is token")
             return True
     else:#token不在
-        print(f"[token-ck] T:{token} not token")
+        print(f"[{GetTime()}] [token-ck] T:{token} not token")
         return False
 
 

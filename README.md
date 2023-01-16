@@ -20,7 +20,7 @@
 </div>
 
 ## 功能
-当前机器人基本完善，目前支持回复Valorant游戏错误码、查询Valorant每日商店/夜市/vp/r点，和一些简单功能。
+当前机器人基本完善，目前支持回复Valorant游戏错误码、查询Valorant每日商店/夜市/vp/r点，和一些简单功能。邮箱验证用户登录也已添加。
 
 下面是目前支持的功能列表：
 
@@ -29,7 +29,6 @@
 | `/Ahri`           | 回复使用帮助（因`/help`和其他机器人冲突，故用阿狸的英文名`Ahri`替代） |
 | `/vhelp` | Valorant相关查询功能的帮助命令                     |
 
-关于商店查询的**初步功能**已经添加，但是其`稳定性/是否封号`未知，建议**谨慎**使用！
 
 
 | 游戏相关      | 功能                                       |
@@ -42,7 +41,7 @@
 | `/logout` | 退出riot账户登录 |
 | `/shop` | 获取每日商店的4个皮肤 |
 | `/night` | 获取夜市的6个皮肤 |
-| `/uinfo`或`/point` | 获取玩家卡面和称号，剩余vp和r点 |
+| `/uinfo` 或 `/point` | 获取玩家卡面和称号，剩余vp和r点 |
 | `/notify-a 皮肤名` | 搜索皮肤名，并提供选项将指定皮肤加入商店提醒 |
 | `/notify-l` | 查看当前已经设置了提醒的皮肤 |
 | `/notify-d 皮肤uuid` | 使用uuid删除不需要提醒的皮肤 |
@@ -56,17 +55,11 @@
 |`/rts 序号 打分 吐槽`|选中皮肤序号，给该皮肤打个分(0~100) 再吐槽一下!|
 |`/kkn`|查看昨日评分最高/最低的用户|
 
-更多vip用户的特殊功能
+每日商店刷枪提醒功能 `/notify-a` 需要用户**保持登录状态**，bot会在每天的`08:00AM`遍历列表，查看您的商店是否刷出了您想要的皮肤；如果是vip用户，则会直接发送当日商店的图片。
 
->* 「全新商店返回值」vip用户将获取到16-9的超帅商店返回值
->* 「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失
->* 「早八商店提醒」阿狸将在早8点获取vip用户的每日商店并私聊发图给用户，同时会对这张图片进行缓存，当天使用/shop命令的时候，只需2s获取结果，三倍于普通用户的响应速度！
->
->目前商店查询背景图diy支持16-9(横屏)的图片，图片url获取：`PC端将图片上传到kook→点击图片→底部...处复制图片链接→使用/vip-shop命令设置背景` [教程图](https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png) 
->
->请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip
+cookie 登录信息将在2-3天后失效，所以皮肤提醒功能会出现用户没有登录而无法获取的情况。
 
-每日商店刷枪提醒功能需要用户**保持登录状态**，bot会在每天的`08:01`遍历列表，查看您的商店是否刷出了您想要的皮肤
+`/rate` 参与的打分，其会显示在 `/shop` 商店查询结果的尾部，同时统计当日商店最高分和最低分，可以在第二天用 `/kkn` 来查看。
 
 | 其他命令    | 功能                                                         |
 | ----------------- | ------------------------------------------------------------ |
@@ -99,6 +92,8 @@
 <img src="./screenshot/vip_daily_shop.png" height="300px" alt="vip_shop">
 </details>
 
+----
+
 ### valorant-shop-img-api
 
 > Api源码见 [api.py](./code/api.py)
@@ -123,13 +118,9 @@ Api请求返回示例图：
 pip install -r requirements.txt
 ~~~
 
-> Q：为何`khl.py`只需要3.6.8以上版本，而本仓库需要3.8+？
->
-> A：因为Valorant的第三方`Python Api`需要3.8+版本
+建议根据 [khl.py/example](https://github.com/TWT233/khl.py/tree/main/example) 的教程，学习KOOK机器人的基本搭建（很简单的，相信我）
 
-建议根据[khl.py](https://github.com/TWT233/khl.py)的`example`教程，学习KOOK机器人的基本搭建（很简单的，相信我）
-
-如果你想直接使用本机器人，可以转到本仓库[WIKI](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)查看更多引导内容
+如果你想直接使用本机器人，可以转到本仓库 [WIKI](https://github.com/Aewait/Valorant-kaiheila-bot/wiki) 查看更多引导内容
 
 ----
 
@@ -148,9 +139,7 @@ pip install -r requirements.txt
 - [ ] 以类似抽卡的方式，用按钮、图片等等方式显示用户的夜市
 - [ ] Api增加使用Riot Token调用的接口，方便本地管理登录信息，调用api画图
 
-~~由于很多人在使用类似商店查询软件后被ban，我决定正式停止相关功能的开发~~
-
-咳咳，虽然初步的商店查询功能已经上线，但是其是否`封号`依旧有争论！目前功能已经上线一个月有余，且询问过外网开发者，其表示没有听说过有人因为使用api被封号。
+咳咳，虽然初步的商店查询功能已经上线，但是其是否`封号`依旧有争论！目前功能已经上线半年有余，未出现异常现象；且询问过外网开发者，其表示没有听说过有人因为使用api查询而被封号。
 
 **如果您担心风险，请不要使用相关功能**！bot的`/vhelp`命令`/login`命令中有相关警告提示，使用即代表您同意了承担风险！
 
@@ -161,16 +150,16 @@ pip install -r requirements.txt
 ## 依赖
 
 由于本人压根没有系统的学过Python，所以本仓库的很多代码都是根据他人教程修改后使用的
-* 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的`kook sdk`以及使用教程
-* Valorant游戏`leaderboard`排行榜获取基于 [frissyn/valorant.py](https://github.com/frissyn/valorant.py/) 提供的`sdk`
-* Valorant游戏主要查询代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目提供的`api文档`
+* 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的  `kook sdk` 以及使用教程
+* Valorant游戏皮肤/捆绑包/玩家卡面等素材源自 [valorant-api.com](https://valorant-api.com/)
+* Valorant游戏主要商店查询代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目提供的 `api文档`
 * 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) 项目
 
 
 ### 特别鸣谢🎁
-* [@DeeChael](https://github.com/DeeChael) for helping me debug
-* [@Edint386](https://github.com/Edint386) for adding `PIL_code` for `/shop` 
-* [@staciax](https://github.com/staciax) for [Valorant-DiscordBot/issues/74](https://github.com/staciax/Valorant-DiscordBot/issues/74)
+* [@DeeChael](https://github.com/DeeChael) 帮我 debug
+* [@Edint386](https://github.com/Edint386) 帮助添加了 `PIL` 代码来进行 `/shop` 的画图 
+* [@staciax](https://github.com/staciax) for [Valorant-DiscordBot/issues/74](https://github.com/staciax/Valorant-DiscordBot/issues/74) & [issues/97](https://github.com/staciax/Valorant-DiscordBot/issues/97)
 
 
 ### 支持本项目😘
