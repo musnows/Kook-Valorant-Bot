@@ -73,6 +73,15 @@ async def Save_File_Task():
         print(err_cur)
         await bot.client.send(debug_ch,err_cur)
 
+@bot.command(name='kill')
+async def KillBot(msg:Message,*arg):
+    logging(msg)
+    if msg.author_id == master_id:
+        # 保存所有文件
+        await Save_All_File(False)
+        await msg.reply(f"[kill] 保存全局变量成功")
+        os._exit(0) # 退出程序
+
 ##########################################################################################
 ##########################################################################################
 
@@ -826,10 +835,11 @@ async def vip_roll(msg:Message,vday:int=7,vnum:int=5,rday:float=1.0):
     VipRollDcit[roll_send['msg_id']]['user']=list()
     print(f"[vip-roll] card message send to {msg.ctx.channel.id}")
     
-@bot.task.add_interval(minutes=1)
+@bot.task.add_interval(seconds=80)
 async def vip_roll_task():
     global VipRollDcit,VipUserDict
     viprolldict_temp = copy.deepcopy(VipRollDcit) #临时变量用于修改
+    log_str=''
     for msg_id,minfo in viprolldict_temp.items():
         if time.time()<minfo['time']:
             continue
