@@ -6,8 +6,7 @@ from khl import  Bot,Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key
-with open('./config/config.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
+from endpoints.FileManage import config
 # 彩云key
 CyKey = config['caiyun']
 

@@ -6,11 +6,7 @@ from khl.card import Card, CardMessage, Element, Module, Types
 from endpoints.Gtime import GetTime
 
 # 预加载文件
-with open("./log/color_idsave.json", 'r', encoding='utf-8') as frcl:
-    ColorIdDict = json.load(frcl)
-
-with open("./config/color_emoji.json", 'r', encoding='utf-8') as fremoji:
-    EmojiDict = json.load(fremoji)
+from endpoints.FileManage import SponsorDict,ColorIdDict,EmojiDict
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid: str, emoji: str):
@@ -22,9 +18,6 @@ def save_userid_color(userid: str, emoji: str):
         return flag
     #原有txt内没有该用户信息，进行追加操作
     ColorIdDict[userid] = emoji
-    with open("./log/color_idsave.json", 'w', encoding='utf-8') as fw2:
-        json.dump(ColorIdDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
     return flag
 
 
@@ -34,9 +27,6 @@ async def Color_SetGm(msg:Message,Card_Msg_id: str):
     EmojiDict['guild_id'] = msg.ctx.guild.id
     EmojiDict['msg_id'] = Card_Msg_id
     await msg.reply(f"颜色监听服务器更新为 {EmojiDict['guild_id']}\n监听消息更新为 {EmojiDict['msg_id']}\n")
-    with open("./log/color_emoji.json", 'w', encoding='utf-8') as fw2:
-        json.dump(EmojiDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
 
 # 给用户上角色
 async def Color_GrantRole(bot:Bot,event:Event):
@@ -90,9 +80,6 @@ async def Color_SetMsg(bot:Bot,msg:Message):
 
 #########################################感谢助力者###############################################
 
-# 预加载文件
-with open("./log/sponsor_roles.json", 'r', encoding='utf-8') as frsp:
-    SponsorDict = json.load(frsp)
 
 # 检查文件中是否有这个助力者的id
 def check_sponsor(it: dict):
@@ -105,8 +92,6 @@ def check_sponsor(it: dict):
 
     #原有txt内没有该用户信息，进行追加操作
     SponsorDict[it['id']] = it['nickname']
-    with open("./log/sponsor_roles.json", 'w', encoding='utf-8') as fw2:
-        json.dump(SponsorDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
     return flag
 

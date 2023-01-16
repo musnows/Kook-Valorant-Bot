@@ -3,8 +3,7 @@ import random
 from khl.card import Card,CardMessage,Module,Element,Types
 
 # 皮肤的评价
-with open("./log/ValSkinRate.json", 'r', encoding='utf-8') as frsl:
-    SkinRateDict = json.load(frsl)
+from endpoints.FileManage import SkinRateDict
 
 async def get_shop_rate_cm(list_shop:dict,kook_user_id:str,cm:CardMessage):
     #皮肤评分和评价，用户不在err_user里面才显示
