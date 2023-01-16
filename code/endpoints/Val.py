@@ -404,7 +404,7 @@ async def get_reward(reward):
 # 创建一个玩家任务和通信证的卡片消息
 async def create_cm_contract(msg: Message):
     # 预加载用户token(其实已经没用了)
-    with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
+    with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
         UserTokenDict = json.load(frau)
         
     userdict = UserTokenDict[msg.author_id]

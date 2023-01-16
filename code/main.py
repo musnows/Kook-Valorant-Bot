@@ -35,7 +35,7 @@ from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
 from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 from endpoints.ShopRate import SkinRateDict,get_shop_rate_cm,check_shop_rate
 from endpoints.ShopImg import get_shop_img_11,get_shop_img_169,img_requestor
-from endpoints.LocalFileUpd import update_bundle_url,update_price,update_skins
+from endpoints.ValFileUpd import update_bundle_url,update_price,update_skins
 
 # bot的token文件
 with open('./config/config.json', 'r', encoding='utf-8') as f:
