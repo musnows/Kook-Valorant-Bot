@@ -19,11 +19,6 @@ KOOK(once called kaiheila) is a Chinese voice communication software.
 
 >Because this bot are only used in Chinese platform,so I didn't write a more detail Readme in English.Sorry for that
 
-I just develop basic `/login` and `/shop` to fetch daily shop, hoping it's save for using 
-
-* night market check as `/night` command was publish at `v0.2.4`
-
-----
 
 ## Command
 
@@ -59,9 +54,9 @@ Recommended to use after the Valorant_Function is stable.
 |`/rts NO. point comment`|select skin_no. to rate a point(0~100) and leave a comment to it|
 |`/kkn`|checkout yesterday's heighest/lowest rate_point of daily shop |
 
-notify function require user to stay `login`, bot wil fetch your daily shop at `08:01AM GMT+8` .If the skin is in daily shop, bot will send a private message to user.
+notify function require user to stay `login`, bot wil fetch your daily shop at `08:00AM GMT+8` .If the skin is in daily shop, bot will send a private message to user.
 
-If the user is a vip, the bot will also send the full picture of the store on that day through private message.
+If the user is a vip, the bot will also send the full picture of the daily-shop on that day through private message.
 
 >Because the bot is only using in Chinese platform, the skin `name` only support `zh-TW`
 
@@ -93,56 +88,42 @@ You can find image examples for the functions in [screenshot](./screenshot) flod
 
 <img src="./screenshot/night.png" height="300px" alt="night">
 
+<img src="./screenshot/val_api_img.png" height="300px" alt="api_shop_img">
+
 </details>
 
-For more guild and information, check out [wiki pages](https://github.com/Aewait/Valorant-kaiheila-bot/wiki)
 
 ----
 
-## Breaking Changes at `V0.2.0`
-First Breaking Changes for bot
-## 1. publish vip!
-### 1.1 add vip daily shop reply 
-vip user will get different daily shop reply from bot.
-* normal user get `1000*1000` img
-* vip user get `1280*720` img
+## How to used?
 
-this background can be modified by vip-user,using picture they liked!
 
-<img src="./screenshot/vip_daily_shop.png" height="290px" alt="vip_shop">
+make sure your Windows/Linux `Python` version `3.8+`
 
-### 1.2 add special command for vip user
-* `vip-u`: get vip from uuid
-* `vip-c`: check remaining time for vip
-* `vip-l`: list vip user
-* `vip-shop`: vip user can modify their background of daily shop
+~~~
+pip install -r requirements.txt
+~~~
 
-### 1.3 more great fuctions!
-* vip user will get automatic daily shop reply at `8AM BJS`
-* bot will log vip user daily shop img, next time when vip user use `/shop` command, bot will upload it from local path instead of drawing the img,which will save `2-3s` of response time
-* using `aiohttp cookie_jar` to save vip user cookie, don't need to login again when bot restart because of maintenance。
+It is highly recommand to checkout [khl.py/example](https://github.com/TWT233/khl.py/tree/main/example) first for basic kook bot init
 
-## 2. other changes
-* `add_date` will fetch `debug_channel` at start,don't need to fetch every time when exception
-* change err reply to card message, bot will update msg instead of replying a new one when using `/shop` or `/uinfo`
-* add `class icon` for easy manage icon-url
+If you want to use this bot, go [WIKI](https://github.com/Aewait/Valorant-kaiheila-bot/wiki) for more infomation
+
 
 ---
 
 ## About
 
 Many codes in this repo are modified and used according to others' tutorials
-* KOOK_api base on [khl.py](https://github.com/TWT233/khl.py)
-* ValorantGameApi base on [frissyn/valorant.py](https://github.com/frissyn/valorant.py/)
+* KOOK Bot base on [khl.py](https://github.com/TWT233/khl.py)
+* Valorant Skin Api base on [valorant-api.com](https://valorant-api.com/)
 * Main fetch_code base on [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI)
-* Fetch riot_auth_token base on [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth)
+* Fetch riot_auth_token base on [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) & 
 
 
 ### Special Thanks🎁
 * [@DeeChael](https://github.com/DeeChael) for helping me debug
 * [@Edint386](https://github.com/Edint386) for adding PIL_code for `/shop` 
-* [@staciax](https://github.com/staciax) for [Valorant-DiscordBot/issues/74](https://github.com/staciax/Valorant-DiscordBot/issues/74)
+* [@staciax](https://github.com/staciax) for [Valorant-DiscordBot/issues/74](https://github.com/staciax/Valorant-DiscordBot/issues/74) & [issues/97](https://github.com/staciax/Valorant-DiscordBot/issues/97)
 
 
 If you like this project,please hit a star!✨
-> sorry for my poor English
