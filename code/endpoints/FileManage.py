@@ -30,18 +30,40 @@ class FileManage:
         global FileList
         FileList.append(self)
     
-    # 操作符重载
+    # []操作符重载
     def __getitem__(self,index):
         return self.value[index]
     # 打印重载
     def __str__(self) -> str:
-        return str(self.value)
+        return str(self.value) 
+    # 删除成员
+    def __delitem__(self,index):
+        del self.value[index]
+    # 长度
+    def __len__(self):
+        return len(self.value)
+    # 索引赋值 x[i] = 1
+    def __setitem__(self,index,value):
+        self.value[index] = value
+    # 迭代
+    def __iter__(self):
+        return self.value.__iter__()
+    def __next__(self):
+        return self.value.__next__()
+
     # 获取成员
     def get_instance(self):
         return self.value
     # 遍历dict
     def items(self):
         return self.value.items()
+    # 追加
+    def append(self):
+        self.value.append()
+    # list的删除
+    def remove(self,i):
+        self.value.remove(i)
+
     # 保存
     def save(self):
         with open(self.path, 'w', encoding='utf-8') as fw:
