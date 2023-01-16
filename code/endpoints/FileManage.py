@@ -18,6 +18,20 @@ def write_file(path:str, value):
     with open(path, 'w', encoding='utf-8') as fw2:
         json.dump(value, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
+# 保存所有文件
+async def Save_All_File():
+    log_text ='[Save.All.File] '
+    for i in FileList:
+        try:
+            await i.save_aio()
+            log_text+=f"({i.path}) "
+        except:
+            print(f"ERR! [{GetTime()}] [Save.All.File] {i.path}\n{traceback.format_exc()}")
+
+    log_text+=f"save success at [{GetTime()}]"
+    print(log_text)
+
+# 文件管理类
 class FileManage:
     # 初始化构造
     def __init__(self,path:str) -> None:
@@ -103,17 +117,3 @@ VipUuidDict = FileManage("./log/VipUuid.json")         # vip uuid文件
 VipUserDict = FileManage("./log/VipUser.json")         # vip 用户列表
 VipShopBgDict = FileManage("./log/VipUserShopBg.json") # vip 背景图设置；商店图缓存
 VipRollDcit = FileManage("./log/VipRoll.json")         # vip 抽奖信息
-
-
-# 保存所有文件
-async def Save_All_File():
-    log_text ='[Save.All.File] '
-    for i in FileList:
-        try:
-            await i.save_aio()
-            log_text+=f"({i.path}) "
-        except:
-            print(f"ERR! [{GetTime()}] [Save.All.File] {i.path}\n{traceback.format_exc()}")
-
-    log_text+=f"save success at [{GetTime()}]"
-    print(log_text)
