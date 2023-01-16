@@ -39,6 +39,9 @@ class FileManage:
     # 获取成员
     def get_instance(self):
         return self.value
+    # 遍历dict
+    def items(self):
+        return self.value.items()
     # 保存
     def save(self):
         with open(self.path, 'w', encoding='utf-8') as fw:
