@@ -20,7 +20,6 @@ def write_file(path:str, value):
 
 # 保存所有文件
 async def Save_All_File(is_Aio=True):
-    print('[Save.All.File.Aio] start!')
     for i in FileList:
         try:
             if is_Aio:
@@ -30,7 +29,7 @@ async def Save_All_File(is_Aio=True):
         except:
             print(f"ERR! [{GetTime()}] [Save.All.File] {i.path}\n{traceback.format_exc()}")
 
-    print(f"[Save.All.File.Aio] save success at [{GetTime()}]")
+    print(f"[Save.All.File] save finished at [{GetTime()}]")
 
 # 文件管理类
 class FileManage:
