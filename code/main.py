@@ -1379,7 +1379,7 @@ def is_CacheLatest(kook_user_id:str):
         is_Today = (VipShopBgDict['cache'][kook_user_id]['cache_time']-GetTimeStampOf8AM())>=0 
         is_Cache = VipShopBgDict['cache'][kook_user_id]['cache_img'] != None
         return is_Today and is_Status and is_Cache# 有一个为false，结果就是false
-    else:# 如果不在，初始化为none
+    else:# 如果不在，初始化为none，时间戳为0
         VipShopBgDict['cache'][kook_user_id] = {'cache_time':0,'cache_img':None}
     return False 
 
@@ -1476,10 +1476,14 @@ async def get_daily_shop(msg: Message, *arg):
                 bg.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
                 dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
-                if is_vip: #vip缓存图片+设置状态
-                    if msg.author_id in VipShopBgDict['bg']: VipShopBgDict['bg'][msg.author_id]['status'] = True
-                    VipShopBgDict['cache'][msg.author_id]['cache_img'] = dailyshop_img_src #设置图片url
-                    VipShopBgDict['cache'][msg.author_id]['cache_time'] = time.time() #设置图片缓存的时间
+                if is_vip: # 如果在bg里面代表有自定义背景图，需更新status
+                    if msg.author_id in VipShopBgDict['bg']: 
+                        VipShopBgDict['bg'][msg.author_id]['status'] = True
+                    # 设置商店图片缓存+图片缓存的时间
+                    VipShopBgDict['cache'][msg.author_id] = {
+                        'cache_img':dailyshop_img_src,
+                        'cache_time':time.time() 
+                    }
             # 结束shop的总计时，结果为浮点数，保留两位小数
             shop_using_time = format(time.perf_counter() - start, '.2f')
             
@@ -2168,9 +2172,10 @@ async def auto_skin_notify():
                             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
                             print(log_time)
                             dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
-                            VipShopBgDict['cache'][vip] = {}
-                            VipShopBgDict['cache'][vip]['cache_img'] = dailyshop_img_src # 缓存图片url
-                            VipShopBgDict['cache'][vip]['cache_time'] = time.time() #设置图片缓存的时间
+                            VipShopBgDict['cache'][vip] = {
+                                'cache_img':dailyshop_img_src,
+                                'cache_time':time.time() 
+                            }# 缓存图片的url+设置图片缓存的时间
                             if vip in VipShopBgDict['bg']: VipShopBgDict['bg'][vip]['status'] = True
                         else:  #如果图片没有正常返回，那就发送文字版本
                             shop_text = ""
