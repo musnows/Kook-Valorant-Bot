@@ -1094,9 +1094,9 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
             global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
             if msg.author_id in VipShopBgDict['bg']:
                 VipShopBgDict['bg'][msg.author_id]['status']=False
-            if not tfa:#如果没有使用2fa接口，那就保存cookie
-                cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
-                res_auth._cookie_jar.save(cookie_path)#保存
+            # 现在2fa用户也能保存登录信息了
+            cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
+            res_auth._cookie_jar.save(cookie_path)#保存
 
         # 全部都搞定了，打印登录信息
         print(
