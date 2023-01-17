@@ -14,7 +14,7 @@
 
 
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
-[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 
 <img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
@@ -153,7 +153,7 @@ pip install -r requirements.txt
 * 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的  `kook sdk` 以及使用教程
 * Valorant游戏皮肤/捆绑包/玩家卡面等素材源自 [valorant-api.com](https://valorant-api.com/)
 * Valorant游戏主要商店查询代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目提供的 `api文档`
-* 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) 项目
+* 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) & [Prodzify/Riot-auth](https://github.com/Prodzify/Riot-auth)
 
 
 ### 特别鸣谢🎁

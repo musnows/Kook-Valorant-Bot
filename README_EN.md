@@ -10,7 +10,7 @@ Kook-Valorant-Bot</h1>
 English | [简体中文](./README.md)
 
 ![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
-[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3566823018281801&style=3)](https://kaihei.co/oqz7Xg) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
 
 <img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
@@ -117,7 +117,7 @@ Many codes in this repo are modified and used according to others' tutorials
 * KOOK Bot base on [khl.py](https://github.com/TWT233/khl.py)
 * Valorant Skin Api base on [valorant-api.com](https://valorant-api.com/)
 * Main fetch_code base on [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI)
-* Fetch riot_auth_token base on [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) & 
+* Fetch riot_auth_token base on [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) & [Prodzify/Riot-auth](https://github.com/Prodzify/Riot-auth)
 
 
 ### Special Thanks🎁
