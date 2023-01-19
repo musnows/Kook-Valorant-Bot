@@ -127,3 +127,4 @@ VipUuidDict = FileManage("./log/VipUuid.json")          # vip uuid文件
 VipUserDict = FileManage("./log/VipUser.json")          # vip 用户列表
 VipShopBgDict = FileManage("./log/VipUserShopBg.json")  # vip 背景图设置；商店图缓存
 VipRollDcit = FileManage("./log/VipRoll.json")          # vip 抽奖信息
+AfdWebhook = FileManage("./log/AfdWebhook.json")        # 爱发电的wh请求

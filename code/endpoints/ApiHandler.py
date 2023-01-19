@@ -141,3 +141,34 @@ async def tfa_code_requeset(request):
     User2faCode[key]['vcode'] = vcode
     User2faCode[key]['2fa_status'] = True
     return {'code':0,'message':'email verify code post success,wait for shop img return','info':'两步验证码获取成功，请等待主接口返回','vcode':vcode}
+
+from endpoints.FileManage import AfdWebhook
+from main import bot,debug_ch,CardMessage,Card,Module,Types
+# 爱发电webhook
+async def afd_request(request):
+    params = request.rel_url.query
+    global AfdWebhook
+    AfdWebhook.append(params)
+
+    text =f"用户 {params['data']['order']['user_id']}\n"
+    for i in params['data']['order']['sku_detail']:
+        text+=f"发电了{i['count']}个 {i['name']}\n"
+    text+=f"共计 {params['data']['order']['total_amount']} 猿"
+
+    trno = params['data']['order']['our_trade_no']
+    trno_f = trno[0:7]
+    trno_b = trno[-4:]
+    trno_f+="####"
+    trno_f+=trno_b
+
+    cm = CardMessage()
+    c = Card(
+        Module.Header(f"[{GetTime()}] 爱发电有新动态啦！"),
+        Module.Context(f"订单号:{trno_f}"),
+        Module.Divider(),
+        Module.Section(text,Types.Text.KMD)
+    )
+    cm.append(c)
+    await bot.client.send(debug_ch,cm)
+    print(f"[{GetTime()}] trno:{params['data']['order']['our_trade_no']} afd-cm-send")
+    return {"ec":200,"em":""} 
