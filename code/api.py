@@ -43,7 +43,7 @@ async def get_dailshop_img(request):
         return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{err_cur}'},ensure_ascii=False), content_type='application/json')
 
 @routes.post('/tfa')
-async def get_dailshop_img(request):
+async def post_tfa_code(request):
     print(f"[{GetTime()}] [request] /tfa")
     try:
         ret = await tfa_code_requeset(request)
