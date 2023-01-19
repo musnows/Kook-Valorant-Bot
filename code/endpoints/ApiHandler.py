@@ -157,7 +157,7 @@ async def afd_request(request):
 
     trno = params['data']['order']['our_trade_no']
     trno_f = trno[0:7]
-    trno_b = trno[len(trno)-4:]
+    trno_b = trno[-4:]
     trno_f+="####"
     trno_f+=trno_b
 
