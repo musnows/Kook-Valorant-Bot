@@ -2,7 +2,7 @@ import json
 import traceback
 from aiohttp import web
 from endpoints.Gtime import GetTime
-from endpoints.ApiHandler import base_img_request,tfa_code_requeset
+from endpoints.ApiHandler import base_img_request,tfa_code_requeset,afd_request
 
 # 初始化节点
 routes = web.RouteTableDef()
@@ -53,8 +53,19 @@ async def get_dailshop_img(request):
         print(f"[{GetTime()}] [Api] ERR in /tfa\n{err_cur}")
         return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{err_cur}'},ensure_ascii=False), content_type='application/json')
     
+@routes.post('/afd')
+async def aifadian_webhook(request):
+    print(f"[{GetTime()}] [request] /afd")
+    try:
+        ret = await afd_request(request)
+        return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
+    except:
+        err_cur = traceback.format_exc()
+        print(f"[{GetTime()}] [Api] ERR in /afd\n{err_cur}")
+        return web.Response(body=json.dumps({"ec":0,"em":"err ouccer"},ensure_ascii=False), content_type='application/json')
+
 
 print(f"[API Start] starting at {GetTime()}")
 app = web.Application()
 app.add_routes(routes)
-# web.run_app(app, host='127.0.0.1', port=14725)
+web.run_app(app, host='127.0.0.1', port=14726)
