@@ -143,10 +143,11 @@ async def tfa_code_requeset(request):
     return {'code':0,'message':'email verify code post success,wait for shop img return','info':'两步验证码获取成功，请等待主接口返回','vcode':vcode}
 
 from endpoints.FileManage import AfdWebhook
-from main import bot,debug_ch,CardMessage,Card,Module,Types
+from khl.card import CardMessage,Card,Module,Types,Element
 # 爱发电webhook
-async def afd_request(request):
-    params = request.rel_url.query
+async def afd_request(request,bot):
+    body = await request.content.read()
+    params = json.loads(body.decode('UTF8'))
     global AfdWebhook
     AfdWebhook.append(params)
 
@@ -155,20 +156,22 @@ async def afd_request(request):
         text+=f"发电了{i['count']}个 {i['name']}\n"
     text+=f"共计 {params['data']['order']['total_amount']} 猿"
 
-    trno = params['data']['order']['our_trade_no']
-    trno_f = trno[0:7]
+    trno = params['data']['order']['out_trade_no']
+    trno_f = trno[0:8]
     trno_b = trno[-4:]
     trno_f+="####"
     trno_f+=trno_b
 
     cm = CardMessage()
     c = Card(
-        Module.Header(f"[{GetTime()}] 爱发电有新动态啦！"),
-        Module.Context(f"订单号:{trno_f}"),
+        Module.Header(f"爱发电有新动态啦！"),
+        Module.Context(Element.Text(f"订单号: {trno_f}")),
         Module.Divider(),
-        Module.Section(text,Types.Text.KMD)
+        Module.Section(Element.Text(text, Types.Text.KMD))
     )
     cm.append(c)
+    #print(json.dumps(cm))
+    debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
     await bot.client.send(debug_ch,cm)
-    print(f"[{GetTime()}] trno:{params['data']['order']['our_trade_no']} afd-cm-send")
-    return {"ec":200,"em":""} 
+    print(f"[{GetTime()}] trno:{params['data']['order']['out_trade_no']} afd-cm-send")
+    return {"ec":200,"em":"success"} 

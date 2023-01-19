@@ -53,11 +53,13 @@ async def get_dailshop_img(request):
         print(f"[{GetTime()}] [Api] ERR in /tfa\n{err_cur}")
         return web.Response(body=json.dumps({'code':200,'message': 'unkown err','info':f'未知错误','except':f'{err_cur}'},ensure_ascii=False), content_type='application/json')
     
+from main import bot
+# 爱发电的wh
 @routes.post('/afd')
 async def aifadian_webhook(request):
     print(f"[{GetTime()}] [request] /afd")
     try:
-        ret = await afd_request(request)
+        ret = await afd_request(request,bot)
         return web.Response(body=json.dumps(ret,ensure_ascii=False), content_type='application/json')
     except:
         err_cur = traceback.format_exc()
