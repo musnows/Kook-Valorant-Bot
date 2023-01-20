@@ -155,8 +155,8 @@ async def afd_request(request,bot):
     if 'plan_title' in params['data']['order']:
         text =f"商品 {params['data']['order']['plan_title']}\n" 
     user_id = params['data']['order']['user_id']
-    user_id = user_id[:6]
-    text+=f"用户 {params['data']['order']['user_id']}\n"
+    user_id = user_id[0:6]
+    text+=f"用户 {user_id}\n"
     for i in params['data']['order']['sku_detail']:
         text+=f"发电了{i['count']}个 {i['name']}\n"
     text+=f"共计 {params['data']['order']['total_amount']} 猿"
