@@ -11,8 +11,9 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 
 | 接口 | 说明                  | 状态 |
 | ---------- | --------------------- | -------- |
-| /shop-img  | 直接返回并跳转商店的图片  | 正常   |
-| /shop-url  | 以`json`格式返回商店图片url  | 正常   |
+| /shop-img  | 登录，直接返回并跳转商店的图片  | 正常   |
+| /shop-url  | 登录，以`json`格式返回商店图片url  | 正常   |
+| /shop-draw  | 无需登录，提供4个皮肤uuid 返回图片url  | 开放测试   |
 | /tfa  | 邮箱验证接口，需和`/shop-url`接口配合使用 | 正常   |
 
 
@@ -75,7 +76,7 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 
 注：只有`code 0`才是获取正常，`200/400` 都是有错误，会返回错误的原因。
 
-### 3.1 /shop-url
+### 3.1 shop-url
 
 如果你是开发者，请使用`/shop-url`来获取`json`格式的结果
 
@@ -105,7 +106,7 @@ https://val.outpost54.top/shop-url
 }
 ~~~
 
-### 3.2 /tfa
+### 3.2 tfa
 
 此接口用于两步验证，适用于开启了邮箱验证的用户；
 
@@ -134,6 +135,47 @@ https://val.outpost54.top/tfa
 }
 ~~~
 
+### 3.3 shop-draw
+
+这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户商店皮肤/vp/rp后，再调用，直接返回图片url
+
+请求方法：`GET`
+
+| params参数 | 说明                  | 是否必填 |
+| ---------- | --------------------- | -------- |
+| token      | API token             | 是       |
+| list_shop    | 4个皮肤uuid组成的dict   | 是       |
+| vp   | vp | 否       |
+| rp   | rp  | 否       |
+| img_src    | 自定义背景图的url链接 | 否       |
+| img_ratio    | 自定义背景图比例，值为1代表正方形 | 否       |
+
+其中 `list_shop` 为riot商店返回值中的以下字段，传入 `["SkinsPanelLayout"]["SingleItemOffers"]` 即可
+
+```json
+{
+  "SkinsPanelLayout":{
+    "SingleItemOffers":[
+       "4875e120-4d7d-aa2a-71c5-c0851c4af00d",
+       "5ac106cd-45ef-a26f-2058-f382f20c64db",
+       "c7695ce7-4fc9-1c79-64b3-8c8f9e21571c",
+       "f35f6e13-4b7b-da38-c0de-5c91fffd584b"
+    ],
+    "SingleItemOffersRemainingDurationInSeconds":60193
+  }
+}
+```
+
+vp/rp只有16-9的图片需要，如果设置了`img_ratio`为1，则无需给予vp/rp参数
+
+返回示例
+~~~json
+{
+    "code": 0, 
+    "message": "https://img.kaiheila.cn/attachments/2022-10/12/1GaII87UTd0zk0k0.png", 
+    "info": "商店图片获取成功"
+}
+~~~
 
 ## 4.Python示例代码
 
