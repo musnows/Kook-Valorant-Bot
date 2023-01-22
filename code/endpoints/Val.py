@@ -4,19 +4,10 @@ import aiohttp
 from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
-# 用读取来的 config 初始化 bot，字段对应即可
-with open('./config/config.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
-
-bot = Bot(token=config['token'])
-
+# 预加载文件
+from endpoints.FileManage import GameIdDict, ValErrDict, ValBundleList,ValItersList,ValPriceList,ValSkinList
 
 ####################################保存用户的游戏ID操作#######################################
-
-# 预加载文件
-with open("./log/game_idsave.json", 'r', encoding='utf-8') as frgm:
-    GameIdDict = json.load(frgm)
-
 
 #保存用户id
 async def saveid_main(msg: Message, game_id: str):
@@ -32,9 +23,6 @@ async def saveid_main(msg: Message, game_id: str):
     if flag == 0:
         GameIdDict[msg.author_id] = game_id
         await msg.reply(f"本狸已经记下你的游戏id喽~")
-    # 修改/新增都需要写入文件
-    with open("./log/game_idsave.json", 'w', encoding='utf-8') as fw2:
-        json.dump(GameIdDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
 # 显示已有id的个数
 async def saveid_count(msg: Message):
@@ -54,9 +42,6 @@ async def myid_main(msg: Message):
 
 ####################################  err code  ################################################
 
-# 预加载文件
-with open("./log/ValErrCode.json", 'r', encoding='utf-8') as frgm:
-    ValErrDict = json.load(frgm)
 
 # 查询游戏错误码
 async def val_errcode(msg: Message, num: str = "-1"):
@@ -76,19 +61,6 @@ async def dx123(msg: Message):
 
 
 ###################################### local files search ######################################################
-
-# 所有皮肤
-with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
-    ValSkinList = json.load(frsk)
-# 所有商品价格
-with open("./log/ValPrice.json", 'r', encoding='utf-8') as frpr:
-    ValPriceList = json.load(frpr)
-# 所有捆绑包的图片
-with open("./log/ValBundle.json", 'r', encoding='utf-8') as frbu:
-    ValBundleList = json.load(frbu)
-# 所有物品等级（史诗/传说）
-with open("./log/ValIters.json", 'r', encoding='utf-8') as frrk:
-    ValItersList = json.load(frrk)
 
 #从list中获取价格
 def fetch_item_price_bylist(item_id):
@@ -127,6 +99,19 @@ def fetch_skin_iters_bylist(item_id):
         if it['levels'][0]['uuid'] == item_id:
             res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
             return res_iters
+
+
+# 用名字查询捆绑包包含什么枪
+async def fetch_bundle_weapen_byname(name):
+    # 捆绑包的所有皮肤
+    WeapenList = list()
+    for skin in ValSkinList['data']:
+        if name in skin['displayName']:
+            # 为了方便查询价格，在这里直接把skin的lv0-uuid也给插入进去
+            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
+            WeapenList.append(data)
+
+    return WeapenList
 
 ####################################################################################################
 ###################https://github.com/HeyM1ke/ValorantClientAPI#####################################
@@ -291,21 +276,6 @@ async def fetch_contract_uuid(id):
     return res_con
 
 
-# 用名字查询捆绑包包含什么枪
-async def fetch_bundle_weapen_byname(name):
-    # 所有皮肤
-    with open("./log/ValSkin.json", 'r', encoding='utf-8') as frsk:
-        ValSkinList = json.load(frsk)
-
-    WeapenList = list()
-    for skin in ValSkinList['data']:
-        if name in skin['displayName']:
-            # 为了方便查询价格，在这里直接把skin的lv0-uuid也给插入进去
-            data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
-            WeapenList.append(data)
-
-    return WeapenList
-
 
 # 获取玩家卡面，uuid
 async def fetch_playercard_uuid(id):
@@ -404,7 +374,7 @@ async def get_reward(reward):
 # 创建一个玩家任务和通信证的卡片消息
 async def create_cm_contract(msg: Message):
     # 预加载用户token(其实已经没用了)
-    with open("./log/UserAuth.json", 'r', encoding='utf-8') as frau:
+    with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
         UserTokenDict = json.load(frau)
         
     userdict = UserTokenDict[msg.author_id]

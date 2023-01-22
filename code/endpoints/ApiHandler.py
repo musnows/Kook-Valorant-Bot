@@ -11,14 +11,10 @@ from endpoints.ShopImg import get_shop_img_11,get_shop_img_169
 
 TOKEN_RATE_LIMITED = 10
 # bot的token文件
-with open('./config/config.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
-# 之前没有处理完毕的2fa用户信息
-with open("./log/Api2fa.json", 'r', encoding='utf-8') as frpr:
-    Api2faDict = json.load(frpr)
+from endpoints.FileManage import config
 # 用来给kook上传文件的bot token
 api_bot_token = config['api_bot_token']
-
+Api2faDict = {'data':{}} # 保存2fa用户登录的过程信息
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
@@ -145,3 +141,42 @@ async def tfa_code_requeset(request):
     User2faCode[key]['vcode'] = vcode
     User2faCode[key]['2fa_status'] = True
     return {'code':0,'message':'email verify code post success,wait for shop img return','info':'两步验证码获取成功，请等待主接口返回','vcode':vcode}
+
+from endpoints.FileManage import AfdWebhook
+from khl.card import CardMessage,Card,Module,Types,Element
+# 爱发电webhook
+async def afd_request(request,bot):
+    body = await request.content.read()
+    params = json.loads(body.decode('UTF8'))
+    global AfdWebhook
+    AfdWebhook.append(params)
+
+    text=""
+    if 'plan_title' in params['data']['order']:
+        text =f"商品 {params['data']['order']['plan_title']}\n" 
+    user_id = params['data']['order']['user_id']
+    user_id = user_id[:6]
+    text+=f"用户 {params['data']['order']['user_id']}\n"
+    for i in params['data']['order']['sku_detail']:
+        text+=f"发电了{i['count']}个 {i['name']}\n"
+    text+=f"共计 {params['data']['order']['total_amount']} 猿"
+
+    trno = params['data']['order']['out_trade_no']
+    trno_f = trno[0:8]
+    trno_b = trno[-4:]
+    trno_f+="####"
+    trno_f+=trno_b
+
+    cm = CardMessage()
+    c = Card(
+        Module.Header(f"爱发电有新动态啦！"),
+        Module.Context(Element.Text(f"订单号: {trno_f}")),
+        Module.Divider(),
+        Module.Section(Element.Text(text, Types.Text.KMD))
+    )
+    cm.append(c)
+    #print(json.dumps(cm))
+    debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
+    await bot.client.send(debug_ch,cm)
+    print(f"[{GetTime()}] trno:{params['data']['order']['out_trade_no']} afd-cm-send")
+    return {"ec":200,"em":"success"} 

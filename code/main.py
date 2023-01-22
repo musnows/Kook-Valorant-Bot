@@ -35,11 +35,10 @@ from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user,
 from endpoints.Translate import ListTL,translate_main,Shutdown_TL,checkTL,Open_TL,Close_TL
 from endpoints.ShopRate import SkinRateDict,get_shop_rate_cm,check_shop_rate
 from endpoints.ShopImg import get_shop_img_11,get_shop_img_169,img_requestor
-from endpoints.LocalFileUpd import update_bundle_url,update_price,update_skins
+from endpoints.ValFileUpd import update_bundle_url,update_price,update_skins
 
 # bot的token文件
-with open('./config/config.json', 'r', encoding='utf-8') as f:
-    config = json.load(f)
+from endpoints.FileManage import config,Save_All_File
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
 # 只用来上传图片的bot
@@ -52,6 +51,8 @@ kook_headers = {f'Authorization': f"Bot {config['token']}"}
 #在bot一开机的时候就获取log频道作为全局变量
 debug_ch = None
 cm_send_test = None
+#记录开机时间
+start_time = GetTime()
 
 
 # 向botmarket通信
@@ -62,12 +63,27 @@ async def botmarket():
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
 
+# 每5分钟保存一次文件
+@bot.task.add_interval(minutes=5)
+async def Save_File_Task():
+    try:
+        await Save_All_File()
+    except:
+        err_cur = f"ERR! [{GetTime()}] [Save.File.Task]\n{traceback.format_exc()}"
+        print(err_cur)
+        await bot.client.send(debug_ch,err_cur)
+
+@bot.command(name='kill')
+async def KillBot(msg:Message,*arg):
+    logging(msg)
+    if msg.author_id == master_id:
+        # 保存所有文件
+        await Save_All_File(False)
+        await msg.reply(f"[kill] 保存全局变量成功")
+        os._exit(0) # 退出程序
 
 ##########################################################################################
 ##########################################################################################
-
-#记录开机时间
-start_time = GetTime()
 
 # 拳头api调用被禁止的时候用这个变量取消所有相关命令
 Login_Forbidden = False
@@ -380,6 +396,15 @@ async def dx(msg: Message):
 
 ###########################################vip######################################################
 
+#用来存放roll的频道/服务器/回应用户的dict
+from endpoints.FileManage import VipShopBgDict,VipRollDcit
+
+#定期检查图片是否没问题
+#下图用于替换违规的vip图片
+illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
+illegal_img_169 = "https://img.kookapp.cn/assets/2022-09/CVWFac7CJG0zk0k0.png"
+
+
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
 async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
@@ -460,17 +485,6 @@ async def list_vip_user(msg: Message, *arg):
         await msg.reply(err_str)
 
 
-# vip用户商店自定义图片
-VipShopBgDict = {}
-with open("./log/VipUserShopBg.json", 'r', encoding='utf-8') as frau:
-    VipShopBgDict = json.load(frau)
-
-#定期检查图片是否没问题
-#下图用于替换违规的vip图片
-illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
-illegal_img_169 = "https://img.kookapp.cn/assets/2022-09/CVWFac7CJG0zk0k0.png"
-
-
 #替换掉违规图片（传入list的下标)
 async def replace_illegal_img(user_id: str, num: int):
     """
@@ -482,8 +496,6 @@ async def replace_illegal_img(user_id: str, num: int):
         img_str = VipShopBgDict['bg'][user_id]["background"][num]
         VipShopBgDict['bg'][user_id]["background"][num] = illegal_img_169
         VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
-        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
@@ -533,8 +545,6 @@ async def check_vip_img():
             log_str_user+=f"({vip_user})"
             #print(f"[BOT.TASK] check_vip_img Au:{vip_user} finished!")
         #所有用户成功遍历后，写入文件
-        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         #打印
         print(log_str_user)
         print("[BOT.TASK] check_vip_img finished!")
@@ -681,9 +691,6 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         #然后阿狸在进行回应
         await msg.reply(cm)
 
-        # 修改/新增都需要写入文件
-        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         # 打印用户新增的图片日后用于排错
         print(f"[vip-shop] Au:{msg.author_id} add ", x3)
 
@@ -742,9 +749,6 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
         #然后阿狸在进行回应
         await msg.reply(cm)
 
-        # 修改/新增都需要写入文件
-        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict['bg'][msg.author_id]['background'][0]}]")
     except requester.HTTPRequester.APIRequestFailed as result:
         await APIRequestFailed_Handler("vip_shop_s",traceback.format_exc(),msg,bot,None,cm)
@@ -784,38 +788,29 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
         #然后阿狸在进行回应
         await msg.reply(cm)
 
-        # 修改/新增都需要写入文件
-        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
     except requester.HTTPRequester.APIRequestFailed as result:
         await APIRequestFailed_Handler("vip_shop_d",traceback.format_exc(),msg,bot,None,cm)
     except Exception as result:
         await BaseException_Handler("vip_shop_d",traceback.format_exc(),msg,bot,None,cm,"您可能需要重新执行操作")
 
-#用来存放roll的频道/服务器/回应用户的dict
-RollVipDcit={}
-with open("./log/VipRoll.json", 'r', encoding='utf-8') as frau:
-    RollVipDcit = json.load(frau)
+
 
 # 判断消息的emoji回应，并记录id
 @bot.on_event(EventTypes.ADDED_REACTION)
 async def vip_roll_log(b: Bot, event: Event):
-    global RollVipDcit
-    if event.body['msg_id'] not in RollVipDcit:
+    global VipRollDcit
+    if event.body['msg_id'] not in VipRollDcit:
         return
     else:
         user_id = event.body['user_id']
         # 把用户id添加到list中
         log_str = f"[vip-roll-log] Au:{user_id} roll_msg:{event.body['msg_id']}"
-        if user_id not in RollVipDcit[event.body['msg_id']]['user']:
-            RollVipDcit[event.body['msg_id']]['user'].append(user_id)
+        if user_id not in VipRollDcit[event.body['msg_id']]['user']:
+            VipRollDcit[event.body['msg_id']]['user'].append(user_id)
             channel = await bot.client.fetch_public_channel(event.body['channel_id'])
             await bot.client.send(channel,f"[添加回应]->抽奖参加成功！", temp_target_id=event.body['user_id'])
             log_str +=" Join"#有join的才是新用户
-            #用户不在才有变动，写入文件
-            with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
-                json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         
         print(log_str)
         
@@ -827,39 +822,38 @@ async def vip_roll(msg:Message,vday:int=7,vnum:int=5,rday:float=1.0):
         await msg.reply(f"您没有权限执行本命令")
         return
     # 设置开始抽奖
-    global RollVipDcit
+    global VipRollDcit
     cm = roll_vip_start(vnum,vday,rday)
     roll_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
     roll_send = await bot.client.send(roll_ch,cm)
-    RollVipDcit[roll_send['msg_id']]={}
-    RollVipDcit[roll_send['msg_id']]['time']= time.time()+rday*86400
-    RollVipDcit[roll_send['msg_id']]['nums']= vnum
-    RollVipDcit[roll_send['msg_id']]['days']= vday
-    RollVipDcit[roll_send['msg_id']]['channel_id']=msg.ctx.channel.id
-    RollVipDcit[roll_send['msg_id']]['guild_id']=msg.ctx.guild.id
-    RollVipDcit[roll_send['msg_id']]['user']=list()
-    with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
-        json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    VipRollDcit[roll_send['msg_id']]={}
+    VipRollDcit[roll_send['msg_id']]['time']= time.time()+rday*86400
+    VipRollDcit[roll_send['msg_id']]['nums']= vnum
+    VipRollDcit[roll_send['msg_id']]['days']= vday
+    VipRollDcit[roll_send['msg_id']]['channel_id']=msg.ctx.channel.id
+    VipRollDcit[roll_send['msg_id']]['guild_id']=msg.ctx.guild.id
+    VipRollDcit[roll_send['msg_id']]['user']=list()
     print(f"[vip-roll] card message send to {msg.ctx.channel.id}")
     
-@bot.task.add_interval(minutes=1)
+@bot.task.add_interval(seconds=80)
 async def vip_roll_task():
-    global RollVipDcit,VipUserDict
-    rollvipdict_temp = copy.deepcopy(RollVipDcit) #临时变量用于修改
-    for msg_id,minfo in RollVipDcit.items():
+    global VipRollDcit,VipUserDict
+    viprolldict_temp = copy.deepcopy(VipRollDcit) #临时变量用于修改
+    log_str=''
+    for msg_id,minfo in viprolldict_temp.items():
         if time.time()<minfo['time']:
             continue
         else:
             print(f"[BOT.TASK] vip_roll_task msg:{msg_id}")
-            vday = RollVipDcit[msg_id]['days']
-            vnum = RollVipDcit[msg_id]['nums']
+            vday = VipRollDcit[msg_id]['days']
+            vnum = VipRollDcit[msg_id]['nums']
             # 结束抽奖
             log_str=f"```\n[MsgID] {msg_id}\n"
             send_str="恭喜 "
             # 生成n个随机数
-            ran = random.sample(range(0, len(RollVipDcit[msg_id]['user'])-1),vnum)
+            ran = random.sample(range(0, len(VipRollDcit[msg_id]['user'])-1),vnum)
             for j in ran:
-                user_id = RollVipDcit[msg_id]['user'][j]
+                user_id = VipRollDcit[msg_id]['user'][j]
                 user = await bot.client.fetch_user(user_id)
                 # 设置用户的时间和个人信息
                 time_vip = vip_time_stamp(user_id, vday)
@@ -885,23 +879,17 @@ async def vip_roll_task():
             send_str+="获得了本次奖品！"
             await bot.client.send(debug_ch,log_str) #发送此条抽奖信息的结果到debug
             #发送结果到抽奖频道
-            roll_ch = await bot.client.fetch_public_channel(RollVipDcit[msg_id]['channel_id'])
+            roll_ch = await bot.client.fetch_public_channel(VipRollDcit[msg_id]['channel_id'])
             cm1 = CardMessage()
-            c=Card(Module.Header(f"🎊 阿狸vip {RollVipDcit[msg_id]['days']}天体验卡 🎊"),
+            c=Card(Module.Header(f"🎊 阿狸vip {VipRollDcit[msg_id]['days']}天体验卡 🎊"),
                 Module.Section(Element.Text(send_str, Types.Text.KMD)),
                 Module.Context(Element.Text(f"本次抽奖结束，奖励已私信发送", Types.Text.KMD)))
             cm1.append(c)
             await bot.client.send(roll_ch,cm1)
-            del rollvipdict_temp[msg_id] #删除此条抽奖信息
+            del VipRollDcit[msg_id] #删除此条抽奖信息
         
     # 更新抽奖列表(如果有变化)
-    if rollvipdict_temp!=RollVipDcit:
-        RollVipDcit=rollvipdict_temp
-        with open("./log/VipRoll.json", 'w', encoding='utf-8') as fw2:
-            json.dump(RollVipDcit, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-        # 更新vip用户列表
-        with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    if viprolldict_temp!=VipRollDcit:
         print(log_str)# 打印中奖用户作为log
 
         
@@ -921,9 +909,6 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
             VipUserDict[vip]['time'] = time_vip
         
         await msg.reply(f"操作完成，已给所有vip用户增加 `{vday}` 天时长")
-        # 将修改存放到文件中
-        with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[vip_time_add] update VipUserDict")
     except:
         err_str = f"ERR! [{GetTime()}] vip_time_add\n```\n{traceback.format_exc()}\n```"
@@ -934,8 +919,7 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 ##############################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
-    UserTokenDict = json.load(frau)
+from endpoints.FileManage import UserTokenDict
 
 
 # 用来存放auth对象（无法直接保存到文件）
@@ -1104,21 +1088,15 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         cm.append(c)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
 
-        # 修改/新增都需要写入文件
-        with open("./log/UserAuthID.json", 'w', encoding='utf-8') as fw2:
-            json.dump(UserTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
         # 如果是vip用户，则执行下面的代码
         if await vip_ck(msg.author_id):
             global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
             if msg.author_id in VipShopBgDict['bg']:
                 VipShopBgDict['bg'][msg.author_id]['status']=False
-                #为了保险起见，保存一下状态信息到文件
-                with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw1:
-                    json.dump(VipShopBgDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
-            if not tfa:#如果没有使用2fa接口，那就保存cookie
-                cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
-                res_auth._cookie_jar.save(cookie_path)#保存
+            # 现在2fa用户也能保存登录信息了
+            cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
+            res_auth._cookie_jar.save(cookie_path)#保存
 
         # 全部都搞定了，打印登录信息
         print(
@@ -1349,11 +1327,6 @@ async def logout_authtoken(msg: Message, *arg):
         cm.append(c)
         await msg.reply(cm)
 
-        #最后重新执行写入
-        #del UserTokenDict[msg.author_id] # 没必要删除此键值
-        with open("./log/UserAuthID.json", 'w', encoding='utf-8') as fw1:
-            json.dump(UserTokenDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
-        fw1.close()
     except Exception as result: # 其他错误
         await BaseException_Handler("logout",traceback.format_exc(),msg,bot)
 
@@ -1406,7 +1379,7 @@ def is_CacheLatest(kook_user_id:str):
         is_Today = (VipShopBgDict['cache'][kook_user_id]['cache_time']-GetTimeStampOf8AM())>=0 
         is_Cache = VipShopBgDict['cache'][kook_user_id]['cache_img'] != None
         return is_Today and is_Status and is_Cache# 有一个为false，结果就是false
-    else:# 如果不在，初始化为none
+    else:# 如果不在，初始化为none，时间戳为0
         VipShopBgDict['cache'][kook_user_id] = {'cache_time':0,'cache_img':None}
     return False 
 
@@ -1503,10 +1476,14 @@ async def get_daily_shop(msg: Message, *arg):
                 bg.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
                 dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
-                if is_vip: #vip缓存图片+设置状态
-                    if msg.author_id in VipShopBgDict['bg']: VipShopBgDict['bg'][msg.author_id]['status'] = True
-                    VipShopBgDict['cache'][msg.author_id]['cache_img'] = dailyshop_img_src #设置图片url
-                    VipShopBgDict['cache'][msg.author_id]['cache_time'] = time.time() #设置图片缓存的时间
+                if is_vip: # 如果在bg里面代表有自定义背景图，需更新status
+                    if msg.author_id in VipShopBgDict['bg']: 
+                        VipShopBgDict['bg'][msg.author_id]['status'] = True
+                    # 设置商店图片缓存+图片缓存的时间
+                    VipShopBgDict['cache'][msg.author_id] = {
+                        'cache_img':dailyshop_img_src,
+                        'cache_time':time.time() 
+                    }
             # 结束shop的总计时，结果为浮点数，保留两位小数
             shop_using_time = format(time.perf_counter() - start, '.2f')
             
@@ -1887,9 +1864,6 @@ async def set_rate_err_user(msg:Message,user_id:str):
         temp_user = copy.deepcopy(SkinRateDict['data'][user_id])
         del SkinRateDict['data'][user_id]
         SkinRateDict['err_user'][user_id]=temp_user
-        #写入文件
-        with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
-            json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         await msg.reply(f"用户 {user_id} 已被加入SkinRateDict['err_user']列表")
         print(f"[rate_err_user] add Au:{user_id}, file save success")
  
@@ -1899,8 +1873,7 @@ async def clear_rate_err_user():
     global SkinRateDict
     SkinRateDict['err_user']={}
     #写入文件
-    with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
-        json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    SkinRateDict.save()
     print(f"[BOT.TASK] clear_rate_err_user at {GetTime()}")
         
 # 给一个皮肤评分（灵感来自微信小程序”瓦的小卖铺“）
@@ -2040,11 +2013,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating:str = "err",
             SkinRateDict['data'][msg.author_id][skin_uuid]['time']  = GetTime()
             SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
 
-            # 写入文件
-            with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
-                json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
-            #del UserRtsDict[msg.author_id]  #删除选择页面中的list
+            
             text1+= f"评价成功！{S_skin['skin']['displayName']}"
             text2+= f"您的评分：{_rating}\n"
             text2+= f"皮肤平均分：{SkinRateDict['rate'][skin_uuid]['pit']}\n"
@@ -2095,9 +2064,6 @@ async def rate_skin_select(msg: Message):
         cm.append(c)
         await msg.reply(cm)
         
-        # 写入文件(这里保存是为了增多保存次数)
-        with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
-            json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
         print(f"[kkn] SkinRateDict save success!")
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
         await APIRequestFailed_Handler("rts",traceback.format_exc(),msg,bot,None,cm)
@@ -2108,8 +2074,7 @@ async def rate_skin_select(msg: Message):
 #用户选择列表
 UserStsDict = {}
 # 皮肤商店提醒记录
-with open("./log/UserSkinNotify.json", 'r', encoding='utf-8') as frsi:
-    SkinNotifyDict = json.load(frsi)
+from endpoints.FileManage import SkinNotifyDict
 
 # 检查用户是否在错误用户里面
 async def check_notify_err_user(msg:Message):
@@ -2207,9 +2172,10 @@ async def auto_skin_notify():
                             log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
                             print(log_time)
                             dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
-                            VipShopBgDict['cache'][vip] = {}
-                            VipShopBgDict['cache'][vip]['cache_img'] = dailyshop_img_src # 缓存图片url
-                            VipShopBgDict['cache'][vip]['cache_time'] = time.time() #设置图片缓存的时间
+                            VipShopBgDict['cache'][vip] = {
+                                'cache_img':dailyshop_img_src,
+                                'cache_time':time.time() 
+                            }# 缓存图片的url+设置图片缓存的时间
                             if vip in VipShopBgDict['bg']: VipShopBgDict['bg'][vip]['status'] = True
                         else:  #如果图片没有正常返回，那就发送文字版本
                             shop_text = ""
@@ -2317,16 +2283,10 @@ async def auto_skin_notify():
         print(log_not_login)
         #完成遍历后，如果有删除才重新保存dict
         if temp_SkinNotifyDict != SkinNotifyDict:
-            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw1:
-                json.dump(SkinNotifyDict, fw1, indent=2, sort_keys=True, ensure_ascii=False)
+            SkinNotifyDict.save()
             print("[BOT.TASK.NOTIFY] save SkinNotifyDict")
             
-        # 将cache time写入文件
-        with open("./log/VipUserShopBg.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipShopBgDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)  
-        # 将当日评分最高最低用户写入文件   
-        with open("./log/ValSkinRate.json", 'w', encoding='utf-8') as fw2:
-            json.dump(SkinRateDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)            
+       # 打印结束信息
         finish_str = f"[BOT.TASK.NOTIFY] Finish at {GetTime()} [ERR {err_count}]"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
@@ -2474,10 +2434,6 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
                 SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
             # print(SkinNotifyDict['data'][msg.author_id])
 
-            # 写入文件
-            with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
-                json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-
             del UserStsDict[msg.author_id]  #删除选择页面中的list
             text = f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
             # 设置成功并删除list后，再发送提醒事项设置成功的消息
@@ -2548,9 +2504,6 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
                 print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict['data'][msg.author_id][uuid]}")
                 await msg.reply(f"已删除皮肤：`{SkinNotifyDict['data'][msg.author_id][uuid]}`")
                 del SkinNotifyDict['data'][msg.author_id][uuid]
-                # 写入文件
-                with open("./log/UserSkinNotify.json", 'w', encoding='utf-8') as fw2:
-                    json.dump(SkinNotifyDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
             else:
                 await msg.reply(f"您提供的uuid不在列表中！")
                 return

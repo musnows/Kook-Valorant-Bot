@@ -60,6 +60,7 @@ class EzAuth:
         r = self.session.post(url=URLS.AUTH_URL, json = data)
         r = self.session.put(url=URLS.AUTH_URL, json = data2)
         data = r.json()
+        tokens = ["",""] # 提前定义，避免下方出错（理论上来说应该走不到下面）
 
         if "access_token" in r.text:
             pattern = compile('access_token=((?:[a-zA-Z]|\d|\.|-|_)*).*id_token=((?:[a-zA-Z]|\d|\.|-|_)*).*expires_in=(\d*)')
@@ -107,7 +108,7 @@ class EzAuth:
                     User2faCode[key]['err']="2fa auth_failue"
                     raise Exception("2fa auth_failure")
                 else:
-                    print(F"[EzAuth] k:{key} 2fa unkown")
+                    print(F"[EzAuth] k:{key} 2fa unkown err")
                     User2faCode[key]['err']="auth_failue, maybe wrong 2fa code"
                     raise Exception("unkown auth err, maybe wrong 2fa code")
 

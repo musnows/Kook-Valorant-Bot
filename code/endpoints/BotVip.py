@@ -14,18 +14,8 @@ def get_uuid():
 
 ################################################################################
 
-# 创建uuid dict
-VipUuidDict = {}
-# 成功兑换vip的用户
-VipUserDict = {}
-
-# 加载文件中的uuid
-with open("./log/VipUuid.json", 'r', encoding='utf-8') as frrk:
-    VipUuidDict = json.load(frrk)
-
-# 加载文件中的vip的用户
-with open("./log/VipUser.json", 'r', encoding='utf-8') as frus:
-    VipUserDict = json.load(frus)
+# 成功兑换vip的用户+vip的uuid
+from endpoints.FileManage import VipUserDict,VipUuidDict
 
 
 # 计算时间戳，用于给用户设置vip时间
@@ -77,8 +67,7 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
         i -= 1
 
     # 更新uuid
-    with open("./log/VipUuid.json", 'w', encoding='utf-8') as fw2:
-        json.dump(VipUuidDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    VipUuidDict.save()
 
     text = ""
     for uuid in NewUuid:
@@ -134,13 +123,6 @@ async def using_vip_uuid(msg: Message, uuid1: str,bot:Bot,debug_ch:Channel):
         await msg.reply(cm)
         print(log_str)
         return False
-
-    # 更新uuid
-    with open("./log/VipUuid.json", 'w', encoding='utf-8') as fw2:
-        json.dump(VipUuidDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
-    # 更新vip用户列表
-    with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
-        json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
     # 发送卡片消息
     c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
@@ -214,8 +196,7 @@ async def fetch_vip_user():
 
     if vipuserdict_temp != VipUserDict:
         #将修改存放到文件中
-        with open("./log/VipUser.json", 'w', encoding='utf-8') as fw2:
-            json.dump(VipUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+        VipUserDict.save()
         print(f"[vip-r] update VipUserDict")
         
     return text

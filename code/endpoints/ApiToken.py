@@ -4,8 +4,7 @@ import time
 from endpoints.Gtime import GetTime
 
 # 所有token
-with open("./log/ApiToken.json", 'r', encoding='utf-8') as frpr:
-    ApiTokenDict = json.load(frpr)
+from endpoints.FileManage import ApiTokenDict
 
 #获取uuid
 def get_uuid():
@@ -15,8 +14,7 @@ def get_uuid():
 
 def save_token_files(text=''):
     global ApiTokenDict
-    with open("./log/ApiToken.json", 'w', encoding='utf-8') as fw2:
-        json.dump(ApiTokenDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
+    ApiTokenDict.save()
     print(f"[{GetTime()}] [API token] files saved! [{text}]")
 
 # 生成uuid

@@ -10,14 +10,8 @@ from copy import deepcopy
 from endpoints.Gtime import GetTime
 
 # 用户数量的记录文件
-with open('./log/BotUserLog.json', 'r', encoding='utf-8') as f:
-    BotUserDict = json.load(f)
+from endpoints.FileManage import BotUserDict
 
-# 保存用户的log文件
-# 因为logging的使用很频繁，所以不需要经常保存
-def log_bot_save():
-    with open("./log/BotUserLog.json", 'w', encoding='utf-8') as fw2:
-        json.dump(BotUserDict, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
 # 记录私聊的用户信息
 def log_bot_user(user_id:str):
@@ -39,12 +33,10 @@ def log_bot_guild(user_id:str,guild_id:str,time):
         BotUserDict['guild']['data'][guild_id] = {} #不能连续创建两个键值！
         BotUserDict['guild']['data'][guild_id]['user'] = {}
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
-        log_bot_save()
         return "GNAu"
     # 服务器存在，新用户
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
-        log_bot_save()
         return "NAu"
     # 旧用户更新执行命令的时间，但是不保存文件
     else:
@@ -111,7 +103,6 @@ async def log_bot_list(msg:Message):
                 continue
         # 保存图片和文件
         await log_bot_img()
-        log_bot_save()
         print("[log_bot_list] file handling finish, return BotUserDict")
         return BotUserDict
     except:

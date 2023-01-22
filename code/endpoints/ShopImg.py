@@ -45,9 +45,6 @@ standard_price_position = (int(280 * standard_length / 1000), int(120 * standard
 standard_level_icon_reszie_ratio = 0.13 * standard_length / 1000  # 等级icon图标的缩放
 standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * standard_length / 1000))  # 等级icon图标的坐标
 
-# # 用户背景图片文件
-# with open("./log/UserShopBg.json", 'r', encoding='utf-8') as frpr:
-#     VipShopBgDict = json.load(frpr)
 
 # 图片获取器
 async def img_requestor(img_url):
