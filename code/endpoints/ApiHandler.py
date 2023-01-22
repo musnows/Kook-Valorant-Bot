@@ -47,12 +47,66 @@ async def check_token_rate(token:str):
         
 
 
-# 基本操作
-async def base_img_request(request):
+# 基本画图操作
+async def base_img_request(params,list_shop,vp1='0',rp1='0'):
+    # 自定义背景
+    if 'img_src' in params:
+        img_src = params['img_src']
+    else:
+        img_src = img_bak_169 # 默认背景16-9
+        if 'img_ratio'in params and params['img_ratio']=='1':
+            img_src = img_bak_11 # 默认背景1-1
+
+    # 开始画图            
+    start = time.perf_counter()
+    if 'img_ratio' in params and params['img_ratio']=='1':
+        ret = await get_shop_img_11(list_shop,bg_img_src=img_src)
+    else:# 只有16-9的图片需获取vp和r点
+        ret = await get_shop_img_169(list_shop,vp=vp1,rp=rp1,bg_img_src=img_src)
+    # 打印计时
+    print(f"[{GetTime()}] [IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
+
+    start = time.perf_counter()
+    if ret['status']:
+        bg = ret['value']
+        img_src_ret = await kook_create_asset(api_bot_token,bg) # 上传图片
+        if img_src_ret['code']==0:
+            print(f"[{GetTime()}] [Api] kook_create_asset success {format(time.perf_counter() - start, '.2f')}")
+            dailyshop_img_src = img_src_ret['data']['url']
+            print(f'[{GetTime()}] [img-url] {dailyshop_img_src}')
+            return {'code':0,'message':dailyshop_img_src,'info':'商店图片获取成功'}     
+        else:
+            print(f'[{GetTime()}] [Api] kook_create_asset failed')
+            return {'code':200,'message': 'img upload err','info':'图片上传错误'}
+    else:  #出现图片违规或者url无法获取
+        err_str = ret['value']
+        print(f'[{GetTime()}] [ERR]',err_str)
+        return {'code':200,'message': 'img src err','info':'自定义图片获取失败'}
+
+# 画图接口(仅画图)
+async def img_draw_request(request):
+    params = request.rel_url.query
+    if "list_shop" not in params or 'token' not in params:
+        print(f"ERR! [{GetTime()}] params needed: token/list_shop")
+        return {'code': 400, 'message': 'params needed: token/list_shop','info':'缺少参数！示例: /shop-draw?token=api凭证&list_shop=四个皮肤uuid的list&vp=vp（可选）&rp=rp（可选）&img_src=自定义背景图（可选）','docs':'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'}
+    
+    list_shop = params['list_shop']
+    token = params['token']
+    ck_ret = await check_token_rate(token)
+    if not ck_ret['status']: 
+        return {'code': 200, 'message': ck_ret['message'],'info':ck_ret['info']}
+    # vp和rp必须同时给予，只给一个不算
+    if 'vp' not in params or 'rp' not in params:
+        return await base_img_request(params,list_shop)
+    else:
+        return await base_img_request(params,list_shop,params['vp'],params['rp'])
+
+# 登录+画图
+async def login_img_request(request):
     params = request.rel_url.query
     if 'account' not in params or 'passwd' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
-        return {'code': 400, 'message': 'params needed: token/account/passwd','info':'缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）'}
+        return {'code': 400, 'message': 'params needed: token/account/passwd','info':'缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）','docs':'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'}
 
     account=params['account']
     passwd=params['passwd']
@@ -86,48 +140,19 @@ async def base_img_request(request):
     resp = await fetch_daily_shop(userdict)  #获取每日商店
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-
-    # 自定义背景
-    if 'img_src' in params:
-        img_src = params['img_src']
-    else:
-        img_src = img_bak_169 # 默认背景16-9
-        if 'img_ratio'in params and params['img_ratio']=='1':
-            img_src = img_bak_11 # 默认背景1-1
-
-    # 开始画图            
-    start = time.perf_counter()
-    if 'img_ratio' in params and params['img_ratio']=='1':
-        ret = await get_shop_img_11(list_shop,bg_img_src=img_src)
-    else:
+    res_vprp={'vp':'0','rp':'0'} # 先初始化为0
+    if 'img_ratio' not in params or params['img_ratio']!='1':
         res_vprp = await fetch_vp_rp_dict(userdict) # 只有16-9的图片需获取vp和r点
-        ret = await get_shop_img_169(list_shop,vp=res_vprp['vp'],rp=res_vprp['rp'],bg_img_src=img_src)
-    # 打印计时
-    print(f"[{GetTime()}] [IMGdraw]",format(time.perf_counter() - start, '.2f'))# 结果为浮点数，保留两位小数
+    # 不管什么情况，都请求这个
+    return await base_img_request(params,list_shop,res_vprp['vp'],res_vprp['rp'])
 
-    start = time.perf_counter()
-    if ret['status']:
-        bg = ret['value']
-        img_src_ret = await kook_create_asset(api_bot_token,bg) # 上传图片
-        if img_src_ret['code']==0:
-            print(f"[{GetTime()}] [Api] kook_create_asset success {format(time.perf_counter() - start, '.2f')}")
-            dailyshop_img_src = img_src_ret['data']['url']
-            print(f'[{GetTime()}] [img-url] {dailyshop_img_src}')
-            return {'code':0,'message':dailyshop_img_src,'info':'商店图片获取成功'}     
-        else:
-            print(f'[{GetTime()}] [Api] kook_create_asset failed')
-            return {'code':200,'message': 'img upload err','info':'图片上传错误'}
-    else:  #出现图片违规或者url无法获取
-        err_str = ret['value']
-        print(f'[{GetTime()}] [ERR]',err_str)
-        return {'code':200,'message': 'img src err','info':'自定义图片获取失败'}
 
 # 邮箱验证的post
 async def tfa_code_requeset(request):
     params = request.rel_url.query
     if 'account' not in params or 'vcode' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/vcode")
-        return {'code': 400, 'message': 'params needed: token/account/vcode','info':'缺少参数！示例: /tfa?token=api凭证&account=Riot账户&vcode=邮箱验证码'}
+        return {'code': 400, 'message': 'params needed: token/account/vcode','info':'缺少参数！示例: /tfa?token=api凭证&account=Riot账户&vcode=邮箱验证码','docs':'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'}
     
     account=params['account']
     vcode=params['vcode']
