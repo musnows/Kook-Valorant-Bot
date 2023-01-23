@@ -51,6 +51,8 @@ kook_headers = {f'Authorization': f"Bot {config['token']}"}
 #在bot一开机的时候就获取log频道作为全局变量
 debug_ch = None
 cm_send_test = None
+NOTIFY_NUM = 3          # 非vip用户皮肤提醒栏位
+RATE_LIMITED_TIME = 180 # 全局登录速率超速等待秒数
 #记录开机时间
 start_time = GetTime()
 
@@ -2181,28 +2183,18 @@ async def add_skin_notify(msg: Message, *arg):
         # 检查用户的提醒栏位
         vip_status = await vip_ck(msg.author_id)
         if msg.author_id in SkinNotifyDict['data'] and not vip_status:
-            if len(SkinNotifyDict['data'][msg.author_id]) > 2:
-                cm = CardMessage()
-                c = Card(color='#fb4b57')
-                c.append(
-                    Module.Section(Element.Text(f"您的皮肤提醒栏位已满", Types.Text.KMD),
-                                   Element.Image(src=icon_cm.rgx_broken, size='sm')))
-                c.append(
-                    Module.Context(
-                        Element.Text(f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！", Types.Text.KMD)))
-                cm.append(c)
+            if len(SkinNotifyDict['data'][msg.author_id]) > NOTIFY_NUM:
+                cm = await get_card(f"您的皮肤提醒栏位已满",
+                    f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
+                    icon_cm.rgx_broken)
                 await msg.reply(cm)
                 return
 
         #用户没有登录
         if msg.author_id not in UserAuthDict:
-            cm = CardMessage()
-            text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
-            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作\n设置了皮肤提醒之后，请勿切换已登录的账户", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作",
+                    f"「/login 账户 密码」请确认您知晓这是一个风险操作",
+                    icon_cm.whats_that)
             await msg.reply(cm)
             return
 
@@ -2238,18 +2230,9 @@ async def add_skin_notify(msg: Message, *arg):
                  Module.Section(Element.Text(text + "\n\n使用 `/sts 序号` 来选择", Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
-
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] addskin\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行login操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+    
+    except Exception as result: # 其他错误
+        await BaseException_Handler("notify-add",traceback.format_exc(),msg,bot,None,cm)
 
 
 #选择皮肤（这个命令必须跟着上面的命令用）
@@ -2269,21 +2252,8 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 
             # 先发送一个私聊消息，作为测试（避免有人开了不给私信）
             user_test = await bot.client.fetch_user(msg.author_id)
-            try:
-                await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
-            except requester.HTTPRequester.APIRequestFailed as result:
-                err_str = f"ERR! [{GetTime()}] notify-sts Au:{msg.author_id}\n"
-                if '屏蔽' in str(result):#如果用户不允许bot私信，则发送提示信息
-                    err_str+=f"```\n{result}\n```\nreply to inform user"
-                    await msg.reply(f"阿狸无法向您发起私信，请修改您的隐私设置，或者私聊阿狸使用相关命令\n{err_str}")
-                else:
-                    err_str+=f"```\n{traceback.format_exc()}\n```\n"
-                    await msg.reply(err_str)
-                #发送信息到日志频道
-                await bot.client.send(debug_ch, err_str)
-                print(err_str)
-                return
-
+            await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
+            # 测试通过，继续后续插入
             S_skin = UserStsDict[msg.author_id][num]
             if msg.author_id not in SkinNotifyDict['data']:
                 SkinNotifyDict['data'][msg.author_id] = {}
@@ -2299,28 +2269,14 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
             print(f"[sts] Au:{msg.author_id} ", text)
         else:
             await msg.reply(f"您需要（重新）执行 `/notify-a` 来设置提醒皮肤")
-    except requester.HTTPRequester.APIRequestFailed as result:
-        err_str = f"ERR! [{GetTime()}] select_skin_inform\n```\n{result}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您是否开启了不允许私信？请检查您的私信权限设置\n这会影响notify功能的使用", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] select_skin_inform\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        cm2 = CardMessage()
-        c = Card(Module.Header(f"很抱歉，发生了一些错误"), Module.Divider())
-        c.append(Module.Section(Element.Text(f"{err_str}\n您可能需要重新执行操作", Types.Text.KMD)))
-        c.append(Module.Divider())
-        c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ',
-                                                                     Types.Click.LINK)))
-        cm2.append(c)
-        await msg.reply(cm2)
+    except requester.HTTPRequester.APIRequestFailed as result: #消息发送失败
+        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
+        await bot.client.send(debug_ch, err_str)
+        await APIRequestFailed_Handler("sts",traceback.format_exc(),msg,bot,None)
+    except Exception as result: # 其他错误
+        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
+        await bot.client.send(debug_ch, err_str)
+        await BaseException_Handler("sts",traceback.format_exc(),msg,bot,None)
 
 
 # 显示当前设置好了的皮肤通知
@@ -2341,9 +2297,8 @@ async def list_skin_notify(msg: Message, *arg):
             await msg.reply(text)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
         await bot.client.send(debug_ch, err_str)
+        await BaseException_Handler("notify-list",traceback.format_exc(),msg,bot,None)        
 
 
 # 删除已有皮肤通知
@@ -2367,9 +2322,8 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
                 return
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
         await bot.client.send(debug_ch, err_str)
+        await BaseException_Handler("notify-del",traceback.format_exc(),msg,bot,None)       
 
 
 #当出现某些问题的时候，通知人员
