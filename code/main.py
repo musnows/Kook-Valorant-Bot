@@ -909,9 +909,7 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 from endpoints.FileManage import UserTokenDict
 
 # 用来存放auth对象（无法直接保存到文件）
-UserAuthDict = {}
-# 用来存放已保存cookie的用户id（保存在文件中）
-UserCookieDict = {}
+UserAuthDict = {'AP':{}}
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
 #用来存放用户每天的商店（早八会清空）
@@ -1084,7 +1082,7 @@ async def auth_2fa(msg:Message,key:str,tfa:str,*arg):
 
 
 # 重新登录
-async def login_re_auth(kook_user_id: str):
+async def login_reauth(kook_user_id: str):
     base_print = f"[{GetTime()}] Au:{kook_user_id} = "
     print(base_print + "auth_token failure,trying reauthorize()")
     global UserAuthDict
@@ -1094,14 +1092,20 @@ async def login_re_auth(kook_user_id: str):
     if ret:  #会返回一个bool是否成功,成功了重新赋值
         UserAuthDict[kook_user_id]['auth'] = auth
         print(base_print + "reauthorize() Successful!")
-    else:
-        print(base_print + "reauthorize() Failed! T-T")  #失败打印
+    else: # cookie重新登录失败
+        print(base_print + "reauthorize() Failed! T-T") # 失败打印
+        # 有保存账户密码+不是邮箱验证用户
+        if kook_user_id in UserAuthDict['AP'] and (not UserAuthDict[kook_user_id]['2fa']): 
+            res_auth = await authflow(UserAuthDict['AP'][kook_user_id]['a'], UserAuthDict['AP'][kook_user_id]['p'])
+            UserAuthDict[kook_user_id]['auth'] = res_auth # 用账户密码重新登录
+            print(base_print+"authflow() by AP")
+            ret = True
 
     return ret  #正好返回一个bool
 
 
 #判断是否需要重新获取token
-async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
+async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
     """
     return value:
      - True: no need to reauthorize / get `user_id` as params & reauhorize success 
@@ -1130,7 +1134,7 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             send_msg = await msg.reply(cm)
 
         # 不管传入的是用户id还是msg，都传userid进入该函数
-        ret = await login_re_auth(user_id)
+        ret = await login_reauth(user_id)
         if ret == False and is_msg:  #没有正常返回,重新获取token失败
             text = f"重新获取token失败，请私聊「/login」重新登录\n"
             cm = await get_card(text,"Auto Reauthorize Failed!",icon_cm.crying_crab)
@@ -1256,7 +1260,7 @@ async def get_daily_shop(msg: Message, *arg):
     send_msg = None
     try:
         if msg.author_id in UserAuthDict:
-            reau = await check_re_auth("每日商店", msg)
+            reau = await check_reauth("每日商店", msg)
             if reau == False: return  #如果为假说明重新登录失败
             # 重新获取token成功，从dict中获取玩家id
             player_gamename = f"{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
@@ -1403,7 +1407,7 @@ async def get_night_market(msg: Message, *arg):
     send_msg = None
     try:
         if msg.author_id in UserAuthDict:
-            reau = await check_re_auth("夜市", msg)
+            reau = await check_reauth("夜市", msg)
             if reau == False: return  #如果为假说明重新登录失败
             
             # 重新获取token成功了再提示正在获取夜市
@@ -1520,7 +1524,7 @@ async def get_user_card(msg: Message, *arg):
     send_msg = None
     try:
         if msg.author_id in UserAuthDict:
-            reau = await check_re_auth("玩家装备/通行证", msg)  #重新登录
+            reau = await check_reauth("玩家装备/通行证", msg)  #重新登录
             if reau == False: return  #如果为假说明重新登录失败
 
             cm = CardMessage()
@@ -2092,7 +2096,7 @@ async def auto_skin_notify():
             try:
                 user = await bot.client.fetch_user(vip)
                 if vip in UserAuthDict:
-                    if await check_re_auth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
+                    if await check_reauth("定时获取玩家商店", vip) == True:  # 重新登录,如果为假说明重新登录失败
                         shop_text = "err"
                         start = time.perf_counter()  #开始计时
                         auth = UserAuthDict[vip]['auth']
@@ -2194,7 +2198,7 @@ async def auto_skin_notify():
             try:
                 user = await bot.client.fetch_user(aid)
                 if aid in UserAuthDict:
-                    if await check_re_auth("定时获取玩家商店", aid) == True:  # 重新登录,如果为假说明重新登录失败
+                    if await check_reauth("定时获取玩家商店", aid) == True:  # 重新登录,如果为假说明重新登录失败
                         auth = UserAuthDict[aid]['auth']
                         userdict = {
                             'auth_user_id': auth.user_id,
