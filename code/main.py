@@ -53,6 +53,7 @@ debug_ch = None
 cm_send_test = None
 NOTIFY_NUM = 3          # 非vip用户皮肤提醒栏位
 RATE_LIMITED_TIME = 180 # 全局登录速率超速等待秒数
+Login_Forbidden = False # 403错误禁止所有用户登录
 #记录开机时间
 start_time = GetTime()
 
@@ -87,14 +88,7 @@ async def KillBot(msg:Message,*arg):
         os._exit(0) # 退出程序
 
 ##########################################################################################
-##########################################################################################
-
-# 拳头api调用被禁止的时候用这个变量取消所有相关命令
-Login_Forbidden = False
-async def Login_Forbidden_send(msg:Message):
-    print(f"[Login_Forbidden] Au:{msg.author_id} Command Failed")
-    await msg.reply(f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)")
-    
+########################################  help  ##########################################
 
 # hello命令，一般用于测试阿狸在不在线
 @bot.command(name='hello',aliases=['HELLO'])
@@ -147,7 +141,7 @@ async def atAhri(msg: Message, mention_str: str):
         print(err_str)
 
 #################################################################################################
-#################################################################################################
+########################################## others ###############################################
 
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
@@ -211,7 +205,7 @@ async def Weather(msg: Message, city: str = "err"):
         #发送错误信息到指定频道
         await bot.client.send(debug_ch, err_str)
 
-################################以下是给用户上色功能的内容########################################
+################################ grant roles for user ##########################################
 
 # 在不修改代码的前提下设置上色功能的服务器和监听消息
 @bot.command()
@@ -323,6 +317,23 @@ async def sleeping(msg: Message, d: int = 1):
         await msg.reply(f"{ret['message']}，阿狸摘下了耳机~")
     #await bot.client.stop_playing_game()
 
+
+# 拳头api调用被禁止的时候用这个变量取消所有相关命令
+async def Login_Forbidden_send(msg:Message):
+    print(f"[Login_Forbidden] Au:{msg.author_id} Command Failed")
+    await msg.reply(f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)")
+# 手动设置禁止登录的全局变量状态
+@bot.command(name='lf')
+async def Login_Forbidden_Change(msg:Message):
+    logging(msg)
+    if msg.author_id == master_id:
+        global Login_Forbidden
+        if Login_Forbidden:
+            Login_Forbidden = False
+        else:
+            Login_Forbidden = True
+        
+        await msg.reply(f"Update Login_Forbidden status: {Login_Forbidden}")
 
 # 存储用户游戏id
 @bot.command()
@@ -2326,41 +2337,9 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         await BaseException_Handler("notify-del",traceback.format_exc(),msg,bot,None)       
 
 
-#当出现某些问题的时候，通知人员
-@bot.command(name="inform-user")
-async def inform_user(msg:Message,channel:str,user:str):
-    logging(msg)
-    if msg.author_id != master_id:
-        await msg.reply(f"您没有权限执行此命令！")
-        return
-    try:
-        au = await bot.client.fetch_user(user)
-        text=f"以下信息来自开发者:\n用户 (met){user}(met) {au.username}#{au.identify_num}，您开启了`皮肤提醒功能`却没有允许阿狸私信您\nkook直接搜用户名搜不到人+您所在服务器没有开公开id无法直接加入，以至于我只能让阿狸在你们服务器发一个消息来提醒您。如果对服务器其他成员有所叨扰，还请海涵。"
-        ch=await bot.client.fetch_public_channel(channel)
-        await bot.client.send(ch,text)
-        log_str=f"[inform-user] bot send to C:{channel} Au:{user}"
-        await msg.reply(log_str)
-        print(log_str)
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] inform-user\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+#######################################################################################################
+#######################################################################################################
 
-@bot.command(name='lf')
-async def Login_Forbidden_Change(msg:Message):
-    logging(msg)
-    if msg.author_id == master_id:
-        global Login_Forbidden
-        if Login_Forbidden == True:
-            Login_Forbidden = False
-        else:
-            Login_Forbidden = True
-        
-        await msg.reply(f"Update Login_Forbidden status: {Login_Forbidden}")
-    else:
-        await msg.reply(f"您没有权限执行此命令！")
-        return
-    
 # 显示当前阿狸加入了多少个服务器，以及用户数量
 @bot.command(name='log-list',aliases=['log-l','log'])
 async def bot_log_list(msg:Message,*arg):
