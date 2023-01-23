@@ -3,7 +3,7 @@ import time
 import traceback
 from khl import Message, PrivateMessage, Bot
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
-from endpoints.KookApi import guild_list, guild_view, upd_card, icon_cm
+from endpoints.KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
 from PIL import Image, ImageDraw, ImageFont
 from copy import deepcopy
 
@@ -114,8 +114,8 @@ async def log_bot_list(msg:Message):
 async def APIRequestFailed_Handler(def_name:str,excp,msg:Message,bot:Bot,send_msg=None,cm:CardMessage=None):
     err_str = f"ERR! [{GetTime()}] {def_name} APIRequestFailed\n{excp}"
     print(err_str)
-    cm0 = CardMessage()
-    c = Card(color='#fb4b57')
+    text = f"啊哦，出现了一些问题"
+    text_sub= 'e'
     if "引用不存在" in excp:#引用不存在的时候，直接向频道或者用户私聊重新发送消息
         if isinstance(msg, PrivateMessage):
             cur_user = await bot.client.fetch_user(msg.author_id)
@@ -124,17 +124,18 @@ async def APIRequestFailed_Handler(def_name:str,excp,msg:Message,bot:Bot,send_ms
             cur_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
             await bot.send(cur_ch,cm)
         print(f"[APIRequestFailed.Handler] Au:{msg.author_id} 引用不存在, cm_send success!")
+        return
     elif "json没有通过验证" in excp:
-        print(f"ERR! Au:{msg.author_id} json.dumps(cm)")
-        print(json.dumps(cm))
-        text = f"啊哦，发送的消息出现了一些问题"
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
-        c.append(Module.Context(Element.Text(f"卡片消息json没有通过验证或者不存在", Types.Text.KMD)))
-        cm0.append(c)
-        if send_msg != None:  # 非none则执行更新消息，而不是直接发送
-            await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
-        else:
-            await msg.reply(cm0)
+        print(f"ERR! Au:{msg.author_id} json.dumps(cm) = {json.dumps(cm)}")
+        text_sub = f"卡片消息json没有通过验证或者不存在"
+    elif "屏蔽" in excp:
+        text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
+
+    cm0 = await get_card(text,text_sub,icon_cm.lagging)
+    if send_msg != None:  # 非none则执行更新消息，而不是直接发送
+        await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
+    else:
+        await msg.reply(cm0)
 
 # 基础错误的处理，带login提示(部分命令不需要这个提示)
 async def BaseException_Handler(def_name:str,excp,msg:Message,bot:Bot,send_msg=None,cm:CardMessage=None,help="您可能需要重新执行/login操作"):
