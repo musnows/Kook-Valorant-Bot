@@ -1105,6 +1105,7 @@ async def login_reauth(kook_user_id: str):
         if kook_user_id in UserAuthDict['AP'] and (not UserAuthDict[kook_user_id]['2fa']): 
             res_auth = await authflow(UserAuthDict['AP'][kook_user_id]['a'], UserAuthDict['AP'][kook_user_id]['p'])
             UserAuthDict[kook_user_id]['auth'] = res_auth # 用账户密码重新登录
+            res_auth._cookie_jar.save(f"./log/cookie/{kook_user_id}.cke")#保存cookie
             print(base_print+"authflow() by AP")
             ret = True
 
