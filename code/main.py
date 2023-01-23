@@ -52,6 +52,7 @@ kook_headers = {f'Authorization': f"Bot {config['token']}"}
 debug_ch = None
 cm_send_test = None
 NOTIFY_NUM = 3          # 非vip用户皮肤提醒栏位
+VIP_BG_SIZE = 4         # vip用户背景图片数量限制
 RATE_LIMITED_TIME = 180 # 全局登录速率超速等待秒数
 Login_Forbidden = False # 403错误禁止所有用户登录
 #记录开机时间
@@ -640,8 +641,9 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         x3 = "[None]"
         if icon != 'err':
             user_ind = (msg.author_id in VipShopBgDict['bg'])  #判断当前用户在不在dict中
-            if user_ind and len(VipShopBgDict['bg'][msg.author_id]["background"]) >= 4:
-                cm = await get_card(f"当前仅支持保存4个自定义图片","您可用「/vip-shop-d 图片编号」删除已有图片再添加",icon_cm.that_it)
+            if user_ind and len(VipShopBgDict['bg'][msg.author_id]["background"]) >= VIP_BG_SIZE:
+                cm = await get_card(f"当前仅支持保存{VIP_BG_SIZE}个自定义图片",
+                                    "您可用「/vip-shop-d 图片编号」删除已有图片再添加",icon_cm.that_it)
                 await msg.reply(cm)
                 return
 
@@ -1010,9 +1012,8 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         )
     except auth_exceptions.RiotAuthenticationError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
-        text = f"当前的账户密码真的对了吗？"
         text_sub = f"Make sure username and password are correct\n`{result}`"
-        cm = await get_card(text,text_sub,icon_cm.dont_do_that)
+        cm = await get_card("当前的账户密码真的对了吗？",text_sub,icon_cm.dont_do_that)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotMultifactorError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
@@ -1028,7 +1029,8 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         err_str+=f" - set login_rate_limit = True"
         print(err_str)
         #这里是第一个出现速率限制err的用户,更新消息提示
-        cm = await get_card("阿狸的请求超速！请在3分钟后重试","RiotRatelimitError, please try again later",icon_cm.lagging)
+        cm = await get_card(f"阿狸的请求超速！请在{RATE_LIMITED_TIME}s后重试",
+                            "RiotRatelimitError, please try again later",icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
         err_str = f"ERR! [{GetTime()}] login aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
