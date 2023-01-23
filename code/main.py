@@ -944,7 +944,7 @@ async def check_UserAuthDict_len(msg: Message):
 async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=0,*arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa}")
     log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
-    global Login_Forbidden
+    global Login_Forbidden,login_rate_limit, UserTokenDict, UserAuthDict
     if not isinstance(msg, PrivateMessage): # 不是私聊的话，禁止调用本命令
         await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
         return
@@ -958,11 +958,10 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         await Login_Forbidden_send(msg)
         return
     try:
-        global login_rate_limit, UserTokenDict, UserAuthDict
+        # 检查全局登录速率
         await check_GloginRate() # 无须接收此函数返回值，直接raise
-        text = "正在尝试获取您的riot账户token"
-        text_sub = "小憩一下，很快就好啦！"
-        cm0 = await get_card(text,text_sub,icon_cm.val_logo_gif)
+        # 发送开始登录的提示消息
+        cm0 = await get_card("正在尝试获取您的riot账户token","小憩一下，很快就好啦！",icon_cm.val_logo_gif)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
         # 获取用户的token
@@ -1007,7 +1006,6 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         print(
             f"[Login] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
-
     except auth_exceptions.RiotAuthenticationError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
         text = f"当前的账户密码真的对了吗？"
