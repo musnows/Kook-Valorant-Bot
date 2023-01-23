@@ -76,11 +76,19 @@ async def kook_create_asset(bot_token:str,bg):
     imgByte = imgByteArr.getvalue()
     data = aiohttp.FormData()
     data.add_field('file',imgByte)
-    url = "https://www.kookapp.cn/api/v3/asset/create"
+    url = kook_base_url+"/api/v3/asset/create"
     kook_headers = {f'Authorization': f"Bot {bot_token}"}
     body = {'file':data}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=kook_headers,data=data) as response:
+            res = json.loads(await response.text())
+    return res
+
+# 下线机器人
+async def bot_offline():
+    url = kook_base_url+"/api/v3/user/offline"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=kook_headers) as response:
             res = json.loads(await response.text())
     return res
 

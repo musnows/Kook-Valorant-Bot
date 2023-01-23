@@ -24,7 +24,7 @@ from endpoints.Help import help_main,help_val,help_develop
 from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
 from endpoints.Other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
-                       status_active_music, status_delete, guild_view, upd_card)
+                       status_active_music, status_delete, bot_offline, upd_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.Val import *
 from endpoints.EzAuth import auth2fa,authflow,auth2faWait,Get2faWait_Key,User2faCode
@@ -80,6 +80,8 @@ async def KillBot(msg:Message,*arg):
         # 保存所有文件
         await Save_All_File(False)
         await msg.reply(f"[kill] 保存全局变量成功")
+        res = await bot_offline() # 调用接口下线bot
+        print(f"[kill] bot-off: {res}")
         os._exit(0) # 退出程序
 
 ##########################################################################################
@@ -191,6 +193,21 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1,*args)
         #发送错误信息到指定频道
         await bot.client.send(debug_ch, err_str)
 
+# 返回天气
+@bot.command(name='we')
+async def Weather(msg: Message, city: str = "err"):
+    logging(msg)
+    if city == "err":
+        await msg.reply(f"函数参数错误，城市: `{city}`\n")
+        return
+
+    try:
+        await weather(msg, city)
+    except Exception as result:
+        await BaseException_Handler("Weather",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
+        err_str = f"ERR! [{GetTime()}] Weather\n```\n{traceback.format_exc()}\n```"
+        #发送错误信息到指定频道
+        await bot.client.send(debug_ch, err_str)
 
 ################################以下是给用户上色功能的内容########################################
 
@@ -263,33 +280,6 @@ async def TLON(msg: Message):
 async def TLOFF(msg: Message):
     logging(msg)
     await Close_TL(msg)
-
-
-######################################## Other ################################################
-
-# 返回历史上的今天
-@bot.command(name='hs')
-async def History(msg: Message):
-    logging(msg)
-    #await history(msg)
-    await msg.reply(f"抱歉，`hs` 功能已被取消！")
-
-
-# 返回天气
-@bot.command(name='we')
-async def Weather(msg: Message, city: str = "err"):
-    logging(msg)
-    if city == "err":
-        await msg.reply(f"函数参数错误，城市: `{city}`\n")
-        return
-
-    try:
-        await weather(msg, city)
-    except Exception as result:
-        await BaseException_Handler("Weather",traceback.format_exc(),msg,bot,None,None,"建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] Weather\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
 
 ###########################################################################################
 ####################################以下是游戏相关代码区#####################################
@@ -404,6 +394,23 @@ from endpoints.FileManage import VipShopBgDict,VipRollDcit
 illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
 illegal_img_169 = "https://img.kookapp.cn/assets/2022-09/CVWFac7CJG0zk0k0.png"
 
+#替换掉违规图片（传入list的下标)
+async def replace_illegal_img(user_id: str, num: int):
+    """
+        user_id:  kook user_id
+        num: VipShopBgDict list index
+    """
+    try:
+        global VipShopBgDict
+        img_str = VipShopBgDict['bg'][user_id]["background"][num]
+        VipShopBgDict['bg'][user_id]["background"][num] = illegal_img_169
+        VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
+        print(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
+        
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -483,24 +490,6 @@ async def list_vip_user(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] list_vip_user\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await msg.reply(err_str)
-
-
-#替换掉违规图片（传入list的下标)
-async def replace_illegal_img(user_id: str, num: int):
-    """
-        user_id:  kook user_id
-        num: VipShopBgDict list index
-    """
-    try:
-        global VipShopBgDict
-        img_str = VipShopBgDict['bg'][user_id]["background"][num]
-        VipShopBgDict['bg'][user_id]["background"][num] = illegal_img_169
-        VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
-        print(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
 
 async def check_vip_img():
@@ -730,14 +719,8 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             icon_num = VipShopBgDict['bg'][msg.author_id]["background"][num]
             VipShopBgDict['bg'][msg.author_id]["background"][num] = VipShopBgDict['bg'][msg.author_id]["background"][0]
             VipShopBgDict['bg'][msg.author_id]["background"][0] = icon_num
-            VipShopBgDict['bg'][msg.author_id]['status'] = False  #修改图片之后，因为8点bot存储了商店图，所以需要重新获取新的背景
-
-            # #进行缩放+贴上图后保存
-            # bg_vip = resize_vip(1280,720,bg_vip)
-            # bg_vip = bg_vip.convert('RGBA')
-            # # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-            # finalImg = Image.alpha_composite(bg_vip, bg_main_169)
-            # finalImg.save(f'./log/img_temp_vip/bg/{msg.author_id}.png')
+            VipShopBgDict['bg'][msg.author_id]['status'] = False  
+            #修改图片之后，因为8点bot存储了商店图，所以需要重新获取 以新的背景图为背景 的商店图片
         else:
             await msg.reply("请提供正确返回的图片序号，可以用`/vip-shop`进行查看")
             return
@@ -921,7 +904,6 @@ async def vip_time_add(msg:Message,vday:int=1,*arg):
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
 from endpoints.FileManage import UserTokenDict
 
-
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {}
 # 用来存放已保存cookie的用户id（保存在文件中）
@@ -962,63 +944,6 @@ def get_login_rate_cm(time_diff=None):
     return cm
 
 
-#检查是否存在用户请求超速
-async def check_user_login_rate(msg: Message):
-    """
-    Returns:
-     - True: UserRatelimitError
-     - False: good_to_go
-    """
-    global login_dict  #检查用户请求次数，避免超速
-    if msg.author_id in login_dict:
-        time_stap = time.time()
-        time_diff = time_stap - login_dict[msg.author_id]['time']
-        if login_dict[msg.author_id]['nums'] >= 3 and time_diff <= 70.0:
-            # 思路是第一次请求超速后，要过70s才能执行下一次
-            if login_dict[msg.author_id]['nums'] == 3:  #第一次请求超速
-                login_dict[msg.author_id]['time'] = time_stap  #更新时间戳
-                time_diff = 0  #更新diff
-
-            login_dict[msg.author_id]['nums'] += 1
-            time_remain = format(70.0 - time_diff, '.1f')  #剩余需要等待的时间
-            text = f"用户登录请求超速，请在 {time_remain}s 后重试"
-            cm0 = CardMessage()
-            c = Card(color='#fb4b57')  #卡片侧边栏颜色
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.powder, size='sm')))
-            c.append(
-                Module.Context(
-                    Element.Text(f"raise UserRatelimitError, please try again after {time_remain}s", Types.Text.KMD)))
-            cm0.append(c)
-            await msg.reply(cm0)
-            return True
-        elif time_diff > 70.0:  #请求次数超限，但是已经过了70s
-            login_dict[msg.author_id]['nums'] = 1  #重置为1
-            login_dict[msg.author_id]['time'] = time_stap
-            return False
-        else:  # login_dict[msg.author_id]['nums']<3 and time_diff<=60.0
-            login_dict[msg.author_id]['nums'] += 1
-            return False
-    else:
-        login_dict[msg.author_id] = {'time': time.time(), 'nums': 1}
-        return False
-
-# 全局请求超速
-async def check_global_login_rate(msg:Message):   
-    if login_rate_limit['limit']:
-        time_stap = time.time()
-        time_diff = time_stap - login_rate_limit['time']
-        if time_diff <= 240.0:  #240s内无法使用login
-            ret_cm = get_login_rate_cm(time_diff)
-            await msg.reply(ret_cm)
-            print(f"Login  - Au:{msg.author_id} - raise global_login_rate_limit")
-            return False
-        else:  #超过240s，解除限制
-            login_rate_limit['limit'] = False
-            login_rate_limit['time'] = time_stap
-            return True
-    return True
-
-
 # 登录，保存用户的token
 @bot.command(name='login')
 async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=0,*arg):
@@ -1041,12 +966,6 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         global login_rate_limit, UserTokenDict, UserAuthDict
         cm0 = CardMessage()
         c = Card(color='#fb4b57')  #卡片侧边栏颜色
-
-        # if await check_global_login_rate(msg):# 全局请求超速
-        #     return
-        # if await check_user_login_rate(msg):# 用户请求超速
-        #     print(f"Login  - Au:{msg.author_id} - raise user_login_rate_limit")
-        #     return
         text = "正在尝试获取您的riot账户token"
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.val_logo_gif, size='sm')))
         c.append(Module.Context(Element.Text("小憩一下，很快就好啦！", Types.Text.KMD)))
