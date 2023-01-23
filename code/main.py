@@ -545,9 +545,8 @@ async def check_vip_img():
 
             # 遍历完一个用户后打印结果
             log_str_user+=f"({vip_user})"
-            #print(f"[BOT.TASK] check_vip_img Au:{vip_user} finished!")
+
         #所有用户成功遍历后，写入文件
-        #打印
         print(log_str_user)
         print("[BOT.TASK] check_vip_img finished!")
     except Exception as result:
@@ -634,8 +633,6 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
         return
 
-    cm = CardMessage()
-    c = Card(color='#fb4b57')
     try:
         if not await vip_ck(msg):
             return
@@ -644,11 +641,7 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         if icon != 'err':
             user_ind = (msg.author_id in VipShopBgDict['bg'])  #判断当前用户在不在dict中
             if user_ind and len(VipShopBgDict['bg'][msg.author_id]["background"]) >= 4:
-                text = f"当前仅支持保存4个自定义图片"
-                c.append(
-                    Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-                c.append(Module.Context(Element.Text("您可用「/vip-shop-d 图片编号」删除已有图片再添加", Types.Text.KMD)))
-                cm.append(c)
+                cm = await get_card(f"当前仅支持保存4个自定义图片","您可用「/vip-shop-d 图片编号」删除已有图片再添加",icon_cm.that_it)
                 await msg.reply(cm)
                 return
 
@@ -661,11 +654,7 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
                 # 检查图片链接格式是否支持
                 if ('png' not in x3) and ('jpg' not in x3) and ('jpeg' not in x3):
                     text = f"您当前上传的图片格式不支持！请上传png/jpg/jpeg格式的图片"
-                    c.append(
-                        Module.Section(Element.Text(text, Types.Text.KMD),
-                                       Element.Image(src=icon_cm.ahri_dark, size='sm')))
-                    c.append(Module.Context(Element.Text("请优先尝试png格式图片，其余格式兼容性有一定问题", Types.Text.KMD)))
-                    cm.append(c)
+                    cm = await get_card(text,"请优先尝试png格式图片，其余格式兼容性有一定问题",icon_cm.ahri_dark)
                     await msg.reply(cm)
                     print(f"[vip-shop] Au:{msg.author_id} img_type_not support")
                     return
@@ -936,7 +925,7 @@ def check_rate_err_user(user_id:str):
 async def check_GloginRate():
     global login_rate_limit
     if login_rate_limit['limit']:
-        if (time.time() - login_rate_limit['time'])>180: 
+        if (time.time() - login_rate_limit['time'])>RATE_LIMITED_TIME: 
             login_rate_limit['limit'] = False#超出180s解除
         else:#未超出240s
             raise auth_exceptions.RiotRatelimitError
@@ -1129,32 +1118,20 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             'entitlements_token': auth.entitlements_token
         }
         resp = await fetch_valorant_point(userdict)
-        # print('[Check_re_auth]', resp)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
         test = resp['httpStatus']
         is_msg = isinstance(msg, Message)  #判断传入的类型是不是消息
         if is_msg:  #如果传入的是msg，则提示用户
-            cm = CardMessage()
             text = f"获取「{def_name}」失败！正在尝试重新获取token，您无需操作"
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.im_good_phoniex,
-                                                                                 size='sm')))
-            c.append(Module.Context(Element.Text(f"{resp['message']}", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card(text,f"{resp['message']}",icon_cm.im_good_phoniex)
             send_msg = await msg.reply(cm)
 
-        #不管传入的是用户id还是msg，都传userid进入该函数
+        # 不管传入的是用户id还是msg，都传userid进入该函数
         ret = await login_re_auth(user_id)
-        if ret == False and is_msg:  #没有正常返回
-            cm = CardMessage()
+        if ret == False and is_msg:  #没有正常返回,重新获取token失败
             text = f"重新获取token失败，请私聊「/login」重新登录\n"
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.crying_crab, size='sm')))
-            c.append(Module.Context(Element.Text(f"Auto Reauthorize Failed!", Types.Text.KMD)))
-            cm.append(c)  #如果重新获取token失败，则更新上面的消息
+            cm = await get_card(text,"Auto Reauthorize Failed!",icon_cm.crying_crab)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         elif ret == True and is_msg:  #正常重新登录，且传过来了消息
             return send_msg  #返回发送出去的消息（用于更新）
@@ -1195,27 +1172,18 @@ async def logout_authtoken(msg: Message, *arg):
     try:
         global UserTokenDict, UserAuthDict
         if msg.author_id not in UserAuthDict:  #使用not in判断是否不存在
-            cm = CardMessage()
-            text = f"你还没有登录呢！"
-            c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-            c.append(Module.Context(Element.Text(f"「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card("您尚未登陆！无须logout","阿巴阿巴？",icon_cm.whats_that)
             await msg.reply(cm)
             return
 
         #如果id存在， 删除id
         del UserAuthDict[msg.author_id]  #先删除auth对象
-        print(
-            f"Logout - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        )
-        cm = CardMessage()
         text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        c = Card(color='#fb4b57')
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.crying_crab, size='sm')))
-        c.append(Module.Context(Element.Text(f"你会回来的，对吗？", Types.Text.KMD)))
-        cm.append(c)
+        cm = await get_card(text,"你会回来的，对吗？",icon_cm.crying_crab)
         await msg.reply(cm)
+        print(
+            f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        )
 
     except Exception as result: # 其他错误
         await BaseException_Handler("logout",traceback.format_exc(),msg,bot)
@@ -1291,12 +1259,7 @@ async def get_daily_shop(msg: Message, *arg):
             # 重新获取token成功，从dict中获取玩家id
             player_gamename = f"{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
             # 获取玩家id成功了，再提示正在获取商店
-            cm = CardMessage()  #卡片侧边栏颜色
-            text = "正在尝试获取您的每日商店"
-            c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.duck, size='sm')))
-            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card("正在尝试获取您的每日商店","阿狸正在施法，很快就好啦！",icon_cm.duck)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
                 await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                 send_msg = reau
@@ -1392,13 +1355,8 @@ async def get_daily_shop(msg: Message, *arg):
             # 结束，打印结果
             print(f"[{GetTime()}] Au:{msg.author_id} daily_shop reply successful [{shop_using_time}/{format(end - start, '.2f')}]")
         else:
-            cm = CardMessage()
-            text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
-            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作",
+                                f"「/login 账户 密码」请确认您知晓这是一个风险操作",icon_cm.whats_that)
             await msg.reply(cm)
             return
         
@@ -1406,16 +1364,12 @@ async def get_daily_shop(msg: Message, *arg):
         await APIRequestFailed_Handler("shop",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
-        cm2 = CardMessage()
-        c = Card(color='#fb4b57')
         if "SkinsPanelLayout" in str(result):
             print(err_str,resp)
             text = f"键值错误，需要重新登录"
             btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
-            c.append(Module.Context(Element.Text(btext, Types.Text.KMD)))
-            cm2.append(c)
-            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+            cm = await get_card(f"键值错误，需要重新登录",btext,icon_cm.whats_that)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         else:
             await BaseException_Handler("shop",traceback.format_exc(),msg,bot,send_msg,cm)
 
@@ -1519,13 +1473,8 @@ async def get_night_market(msg: Message, *arg):
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             print(f"[night_market] Au:{msg.author_id} night_market reply success! [{using_time}]")
         else:
-            cm = CardMessage()
-            text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
-            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作",
+                                f"「/login 账户 密码」请确认您知晓这是一个风险操作",icon_cm.whats_that)
             await msg.reply(cm)
             return
         
@@ -1578,6 +1527,8 @@ async def get_user_card(msg: Message, *arg):
             c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.rgx_card, size='sm')))
             c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
             cm.append(c)
+            cm = await get_card("正在尝试获取您的 玩家卡面/VP/R点",
+                    "阿狸正在施法，很快就好啦！",icon_cm.rgx_card)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
                 await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                 send_msg = reau
@@ -1591,7 +1542,6 @@ async def get_user_card(msg: Message, *arg):
                 'entitlements_token': auth.entitlements_token
             }
             resp = await fetch_player_loadout(userdict)  #获取玩家装备栏
-            #print(resp)
             player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
             player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
             if 'data' not in player_card or player_card['status'] != 200:
@@ -1604,15 +1554,8 @@ async def get_user_card(msg: Message, *arg):
                 print(f"ERR![player_title] Au:{msg.author_id} uuid:{resp['Identity']['PlayerTitleID']}")
             #print(player_card,player_title)
             if resp['Guns'] == None or resp['Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
-                cm = CardMessage()
-                text = f"状态错误！您是否登录了一个全新账户？"
-                c = Card(color='#fb4b57')
-                c.append(
-                    Module.Section(Element.Text(text, Types.Text.KMD),
-                                   Element.Image(src=icon_cm.say_hello_to_camera, size='sm')))
-                c.append(Module.Section(Element.Text(f"card: `{player_card}`\ntitle: `{player_title}`",
-                                                     Types.Text.KMD)))
-                cm.append(c)
+                cm = await get_card(f"状态错误！您是否登录了一个全新的账户？",
+                    f"card: `{player_card}`\ntitle: `{player_title}`",icon_cm.whats_that)
                 await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
                 return
 
@@ -1624,7 +1567,6 @@ async def get_user_card(msg: Message, *arg):
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
             text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-            #cm.append(c)
 
             #获取玩家的vp和r点剩余的text
             resp = await fetch_vp_rp_dict(userdict)
@@ -1636,13 +1578,8 @@ async def get_user_card(msg: Message, *arg):
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
         else:
-            cm = CardMessage()
-            text = "您尚未登陆！请「私聊」使用login命令进行登录操作\n"
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that, size='sm')))
-            c.append(Module.Context(Element.Text("「/login 账户 密码」请确认您知晓这是一个风险操作", Types.Text.KMD)))
-            cm.append(c)
+            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作",
+                                f"「/login 账户 密码」请确认您知晓这是一个风险操作",icon_cm.whats_that)
             await msg.reply(cm)
             return
 
@@ -1650,15 +1587,9 @@ async def get_user_card(msg: Message, *arg):
         await APIRequestFailed_Handler("uinfo",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
-        cm2 = CardMessage()
-        res_str = str(result)
-        if "Identity" in res_str or "Balances" in res_str:
+        if "Identity" in str(result) or "Balances" in str(result):
             print(err_str)
-            text = f"键值错误，需要重新登录"
-            c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
-            c.append(Module.Context(Element.Text(f"KeyError:{result}, please re-login", Types.Text.KMD)))
-            cm2.append(c)
+            cm2 = await get_card(f"键值错误，需要重新登录",f"KeyError:{result}, please re-login",icon_cm.lagging)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
             await BaseException_Handler("uinfo",traceback.format_exc(),msg,bot,send_msg,cm)
