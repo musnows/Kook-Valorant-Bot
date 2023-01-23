@@ -1908,6 +1908,162 @@ async def check_notify_err_user(msg:Message):
             return True
     else:
         return False
+
+
+#设置提醒（出现xx皮肤）
+@bot.command(name="notify-add", aliases=['notify-a'])
+async def add_skin_notify(msg: Message, *arg):
+    logging(msg)
+    if arg == ():
+        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
+        return
+    try:
+        if await check_notify_err_user(msg):
+            return
+        # 检查用户的提醒栏位
+        vip_status = await vip_ck(msg.author_id)
+        if msg.author_id in SkinNotifyDict['data'] and not vip_status:
+            if len(SkinNotifyDict['data'][msg.author_id]) > NOTIFY_NUM:
+                cm = await get_card(f"您的皮肤提醒栏位已满",
+                    f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
+                    icon_cm.rgx_broken)
+                await msg.reply(cm)
+                return
+
+        #用户没有登录
+        if msg.author_id not in UserAuthDict:
+            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作",
+                    f"「/login 账户 密码」请确认您知晓这是一个风险操作",
+                    icon_cm.whats_that)
+            await msg.reply(cm)
+            return
+
+        name = " ".join(arg)
+        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
+        sklist = fetch_skin_byname_list(name)
+        if sklist == []:  #空list代表这个皮肤不在里面
+            await msg.reply(f"该皮肤不在列表中，请重新查询！")
+            return
+
+        retlist = list()  #用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
+        for s in sklist:
+            res_price = fetch_item_price_bylist(s['lv_uuid'])
+            if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
+                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                data = {'skin': s, 'price': price}
+                retlist.append(data)
+
+        if retlist == []:  #空list代表这个皮肤没有价格
+            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
+            return
+
+        UserStsDict[msg.author_id] = retlist
+        i = 0
+        text = "```\n"  #模拟一个选择表
+        for w in retlist:
+            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}\n"
+            i += 1
+        text += "```"
+        cm = CardMessage()
+        c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
+                 Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤", Types.Text.KMD)),
+                 Module.Section(Element.Text(text + "\n\n使用 `/sts 序号` 来选择", Types.Text.KMD)))
+        cm.append(c)
+        await msg.reply(cm)
+    
+    except Exception as result: # 其他错误
+        await BaseException_Handler("notify-add",traceback.format_exc(),msg,bot,None,cm)
+
+
+#选择皮肤（这个命令必须跟着上面的命令用）
+@bot.command(name="sts")
+async def select_skin_notify(msg: Message, n: str = "err", *arg):
+    logging(msg)
+    if n == "err" or '-' in n:
+        await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号")
+        return
+    try:
+        global SkinNotifyDict
+        if msg.author_id in UserStsDict:
+            num = int(n)  #转成int下标（不能处理负数）
+            if num >= len(UserStsDict[msg.author_id]):  #下标判断，避免越界
+                await msg.reply(f"您的选择越界了！请正确填写序号")
+                return
+
+            # 先发送一个私聊消息，作为测试（避免有人开了不给私信）
+            user_test = await bot.client.fetch_user(msg.author_id)
+            await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
+            # 测试通过，继续后续插入
+            S_skin = UserStsDict[msg.author_id][num]
+            if msg.author_id not in SkinNotifyDict['data']:
+                SkinNotifyDict['data'][msg.author_id] = {}
+                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            else:  #如果存在了就直接在后面添加
+                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
+            # print(SkinNotifyDict['data'][msg.author_id])
+
+            del UserStsDict[msg.author_id]  #删除选择页面中的list
+            text = f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
+            # 设置成功并删除list后，再发送提醒事项设置成功的消息
+            await msg.reply(text)
+            print(f"[sts] Au:{msg.author_id} ", text)
+        else:
+            await msg.reply(f"您需要（重新）执行 `/notify-a` 来设置提醒皮肤")
+    except requester.HTTPRequester.APIRequestFailed as result: #消息发送失败
+        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
+        await bot.client.send(debug_ch, err_str)
+        await APIRequestFailed_Handler("sts",traceback.format_exc(),msg,bot,None)
+    except Exception as result: # 其他错误
+        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
+        await bot.client.send(debug_ch, err_str)
+        await BaseException_Handler("sts",traceback.format_exc(),msg,bot,None)
+
+
+# 显示当前设置好了的皮肤通知
+@bot.command(name="notify-list", aliases=['notify-l'])
+async def list_skin_notify(msg: Message, *arg):
+    logging(msg)
+    try:
+        if await check_notify_err_user(msg):
+            return
+        if msg.author_id in SkinNotifyDict['data']:
+            text = "```\n"
+            for skin, name in SkinNotifyDict['data'][msg.author_id].items():
+                text += skin + ' = ' + name + '\n'
+            text += "```\n"
+            text += "如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
+            text += "如果您需要删除皮肤，请使用`notify-d uuid`\n"
+            text += "注：`=`号前面很长的那一串就是uuid\n"
+            await msg.reply(text)
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
+        await bot.client.send(debug_ch, err_str)
+        await BaseException_Handler("notify-list",traceback.format_exc(),msg,bot,None)        
+
+
+# 删除已有皮肤通知
+@bot.command(name="notify-del", aliases=['notify-d'])
+async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
+    logging(msg)
+    if uuid == 'err':
+        await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
+        return
+    try:
+        if await check_notify_err_user(msg):
+            return
+        global SkinNotifyDict
+        if msg.author_id in SkinNotifyDict['data']:
+            if uuid in SkinNotifyDict['data'][msg.author_id]:
+                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict['data'][msg.author_id][uuid]}")
+                await msg.reply(f"已删除皮肤：`{SkinNotifyDict['data'][msg.author_id][uuid]}`")
+                del SkinNotifyDict['data'][msg.author_id][uuid]
+            else:
+                await msg.reply(f"您提供的uuid不在列表中！")
+                return
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
+        await bot.client.send(debug_ch, err_str)
+        await BaseException_Handler("notify-del",traceback.format_exc(),msg,bot,None)   
     
 
 #独立函数，为了封装成命令+定时
@@ -2110,165 +2266,6 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
     logging(msg)
     if msg.author_id == master_id:
         await auto_skin_notify()
-    else:
-        await msg.reply("您没有权限执行此命令")
-
-
-#设置提醒（出现xx皮肤）
-@bot.command(name="notify-add", aliases=['notify-a'])
-async def add_skin_notify(msg: Message, *arg):
-    logging(msg)
-    if arg == ():
-        await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
-        return
-    try:
-        if await check_notify_err_user(msg):
-            return
-        # 检查用户的提醒栏位
-        vip_status = await vip_ck(msg.author_id)
-        if msg.author_id in SkinNotifyDict['data'] and not vip_status:
-            if len(SkinNotifyDict['data'][msg.author_id]) > NOTIFY_NUM:
-                cm = await get_card(f"您的皮肤提醒栏位已满",
-                    f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
-                    icon_cm.rgx_broken)
-                await msg.reply(cm)
-                return
-
-        #用户没有登录
-        if msg.author_id not in UserAuthDict:
-            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作",
-                    f"「/login 账户 密码」请确认您知晓这是一个风险操作",
-                    icon_cm.whats_that)
-            await msg.reply(cm)
-            return
-
-        name = " ".join(arg)
-        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist = fetch_skin_byname_list(name)
-        if sklist == []:  #空list代表这个皮肤不在里面
-            await msg.reply(f"该皮肤不在列表中，请重新查询！")
-            return
-
-        retlist = list()  #用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
-        for s in sklist:
-            res_price = fetch_item_price_bylist(s['lv_uuid'])
-            if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                data = {'skin': s, 'price': price}
-                retlist.append(data)
-
-        if retlist == []:  #空list代表这个皮肤没有价格
-            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
-            return
-
-        UserStsDict[msg.author_id] = retlist
-        i = 0
-        text = "```\n"  #模拟一个选择表
-        for w in retlist:
-            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}\n"
-            i += 1
-        text += "```"
-        cm = CardMessage()
-        c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"),
-                 Module.Context(Element.Text("请在下方键入序号进行选择，请不要选择已购买的皮肤", Types.Text.KMD)),
-                 Module.Section(Element.Text(text + "\n\n使用 `/sts 序号` 来选择", Types.Text.KMD)))
-        cm.append(c)
-        await msg.reply(cm)
-    
-    except Exception as result: # 其他错误
-        await BaseException_Handler("notify-add",traceback.format_exc(),msg,bot,None,cm)
-
-
-#选择皮肤（这个命令必须跟着上面的命令用）
-@bot.command(name="sts")
-async def select_skin_notify(msg: Message, n: str = "err", *arg):
-    logging(msg)
-    if n == "err" or '-' in n:
-        await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号")
-        return
-    try:
-        global SkinNotifyDict
-        if msg.author_id in UserStsDict:
-            num = int(n)  #转成int下标（不能处理负数）
-            if num >= len(UserStsDict[msg.author_id]):  #下标判断，避免越界
-                await msg.reply(f"您的选择越界了！请正确填写序号")
-                return
-
-            # 先发送一个私聊消息，作为测试（避免有人开了不给私信）
-            user_test = await bot.client.fetch_user(msg.author_id)
-            await user_test.send(f"这是一个私信测试。请不要修改您的私信权限，以免notify功能无法正常使用")
-            # 测试通过，继续后续插入
-            S_skin = UserStsDict[msg.author_id][num]
-            if msg.author_id not in SkinNotifyDict['data']:
-                SkinNotifyDict['data'][msg.author_id] = {}
-                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
-            else:  #如果存在了就直接在后面添加
-                SkinNotifyDict['data'][msg.author_id][S_skin['skin']['lv_uuid']] = S_skin['skin']['displayName']
-            # print(SkinNotifyDict['data'][msg.author_id])
-
-            del UserStsDict[msg.author_id]  #删除选择页面中的list
-            text = f"设置成功！已开启`{S_skin['skin']['displayName']}`的提醒"
-            # 设置成功并删除list后，再发送提醒事项设置成功的消息
-            await msg.reply(text)
-            print(f"[sts] Au:{msg.author_id} ", text)
-        else:
-            await msg.reply(f"您需要（重新）执行 `/notify-a` 来设置提醒皮肤")
-    except requester.HTTPRequester.APIRequestFailed as result: #消息发送失败
-        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
-        await bot.client.send(debug_ch, err_str)
-        await APIRequestFailed_Handler("sts",traceback.format_exc(),msg,bot,None)
-    except Exception as result: # 其他错误
-        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
-        await bot.client.send(debug_ch, err_str)
-        await BaseException_Handler("sts",traceback.format_exc(),msg,bot,None)
-
-
-# 显示当前设置好了的皮肤通知
-@bot.command(name="notify-list", aliases=['notify-l'])
-async def list_skin_notify(msg: Message, *arg):
-    logging(msg)
-    try:
-        if await check_notify_err_user(msg):
-            return
-        if msg.author_id in SkinNotifyDict['data']:
-            text = "```\n"
-            for skin, name in SkinNotifyDict['data'][msg.author_id].items():
-                text += skin + ' = ' + name + '\n'
-            text += "```\n"
-            text += "如果您需要添加皮肤，请使用`notify-a 皮肤名`\n"
-            text += "如果您需要删除皮肤，请使用`notify-d uuid`\n"
-            text += "注：`=`号前面很长的那一串就是uuid\n"
-            await msg.reply(text)
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
-        await bot.client.send(debug_ch, err_str)
-        await BaseException_Handler("notify-list",traceback.format_exc(),msg,bot,None)        
-
-
-# 删除已有皮肤通知
-@bot.command(name="notify-del", aliases=['notify-d'])
-async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
-    logging(msg)
-    if uuid == 'err':
-        await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
-        return
-    try:
-        if await check_notify_err_user(msg):
-            return
-        global SkinNotifyDict
-        if msg.author_id in SkinNotifyDict['data']:
-            if uuid in SkinNotifyDict['data'][msg.author_id]:
-                print(f"notify-d - Au:{msg.author_id} = {uuid} {SkinNotifyDict['data'][msg.author_id][uuid]}")
-                await msg.reply(f"已删除皮肤：`{SkinNotifyDict['data'][msg.author_id][uuid]}`")
-                del SkinNotifyDict['data'][msg.author_id][uuid]
-            else:
-                await msg.reply(f"您提供的uuid不在列表中！")
-                return
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
-        await bot.client.send(debug_ch, err_str)
-        await BaseException_Handler("notify-del",traceback.format_exc(),msg,bot,None)       
-
 
 #######################################################################################################
 #######################################################################################################
