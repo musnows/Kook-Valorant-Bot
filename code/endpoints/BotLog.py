@@ -110,6 +110,24 @@ async def log_bot_list(msg:Message):
         await msg.reply(f"{err_str}")
         print(err_str)
 
+# 通过log_bot_list分选出两列服务器名和服务器用户数
+async def log_bot_list_text(logDict:dict):
+    i=1
+    text_name = "No  服务器名\n"
+    text_user = "用户数\n"
+    for gu,ginfo in logDict['guild']['data'].items():
+        #Gret = await guild_view(gu)
+        Gname = ginfo['name']
+        if len(Gname) >12:
+            text = Gname[0:11]
+            text += "…"
+            Gname = text
+        # 追加text
+        text_name+=f"[{i}]  {Gname}\n"
+        text_user+=f"{len(ginfo['user'])}\n"
+        i+=1
+    return {'name':text_name,'user':text_user}
+
 # 出现kook api异常的通用处理
 async def APIRequestFailed_Handler(def_name:str,excp,msg:Message,bot:Bot,send_msg=None,cm:CardMessage=None):
     err_str = f"ERR! [{GetTime()}] {def_name} APIRequestFailed\n{excp}"

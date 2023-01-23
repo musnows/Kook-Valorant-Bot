@@ -21,7 +21,7 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合
 from riot_auth import RiotAuth, auth_exceptions
 
 from endpoints.Help import help_main,help_val,help_develop
-from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
+from endpoints.BotLog import logging, log_bot_list, log_bot_user,log_bot_list_text,APIRequestFailed_Handler, BaseException_Handler
 from endpoints.Other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
                        status_active_music, status_delete, bot_offline, upd_card,get_card)
@@ -2271,21 +2271,8 @@ async def bot_log_list(msg:Message,*arg):
     logging(msg)
     try:
         if msg.author_id == master_id:
-            retDict = await log_bot_list(msg)
-            i=1
-            text_name = "No  服务器名\n"
-            text_user = "用户数\n"
-            for gu,ginfo in retDict['guild']['data'].items():
-                #Gret = await guild_view(gu)
-                Gname = ginfo['name']
-                if len(Gname) >12:
-                    text = Gname[0:11]
-                    text += "…"
-                    Gname = text
-                # 追加text
-                text_name+=f"[{i}]  {Gname}\n"
-                text_user+=f"{len(ginfo['user'])}\n"
-                i+=1
+            retDict = await log_bot_list(msg) # 获取用户/服务器列表
+            res_text = await log_bot_list_text(retDict) # 获取text
             
             cm = CardMessage()
             c = Card(
@@ -2297,8 +2284,8 @@ async def bot_log_list(msg:Message,*arg):
             c.append(
                 Module.Section(
                     Struct.Paragraph(2,
-                               Element.Text(f"{text_name[:5000]}",Types.Text.KMD),
-                               Element.Text(f"{text_user[:5000]}",Types.Text.KMD))))#限制字数才能发出来
+                               Element.Text(f"{res_text['name'][:5000]}",Types.Text.KMD),
+                               Element.Text(f"{res_text['user'][:5000]}",Types.Text.KMD))))#限制字数才能发出来
             cm.append(c)
             await msg.reply(cm)
         else:
