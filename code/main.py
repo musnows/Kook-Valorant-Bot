@@ -1330,11 +1330,9 @@ async def get_daily_shop(msg: Message, *arg):
                 upload_flag=False #有缓存图，直接使用本地已有链接
                 dailyshop_img_src = VipShopBgDict['cache'][msg.author_id]['cache_img']
             elif is_vip and (msg.author_id in VipShopBgDict['bg']): #本地缓存路径不存在，或者缓存过期
-                play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
-                vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
-                rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+                play_currency = await fetch_vp_rp_dict(userdict)#获取用户的vp和rp
                 background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else VipShopBgDict['bg'][msg.author_id]["background"][0])
-                img_ret = await get_shop_img_169(list_shop,vp=vp,rp=rp,bg_img_src=background_img)
+                img_ret = await get_shop_img_169(list_shop,vp=play_currency['vp'],rp=play_currency['rp'],bg_img_src=background_img)
             else:# 普通用户/没有自定义图片的vip用户
                 img_ret = await get_shop_img_11(list_shop)
 
@@ -1545,19 +1543,6 @@ async def open_night_market(msg: Message, *arg):
         print(err_str)
         
 
-# 获取vp和r点剩余
-async def get_user_vp(msg: Message, userdict, *arg):
-    #userdict = UserTokenDict[msg.author_id]
-    resp = await fetch_valorant_point(userdict)
-    #print(resp)
-    vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
-    rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
-    text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {rp}"
-    text += "    "
-    text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {vp}\n"
-    return text
-
-
 # 获取玩家卡面(添加point的别名)
 @bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
 async def get_user_card(msg: Message, *arg):
@@ -1628,11 +1613,12 @@ async def get_user_card(msg: Message, *arg):
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
             #cm.append(c)
 
-            #获取玩家的vp和r点剩余
-            text = await get_user_vp(msg, userdict)
+            #获取玩家的vp和r点剩余的text
+            resp = await fetch_vp_rp_dict(userdict)
+            text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {resp['rp']}    "
+            text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {resp['vp']}\n"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
             cm.append(c)
-            #await msg.reply(cm)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             print(f"[{GetTime()}] Au:{msg.author_id} uinfo reply successful!")
 
@@ -1675,12 +1661,10 @@ async def get_bundle(msg: Message, *arg):
         name = " ".join(arg)  # 补全函数名
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
         # 不能一来就在武器列表里面找，万一用户输入武器名，那就会把这个武器的所有皮肤都找出来，和该功能的需求不符合
-        # bundlelist = await fetch_bundles_all()
         for b in ValBundleList:  #在本地查找
             if name in b['displayName']:
                 # 确认在捆绑包里面有这个名字之后，在查找武器（这里不能使用displayName，因为有些捆绑包两个版本的名字不一样）
                 weapenlist = await fetch_bundle_weapen_byname(name)
-                #print(weapenlist)
                 cm = CardMessage()
                 c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包", Types.Text.KMD)))
                 for b in ValBundleList:
@@ -1692,7 +1676,6 @@ async def get_bundle(msg: Message, *arg):
                         res_price = fetch_item_price_bylist(w['lv_uuid'])
                         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                            #text += f"{w['displayName']} \t- vp {price}\n"
                             text += '%-28s\t- vp%5s\n' % (w['displayName'], price)
                         else:  # 找不到价格就直接插入武器名字
                             text += f"{w['displayName']}\n"
@@ -2036,12 +2019,10 @@ async def auto_skin_notify():
                         #直接获取商店图片
                         draw_time = time.time()  #开始计算画图需要的时间
                         img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
-                        play_currency = await fetch_valorant_point(userdict)#获取用户的vp和rp
-                        vp = play_currency["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
-                        rp = play_currency["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
+                        play_currency = await fetch_vp_rp_dict(userdict)#获取用户的vp和rp
                         # 设置用户背景图，如果在则用，否则返回err
                         background_img = ('err' if vip not in VipShopBgDict['bg'] else VipShopBgDict['bg'][vip]["background"][0])
-                        img_ret = await get_shop_img_169(list_shop,vp=vp,rp=rp,bg_img_src=background_img)
+                        img_ret = await get_shop_img_169(list_shop,vp=play_currency['vp'],rp=play_currency['rp'],bg_img_src=background_img)
                         if img_ret['status']:
                             bg_shop = img_ret['value']
                             bg_shop.save(img_shop_path, format='PNG')
