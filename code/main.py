@@ -2170,10 +2170,8 @@ async def auto_skin_notify():
                         print(f"[BOT.TASK.NOTIFY] [{GetTime()}] VAu:{vip} notify_shop success [{using_time}]")
                     else:  #reauthorize failed!
                         log_vip_failed+=f"({vip})"
-                        await user.send(f"尊贵的vip用户，您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：cookie登录有效期约为2-3天")
                 else:  #不在auth里面说明没有登录
                     log_vip_not_login+=f"({vip})"
-                    await user.send(f"尊贵的vip用户，请您`login`来让每日商店提醒生效哦~\n[注] 如果您在早8:10之后收到此条消息，请忽略。开发者在进行bug测试")
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] VAu:{vip} vip_user.send\n```\n{err_cur}\n```"
@@ -2221,11 +2219,8 @@ async def auto_skin_notify():
                         print(f"[BOT.TASK.NOTIFY] Au:{aid} auto_skin_notify = None")
                     else:  #reauthorize failed!
                         log_failed+=f"({aid})"
-                        await user.send(f"您已登录，但是登录信息失效了。请您重新`login`以查询每日商店\n注：cookie登录有效期约为2-3天")
                 else:  #不在auth里面说明没有登录
                     log_not_login+=f"({aid})"
-                    await user.send(
-                        f"您设置了皮肤提醒，却没有登录！请尽快`login`哦~\n[悄悄话] 阿狸会保存vip用户的登录信息，有兴趣[支持一下](https://afdian.net/a/128ahri?tab=shop)吗？\n[注] 如果您在早8:10之后收到此条消息，请忽略。开发者在进行bug测试")
             except Exception as result:  #这个是用来获取单个用户的问题的
                 err_cur = str(traceback.format_exc())
                 err_str = f"ERR![BOT.TASK.NOTIFY] Au:{aid} user.send\n```\n{err_cur}\n```"
