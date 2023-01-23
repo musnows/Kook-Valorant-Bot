@@ -83,9 +83,9 @@ async def KillBot(msg:Message,*arg):
     if msg.author_id == master_id:
         # 保存所有文件
         await Save_All_File(False)
-        await msg.reply(f"[kill] 保存全局变量成功")
+        await msg.reply(f"[KILL] 保存全局变量成功")
         res = await bot_offline() # 调用接口下线bot
-        print(f"[kill] bot-off: {res}")
+        print(f"[KILL] [{GetTime()}] bot-off: {res}")
         os._exit(0) # 退出程序
 
 ##########################################################################################
@@ -943,8 +943,8 @@ async def check_UserAuthDict_len(msg: Message):
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=0,*arg):
-    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa}")
+async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',tfa=0,apSave='',*arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa} {apSave}")
     log_bot_user(msg.author_id) #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden,login_rate_limit, UserTokenDict, UserAuthDict
     if not isinstance(msg, PrivateMessage): # 不是私聊的话，禁止调用本命令
@@ -960,14 +960,15 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         await Login_Forbidden_send(msg)
         return
     try:
-        # 检查全局登录速率
+        # 1.检查全局登录速率
         await check_GloginRate() # 无须接收此函数返回值，直接raise
-        # 发送开始登录的提示消息
+        # 2.发送开始登录的提示消息
         cm0 = await get_card("正在尝试获取您的riot账户token","小憩一下，很快就好啦！",icon_cm.val_logo_gif)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
-        # 获取用户的token
+        # 3.登录，获取用户的token
         res_auth = None
+        tfa = 0 if tfa == '0' else 1 # 如果tfa是字符串的0（代表是用户主动给的）那么就赋值为int 0，否则为1
         if not tfa:
             res_auth = await authflow(user, passwd)
         else:
@@ -977,7 +978,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
             th.start()
             resw = await auth2faWait(key=key,msg=msg) # 随后主执行流来这里等待
             res_auth = await resw['auth'].get_RiotAuth() # 直接获取RiotAuth对象
-        # 如果没有抛出异常，那就是完成登录了
+        # 4.如果没有抛出异常，那就是完成登录了
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName':'None', 'TagLine':'0000'} 
         userdict = {
             'auth_user_id': res_auth.user_id,
@@ -988,14 +989,11 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         UserTokenDict[msg.author_id]['GameName'] = res_gameid[0]['GameName']
         UserTokenDict[msg.author_id]['TagLine'] = res_gameid[0]['TagLine']
         UserAuthDict[msg.author_id] = { "auth":res_auth,"2fa":tfa}  #将对象插入
-
-        # 发送登录成功的信息
-        info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
+        # 设置基础打印信息
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        cm = await get_card(text,info_text,icon_cm.correct)
-        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+        info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
 
-        # 如果是vip用户，则执行下面的代码
+        # 5.如果是vip用户，则执行下面的代码
         if await vip_ck(msg.author_id):
             global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
             if msg.author_id in VipShopBgDict['bg']:
@@ -1004,7 +1002,16 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
             cookie_path = f"./log/cookie/{msg.author_id}.cke"
             res_auth._cookie_jar.save(cookie_path)#保存
 
-        # 全部都搞定了，打印登录信息
+        # 6.用户自己选择是否保存账户密码，默认是不保存的
+        if apSave == 'save' and (not tfa):
+            UserAuthDict['AP'][msg.author_id] = {'a':user,'p':passwd}
+            info_text+="\n您选择了保存账户密码，cookie失效后将使用账户密码重登"
+
+        # 7.发送登录成功的信息
+        cm = await get_card(text,info_text,icon_cm.correct)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+
+        # 8.全部都搞定了，打印登录信息日志
         print(
             f"[Login] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
