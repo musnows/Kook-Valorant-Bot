@@ -1172,24 +1172,6 @@ async def check_re_auth(def_name: str = "", msg: Union[Message, str] = ''):
             return False
 
 
-# 测试是否已登陆
-@bot.command(name="login-t")
-async def login_test(msg: Message, *arg):
-    logging(msg)
-    if Login_Forbidden:
-        await Login_Forbidden_send(msg)
-        return
-    try:
-        if msg.author_id in UserAuthDict:
-            reau = await check_re_auth("测试登录", msg)
-            if reau == False: return  #如果为假说明重新登录失败
-
-            await msg.reply(
-                f"您当前已登录账户 `{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}`")
-    except Exception as result: # 其他错误
-        await BaseException_Handler("login-t",traceback.format_exc(),msg,bot)
-
-
 # 退出登录
 @bot.command(name='logout')
 async def logout_authtoken(msg: Message, *arg):
