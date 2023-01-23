@@ -24,7 +24,7 @@ from endpoints.Help import help_main,help_val,help_develop
 from endpoints.BotLog import logging, log_bot_list, log_bot_user, APIRequestFailed_Handler, BaseException_Handler
 from endpoints.Other import  weather
 from endpoints.KookApi import (icon_cm, status_active_game,
-                       status_active_music, status_delete, bot_offline, upd_card)
+                       status_active_music, status_delete, bot_offline, upd_card,get_card)
 from endpoints.GrantRoles import (Color_GrantRole,Color_SetGm,Color_SetMsg,THX_Sponser)
 from endpoints.Val import *
 from endpoints.EzAuth import auth2fa,authflow,auth2faWait,Get2faWait_Key,User2faCode
@@ -410,7 +410,7 @@ async def replace_illegal_img(user_id: str, num: int):
         err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
         print(err_str)
         await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
-        
+
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -908,17 +908,26 @@ from endpoints.FileManage import UserTokenDict
 UserAuthDict = {}
 # 用来存放已保存cookie的用户id（保存在文件中）
 UserCookieDict = {}
-#用于限制用户操作，一分钟只能3次
-login_dict = {}
 #全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
 #用来存放用户每天的商店（早八会清空）
 UserShopDict = {}
+
 #检查皮肤评分的错误用户（违规用户）
 def check_rate_err_user(user_id:str):
     """(user_id in SkinRateDict['err_user'])
     """
     return (user_id in SkinRateDict['err_user'])
+
+# 检查全局用户登录速率
+async def check_GloginRate():
+    global login_rate_limit
+    if login_rate_limit['limit']:
+        if (time.time() - login_rate_limit['time'])>180: 
+            login_rate_limit['limit'] = False#超出180s解除
+        else:#未超出240s
+            raise auth_exceptions.RiotRatelimitError
+    return True
 
 #查询当前有多少用户登录了
 @bot.command(name="ckau")
@@ -928,20 +937,6 @@ async def check_UserAuthDict_len(msg: Message):
     res = f"UserAuthDict_len: `{sz}`"
     print(res)
     await msg.reply(res)
-
-
-#遇到全局速率限制统一获取卡片消息
-def get_login_rate_cm(time_diff=None):
-    if time_diff != None:
-        text = f"阿狸的登录请求超速！请在 {format(240.0-time_diff, '.1f')}s 后重试"
-    else:
-        text = f"阿狸的登录请求超速！请在 240.0s 后重试"
-    cm = CardMessage()
-    c = Card(color='#fb4b57')
-    c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.lagging, size='sm')))
-    c.append(Module.Context(Element.Text("raise RiotRatelimitError, please try again later", Types.Text.KMD)))
-    cm.append(c)
-    return cm
 
 
 # 登录，保存用户的token
@@ -964,12 +959,10 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         return
     try:
         global login_rate_limit, UserTokenDict, UserAuthDict
-        cm0 = CardMessage()
-        c = Card(color='#fb4b57')  #卡片侧边栏颜色
+        await check_GloginRate() # 无须接收此函数返回值，直接raise
         text = "正在尝试获取您的riot账户token"
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.val_logo_gif, size='sm')))
-        c.append(Module.Context(Element.Text("小憩一下，很快就好啦！", Types.Text.KMD)))
-        cm0.append(c)
+        text_sub = "小憩一下，很快就好啦！"
+        cm0 = await get_card(text,text_sub,icon_cm.val_logo_gif)
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
         # 获取用户的token
@@ -995,60 +988,50 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
         UserTokenDict[msg.author_id]['TagLine'] = res_gameid[0]['TagLine']
         UserAuthDict[msg.author_id] = { "auth":res_auth,"2fa":tfa}  #将对象插入
 
-        info_text = "当前token有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
-        if tfa:
-            info_text = "由于后台实现的限制，您每次登录的时候都需要提供验证码，见谅T.T\n有任何问题请[点我](https://kook.top/gpbTwZ)"
-
-        cm = CardMessage()
+        # 发送登录成功的信息
+        info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        c = Card(color='#fb4b57')
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.correct, size='sm')))
-        c.append(Module.Context(Element.Text(info_text, Types.Text.KMD)))
-        cm.append(c)
+        cm = await get_card(text,info_text,icon_cm.correct)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-
 
         # 如果是vip用户，则执行下面的代码
         if await vip_ck(msg.author_id):
             global VipShopBgDict #因为换了用户，所以需要修改状态码重新获取商店
             if msg.author_id in VipShopBgDict['bg']:
                 VipShopBgDict['bg'][msg.author_id]['status']=False
-            # 现在2fa用户也能保存登录信息了
-            cookie_path = f"./log/cookie/{msg.author_id}.cke"#用于保存cookie的路径
+            # 用于保存cookie的路径,保存vip用户登录信息
+            cookie_path = f"./log/cookie/{msg.author_id}.cke"
             res_auth._cookie_jar.save(cookie_path)#保存
 
         # 全部都搞定了，打印登录信息
         print(
-            f"Login  - Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+            f"[Login] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
 
     except auth_exceptions.RiotAuthenticationError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
-        cm = CardMessage()
-        c = Card(color='#fb4b57')
         text = f"当前的账户密码真的对了吗？"
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.dont_do_that, size='sm')))
-        c.append(Module.Context(Element.Text(f"Make sure username and password are correct\n`{result}`", Types.Text.KMD)))
-        cm.append(c)
+        text_sub = f"Make sure username and password are correct\n`{result}`"
+        cm = await get_card(text,text_sub,icon_cm.dont_do_that)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotMultifactorError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
         text = f"若您开始了邮箱双重验证，请使用「/login 账户 密码 1」来登录"
-        cm = CardMessage()
-        c = Card(color='#fb4b57')
-        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-        c.append(Module.Context(Element.Text("Please use `/login accout passwd 1` for 2fa", Types.Text.KMD)))
-        cm.append(c)
+        text_sub = f"Please use `/login accout passwd 1` for 2fa"
+        cm = await get_card(text,text_sub,icon_cm.that_it)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except auth_exceptions.RiotRatelimitError as result:
-        print(f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError")
+        err_str = f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError"
         #更新全局速率限制
         login_rate_limit['limit'] = True
         login_rate_limit['time'] = time.time()
-        ret_cm = get_login_rate_cm()  #这里是第一个出现速率限制err的用户
-        await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
+        err_str+=f" - set login_rate_limit = True"
+        print(err_str)
+        #这里是第一个出现速率限制err的用户,更新消息提示
+        cm = await get_card("阿狸的请求超速！请在3分钟后重试","RiotRatelimitError, please try again later",icon_cm.lagging)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
-        err_str = f"[Login] aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
+        err_str = f"ERR! [{GetTime()}] login aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
         if 'auth.riotgames.com' and '403' in str(result):
             Login_Forbidden = True
             err_str+= f"[Login] 403 err! set Login_Forbidden = True"
@@ -1056,26 +1039,21 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err',t
             err_str+= f"[Login] 404 err! network err, try again"
         else:
             err_str+= f"[Login] Unkown aiohttp ERR!"
-        
+        # 打印+发送消息
         print(err_str)
         await bot.client.send(debug_ch,err_str)
-        await upd_card(send_msg['msg_id'], ret_cm, channel_type=msg.channel_type)
+        cm = await get_card(err_str)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except KeyError as result:
         print(f"ERR! [{GetTime()}] login - KeyError:{result}")
-        cm = CardMessage()
-        c = Card(color='#fb4b57')
+        text = f"遇到未知的KeyError，请[联系](https://kook.top/gpbTwZ)阿狸的主人哦~"
+        text_sub=f"Unkown KeyError, please contact bot developer"
         if '0' in str(result):
             text = f"遇到不常见的KeyError，可能👊Api服务器炸了"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-            c.append(Module.Context(Element.Text("KeyError, maybe API Offline", Types.Text.KMD)))
-            cm.append(c)
-            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-        else:
-            text = f"遇到未知的KeyError，请[联系](https://kook.top/gpbTwZ)阿狸的主人哦~"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.that_it, size='sm')))
-            c.append(Module.Context(Element.Text("Unkown KeyError, please contact bot developer", Types.Text.KMD)))
-            cm.append(c)
-            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+            text_sub=f"KeyError, maybe Roit API Offline"
+        # 发送卡片消息
+        cm = await get_card(text,text_sub,icon_cm.that_it)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except requester.HTTPRequester.APIRequestFailed as result: #卡片消息发送失败
         await APIRequestFailed_Handler("login",traceback.format_exc(),msg,bot,send_msg,cm)
     except Exception as result: # 其他错误
