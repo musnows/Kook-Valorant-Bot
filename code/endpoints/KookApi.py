@@ -2,6 +2,7 @@ import json
 import aiohttp
 import io
 from khl import Bot,ChannelPrivacyTypes
+from khl.card import Card,CardMessage,Module,Element,Types
 
 from endpoints.FileManage import config
 # 下方更新卡片消息需要bot
@@ -76,11 +77,19 @@ async def kook_create_asset(bot_token:str,bg):
     imgByte = imgByteArr.getvalue()
     data = aiohttp.FormData()
     data.add_field('file',imgByte)
-    url = "https://www.kookapp.cn/api/v3/asset/create"
+    url = kook_base_url+"/api/v3/asset/create"
     kook_headers = {f'Authorization': f"Bot {bot_token}"}
     body = {'file':data}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=kook_headers,data=data) as response:
+            res = json.loads(await response.text())
+    return res
+
+# 下线机器人
+async def bot_offline():
+    url = kook_base_url+"/api/v3/user/offline"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=kook_headers) as response:
             res = json.loads(await response.text())
     return res
 
@@ -135,3 +144,16 @@ async def upd_card(msg_id: str,
     else:
         result = await bot.client.gate.request('POST', 'direct-message/update', data=data)
     return result
+
+# 获取常用的卡片消息
+async def get_card(text:str,sub_text='e',img_url='e',card_color='#fb4b57',img_sz='sm'):
+    cm = CardMessage()
+    c = Card(color=card_color)
+    if img_url != 'e':
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=img_url, size=img_sz)))
+    else:
+        c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+    if sub_text != 'e':
+        c.append(Module.Context(Element.Text(sub_text, Types.Text.KMD)))
+    cm.append(c)
+    return cm

@@ -47,8 +47,8 @@ def help_val():
     c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
     c3.append(Module.Divider())
     help_1  = "「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
-    help_1 += "「/lead」 显示出当前游戏的排行榜。可提供参数1前多少位，参数2过滤胜场。如`/lead 20 30`代表排行榜前20位胜场超过30的玩家\n"
     help_1 += "「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
+    help_1 += "「/login 账户 密码 1」邮箱验证登录，请`私聊`使用\n"
     help_1 += "「/shop」 查询您的每日商店\n"
     help_1 += "「/night」查询您的夜市（未完工）\n"
     help_1 += "「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
