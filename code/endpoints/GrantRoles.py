@@ -1,12 +1,13 @@
 import json
 import time
 import aiohttp
-from khl import Bot,Message,PublicMessage,Event
+from khl import Bot, Message, PublicMessage, Event
 from khl.card import Card, CardMessage, Element, Module, Types
 from endpoints.Gtime import GetTime
 
 # 预加载文件
-from endpoints.FileManage import SponsorDict,ColorIdDict,EmojiDict
+from endpoints.FileManage import SponsorDict, ColorIdDict, EmojiDict
+
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid: str, emoji: str):
@@ -22,14 +23,15 @@ def save_userid_color(userid: str, emoji: str):
 
 
 # 在不改代码的前提下修改监听服务器和监听消息，并保存到文件
-async def Color_SetGm(msg:Message,Card_Msg_id: str):
+async def Color_SetGm(msg: Message, Card_Msg_id: str):
     global EmojiDict  #需要声明全局变量
     EmojiDict['guild_id'] = msg.ctx.guild.id
     EmojiDict['msg_id'] = Card_Msg_id
     await msg.reply(f"颜色监听服务器更新为 {EmojiDict['guild_id']}\n监听消息更新为 {EmojiDict['msg_id']}\n")
 
+
 # 给用户上角色
-async def Color_GrantRole(bot:Bot,event:Event):
+async def Color_GrantRole(bot: Bot, event: Event):
     g = await bot.client.fetch_guild(EmojiDict['guild_id'])  # 填入服务器id
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == EmojiDict['msg_id']:
@@ -49,13 +51,12 @@ async def Color_GrantRole(bot:Bot,event:Event):
                 role = int(EmojiDict['data'][emoji])
                 await g.grant_role(s, role)
                 await bot.client.send(channel, f'阿狸已经给你上了 {emoji} 对应的颜色啦~', temp_target_id=event.body['user_id'])
-        else: #回复的表情不合法
+        else:  #回复的表情不合法
             await bot.client.send(channel, f'你回应的表情不在列表中哦~再试一次吧！', temp_target_id=event.body['user_id'])
 
 
-
 # 设置角色的消息，bot会自动给该消息添加对应的emoji回应作为示例表情
-async def Color_SetMsg(bot:Bot,msg:Message):
+async def Color_SetMsg(bot: Bot, msg: Message):
     cm = CardMessage()
     c1 = Card(Module.Header('在下面添加回应，来设置你的id颜色吧！'), Module.Context('五颜六色等待上线...'))
     c1.append(Module.Divider())
@@ -78,6 +79,7 @@ async def Color_SetMsg(bot:Bot,msg:Message):
     for emoji in EmojiDict['data']:
         await setMSG.add_reaction(emoji)
 
+
 #########################################感谢助力者###############################################
 
 
@@ -95,7 +97,8 @@ def check_sponsor(it: dict):
 
     return flag
 
-async def THX_Sponser(bot:Bot,kook_headers:str):
+
+async def THX_Sponser(bot: Bot, kook_headers: str):
     print("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = f"https://www.kaiheila.cn/api/v3/guild/user-list?guild_id={EmojiDict['guild_id']}&role_id={EmojiDict['sp_role_id']}"

@@ -4,6 +4,7 @@ import aiohttp
 from khl import Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
+
 # 历史上的今天，来自https://www.free-api.com/doc/317
 async def history(msg: Message):
     url = "https://api.asilu.com/today"

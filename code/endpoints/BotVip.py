@@ -2,20 +2,22 @@ import copy
 import uuid
 import json
 import time
-from khl import Message,Bot,Channel
+from khl import Message, Bot, Channel
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
 from endpoints.KookApi import icon_cm
+
 
 #获取uuid
 def get_uuid():
     get_timestamp_uuid = uuid.uuid1()  # 根据 时间戳生成 uuid , 保证全球唯一
     return get_timestamp_uuid
 
+
 ################################################################################
 
 # 成功兑换vip的用户+vip的uuid
-from endpoints.FileManage import VipUserDict,VipUuidDict
+from endpoints.FileManage import VipUserDict, VipUuidDict
 
 
 # 计算时间戳，用于给用户设置vip时间
@@ -35,6 +37,7 @@ def vip_time_stamp(kook_user_id: str, day: int = 0):
         #print(next_end)
         return next_end
 
+
 #检查vip的剩余时间
 def vip_time_remain(user_id):
     """
@@ -43,6 +46,7 @@ def vip_time_remain(user_id):
     # 时间差值
     timeout = VipUserDict[user_id]['time'] - time.time()
     return timeout
+
 
 # 生成uuid
 async def create_vip_uuid(num: int = 10, day: int = 30):
@@ -81,7 +85,8 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
 async def vip_time_remain_cm(times):
     cm = CardMessage()
     c1 = Card(color='#e17f89')
-    c1.append(Module.Section(Element.Text('您的「vip会员」还剩', Types.Text.KMD), Element.Image(src=icon_cm.ahri_forest, size='sm')))
+    c1.append(
+        Module.Section(Element.Text('您的「vip会员」还剩', Types.Text.KMD), Element.Image(src=icon_cm.ahri_forest, size='sm')))
     c1.append(Module.Divider())
     c1.append(Module.Countdown(datetime.now() + timedelta(seconds=times), mode=Types.CountdownMode.DAY))
     cm.append(c1)
@@ -89,7 +94,7 @@ async def vip_time_remain_cm(times):
 
 
 # 兑换vip
-async def using_vip_uuid(msg: Message, uuid1: str,bot:Bot,debug_ch:Channel):
+async def using_vip_uuid(msg: Message, uuid1: str, bot: Bot, debug_ch: Channel):
     user_id = msg.author_id
     cm = CardMessage()
     c = Card(color='#e17f89')
@@ -102,10 +107,7 @@ async def using_vip_uuid(msg: Message, uuid1: str,bot:Bot,debug_ch:Channel):
         days = VipUuidDict[uuid1]['days']
         time = vip_time_stamp(user_id, days)
         # 设置用户的时间和个人信息
-        VipUserDict[user_id] = {
-            'time':time,
-            'name_tag':f"{msg.author.username}#{msg.author.identify_num}"
-        }
+        VipUserDict[user_id] = {'time': time, 'name_tag': f"{msg.author.username}#{msg.author.identify_num}"}
         # 记录uuid被谁使用了
         VipUuidDict[uuid1]['user_id'] = user_id
         if VipUuidDict[uuid1]['prime']:
@@ -169,41 +171,42 @@ async def vip_ck(msg):
         if time.time() > VipUserDict[user_id]['time']:
             del VipUserDict[user_id]
             #如果是消息，那就发送提示
-            if flag: 
+            if flag:
                 await msg.reply(cm)
                 print(f"[vip-ck] Au:{user_id} msg.reply(vip out of date)")
             return False
-        else:#没有过期，返回真
+        else:  #没有过期，返回真
             print(f"[vip-ck] Au:{user_id} is vip")
             return True
-    else:#用户不是vip
-        if flag: #如果是消息，那就发送提示
+    else:  #用户不是vip
+        if flag:  #如果是消息，那就发送提示
             await msg.reply(cm)
             print(f"[vip-ck] Au:{user_id} msg.reply(not vip)")
         return False
-    
+
+
 #获取当前vip用户列表
 async def fetch_vip_user():
     global VipUserDict
     vipuserdict_temp = copy.deepcopy(VipUserDict)
-    text=""
-    for u,ifo in vipuserdict_temp.items():
-        if await vip_ck(u):# vip-ck会主动修改dict
+    text = ""
+    for u, ifo in vipuserdict_temp.items():
+        if await vip_ck(u):  # vip-ck会主动修改dict
             time = vip_time_remain(u)
-            time = format(time/86400, '.2f')
+            time = format(time / 86400, '.2f')
             #通过/86400计算出大概的天数
-            text +=f"{u}_{ifo['name_tag']}\t = {time}\n"
+            text += f"{u}_{ifo['name_tag']}\t = {time}\n"
 
     if vipuserdict_temp != VipUserDict:
         #将修改存放到文件中
         VipUserDict.save()
         print(f"[vip-r] update VipUserDict")
-        
+
     return text
 
 
 # vip抽奖相关代码（卡片消息）
-def roll_vip_start(vip_num:int,vip_day:int,roll_day):
+def roll_vip_start(vip_num: int, vip_day: int, roll_day):
     """
     Args:
         vip_num (int): num of vip uuid
@@ -213,12 +216,11 @@ def roll_vip_start(vip_num:int,vip_day:int,roll_day):
     Returns:
         CardMessage for roll 
     """
-    roll_second = roll_day*86400
+    roll_second = roll_day * 86400
     cm = CardMessage()
     c = Card()
     c.append(Module.Section(Element.Text(f"添加表情回应，参加抽奖！"), Element.Image(src=icon_cm.ahri_kda3, size='sm')))
     c.append(Module.Context(Element.Text(f"奖励: {vip_day}天阿狸vip激活码   |  奖品: {vip_num}个", Types.Text.KMD)))
-    c.append(
-        Module.Countdown(datetime.now() + timedelta(seconds=roll_second), mode=Types.CountdownMode.DAY))
+    c.append(Module.Countdown(datetime.now() + timedelta(seconds=roll_second), mode=Types.CountdownMode.DAY))
     cm.append(c)
     return cm

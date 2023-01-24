@@ -2,13 +2,14 @@ import json
 import aiohttp
 import urllib.request
 import urllib.parse
-from khl import  Bot,Message
+from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key
 from endpoints.FileManage import config
 # 彩云key
 CyKey = config['caiyun']
+
 
 # youdao code is from https://github.com/Chinese-boy/Many-Translaters
 def youdao_translate(txt: str):
@@ -35,6 +36,7 @@ def youdao_translate(txt: str):
     ta = json.loads(html)
     #print(ta['translateResult'][0][0]['tgt'])
     return ta['translateResult'][0][0]['tgt']
+
 
 # caiyun translte
 async def caiyun_translate(source, direction):
@@ -84,6 +86,7 @@ def deleteByStartAndEnd(s, start, end):
     print(f'Handel{start}: {s}')
     return s
 
+
 # 调用翻译,有道和彩云两种引擎（有道寄了就用彩云）
 async def translate_main(msg: Message, *arg):
     word = " ".join(arg)
@@ -119,7 +122,8 @@ async def translate_main(msg: Message, *arg):
 
 
 # 实时翻译栏位
-ListTL = ['0', '0', '0', '0','0','0']
+ListTL = ['0', '0', '0', '0', '0', '0']
+
 
 # 查看目前已经占用的容量
 def checkTL():
@@ -129,7 +133,8 @@ def checkTL():
             sum += 1
     return sum
 
-async def Shutdown_TL(bot:Bot,msg:Message):
+
+async def Shutdown_TL(bot: Bot, msg: Message):
     global ListTL
     if checkTL() == 0:
         await msg.reply(f"实时翻译栏位为空: {checkTL()}/{len(ListTL)}")
@@ -143,8 +148,9 @@ async def Shutdown_TL(bot:Bot,msg:Message):
         i += 1
     await msg.reply(f"实时翻译栏位已清空！目前为: {checkTL()}/{len(ListTL)}")
 
+
 # 开启频道实时翻译
-async def Open_TL(msg:Message):
+async def Open_TL(msg: Message):
     global ListTL
     if checkTL() == len(ListTL):
         await msg.reply(f"目前栏位: {checkTL()}/{len(ListTL)}，已满！")
@@ -162,8 +168,9 @@ async def Open_TL(msg:Message):
     ret = checkTL()
     await msg.reply(f"Real-Time Translation ON\n阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
 
+
 #关闭频道实时翻译
-async def Close_TL(msg:Message):
+async def Close_TL(msg: Message):
     global ListTL
     i = 0
     while i < len(ListTL):
