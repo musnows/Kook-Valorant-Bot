@@ -1,12 +1,21 @@
 import copy
 import uuid
-import json
 import time
+import traceback
+import io
+from PIL import Image,UnidentifiedImageError
 from khl import Message, Bot, Channel
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
-from endpoints.KookApi import icon_cm
+from endpoints.KookApi import icon_cm,bot
+from endpoints.Gtime import GetTime
+from endpoints.FileManage import VipShopBgDict,config
+from endpoints.ShopImg import img_requestor
 
+
+#下图用于替换违规的vip图片
+illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
+illegal_img_169 = "https://img.kookapp.cn/assets/2022-09/CVWFac7CJG0zk0k0.png"
 
 #获取uuid
 def get_uuid():
@@ -223,4 +232,79 @@ def roll_vip_start(vip_num: int, vip_day: int, roll_day):
     c.append(Module.Context(Element.Text(f"奖励: {vip_day}天阿狸vip激活码   |  奖品: {vip_num}个", Types.Text.KMD)))
     c.append(Module.Countdown(datetime.now() + timedelta(seconds=roll_second), mode=Types.CountdownMode.DAY))
     cm.append(c)
+    return cm
+
+
+######################################################################################################
+
+#替换掉违规图片（传入list的下标)
+async def replace_illegal_img(user_id: str, num: int):
+    """
+        user_id:  kook user_id
+        num: VipShopBgDict list index
+    """
+    try:
+        global VipShopBgDict
+        img_str = VipShopBgDict['bg'][user_id]["background"][num]
+        VipShopBgDict['bg'][user_id]["background"][num] = illegal_img_169
+        VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
+        print(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        debug_ch = await bot.fetch_public_channel(config['debug_ch'])
+        await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
+
+#计算用户背景图的list大小，避免出现空list的情况
+def len_VusBg(user_id: str):
+    """
+       - len(VipShopBgDict[user_id]["background"])
+       - return 0 if user not in dict 
+    """
+    if user_id in VipShopBgDict['bg']:
+        return len(VipShopBgDict['bg'][user_id]["background"])
+    else:
+        return 0
+
+# 获取自定义背景图的展示卡片
+async def get_vip_shop_bg_cm(msg: Message):
+    global VipShopBgDict
+    if msg.author_id not in VipShopBgDict['bg']:
+        return "您尚未自定义商店背景图！"
+    elif len_VusBg(msg.author_id) == 0:
+        return "您尚未自定义商店背景图！"
+
+    cm = CardMessage()
+    c1 = Card(color='#e17f89')
+    c1.append(Module.Header('您当前设置的商店背景图如下'))
+    c1.append(Module.Container(Element.Image(src=VipShopBgDict['bg'][msg.author_id]["background"][0])))
+    sz = len(VipShopBgDict['bg'][msg.author_id]["background"])
+    if sz > 1:
+        c1.append(Module.Divider())
+        c1.append(Module.Section(Element.Text('当前未启用的背景图，可用「/vip-shop-s 序号」切换', Types.Text.KMD)))
+        i = 0
+        while (i < sz):
+            try:
+                # 打开图片进行测试，没有问题就append
+                bg_test = Image.open(
+                    io.BytesIO(await img_requestor(VipShopBgDict['bg'][msg.author_id]["background"][i])))
+                if i == 0:  #第一张图片只进行打开测试，没有报错就是没有违规，不进行后续的append操作
+                    i += 1
+                    continue
+                # 插入后续其他图片
+                c1.append(
+                    Module.Section(Element.Text(f' [{i}]', Types.Text.KMD),
+                                   Element.Image(src=VipShopBgDict['bg'][msg.author_id]["background"][i])))
+                i += 1
+            except UnidentifiedImageError as result:
+                err_str = f"ERR! [{GetTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
+                #把被ban的图片替换成默认的图片，打印url便于日后排错
+                err_str += f"[UnidentifiedImageError] url={VipShopBgDict['bg'][msg.author_id]['background'][i]}\n```"
+                await replace_illegal_img(msg.author_id, i)  #替换图片
+                debug_ch = await bot.fetch_public_channel(config['debug_ch']) 
+                await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
+                print(err_str)
+                return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
+
+    cm.append(c1)
     return cm
