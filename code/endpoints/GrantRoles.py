@@ -7,6 +7,7 @@ from endpoints.Gtime import GetTime
 
 # 预加载文件
 from endpoints.FileManage import SponsorDict, ColorIdDict, EmojiDict
+from endpoints.KookApi import kook_headers
 
 
 # 用于记录使用表情回应获取ID颜色的用户
@@ -98,12 +99,12 @@ def check_sponsor(it: dict):
     return flag
 
 
-async def THX_Sponser(bot: Bot, kook_headers: str):
+async def THX_Sponser(bot: Bot, kook_header=kook_headers):
     print("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = f"https://www.kaiheila.cn/api/v3/guild/user-list?guild_id={EmojiDict['guild_id']}&role_id={EmojiDict['sp_role_id']}"
     async with aiohttp.ClientSession() as session:
-        async with session.post(api, headers=kook_headers) as response:
+        async with session.post(api, headers=kook_header) as response:
             json_dict = json.loads(await response.text())
 
     #长度相同无需更新

@@ -29,7 +29,7 @@ from endpoints.Val import *
 from endpoints.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode
 from endpoints.Gtime import GetTime, GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
-                              vip_time_remain, vip_time_remain_cm, vip_time_stamp)
+                              vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
 from endpoints.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
 from endpoints.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
 from endpoints.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
@@ -44,7 +44,6 @@ bot_upimg = Bot(token=config['img_upload_token'])
 
 # 设置全局变量：机器人开发者id/报错频道
 master_id = config['master_id']
-kook_headers = {f'Authorization': f"Bot {config['token']}"}
 
 #在bot一开机的时候就获取log频道作为全局变量
 debug_ch = None
@@ -242,7 +241,7 @@ async def Color_Set(msg: Message):
 # 感谢助力者（每天19点进行检查）
 @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
 async def thanks_sponser():
-    await THX_Sponser(bot, kook_headers)
+    await THX_Sponser(bot)
 
 
 ######################################## Translate ################################################
@@ -429,29 +428,6 @@ async def dx(msg: Message):
 #用来存放roll的频道/服务器/回应用户的dict
 from endpoints.FileManage import VipShopBgDict, VipRollDcit
 
-#定期检查图片是否没问题
-#下图用于替换违规的vip图片
-illegal_img_11 = "https://img.kookapp.cn/assets/2022-09/a1k6QGZMiW0rs0rs.png"
-illegal_img_169 = "https://img.kookapp.cn/assets/2022-09/CVWFac7CJG0zk0k0.png"
-
-
-#替换掉违规图片（传入list的下标)
-async def replace_illegal_img(user_id: str, num: int):
-    """
-        user_id:  kook user_id
-        num: VipShopBgDict list index
-    """
-    try:
-        global VipShopBgDict
-        img_str = VipShopBgDict['bg'][user_id]["background"][num]
-        VipShopBgDict['bg'][user_id]["background"][num] = illegal_img_169
-        VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
-        print(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
-    except Exception as result:
-        err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
-
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -600,59 +576,7 @@ async def check_vip_img_task(msg: Message, *arg):
         return
 
 
-#计算用户背景图的list大小，避免出现空list的情况
-def len_VusBg(user_id: str):
-    """
-       - len(VipShopBgDict[user_id]["background"])
-       - return 0 if user not in dict 
-    """
-    if user_id in VipShopBgDict['bg']:
-        return len(VipShopBgDict['bg'][user_id]["background"])
-    else:
-        return 0
 
-
-#因为下面两个函数都要用，所以直接独立出来
-async def get_vip_shop_bg_cm(msg: Message):
-    global VipShopBgDict
-    if msg.author_id not in VipShopBgDict['bg']:
-        return "您尚未自定义商店背景图！"
-    elif len_VusBg(msg.author_id) == 0:
-        return "您尚未自定义商店背景图！"
-
-    cm = CardMessage()
-    c1 = Card(color='#e17f89')
-    c1.append(Module.Header('您当前设置的商店背景图如下'))
-    c1.append(Module.Container(Element.Image(src=VipShopBgDict['bg'][msg.author_id]["background"][0])))
-    sz = len(VipShopBgDict['bg'][msg.author_id]["background"])
-    if sz > 1:
-        c1.append(Module.Divider())
-        c1.append(Module.Section(Element.Text('当前未启用的背景图，可用「/vip-shop-s 序号」切换', Types.Text.KMD)))
-        i = 0
-        while (i < sz):
-            try:
-                # 打开图片进行测试，没有问题就append
-                bg_test = Image.open(
-                    io.BytesIO(await img_requestor(VipShopBgDict['bg'][msg.author_id]["background"][i])))
-                if i == 0:  #第一张图片只进行打开测试，没有报错就是没有违规，不进行后续的append操作
-                    i += 1
-                    continue
-                # 插入后续其他图片
-                c1.append(
-                    Module.Section(Element.Text(f' [{i}]', Types.Text.KMD),
-                                   Element.Image(src=VipShopBgDict['bg'][msg.author_id]["background"][i])))
-                i += 1
-            except UnidentifiedImageError as result:
-                err_str = f"ERR! [{GetTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
-                #把被ban的图片替换成默认的图片，打印url便于日后排错
-                err_str += f"[UnidentifiedImageError] url={VipShopBgDict['bg'][msg.author_id]['background'][i]}\n```"
-                await replace_illegal_img(msg.author_id, i)  #替换图片
-                await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
-                print(err_str)
-                return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
-
-    cm.append(c1)
-    return cm
 
 
 @bot.command(name="vip-shop")
