@@ -1180,21 +1180,18 @@ async def update_skin_price_bundle(msg: Message):
             await msg.reply(f"成功更新：物品价格")
 
 
-#计算当前时间和明天早上8点的差值
+# 计算当前时间和明天早上8点的差值
 def shop_time_remain():
     today = datetime.today().strftime("%y-%m-%d %H:%M:%S")  #今天日期+时间
     tomorow = (datetime.today() + timedelta(days=1)).strftime("%y-%m-%d")  #明天日期
-    #print(f"{tomorow} 08:00:00")
     times_tomorow = time.mktime(time.strptime(f"{tomorow} 08:00:00", "%y-%m-%d %H:%M:%S"))  #明天早上8点时间戳
     times_now = time.mktime(time.strptime(f"{today}", "%y-%m-%d %H:%M:%S"))  #现在的时间戳
-    #print(times_tomorow)
     timeout = times_tomorow - times_now  #计算差值
     timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #转换成可读时间
-    #print(timeout)
     return timeout
 
 
-#判断uuid是否相等
+# 判断uuid是否相等（用户有没有切换登录账户）
 def isSame_Authuuid(msg: Message):
     return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
 
@@ -1205,7 +1202,7 @@ def is_CacheLatest(kook_user_id: str):
     is_Status = False
     if kook_user_id in VipShopBgDict['bg']:
         is_Status = VipShopBgDict['bg'][kook_user_id]['status']  # 如果有切换登录用户/背景图，此为false
-        # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
+    # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
     if kook_user_id in VipShopBgDict['cache']:
         is_Today = (VipShopBgDict['cache'][kook_user_id]['cache_time'] - GetTimeStampOf8AM()) >= 0
         is_Cache = VipShopBgDict['cache'][kook_user_id]['cache_img'] != None
@@ -1342,7 +1339,6 @@ async def get_daily_shop(msg: Message, *arg):
         err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
         if "SkinsPanelLayout" in str(result):
             print(err_str, resp)
-            text = f"键值错误，需要重新登录"
             btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
             cm = await get_card(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1383,12 +1379,7 @@ async def get_night_market(msg: Message, *arg):
             if reau == False: return  #如果为假说明重新登录失败
 
             # 重新获取token成功了再提示正在获取夜市
-            cm0 = CardMessage()  #卡片侧边栏颜色
-            text = "正在尝试获取您的夜市"
-            c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.duck, size='sm')))
-            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
-            cm0.append(c)
+            cm0 = await get_card("正在尝试获取您的夜市", "阿狸正在施法，很快就好啦！", icon_cm.duck)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
                 await upd_card(reau['msg_id'], cm0, channel_type=msg.channel_type)
                 send_msg = reau
@@ -1406,15 +1397,8 @@ async def get_night_market(msg: Message, *arg):
             resp = await fetch_daily_shop(userdict)  #获取商店（夜市是相同接口）
             if "BonusStore" not in resp:  # 如果没有这个字段，说明夜市取消了
                 NightMarketOff = False
-                cm1 = CardMessage()
-                text = f"嗷~ 夜市已关闭 或 Api没能正确返回结果"
-                c = Card(color='#fb4b57')
-                c.append(
-                    Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.whats_that,
-                                                                                     size='sm')))
-                c.append(Module.Context(Element.Text("night_market closed! 'BonusStore' not in resp", Types.Text.KMD)))
-                cm1.append(c)
-                await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)
+                cm1 = await get_card("嗷~ 夜市已关闭 或 Api没能正确返回结果","night_market closed! 'BonusStore' not in resp", icon_cm.duck)
+                await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type) # 更新消息
                 print("[night_market] night_market closed! 'BonusStore' not in resp")
                 return
 
@@ -1444,11 +1428,10 @@ async def get_night_market(msg: Message, *arg):
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
             # 结束计时
-            end = time.perf_counter()
-            using_time = format(end - start, '.2f')
+            using_time = format(time.perf_counter() - start, '.2f')
             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
             cm.append(c)
-            #print(json.dumps(cm2))
+            # 更新消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             print(f"[night_market] Au:{msg.author_id} night_market reply success! [{using_time}]")
         else:
@@ -1499,12 +1482,6 @@ async def get_user_card(msg: Message, *arg):
             reau = await check_reauth("玩家装备/通行证", msg)  #重新登录
             if reau == False: return  #如果为假说明重新登录失败
 
-            cm = CardMessage()
-            text = "正在尝试获取您的 玩家卡面/VP/R点"
-            c = Card(color='#fb4b57')
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=icon_cm.rgx_card, size='sm')))
-            c.append(Module.Context(Element.Text("阿狸正在施法，很快就好啦！", Types.Text.KMD)))
-            cm.append(c)
             cm = await get_card("正在尝试获取您的 玩家卡面/VP/R点", "阿狸正在施法，很快就好啦！", icon_cm.rgx_card)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
                 await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
@@ -1531,7 +1508,7 @@ async def get_user_card(msg: Message, *arg):
                     }
                 }
                 print(f"ERR![player_title] Au:{msg.author_id} uuid:{resp['Identity']['PlayerTitleID']}")
-            #print(player_card,player_title)
+
             if resp['Guns'] == None or resp['Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
                 cm = await get_card(f"状态错误！您是否登录了一个全新的账户？", f"card: `{player_card}`\ntitle: `{player_title}`",
                                     icon_cm.whats_that)
@@ -2226,7 +2203,7 @@ async def auto_skin_notify():
             SkinNotifyDict.save()
             print("[BOT.TASK.NOTIFY] save SkinNotifyDict")
 
-    # 打印结束信息
+        # 打印结束信息
         finish_str = f"[BOT.TASK.NOTIFY] Finish at {GetTime()} [ERR {err_count}]"
         print(finish_str)  #正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
