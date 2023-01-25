@@ -69,9 +69,7 @@ async def update_price(msg: Message, userdict):
         global ValPriceList
         # 调用api获取价格列表
         prices = await fetch_item_price_all(userdict)
-        if "errorCode" in prices:  #键值不在，获取错误
-            print(f"ERR! [{GetTime()}] update_item_price:\n{prices}")
-            raise Exception("KeyError, fetch price failed!")
+        test = prices["Offers"] # 暴力判断是否有这个键值，没有则keyerr
         ValPriceList.value = prices  # 所有价格的列表
         # 写入文件
         ValPriceList.save()

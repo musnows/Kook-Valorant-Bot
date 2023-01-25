@@ -880,10 +880,15 @@ ValItersEmoji = EmojiDict['val_iters_emoji']
 
 #检查皮肤评分的错误用户（违规用户）
 def check_rate_err_user(user_id: str):
-    """(user_id in SkinRateDict['err_user'])
+    """user_id in SkinRateDict['err_user']
     """
     return (user_id in SkinRateDict['err_user'])
 
+# 判断uuid是否相等（用户有没有切换登录账户）
+def isSame_Authuuid(msg: Message):
+    """UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
+    """
+    return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
 
 # 检查全局用户登录速率
 async def check_GloginRate():
@@ -1088,8 +1093,6 @@ async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
     user_id = "[ERR!]"  #先给userid赋值，避免下方打印的时候报错（不出意外是会被下面的语句修改的）
     try:
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
-        # if UserAuthDict[user_id]['2fa']:
-        #     return True #先判断是否为2fa账户，如果是，那就不进行reauthrize操作
         auth = UserAuthDict[user_id]['auth']
         userdict = {
             'auth_user_id': auth.user_id,
@@ -1168,25 +1171,6 @@ async def logout_authtoken(msg: Message, *arg):
         await BaseException_Handler("logout", traceback.format_exc(), msg, bot)
 
 
-# 手动更新商店物品和价格
-@bot.command(name='update_spb', aliases=['update', 'upd'])
-async def update_skin_price_bundle(msg: Message):
-    logging(msg)
-    if msg.author_id == master_id:
-        if await update_skins(msg):
-            await msg.reply(f"成功更新：商店皮肤")
-        if await update_bundle_url(msg, bot_upimg):
-            await msg.reply(f"成功更新：捆绑包")
-        # 获取物品价格需要登录
-        auth = UserAuthDict[msg.author_id]['auth']
-        userdict = {
-            'auth_user_id': auth.user_id,
-            'access_token': auth.access_token,
-            'entitlements_token': auth.entitlements_token
-        }
-        if await update_price(msg, userdict):
-            await msg.reply(f"成功更新：物品价格")
-
 
 # 计算当前时间和明天早上8点的差值
 def shop_time_remain():
@@ -1197,11 +1181,6 @@ def shop_time_remain():
     timeout = times_tomorow - times_now  #计算差值
     timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #转换成可读时间
     return timeout
-
-
-# 判断uuid是否相等（用户有没有切换登录账户）
-def isSame_Authuuid(msg: Message):
-    return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
 
 
 # 判断缓存好的图片是否可用
@@ -2206,13 +2185,31 @@ async def auto_skin_notify():
 async def auto_skin_notify_task():
     await auto_skin_notify()
 
-
+# 手动执行notify task
 @bot.command(name='notify-test')
 async def auto_skin_notify_cmd(msg: Message, *arg):
     logging(msg)
     if msg.author_id == master_id:
         await auto_skin_notify()
 
+# 手动更新商店物品和价格
+@bot.command(name='update_spb', aliases=['update', 'upd'])
+async def update_skin_price_bundle(msg: Message):
+    logging(msg)
+    if msg.author_id == master_id:
+        if await update_skins(msg):
+            await msg.reply(f"成功更新：商店皮肤")
+        if await update_bundle_url(msg, bot_upimg):
+            await msg.reply(f"成功更新：捆绑包")
+        # 获取物品价格需要登录
+        auth = UserAuthDict[msg.author_id]['auth']
+        userdict = {
+            'auth_user_id': auth.user_id,
+            'access_token': auth.access_token,
+            'entitlements_token': auth.entitlements_token
+        }
+        if await update_price(msg, userdict):
+            await msg.reply(f"成功更新：物品价格")
 
 #######################################################################################################
 #######################################################################################################
