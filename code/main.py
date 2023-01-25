@@ -26,7 +26,7 @@ from endpoints.KookApi import (icon_cm, status_active_game, status_active_music,
                                get_card)
 from endpoints.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
 from endpoints.Val import *
-from endpoints.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode
+from endpoints.auth.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
 from endpoints.Gtime import GetTime, GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
@@ -913,8 +913,8 @@ async def check_UserAuthDict_len(msg: Message):
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', tfa=0, apSave='', *arg):
-    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {tfa} {apSave}")
+async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {apSave}")
     log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden, login_rate_limit, UserTokenDict, UserAuthDict
     if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
@@ -922,9 +922,6 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         return
     elif passwd == 'err' or user == 'err':
         await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
-        return
-    elif arg != ():
-        await msg.reply(f"您给予了多余的参数，请检查后重试\naccount: `{user}` passwd: `{passwd}`\n多余参数: `{arg}`\n正确用法：`/login 账户 密码`")
         return
     elif Login_Forbidden:
         await Login_Forbidden_send(msg)
@@ -937,28 +934,26 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
         # 3.登录，获取用户的token
-        res_auth = None
-        tfa = 0 if tfa == '0' else 1  # 如果tfa是字符串的0（代表是用户主动给的）那么就赋值为int 0，否则为1
-        if not tfa:
-            res_auth = await authflow(user, passwd)
-        else:
-            key = await Get2faWait_Key()
-            # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
-            th = threading.Thread(target=auth2fa, args=(user, passwd, key))
-            th.start()
-            resw = await auth2faWait(key=key, msg=msg)  # 随后主执行流来这里等待
-            res_auth = await resw['auth'].get_RiotAuth()  # 直接获取RiotAuth对象
+        key = await Get2faWait_Key() # 先获取一个key
+        # 如果使用异步运行该函数，执行流会被阻塞住等待，应该使用线程来操作
+        th = threading.Thread(target=auth2fa, args=(user, passwd, key))
+        th.start()
+        resw = await auth2faWait(key=key, msg=msg)  # 随后主执行流来这里等待
+        res_auth = await resw['auth'].get_RiotAuth()  # 直接获取RiotAuth对象
+        is2fa = resw['auth'].is2fa # 是否是2fa用户
         # 4.如果没有抛出异常，那就是完成登录了
         UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName': 'None', 'TagLine': '0000'}
-        userdict = {
-            'auth_user_id': res_auth.user_id,
-            'access_token': res_auth.access_token,
-            'entitlements_token': res_auth.entitlements_token
-        }
-        res_gameid = await fetch_user_gameID(userdict)  # 获取用户玩家id
-        UserTokenDict[msg.author_id]['GameName'] = res_gameid[0]['GameName']
-        UserTokenDict[msg.author_id]['TagLine'] = res_gameid[0]['TagLine']
-        UserAuthDict[msg.author_id] = {"auth": res_auth, "2fa": tfa}  #将对象插入
+        # userdict = {
+        #     'auth_user_id': res_auth.user_id,
+        #     'access_token': res_auth.access_token,
+        #     'entitlements_token': res_auth.entitlements_token
+        # }
+        # res_gameid = await fetch_user_gameID(userdict)  # 获取用户玩家id
+        # UserTokenDict[msg.author_id]['GameName'] = res_gameid[0]['GameName']
+        # UserTokenDict[msg.author_id]['TagLine'] = res_gameid[0]['TagLine']
+        UserTokenDict[msg.author_id]['GameName'] = resw['auth'].Name
+        UserTokenDict[msg.author_id]['TagLine'] = resw['auth'].Tag
+        UserAuthDict[msg.author_id] = {"auth": res_auth, "2fa": is2fa } #将对象插入
         # 设置基础打印信息
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
@@ -973,7 +968,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             res_auth._cookie_jar.save(cookie_path)  #保存
 
         # 6.用户自己选择是否保存账户密码，默认是不保存的
-        if apSave == 'save' and (not tfa):
+        if apSave == 'save' and (not is2fa):
             UserAuthDict['AP'][msg.author_id] = {'a': user, 'p': passwd}
             info_text += "\n您选择了保存账户密码，cookie失效后将使用账户密码重登"
 
@@ -985,27 +980,22 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         print(
             f"[Login] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
-    except auth_exceptions.RiotAuthenticationError as result:
+    except EzAuthExp.AuthenticationError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
-        text_sub = f"Make sure username and password are correct\n`{result}`"
-        cm = await get_card("当前的账户密码真的对了吗？", text_sub, icon_cm.dont_do_that)
+        text_sub = f"Make sure accont/password/verify-code correct\n`{result}`"
+        cm = await get_card("登录错误，请检查账户/密码/邮箱验证码", text_sub, icon_cm.dont_do_that)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-    except auth_exceptions.RiotMultifactorError as result:
+    except EzAuthExp.WaitOvertimeError as result:
         print(f"ERR! [{GetTime()}] login - {result}")
-        text = f"若您开始了邮箱双重验证，请使用「/login 账户 密码 1」来登录"
-        text_sub = f"Please use `/login accout passwd 1` for 2fa"
-        cm = await get_card(text, text_sub, icon_cm.that_it)
+        cm = await get_card("等待超时","auth wait overtime",icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-    except auth_exceptions.RiotRatelimitError as result:
+    except EzAuthExp.RatelimitError as result:
         err_str = f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError"
-        #更新全局速率限制
-        login_rate_limit['limit'] = True
-        login_rate_limit['time'] = time.time()
-        err_str += f" - set login_rate_limit = True"
-        print(err_str)
-        #这里是第一个出现速率限制err的用户,更新消息提示
-        cm = await get_card(f"阿狸的请求超速！请在{RATE_LIMITED_TIME}s后重试", "RiotRatelimitError, please try again later",
-                            icon_cm.lagging)
+        # 更新全局速率限制
+        login_rate_limit = {'limit': True, 'time': time.time()}
+        print(err_str," set login_rate_limit = True")
+        # 这里是第一个出现速率限制err的用户,更新消息提示
+        cm = await get_card(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later",icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
         err_str = f"ERR! [{GetTime()}] login aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
@@ -1034,6 +1024,8 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
         await APIRequestFailed_Handler("login", traceback.format_exc(), msg, bot, send_msg, cm)
     except Exception as result:  # 其他错误
+        err_str =f"[login] Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
+        await upd_card(send_msg['msg_id'], err_str, channel_type=msg.channel_type)
         await BaseException_Handler("login", traceback.format_exc(), msg, bot, send_msg, cm)
 
 
