@@ -11,5 +11,12 @@
   },
   "guild_id": "3566823018281801",
   "msg_id": "6fec1aeb-9d5c-4642-aa95-862e3db8aa61",
-  "sp_role_id": "1454428"
+  "sp_role_id": "1454428",
+  "val_iters_emoji":{
+      "Deluxe": "3986996654014459/98pGl6Tixp074074",
+      "Premium": "3986996654014459/ZT2et4zNSa074074",
+      "Select": "3986996654014459/HOGPjGnwoT074074",
+      "Ultra": "3986996654014459/5MPICFpxsa074074",
+      "Exclusive": "3986996654014459/5pj9z3T8sL074074"
+  }
 }

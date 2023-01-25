@@ -857,17 +857,25 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
         print(err_str)
 
 
-##############################################################################
+#####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from endpoints.FileManage import UserTokenDict
+from endpoints.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}
-#全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
+# 判断夜市有没有开
+NightMarketOff = False
+# 全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
-#用来存放用户每天的商店（早八会清空）
+# 用来存放用户每天的商店（早八会清空）
 UserShopDict = {}
+# 用户皮肤评分选择列表
+UserRtsDict = {}
+# 用户皮肤提醒选择列表
+UserStsDict = {}
+# valorant皮肤等级对应的kook自定义表情
+ValItersEmoji = EmojiDict['val_iters_emoji']
 
 
 #检查皮肤评分的错误用户（违规用户）
@@ -1346,17 +1354,6 @@ async def get_daily_shop(msg: Message, *arg):
             await BaseException_Handler("shop", traceback.format_exc(), msg, bot, send_msg, cm)
 
 
-# 判断夜市有没有开
-NightMarketOff = False
-ValItersEmoji = {
-    'Deluxe': '3986996654014459/98pGl6Tixp074074',
-    'Premium': '3986996654014459/ZT2et4zNSa074074',
-    'Select': '3986996654014459/HOGPjGnwoT074074',
-    'Ultra': '3986996654014459/5MPICFpxsa074074',
-    'Exclusive': '3986996654014459/5pj9z3T8sL074074'
-}
-
-
 # 获取夜市
 @bot.command(name='night', aliases=['NIGHT'])
 async def get_night_market(msg: Message, *arg):
@@ -1596,9 +1593,6 @@ async def get_bundle(msg: Message, *arg):
         await bot.client.send(debug_ch, err_str)
 
 
-#用户给皮肤评分的选择列表
-UserRtsDict = {}
-
 
 # 设置rate的错误用户
 @bot.command(name='ban-r')
@@ -1835,11 +1829,6 @@ async def rate_skin_select(msg: Message):
     except Exception as result:  # 其他错误
         await BaseException_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
 
-
-#用户选择列表
-UserStsDict = {}
-# 皮肤商店提醒记录
-from endpoints.FileManage import SkinNotifyDict
 
 
 # 检查用户是否在错误用户里面
