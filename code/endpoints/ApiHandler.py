@@ -2,7 +2,7 @@ import json
 import time
 import threading
 import traceback
-from endpoints.EzAuth import auth_exceptions, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
+from endpoints.auth.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
 from endpoints.ApiToken import token_ck, ApiTokenDict, save_token_files
 from endpoints.Gtime import GetTime
 from endpoints.KookApi import kook_create_asset
@@ -136,9 +136,9 @@ async def login_img_request(request):
         resw = await auth2faWait(key=key)  # 随后主执行流来这里等待
         res_auth = resw['auth']
         del Api2faDict['data'][account]  # 登录成功，删除账户键值
-    except auth_exceptions.RiotRatelimitError as result:
-        print(f"ERR! [{GetTime()}] login - riot_auth.riot_auth.auth_exceptions.RiotRatelimitError")
-        return {'code': 200, 'message': "riot_auth.auth_exceptions.RiotRatelimitError", 'info': 'riot登录api超速，请稍后重试'}
+    except EzAuthExp.RatelimitError as result:
+        print(f"ERR! [{GetTime()}] login - EzAuthExp.RatelimitError")
+        return {'code': 200, 'message': "EzAuthExp.RiotRatelimitError", 'info': 'riot登录api超速，请稍后重试'}
     except Exception as result:
         print(f"ERR! [{GetTime()}] login\n{traceback.format_exc()}")
         return {'code': 200, 'message': f"{result}", 'info': 'riot登录错误，详见message'}
