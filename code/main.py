@@ -84,7 +84,7 @@ async def KillBot(msg: Message, *arg):
         await Save_All_File(False)
         await msg.reply(f"[KILL] 保存全局变量成功")
         res = await bot_offline()  # 调用接口下线bot
-        print(f"[KILL] [{GetTime()}] bot-off: {res}")
+        print(f"[KILL] [{GetTime()}] bot-off: {res}\n")
         os._exit(0)  # 退出程序
 
 

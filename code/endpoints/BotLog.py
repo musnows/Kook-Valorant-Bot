@@ -1,5 +1,5 @@
 import json
-import time
+import copy
 import traceback
 from khl import Message, PrivateMessage, Bot
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
@@ -104,9 +104,15 @@ async def log_bot_list(msg: Message):
         # 计算用户总数
         BotUserDict['user']['user_total'] = len(BotUserDict['user']['data'])
         # 遍历列表，获取服务器名称
-        for gu in BotUserDict['guild']['data']:
-            if 'name' not in BotUserDict['guild']['data'][gu]:
+        tempDict = copy.deepcopy(BotUserDict)
+        for gu in tempDict['guild']['data']:
+            if 'name' not in tempDict['guild']['data'][gu]:
                 Gret = await guild_view(gu)
+                if Gret['code'] !=0: # 没有正常返回，可能是服务器被删除
+                    del BotUserDict['guild']['data'][gu] # 删除键值
+                    print(f"[log_bot_list] G:{gu} guild-view {Gret}")
+                    continue
+                # 正常返回，赋值
                 BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
             else:
                 continue
