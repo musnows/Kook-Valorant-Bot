@@ -410,7 +410,6 @@ async def myid(msg: Message, *args):
 async def val_err(msg: Message, numS: str = "-1", *arg):
     logging(msg)
     try:
-        #num = int(numS)
         await val_errcode(msg, numS)
     except Exception as result:
         await msg.reply(f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
@@ -426,8 +425,8 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from endpoints.FileManage import VipShopBgDict, VipRollDcit
-
+from endpoints.FileManage import VipShopBgDict
+VipRollDcit = VipUserDict['ROLL'] # vip 抽奖信息
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
