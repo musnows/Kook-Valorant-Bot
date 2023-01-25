@@ -150,11 +150,11 @@ class EzAuth:
         self.emailverifed = self.get_emailverifed()
 
         userinfo = self.get_userinfo()
-        self.user_id = userinfo[0]
-        self.Name = userinfo[1]
-        self.Tag = userinfo[2]
-        self.creationdata = userinfo[3]
-        self.typeban = userinfo[4]
+        self.user_id = userinfo['sub']
+        self.Name = userinfo['name']
+        self.Tag = userinfo['tag']
+        self.creationdata = userinfo['create_data']
+        self.typeban = userinfo['typeban']
         self.Region_headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {self.access_token}'}
         self.session.headers.update(self.Region_headers)
         self.Region = self.get_Region()
@@ -177,6 +177,8 @@ class EzAuth:
         return Emailverifed
 
     def get_userinfo(self):
+        """ {'sub':Sub, 'name':Name, 'tag':Tag, 'create_datad':Createdat, 'typeban':typeban}
+        """
         r = self.session.get(url=URLS.USERINFO_URL, json={})
         data = r.json()
         Sub = data['sub']
@@ -206,7 +208,7 @@ class EzAuth:
                     typeban = "PERMANENT_BAN"
         if data3 == [] or "PBE_LOGIN_TIME_BAN" in data3 or "LEGACY_BAN" in data3:
             typeban = "None"
-        return [Sub, Name, Tag, Createdat, typeban]
+        return {'sub':Sub, 'name':Name, 'tag':Tag, 'create_data':Createdat, 'typeban':typeban}
 
     def get_Region(self):
         json = {"id_token": self.id_token}
