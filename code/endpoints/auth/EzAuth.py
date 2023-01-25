@@ -1,17 +1,19 @@
 # code from https://github.com/Prodzify/Riot-auth/blob/main/main.py
 import ssl
-from typing import Any
-from collections import OrderedDict
-import requests
-from requests.adapters import HTTPAdapter
-import pandas
-from re import compile
 import time
 import asyncio
 import copy
 import random
-from riot_auth import auth_exceptions, RiotAuth
+import pandas
+import requests
+from requests.adapters import HTTPAdapter
 from http.cookies import SimpleCookie
+from typing import Any
+from collections import OrderedDict
+from re import compile
+
+from riot_auth import RiotAuth
+from endpoints.auth import EzAuthExp
 
 RiotClient = "RiotClient/62.0.1.4852117.4789131"
 User2faCode = {}
@@ -32,7 +34,6 @@ class URLS:
 
 
 class SSLAdapter(HTTPAdapter):
-
     def init_poolmanager(self, *a: Any, **k: Any) -> None:
         c = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         c.set_ciphers(':'.join(CIPHERS))
@@ -79,14 +80,15 @@ class EzAuth:
             tokens = [token, token_id]
 
         elif "auth_failure" in r.text:
+            User2faCode[key] = {'status': False, 'err': "auth_failure, USER NOT EXIST", 
+                                'start_time': time.time(),'2fa_status':True}
             print(F"[EzAuth] k:{key} auth_failure, USER NOT EXIST")
-            User2faCode[key] = {'status': False, 'err': "auth_failure, NOT EXIST", 'start_time': time.time()}
-            raise Exception("auth_failure")
+            raise EzAuthExp.AuthenticationError(User2faCode[key]['err'])
 
         elif 'rate_limited' in r.text:
-            print(F"[EzAuth] k:{key} auth rate limited")
-            User2faCode[key] = {'status': False, 'err': "auth rate_limited", 'start_time': time.time()}
-            raise Exception("auth rate_limited")
+            User2faCode[key] = {'status': False, 'err': "auth rate_limited", 'start_time': time.time(),'2fa_status':True}
+            print(F"[EzAuth] k:{key} auth rate_limited")
+            raise EzAuthExp.RatelimitError(User2faCode[key]['err'])
 
         else:  # 到此处一般是需要邮箱验证的用户
             print(f"[EzAuth] k:{key} 2fa user")
@@ -97,12 +99,13 @@ class EzAuth:
                 '2fa_status': False,
                 'err': None
             }
+            # 开始等待用户提供邮箱验证码
             while (not User2faCode[key]['2fa_status']):
                 if (time.time() - User2faCode[key]['start_time']) > TFA_TIME_LIMIT:
                     break  # 超过10分钟，以无效处理
-                #await asyncio.sleep(0.2)
-                time.sleep(0.2)
-            # 再次判断，避免是超时的
+                time.sleep(0.2) # 因为是线程执行操作，不能线程+异步
+            
+            # 再次判断，避免是超时break的
             if User2faCode[key]['2fa_status']:
                 #需要用户通过命令键入邮箱验证码
                 authdata = {
@@ -120,14 +123,19 @@ class EzAuth:
                     tokens = [token, token_id]
 
                 elif "auth_failure" in r.text:
-                    print(F"[EzAuth] k:{key} auth_failure")  # banned (?)
                     User2faCode[key]['err'] = "2fa auth_failue"
-                    raise Exception("2fa auth_failure")
-                else:
-                    print(F"[EzAuth] k:{key} 2fa unkown err")
+                    print(F"[EzAuth] k:{key} {User2faCode[key]['err']}")  
+                    raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
+                else: # 大概率是验证码错了
                     User2faCode[key]['err'] = "auth_failue, maybe wrong 2fa code"
-                    raise Exception("unkown auth err, maybe wrong 2fa code")
+                    print(F"[EzAuth] k:{key} {User2faCode[key]['err']}")
+                    raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
+            else: # 2fa等待超出600s
+                User2faCode[key]['err']="2fa wait overtime as 600s, wait failed"
+                print(f"[EzAuth] k:{key} {User2faCode[key]['err']}")             
+                raise EzAuthExp.WaitOvertimeError(User2faCode[key]['err'])
 
+        # auth success
         self.access_token = tokens[0]
         self.id_token = tokens[1]
 
@@ -150,15 +158,11 @@ class EzAuth:
         self.Region_headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {self.access_token}'}
         self.session.headers.update(self.Region_headers)
         self.Region = self.get_Region()
-        # 搞定了之后，将userdict传入此处
+        # return self 
         User2faCode[key] = {
             'status': True,
-            'userdict': {
-                'auth_user_id': self.user_id,
-                'access_token': self.access_token,
-                'entitlements_token': self.entitlements_token
-            },
-            'auth': self
+            'auth': self,
+            'err': None
         }
         print(f"[EzAuth] k:{key} auth success")
 
@@ -278,9 +282,9 @@ def auth2fa(user: str, passwd: str, key: str):
 async def auth2faWait(key, msg=None):
     while True:
         if key in User2faCode:
-            # 如果status为假，代表是2fa用户
-            if not User2faCode[key]['status']:
-                print(f"[auth2faWait] k:{key} 2fa wait")
+            # 如果2fa_status为假，代表是2fa且账户密码没有问题，需要用户提供vcode
+            if not User2faCode[key]['2fa_status']:
+                print(f"[auth2faWait] k:{key} 2fa Wait")
                 if msg != None:
                     await msg.reply(f"您开启了邮箱双重验证，请使用「/tfa {key} 邮箱码」的方式验证\n栗子：若邮箱验证码为114514，那么您应该键入 `/tfa {key} 114514`"
                                     )
@@ -290,13 +294,14 @@ async def auth2faWait(key, msg=None):
                 # 不为none，出现错误
                 if User2faCode[key]['err'] != None:
                     if 'rate_limited' in User2faCode[key]['err']:
-                        raise auth_exceptions.RiotRatelimitError
+                        raise EzAuthExp.RatelimitError(User2faCode[key]['err'])
+                    elif 'auth_failure' in User2faCode[key]['err']:
+                        raise EzAuthExp.AuthenticationError(User2faCode[key]['err'])
+                    elif 'overtime' in User2faCode[key]['err']:
+                        del User2faCode[key]
+                        raise EzAuthExp.WaitOvertimeError(User2faCode[key]['err'])
                     else:
-                        raise Exception(User2faCode[key]['err'])
-                # 这里 -3s 是为了让该线程更晚获取到信息，要在auth线程break之后才删除键值
-                if (time.time() - User2faCode[key]['start_time'] - 3) > TFA_TIME_LIMIT:
-                    del User2faCode[key]
-                    break  # 超过10分钟，以无效处理
+                        raise EzAuthExp.UnkownError(User2faCode[key]['err'])
 
                 # 睡一会再检测
                 await asyncio.sleep(0.3)
@@ -305,11 +310,11 @@ async def auth2faWait(key, msg=None):
             if User2faCode[key]['status']:
                 ret = copy.deepcopy(User2faCode[key])
                 del User2faCode[key]
-                print(f"[auth2faWait] k:{key} 2fa wait success,del key")
+                print(f"[auth2faWait] k:{key} Wait success,del key")
                 return ret
-            else:  # 否则登陆失败
-                print(f"[auth2faWait] k:{key} 2fa wait failed")  # 因为默认给出的是账户密码错误，而2fa不会是这个问题
-                raise Exception("[auth2faWait] 2fa wait failed, auth_failure")
+            else: # 走到这里没有被raise，出现了未知错误
+                print(f"[auth2faWait] k:{key} Wait failed, unkown err") 
+                raise EzAuthExp.UnkownError("auth2faWait Failed")
         # key值不在，睡一会后再看看
         await asyncio.sleep(0.2)
 
