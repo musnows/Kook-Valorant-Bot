@@ -35,9 +35,3 @@ class WaitOvertimeError(EzAuthError):
 
 class UnkownError(EzAuthError):
     """UnkownError"""
-
-import traceback
-try:
-    raise WaitOvertimeError
-except:
-    print(str(traceback.format_exc()))

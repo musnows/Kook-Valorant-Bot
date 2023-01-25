@@ -51,7 +51,7 @@ class EzAuth:
             "Accept": "application/json, text/plain, */*"
         })
         self.session.mount('https://', SSLAdapter())
-        #self.p = self.print()
+        self.is2fa = False # 默认不是2fa用户
 
     def authorize(self, username, password, key):
         global User2faCode
@@ -90,8 +90,9 @@ class EzAuth:
             print(F"[EzAuth] k:{key} auth rate_limited")
             raise EzAuthExp.RatelimitError(User2faCode[key]['err'])
 
-        else:  # 到此处一般是需要邮箱验证的用户
+        else:  # 到此处是需要邮箱验证的用户
             print(f"[EzAuth] k:{key} 2fa user")
+            self.is2fa = True # 是2fa用户
             User2faCode[key] = {
                 'vcode': '',
                 'status': False,
@@ -162,7 +163,8 @@ class EzAuth:
         User2faCode[key] = {
             'status': True,
             'auth': self,
-            'err': None
+            'err': None,
+            '2fa_status':True
         }
         print(f"[EzAuth] k:{key} auth success")
 
