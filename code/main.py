@@ -784,20 +784,24 @@ async def vip_roll_task():
             continue
         else:
             print(f"[BOT.TASK] vip_roll_task msg:{msg_id}")
-            vday = VipRollDcit[msg_id]['days']
-            vnum = VipRollDcit[msg_id]['nums']
+            vday = VipRollDcit[msg_id]['days'] # vip天数
+            vnum = VipRollDcit[msg_id]['nums'] # 奖品数量
             # 结束抽奖
             log_str = f"```\n[MsgID] {msg_id}\n"
             send_str = "恭喜 "
-            # 生成n个随机数
-            ran = random.sample(range(0, len(VipRollDcit[msg_id]['user']) - 1), vnum)
+            # 人数大于奖品数量
+            if len(VipRollDcit[msg_id]['user'])>vnum: 
+                ran = random.sample(range(0, len(VipRollDcit[msg_id]['user'])), vnum) # 生成n个随机数
+            else: # 生成一个从0到len-1的列表 如果只有一个用户，生成的是[0]
+                ran = list(range(len(VipRollDcit[msg_id]['user'])))
+            # 开始遍历
             for j in ran:
                 user_id = VipRollDcit[msg_id]['user'][j]
                 user = await bot.client.fetch_user(user_id)
                 # 设置用户的时间和个人信息
                 time_vip = vip_time_stamp(user_id, vday)
                 VipUserDict[user_id] = {'time': time_vip, 'name_tag': f"{user.username}#{user.identify_num}"}
-                #创建卡片消息
+                # 创建卡片消息
                 cm = CardMessage()
                 c = Card(
                     Module.Section(Element.Text("恭喜您中奖阿狸vip了！", Types.Text.KMD),
