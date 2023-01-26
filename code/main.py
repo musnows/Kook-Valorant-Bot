@@ -944,19 +944,13 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         resw = await auth2faWait(key=key, msg=msg)  # 随后主执行流来这里等待
         res_auth = await resw['auth'].get_RiotAuth()  # 直接获取RiotAuth对象
         is2fa = resw['auth'].is2fa # 是否是2fa用户
-        # 4.如果没有抛出异常，那就是完成登录了
-        UserTokenDict[msg.author_id] = {'auth_user_id': res_auth.user_id, 'GameName': 'None', 'TagLine': '0000'}
-        # userdict = {
-        #     'auth_user_id': res_auth.user_id,
-        #     'access_token': res_auth.access_token,
-        #     'entitlements_token': res_auth.entitlements_token
-        # }
-        # res_gameid = await fetch_user_gameID(userdict)  # 获取用户玩家id
-        # UserTokenDict[msg.author_id]['GameName'] = res_gameid[0]['GameName']
-        # UserTokenDict[msg.author_id]['TagLine'] = res_gameid[0]['TagLine']
-        UserTokenDict[msg.author_id]['GameName'] = resw['auth'].Name
-        UserTokenDict[msg.author_id]['TagLine'] = resw['auth'].Tag
-        UserAuthDict[msg.author_id] = {"auth": res_auth, "2fa": is2fa } #将对象插入
+        # 4.如果没有抛出异常，那就是完成登录了，设置用户的玩家uuid+昵称
+        UserTokenDict[msg.author_id] = {
+            'auth_user_id': res_auth.user_id, 
+            'GameName': resw['auth'].Name, 
+            'TagLine': resw['auth'].Tag
+        }
+        UserAuthDict[msg.author_id] = {"auth": res_auth, "2fa": is2fa } # 将对象插入
         # 设置基础打印信息
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
@@ -970,8 +964,11 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             cookie_path = f"./log/cookie/{msg.author_id}.cke"
             res_auth._cookie_jar.save(cookie_path)  #保存
 
-        # 6.用户自己选择是否保存账户密码，默认是不保存的
+        # 6.用户自己选择是否保存账户密码，默认是不保存的；2fa用户也不会保存
         if apSave == 'save' and (not is2fa):
+            # 不在这里再新建（用于保存阿狸使用账户密码重登的时间，告知用户）
+            if msg.author_id not in UserTokenDict['ap_log']:
+                UserTokenDict['ap_log'][msg.author_id] = {}
             UserAuthDict['AP'][msg.author_id] = {'a': user, 'p': passwd}
             info_text += "\n您选择了保存账户密码，cookie失效后将使用账户密码重登"
 
@@ -1053,11 +1050,54 @@ async def auth_2fa(msg: Message, key: str, tfa: str, *arg):
         await BaseException_Handler("tfa", traceback.format_exc(), msg, bot)
 
 
-# 重新登录
+# 退出登录
+@bot.command(name='logout')
+async def logout_authtoken(msg: Message, *arg):
+    logging(msg)
+    try:
+        global UserTokenDict, UserAuthDict
+        if msg.author_id not in UserAuthDict:  #使用not in判断是否不存在
+            cm = await get_card("您尚未登陆！无须logout", "阿巴阿巴？", icon_cm.whats_that)
+            await msg.reply(cm)
+            return
+
+        #如果id存在， 删除id
+        del UserAuthDict[msg.author_id]  #先删除auth对象
+        text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
+        await msg.reply(cm)
+        print(
+            f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        )
+
+    except Exception as result:  # 其他错误
+        await BaseException_Handler("logout", traceback.format_exc(), msg, bot)
+
+@bot.command(name='login-ap')
+async def login_acpw(msg:Message,*arg):
+    logging(msg)
+    try:
+        if msg.author_id not in UserTokenDict['ap_log']:
+            await msg.reply(f"您没有保存账户密码或2fa用户，该命令无效")
+            return
+        send_text='none'
+        if len(UserTokenDict['ap_log'][msg.author_id]) == 0:
+            send_text = "阿狸还没有用过您的账户密码来重新登录呢"
+        else:
+            send_text = '以下为账户密码登录日志\n'
+            for i in UserTokenDict['ap_log'][msg.author_id]:
+                send_text+=f"{i} - {UserTokenDict['ap_log'][msg.author_id][i]}\n"
+        # 发送信息
+        await msg.reply(send_text)
+    except Exception as result:  # 其他错误
+        await BaseException_Handler("login-ap", traceback.format_exc(), msg, bot)
+
+
+# cookie重新登录
 async def login_reauth(kook_user_id: str):
     base_print = f"[{GetTime()}] Au:{kook_user_id} = "
     print(base_print + "auth_token failure,trying reauthorize()")
-    global UserAuthDict
+    global UserAuthDict,UserTokenDict
     auth = UserAuthDict[kook_user_id]['auth']
     #用cookie重新登录,会返回一个bool是否成功
     ret = await auth.reauthorize()
@@ -1071,13 +1111,15 @@ async def login_reauth(kook_user_id: str):
             res_auth = await authflow(UserAuthDict['AP'][kook_user_id]['a'], UserAuthDict['AP'][kook_user_id]['p'])
             UserAuthDict[kook_user_id]['auth'] = res_auth  # 用账户密码重新登录
             res_auth._cookie_jar.save(f"./log/cookie/{kook_user_id}.cke")  #保存cookie
+            # 记录使用账户密码重新登录的时间
+            UserTokenDict['ap_log'][kook_user_id][GetTime()] = UserTokenDict[kook_user_id]['GameName']
             print(base_print + "authflow() by AP")
             ret = True
+    # 正好返回auth.reauthorize()的bool
+    return ret  
 
-    return ret  #正好返回一个bool
 
-
-#判断是否需要重新获取token
+# 判断是否需要重新获取token
 async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
     """
     return value:
@@ -1137,33 +1179,6 @@ async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
             print(f"[Check_re_auth] Unkown ERR!\n{traceback.format_exc()}")
             await bot.client.send(debug_ch, f"[Check_re_auth] Unkown ERR!\n{traceback.format_exc()}")
             return False
-
-
-# 退出登录
-@bot.command(name='logout')
-async def logout_authtoken(msg: Message, *arg):
-    logging(msg)
-    if Login_Forbidden:
-        await Login_Forbidden_send(msg)
-        return
-    try:
-        global UserTokenDict, UserAuthDict
-        if msg.author_id not in UserAuthDict:  #使用not in判断是否不存在
-            cm = await get_card("您尚未登陆！无须logout", "阿巴阿巴？", icon_cm.whats_that)
-            await msg.reply(cm)
-            return
-
-        #如果id存在， 删除id
-        del UserAuthDict[msg.author_id]  #先删除auth对象
-        text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
-        await msg.reply(cm)
-        print(
-            f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        )
-
-    except Exception as result:  # 其他错误
-        await BaseException_Handler("logout", traceback.format_exc(), msg, bot)
 
 
 
