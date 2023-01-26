@@ -1,0 +1,29 @@
+{
+  "cmp": {
+    "best": {
+      "kook_id": "",
+      "pit": 100,
+      "skin": []
+    },
+    "worse": {
+      "kook_id": "",
+      "pit": 0,
+      "skin": []
+    }
+  },
+  "data": {},
+  "err_user": {},
+  "kkn": {
+    "best": {
+      "kook_id": "",
+      "pit": 100,
+      "skin": []
+    },
+    "worse": {
+      "kook_id": "",
+      "pit": 0,
+      "skin": []
+    }
+  },
+  "rate": {}
+}
