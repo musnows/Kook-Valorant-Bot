@@ -147,7 +147,7 @@ async def log_bot_list_text(logDict: dict):
 
 # 出现kook api异常的通用处理
 async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, send_msg=None, cm: CardMessage = None):
-    err_str = f"ERR! [{GetTime()}] {def_name} APIRequestFailed\n{excp}"
+    err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
     print(err_str)
     text = f"啊哦，出现了一些问题"
     text_sub = 'e'
@@ -161,9 +161,10 @@ async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, 
         print(f"[APIRequestFailed.Handler] Au:{msg.author_id} 引用不存在, cm_send success!")
         return
     elif "json没有通过验证" in excp:
-        print(f"ERR! Au:{msg.author_id} json.dumps(cm) = {json.dumps(cm)}")
+        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} json.dumps = {json.dumps(cm)}")
         text_sub = f"卡片消息json没有通过验证或者不存在"
     elif "屏蔽" in excp:
+        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} json.dumps = {json.dumps(cm)}")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
     cm0 = await get_card(text, text_sub, icon_cm.lagging)
@@ -181,7 +182,7 @@ async def BaseException_Handler(def_name: str,
                                 send_msg=None,
                                 cm: CardMessage = None,
                                 help="您可能需要重新执行/login操作"):
-    err_str = f"ERR! [{GetTime()}] {def_name}\n```\n{excp}\n```"
+    err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
     print(err_str)
     cm0 = CardMessage()
     c = Card(color='#fb4b57')

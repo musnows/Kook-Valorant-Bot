@@ -981,16 +981,16 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
             f"[Login] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         )
     except EzAuthExp.AuthenticationError as result:
-        print(f"ERR! [{GetTime()}] login - {result}")
+        print(f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}")
         text_sub = f"Make sure accont/password/verify-code correct\n`{result}`"
         cm = await get_card("登录错误，请检查账户/密码/邮箱验证码", text_sub, icon_cm.dont_do_that)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except EzAuthExp.WaitOvertimeError as result:
-        print(f"ERR! [{GetTime()}] login - {result}")
+        print(f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}")
         cm = await get_card("等待超时","auth wait overtime",icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except EzAuthExp.RatelimitError as result:
-        err_str = f"ERR! [{GetTime()}] login - riot_auth.auth_exceptions.RiotRatelimitError"
+        err_str = f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}"
         # 更新全局速率限制
         login_rate_limit = {'limit': True, 'time': time.time()}
         print(err_str," set login_rate_limit = True")
@@ -998,7 +998,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm = await get_card(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later",icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
-        err_str = f"ERR! [{GetTime()}] login aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
+        err_str = f"ERR! [{GetTime()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
         if 'auth.riotgames.com' and '403' in str(result):
             Login_Forbidden = True
             err_str += f"[Login] 403 err! set Login_Forbidden = True"
@@ -1012,7 +1012,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         cm = await get_card(err_str)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except KeyError as result:
-        print(f"ERR! [{GetTime()}] login - KeyError:{result}")
+        print(f"ERR! [{GetTime()}] login Au:{msg.author_id} - KeyError:{result}")
         text = f"遇到未知的KeyError，请[联系](https://kook.top/gpbTwZ)阿狸的主人哦~"
         text_sub = f"Unkown KeyError, please contact bot developer"
         if '0' in str(result):
