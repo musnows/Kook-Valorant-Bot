@@ -80,14 +80,12 @@ class EzAuth:
             tokens = [token, token_id]
 
         elif "auth_failure" in r.text:
-            User2faCode[key] = {'status': False, 'err': "auth_failure, USER NOT EXIST", 
+            User2faCode[key] = {'status': False, 'err': f"[{key}] auth_failure, USER NOT EXIST", 
                                 'start_time': time.time(),'2fa_status':True}
-            print(F"[EzAuth] k:{key} auth_failure, USER NOT EXIST")
             raise EzAuthExp.AuthenticationError(User2faCode[key]['err'])
 
         elif 'rate_limited' in r.text:
-            User2faCode[key] = {'status': False, 'err': "auth rate_limited", 'start_time': time.time(),'2fa_status':True}
-            print(F"[EzAuth] k:{key} auth rate_limited")
+            User2faCode[key] = {'status': False, 'err': f"[{key}] auth rate_limited", 'start_time': time.time(),'2fa_status':True}
             raise EzAuthExp.RatelimitError(User2faCode[key]['err'])
 
         else:  # 到此处是需要邮箱验证的用户
@@ -124,16 +122,13 @@ class EzAuth:
                     tokens = [token, token_id]
 
                 elif "auth_failure" in r.text:
-                    User2faCode[key]['err'] = "2fa auth_failue"
-                    print(F"[EzAuth] k:{key} {User2faCode[key]['err']}")  
+                    User2faCode[key]['err'] = f"[{key}] 2fa auth_failue"
                     raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
                 else: # 大概率是验证码错了
-                    User2faCode[key]['err'] = "auth_failue, maybe wrong 2fa code"
-                    print(F"[EzAuth] k:{key} {User2faCode[key]['err']}")
+                    User2faCode[key]['err'] = f"[{key}] auth_failue, maybe wrong 2fa code"
                     raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
             else: # 2fa等待超出600s
-                User2faCode[key]['err']="2fa wait overtime as 600s, wait failed"
-                print(f"[EzAuth] k:{key} {User2faCode[key]['err']}")             
+                User2faCode[key]['err']=f"[{key}] 2fa wait overtime, wait failed"
                 raise EzAuthExp.WaitOvertimeError(User2faCode[key]['err'])
 
         # auth success
