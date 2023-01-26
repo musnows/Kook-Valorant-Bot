@@ -6,6 +6,7 @@ from endpoints.Gtime import GetTime
 # 所有token
 from endpoints.FileManage import ApiTokenDict
 
+
 #获取uuid
 def get_uuid():
     get_timestamp_uuid = uuid.uuid1()  # 根据 时间戳生成 uuid , 保证全球唯一
@@ -16,6 +17,7 @@ def save_token_files(text=''):
     global ApiTokenDict
     ApiTokenDict.save()
     print(f"[{GetTime()}] [API token] files saved! [{text}]")
+
 
 # 生成uuid
 def create_token_uuid(num: int = 10, day: int = 30):
@@ -32,15 +34,15 @@ def create_token_uuid(num: int = 10, day: int = 30):
     while (i > 0):
         uuid = str(get_uuid())
         ApiTokenDict['data'][uuid] = {
-            'days': day, 
+            'days': day,
             'prime': False,
-            'od_time': time.time()+day*86400,
-            'last_used':time.time(),
-            'rate_time':time.time(),
-            'rate_nums':0,
-            'sum':0
+            'od_time': time.time() + day * 86400,
+            'last_used': time.time(),
+            'rate_time': time.time(),
+            'rate_nums': 0,
+            'sum': 0
         }
-        if day > 3000: #永久会员
+        if day > 3000:  #永久会员
             ApiTokenDict['data'][uuid]['prime'] = True
         NewUuid.append(uuid)
         i -= 1
@@ -55,8 +57,9 @@ def create_token_uuid(num: int = 10, day: int = 30):
     print(f"[{GetTime()}] [token] create_token_uuid - num:{num} - day:{day}")
     return text
 
+
 # 检查用户token是否失效或者不是token
-async def token_ck(token:str):
+async def token_ck(token: str):
     """    
     retuns:
         * True: is token
@@ -72,10 +75,10 @@ async def token_ck(token:str):
             save_token_files("token expire")
             print(f"[{GetTime()}] [token-ck] T:{token} out of date")
             return False
-        else:#没有过期，返回真
+        else:  #没有过期，返回真
             print(f"[{GetTime()}] [token-ck] T:{token} is token")
             return True
-    else:#token不在
+    else:  #token不在
         print(f"[{GetTime()}] [token-ck] T:{token} not token")
         return False
 

@@ -44,21 +44,26 @@ Recommended to use after the Valorant_Function is stable.
 | `/uinfo` or `/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
 | `/notify-a skin_name` |search for skin name,providing NO for add it into notification |
 | `/notify-l` | show current notify skin |
+|`/rate skin_name`|search skin by name for /rts|
+|`/rts NO. point comment`|select skin_no. to rate a point(0~100) and leave a comment to it|
+|`/kkn`|checkout yesterday's heighest/lowest rate_point of daily shop |
+
+
+| Vip    | Function                |
+| ------------- | ---------------- |
 | `/vip-u uuid` | get vip from uuid |
 | `/vip-c` | check remaining time for vip |
 | `/vip-shop` | check current vip-shop background img |
 | `/vip-shop img-url` | add vip-shop background img  |
 | `/vip-shop-s NO.` | switch vip-shop background img using `NO.`,  `NO.` will show at `/vip-shop` |
 | `/vip-shop-d NO.` | delete vip-shop background img using `NO.` |
-|`/rate skin_name`|search skin by name for /rts|
-|`/rts NO. point comment`|select skin_no. to rate a point(0~100) and leave a comment to it|
-|`/kkn`|checkout yesterday's heighest/lowest rate_point of daily shop |
+
 
 notify function require user to stay `login`, bot wil fetch your daily shop at `08:00AM GMT+8` .If the skin is in daily shop, bot will send a private message to user.
 
 If the user is a vip, the bot will also send the full picture of the daily-shop on that day through private message.
 
->Because the bot is only using in Chinese platform, the skin `name` only support `zh-TW`
+> The bot is only using in Chinese platform, the skin `name` only support `zh-TW`
 
 | Other        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |

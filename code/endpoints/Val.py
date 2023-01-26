@@ -5,7 +5,8 @@ from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
-from endpoints.FileManage import GameIdDict, ValErrDict, ValBundleList,ValItersList,ValPriceList,ValSkinList
+from endpoints.FileManage import GameIdDict, ValErrDict, ValBundleList, ValItersList, ValPriceList, ValSkinList
+
 
 ####################################保存用户的游戏ID操作#######################################
 
@@ -23,6 +24,7 @@ async def saveid_main(msg: Message, game_id: str):
     if flag == 0:
         GameIdDict[msg.author_id] = game_id
         await msg.reply(f"本狸已经记下你的游戏id喽~")
+
 
 # 显示已有id的个数
 async def saveid_count(msg: Message):
@@ -46,7 +48,9 @@ async def myid_main(msg: Message):
 # 查询游戏错误码
 async def val_errcode(msg: Message, num: str = "-1"):
     if num == "-1":
-        await msg.reply('目前支持查询的错误信息有：\n```\n0-1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002,9003\n```\n注：van和val错误码都可用本命令查询')
+        await msg.reply(
+            '目前支持查询的错误信息有：\n```\n0-1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002,9003\n```\n注：van和val错误码都可用本命令查询'
+        )
     elif num in ValErrDict:
         await msg.reply(ValErrDict[num])
     else:
@@ -62,6 +66,7 @@ async def dx123(msg: Message):
 
 ###################################### local files search ######################################################
 
+
 #从list中获取价格
 def fetch_item_price_bylist(item_id):
     for item in ValPriceList['Offers']:  #遍历查找指定uuid
@@ -76,6 +81,7 @@ def fetch_item_iters_bylist(iter_id):
             res = {'data': iter}  #所以要手动创建一个带data的dict作为返回值
             return res
 
+
 #从list中获取皮肤
 def fetch_skin_bylist(item_id):
     res = {}  #下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
@@ -83,6 +89,7 @@ def fetch_skin_bylist(item_id):
         if item_id == item['levels'][0]['uuid']:
             res['data'] = item  #所以要手动创建一个带data的dict作为返回值
             return res
+
 
 #从list中，通过皮肤名字获取皮肤列表
 def fetch_skin_byname_list(name):
@@ -92,6 +99,7 @@ def fetch_skin_byname_list(name):
             data = {'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}
             wplist.append(data)
     return wplist
+
 
 #从list中通过皮肤lv0uuid获取皮肤等级
 def fetch_skin_iters_bylist(item_id):
@@ -113,9 +121,11 @@ async def fetch_bundle_weapen_byname(name):
 
     return WeapenList
 
+
 ####################################################################################################
 ###################https://github.com/HeyM1ke/ValorantClientAPI#####################################
 ####################################################################################################
+
 
 #获取用户游戏id(从使用对象修改成使用文件中的内容)
 async def fetch_user_gameID(auth):
@@ -159,12 +169,14 @@ async def fetch_valorant_point(u):
             res = json.loads(await response.text())
     return res
 
+
 # 获取vp和r点的dict
 async def fetch_vp_rp_dict(u):
     resp = await fetch_valorant_point(u)
     vp = resp["Balances"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #vp
     rp = resp["Balances"]["e59aa87c-4cbf-517a-5983-6e81511be9b7"]  #R点
-    return {'vp':vp,'rp':rp}
+    return {'vp': vp, 'rp': rp}
+
 
 # 获取商品价格（所有）
 async def fetch_item_price_all(u):
@@ -276,7 +288,6 @@ async def fetch_contract_uuid(id):
     return res_con
 
 
-
 # 获取玩家卡面，uuid
 async def fetch_playercard_uuid(id):
     url = "https://valorant-api.com/v1/playercards/" + id
@@ -336,8 +347,8 @@ async def fetch_skinlevel_uuid(id):
     return res_skin
 
 
-
 #######################################通行证#######################################################
+
 
 # 获取不同奖励的信息
 async def get_reward(reward):
@@ -376,7 +387,7 @@ async def create_cm_contract(msg: Message):
     # 预加载用户token(其实已经没用了)
     with open("./log/UserAuthID.json", 'r', encoding='utf-8') as frau:
         UserTokenDict = json.load(frau)
-        
+
     userdict = UserTokenDict[msg.author_id]
     # 获取玩家当前任务和通行证情况
     player_mision = await fetch_player_contract(userdict)

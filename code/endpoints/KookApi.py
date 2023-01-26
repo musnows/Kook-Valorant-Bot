@@ -1,8 +1,8 @@
 import json
 import aiohttp
 import io
-from khl import Bot,ChannelPrivacyTypes
-from khl.card import Card,CardMessage,Module,Element,Types
+from khl import Bot, ChannelPrivacyTypes
+from khl.card import Card, CardMessage, Module, Element, Types
 
 from endpoints.FileManage import config
 # 下方更新卡片消息需要bot
@@ -10,6 +10,7 @@ bot = Bot(token=config['token'])
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
 kook_headers = {f'Authorization': f"Bot {config['token']}"}
+
 
 #################################机器人在玩状态####################################
 
@@ -51,6 +52,7 @@ async def guild_userlist(Guild_ID: str = "3566823018281801"):
             #print(ret1)
             return ret1
 
+
 # 获取阿狸加入的服务器数量
 async def guild_list():
     url = kook_base_url + "/api/v3/guild/list"
@@ -59,9 +61,10 @@ async def guild_list():
             ret1 = json.loads(await response.text())
             #print(ret1)
             return ret1
-        
+
+
 # 获取服务器详情
-async def guild_view(Guild_ID:str):
+async def guild_view(Guild_ID: str):
     url = kook_base_url + "/api/v3/guild/view"
     params = {"guild_id": Guild_ID}
     async with aiohttp.ClientSession() as session:
@@ -70,32 +73,36 @@ async def guild_view(Guild_ID:str):
             #print(ret1)
             return ret1
 
+
 # 上传图片到kook
-async def kook_create_asset(bot_token:str,bg):
+async def kook_create_asset(bot_token: str, bg):
     imgByteArr = io.BytesIO()
     bg.save(imgByteArr, format='PNG')
     imgByte = imgByteArr.getvalue()
     data = aiohttp.FormData()
-    data.add_field('file',imgByte)
-    url = kook_base_url+"/api/v3/asset/create"
+    data.add_field('file', imgByte)
+    url = kook_base_url + "/api/v3/asset/create"
     kook_headers = {f'Authorization': f"Bot {bot_token}"}
-    body = {'file':data}
+    body = {'file': data}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=kook_headers,data=data) as response:
+        async with session.post(url, headers=kook_headers, data=data) as response:
             res = json.loads(await response.text())
     return res
 
+
 # 下线机器人
 async def bot_offline():
-    url = kook_base_url+"/api/v3/user/offline"
+    url = kook_base_url + "/api/v3/user/offline"
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=kook_headers) as response:
             res = json.loads(await response.text())
     return res
 
+
 ##########################################icon##############################################
 
 from typing import Union
+
 
 # 图标
 class icon_cm:
@@ -145,8 +152,9 @@ async def upd_card(msg_id: str,
         result = await bot.client.gate.request('POST', 'direct-message/update', data=data)
     return result
 
+
 # 获取常用的卡片消息
-async def get_card(text:str,sub_text='e',img_url='e',card_color='#fb4b57',img_sz='sm'):
+async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', img_sz='sm'):
     cm = CardMessage()
     c = Card(color=card_color)
     if img_url != 'e':
