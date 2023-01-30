@@ -60,6 +60,8 @@ def bg_comp(bg, img, x, y):
 
 # 获取武器皮肤的图片
 def get_weapon_img(skinuuid: str, skin_icon: str):
+    if skin_icon == None: 
+        print(f"[get_weapon_img] {skinuuid} None-icon") # 出现None
     if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
         layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开本地皮肤图片
     else:
