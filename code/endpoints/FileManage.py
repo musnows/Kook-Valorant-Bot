@@ -140,11 +140,14 @@ ValItersList = FileManage("./log/ValIters.json")  # valorant皮肤等级
 SkinRateDict = FileManage("./log/ValSkinRate.json")  # valorant皮肤评分信息
 SkinNotifyDict = FileManage("./log/UserSkinNotify.json")  # 皮肤提醒 用户记录
 GameIdDict = FileManage("./log/game_idsave.json")  # 玩家游戏id保存
-UserTokenDict = FileManage("./log/UserAuthID.json")  # riot用户游戏id和uuid
+UserAuthID = FileManage("./log/UserAuthID.json")  # 用户游戏id/uuid，账户密码重登记录
+UserTokenDict = UserAuthID['data']  # riot用户游戏id和uuid
+UserApLog = UserAuthID['ap_log']    # 账户密码重登记录
 
 VipUuidDict = FileManage("./log/VipUuid.json")  # vip uuid文件
-VipUserDict = FileManage("./log/VipUser.json")  # vip 用户列表
 VipShopBgDict = FileManage("./log/VipUserShopBg.json")  # vip 背景图设置；商店图缓存
-#VipRollDcit = FileManage("./log/VipRoll.json")  # vip 抽奖信息
+VipUser = FileManage("./log/VipUser.json")  # vip 用户列表
+VipUserDict = VipUser['data'] # vip 用户
+VipRollDcit = VipUser['roll'] # vip 抽奖信息 
 
 AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求

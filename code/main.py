@@ -425,8 +425,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from endpoints.FileManage import VipShopBgDict
-VipRollDcit = VipUserDict['ROLL'] # vip 抽奖信息
+from endpoints.FileManage import VipShopBgDict,VipRollDcit,UserApLog
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -967,8 +966,8 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
         # 6.用户自己选择是否保存账户密码，默认是不保存的；2fa用户也不会保存
         if apSave == 'save' and (not is2fa):
             # 不在这里再新建（用于保存阿狸使用账户密码重登的时间，告知用户）
-            if msg.author_id not in UserTokenDict['ap_log']:
-                UserTokenDict['ap_log'][msg.author_id] = {}
+            if msg.author_id not in UserApLog:
+                UserApLog[msg.author_id] = {}
             UserAuthDict['AP'][msg.author_id] = {'a': user, 'p': passwd}
             info_text += "\n您选择了保存账户密码，cookie失效后将使用账户密码重登"
 
@@ -1077,16 +1076,16 @@ async def logout_authtoken(msg: Message, *arg):
 async def login_acpw(msg:Message,*arg):
     logging(msg)
     try:
-        if msg.author_id not in UserTokenDict['ap_log']:
+        if msg.author_id not in UserApLog:
             await msg.reply(f"您没有保存账户密码或2fa用户，该命令无效")
             return
         send_text='none'
-        if len(UserTokenDict['ap_log'][msg.author_id]) == 0:
+        if len(UserApLog[msg.author_id]) == 0:
             send_text = "阿狸还没有用过您的账户密码来重新登录呢"
         else:
             send_text = '以下为账户密码登录日志\n'
-            for i in UserTokenDict['ap_log'][msg.author_id]:
-                send_text+=f"{i} - {UserTokenDict['ap_log'][msg.author_id][i]}\n"
+            for i in UserApLog[msg.author_id]:
+                send_text+=f"{i} - {UserApLog[msg.author_id][i]}\n"
         # 发送信息
         await msg.reply(send_text)
     except Exception as result:  # 其他错误
@@ -1112,7 +1111,7 @@ async def login_reauth(kook_user_id: str):
             UserAuthDict[kook_user_id]['auth'] = res_auth  # 用账户密码重新登录
             res_auth._cookie_jar.save(f"./log/cookie/{kook_user_id}.cke")  #保存cookie
             # 记录使用账户密码重新登录的时间
-            UserTokenDict['ap_log'][kook_user_id][GetTime()] = UserTokenDict[kook_user_id]['GameName']
+            UserApLog[kook_user_id][GetTime()] = UserTokenDict[kook_user_id]['GameName']
             print(base_print + "authflow() by AP")
             ret = True
     # 正好返回auth.reauthorize()的bool
