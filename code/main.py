@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合
 from riot_auth import RiotAuth, auth_exceptions
 
 from endpoints.Help import help_main, help_val, help_develop
-from endpoints.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler
+from endpoints.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
 from endpoints.Other import weather
 from endpoints.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                                get_card)
@@ -82,7 +82,7 @@ async def KillBot(msg: Message, *arg):
     if msg.author_id == master_id:
         # 保存所有文件
         await Save_All_File(False)
-        await msg.reply(f"[KILL] 保存全局变量成功")
+        await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
         res = await bot_offline()  # 调用接口下线bot
         print(f"[KILL] [{GetTime()}] bot-off: {res}\n")
         os._exit(0)  # 退出程序
@@ -2254,6 +2254,17 @@ async def bot_log_list(msg: Message, *arg):
         await msg.reply(f"{err_str}")
         print(err_str)
 
+@bot.command(name='mem')
+async def proc_check(msg:Message,*arg):
+    logging(msg)
+    try:
+        if msg.author_id == master_id:
+            cm = await get_proc_info()
+            await msg.reply(cm)
+    except:
+        err_str = f"ERR! [{GetTime()}] mem\n```\n{traceback.format_exc()}\n```"
+        await msg.reply(f"{err_str}")
+        print(err_str)
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.task.add_date()
