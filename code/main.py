@@ -25,15 +25,15 @@ from endpoints.Other import weather
 from endpoints.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                                get_card)
 from endpoints.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
-from endpoints.Val import *
-from endpoints.auth.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
+from endpoints.valorant.Val import *
+from endpoints.valorant.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
 from endpoints.Gtime import GetTime, GetTimeStampOf8AM
 from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
 from endpoints.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
 from endpoints.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
 from endpoints.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
-from endpoints.ValFileUpd import update_bundle_url, update_price, update_skins
+from endpoints.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
 # bot的token文件
 from endpoints.FileManage import config, Save_All_File

@@ -13,7 +13,7 @@ from collections import OrderedDict
 from re import compile
 
 from riot_auth import RiotAuth
-from endpoints.auth import EzAuthExp
+from endpoints.valorant import EzAuthExp
 
 RiotClient = "RiotClient/62.0.1.4852117.4789131"
 User2faCode = {}

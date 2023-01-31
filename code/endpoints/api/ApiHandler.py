@@ -2,11 +2,11 @@ import json
 import time
 import threading
 import traceback
-from endpoints.auth.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
-from endpoints.ApiToken import token_ck, ApiTokenDict, save_token_files
+from endpoints.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
+from endpoints.api.ApiToken import token_ck, ApiTokenDict, save_token_files
 from endpoints.Gtime import GetTime
 from endpoints.KookApi import kook_create_asset
-from endpoints.Val import fetch_daily_shop, fetch_vp_rp_dict
+from endpoints.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from endpoints.ShopImg import get_shop_img_11, get_shop_img_169
 
 TOKEN_RATE_LIMITED = 10

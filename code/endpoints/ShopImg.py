@@ -9,7 +9,7 @@ import aiohttp
 import requests
 import zhconv
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
-from endpoints.Val import *
+from endpoints.valorant.Val import *
 from endpoints.Gtime import *
 
 font_color = '#ffffff'  # 文字颜色：白色
