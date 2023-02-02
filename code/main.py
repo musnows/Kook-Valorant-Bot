@@ -2205,20 +2205,25 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
 @bot.command(name='update_spb', aliases=['update', 'upd'])
 async def update_skin_price_bundle(msg: Message):
     logging(msg)
-    if msg.author_id == master_id:
-        if await update_skins(msg):
-            await msg.reply(f"成功更新：商店皮肤")
-        if await update_bundle_url(msg, bot_upimg):
-            await msg.reply(f"成功更新：捆绑包")
-        # 获取物品价格需要登录
-        auth = UserAuthDict[msg.author_id]['auth']
-        userdict = {
-            'auth_user_id': auth.user_id,
-            'access_token': auth.access_token,
-            'entitlements_token': auth.entitlements_token
-        }
-        if await update_price(msg, userdict):
-            await msg.reply(f"成功更新：物品价格")
+    try:
+        if msg.author_id == master_id:
+            if await update_skins(msg):
+                await msg.reply(f"成功更新：商店皮肤")
+            if await update_bundle_url(msg, bot_upimg):
+                await msg.reply(f"成功更新：捆绑包")
+            # 获取物品价格需要登录
+            auth = UserAuthDict[msg.author_id]['auth']
+            userdict = {
+                'auth_user_id': auth.user_id,
+                'access_token': auth.access_token,
+                'entitlements_token': auth.entitlements_token
+            }
+            if await update_price(msg, userdict):
+                await msg.reply(f"成功更新：物品价格")
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] update_spb\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
 
 #######################################################################################################
 #######################################################################################################
