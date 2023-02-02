@@ -1636,7 +1636,7 @@ async def rate_skin_add(msg: Message, *arg):
     try:
         name = " ".join(arg)
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist = fetch_skin_byname_list(name)
+        sklist = fetch_skin_list_byname(name)
         if sklist == []:  #空list代表这个皮肤不在里面
             await msg.reply(f"该皮肤不在列表中，请重新查询！")
             return
@@ -1874,7 +1874,7 @@ async def add_skin_notify(msg: Message, *arg):
 
         name = " ".join(arg)
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist = fetch_skin_byname_list(name)
+        sklist = fetch_skin_list_byname(name)
         if sklist == []:  #空list代表这个皮肤不在里面
             await msg.reply(f"该皮肤不在列表中，请重新查询！")
             return
