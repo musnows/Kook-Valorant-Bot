@@ -6,7 +6,7 @@ from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
 from endpoints.FileManage import GameIdDict, ValErrDict, ValBundleList, ValItersList, ValPriceList, ValSkinList
-
+SKIN_ICON_ERR = "https://img.kookapp.cn/assets/2023-02/ekwdy7PiQC0e803m.png"
 
 ####################################保存用户的游戏ID操作#######################################
 
@@ -88,11 +88,20 @@ def fetch_skin_bylist(item_id):
     for item in ValSkinList['data']:  #遍历查找指定uuid
         if item_id == item['levels'][0]['uuid']:
             res['data'] = item  #所以要手动创建一个带data的dict作为返回值
+            # 可能出现图标为空的情况（异星霸主 斗牛犬）
+            while(res['data']['displayIcon']==None): 
+                for level in item['levels']: # 在等级里面找皮肤图标
+                    if level["displayIcon"] != None:
+                        res['data']['displayIcon'] = level["displayIcon"]
+                        break # 找到了，退出循环
+                # 没找到，替换成err图片
+                res['data']['displayIcon'] = SKIN_ICON_ERR
+            
             return res
 
 
 #从list中，通过皮肤名字获取皮肤列表
-def fetch_skin_byname_list(name):
+def fetch_skin_list_byname(name):
     wplist = list()  #包含该名字的皮肤list
     for skin in ValSkinList['data']:
         if name in skin['displayName']:

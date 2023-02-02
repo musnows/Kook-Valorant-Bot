@@ -267,12 +267,12 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
     res_iters = fetch_skin_iters_bylist(skinuuid)  # 在本地文件中查找皮肤等级
     # 画单个皮肤的图片
     if is_169:
-        img = sm_comp_169(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+        img = sm_comp_169(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
                           res_iters['data']['displayIcon'], skinuuid)
         global shop_img_temp_169  # 这里是把处理好的图片存到当前执行用户的临时库中
         shop_img_temp_169[ran].append(img)
     else:
-        img = sm_comp_11(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+        img = sm_comp_11(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
                          res_iters['data']['displayIcon'], skinuuid)
         global shop_img_temp_11  #这里是把处理好的图片存到本地
         shop_img_temp_11[ran].append(img)
