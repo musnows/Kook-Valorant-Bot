@@ -1,0 +1,60 @@
+{
+  "data": [
+    {
+      "assetPath": "ShooterGame/Content/ContentTiers/Deluxe_PrimaryAsset",
+      "devName": "Deluxe",
+      "displayIcon": "https://media.valorant-api.com/contenttiers/0cebb8be-46d7-c12a-d306-e9907bfc5a25/displayicon.png",
+      "displayName": "Deluxe Edition",
+      "highlightColor": "00958733",
+      "juiceCost": 60,
+      "juiceValue": 20,
+      "rank": 1,
+      "uuid": "0cebb8be-46d7-c12a-d306-e9907bfc5a25"
+    },
+    {
+      "assetPath": "ShooterGame/Content/ContentTiers/Exclusive_PrimaryAsset",
+      "devName": "Exclusive",
+      "displayIcon": "https://media.valorant-api.com/contenttiers/e046854e-406c-37f4-6607-19a9ba8426fc/displayicon.png",
+      "displayName": "Deluxe Edition",
+      "highlightColor": "f1b82d33",
+      "juiceCost": 140,
+      "juiceValue": 40,
+      "rank": 3,
+      "uuid": "e046854e-406c-37f4-6607-19a9ba8426fc"
+    },
+    {
+      "assetPath": "ShooterGame/Content/ContentTiers/Premium_PrimaryAsset",
+      "devName": "Premium",
+      "displayIcon": "https://media.valorant-api.com/contenttiers/60bca009-4182-7998-dee7-b8a2558dc369/displayicon.png",
+      "displayName": "Premium Edition",
+      "highlightColor": "d1548d33",
+      "juiceCost": 100,
+      "juiceValue": 30,
+      "rank": 2,
+      "uuid": "60bca009-4182-7998-dee7-b8a2558dc369"
+    },
+    {
+      "assetPath": "ShooterGame/Content/ContentTiers/Select_PrimaryAsset",
+      "devName": "Select",
+      "displayIcon": "https://media.valorant-api.com/contenttiers/12683d76-48d7-84a3-4e09-6985794f0445/displayicon.png",
+      "displayName": "Select Edition",
+      "highlightColor": "5a9fe233",
+      "juiceCost": 30,
+      "juiceValue": 10,
+      "rank": 0,
+      "uuid": "12683d76-48d7-84a3-4e09-6985794f0445"
+    },
+    {
+      "assetPath": "ShooterGame/Content/ContentTiers/Ultra_PrimaryAsset",
+      "devName": "Ultra",
+      "displayIcon": "https://media.valorant-api.com/contenttiers/411e4a55-4e59-7757-41f0-86a53f101bb5/displayicon.png",
+      "displayName": "Ultra Edition",
+      "highlightColor": "efeb6533",
+      "juiceCost": 160,
+      "juiceValue": 50,
+      "rank": 4,
+      "uuid": "411e4a55-4e59-7757-41f0-86a53f101bb5"
+    }
+  ],
+  "status": 200
+}

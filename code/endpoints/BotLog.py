@@ -1,5 +1,5 @@
 import json
-import time
+import copy
 import traceback
 from khl import Message, PrivateMessage, Bot
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
@@ -52,12 +52,12 @@ def logging(msg: Message):
         if isinstance(msg, PrivateMessage):
             log_bot_user(msg.author_id)  # 记录用户
             print(
-                f"[{now_time}] PrivateMessage - Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
+                f"[{now_time}] PrivateMessage - Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
         else:
             Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id, now_time)  # 记录服务器和用户
             print(
-                f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = {msg.content}"
+                f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
     except:
         err_str = f"ERR! [{GetTime()}] logging\n```\n{traceback.format_exc()}\n```"
@@ -104,9 +104,15 @@ async def log_bot_list(msg: Message):
         # 计算用户总数
         BotUserDict['user']['user_total'] = len(BotUserDict['user']['data'])
         # 遍历列表，获取服务器名称
-        for gu in BotUserDict['guild']['data']:
-            if 'name' not in BotUserDict['guild']['data'][gu]:
+        tempDict = copy.deepcopy(BotUserDict)
+        for gu in tempDict['guild']['data']:
+            if 'name' not in tempDict['guild']['data'][gu]:
                 Gret = await guild_view(gu)
+                if Gret['code'] !=0: # 没有正常返回，可能是服务器被删除
+                    del BotUserDict['guild']['data'][gu] # 删除键值
+                    print(f"[log_bot_list] G:{gu} guild-view {Gret}")
+                    continue
+                # 正常返回，赋值
                 BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
             else:
                 continue
@@ -141,7 +147,7 @@ async def log_bot_list_text(logDict: dict):
 
 # 出现kook api异常的通用处理
 async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, send_msg=None, cm: CardMessage = None):
-    err_str = f"ERR! [{GetTime()}] {def_name} APIRequestFailed\n{excp}"
+    err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
     print(err_str)
     text = f"啊哦，出现了一些问题"
     text_sub = 'e'
@@ -155,9 +161,10 @@ async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, 
         print(f"[APIRequestFailed.Handler] Au:{msg.author_id} 引用不存在, cm_send success!")
         return
     elif "json没有通过验证" in excp:
-        print(f"ERR! Au:{msg.author_id} json.dumps(cm) = {json.dumps(cm)}")
+        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} json.dumps = {json.dumps(cm)}")
         text_sub = f"卡片消息json没有通过验证或者不存在"
     elif "屏蔽" in excp:
+        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} json.dumps = {json.dumps(cm)}")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
     cm0 = await get_card(text, text_sub, icon_cm.lagging)
@@ -175,7 +182,7 @@ async def BaseException_Handler(def_name: str,
                                 send_msg=None,
                                 cm: CardMessage = None,
                                 help="您可能需要重新执行/login操作"):
-    err_str = f"ERR! [{GetTime()}] {def_name}\n```\n{excp}\n```"
+    err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
     print(err_str)
     cm0 = CardMessage()
     c = Card(color='#fb4b57')
@@ -189,3 +196,24 @@ async def BaseException_Handler(def_name: str,
         await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
     else:
         await msg.reply(cm0)
+
+
+#############################################################################################
+
+import psutil,os
+# 获取进程信息
+async def get_proc_info():
+    p = psutil.Process(os.getpid())
+    text =f"霸占的CPU百分比：{p.cpu_percent()} %\n"
+    text+=f"占用的MEM百分比：{format(p.memory_percent(), '.3f')} %\n"
+    text+=f"吃下的物理内存：{format((p.memory_info().rss / 1024 / 1024), '.4f')} MB\n"
+    text+=f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
+    text+=f"IO信息：\n{p.io_counters()}"
+    cm = CardMessage()
+    c = Card(
+        Module.Header(f"来看看阿狸当前的负载吧！"),
+        Module.Context(f"记录于 {GetTime()}"),Module.Divider(),
+        Module.Section(Element.Text(text,Types.Text.KMD))
+    )
+    cm.append(c)
+    return cm

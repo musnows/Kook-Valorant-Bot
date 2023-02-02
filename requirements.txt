@@ -3,6 +3,7 @@ aiohttp==3.8.1
 khl.py==0.3.7
 pandas==1.5.2
 Pillow==9.4.0
+psutil==5.9.4
 requests==2.28.1
 riot-auth @ git+https://github.com/floxay/python-riot-auth.git@e70f76002728b99005baccd6fe3157c03d4d9f02
 zhconv==1.4.3

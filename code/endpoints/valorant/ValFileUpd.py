@@ -5,7 +5,7 @@ from khl import Message, Bot
 from PIL import Image
 from endpoints.Gtime import GetTime
 from endpoints.ShopImg import img_requestor
-from endpoints.Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValBundleList, ValSkinList, ValPriceList
+from endpoints.valorant.Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValBundleList, ValSkinList, ValPriceList
 
 
 # 更新本地保存的皮肤
@@ -69,9 +69,7 @@ async def update_price(msg: Message, userdict):
         global ValPriceList
         # 调用api获取价格列表
         prices = await fetch_item_price_all(userdict)
-        if "errorCode" in prices:  #键值不在，获取错误
-            print(f"ERR! [{GetTime()}] update_item_price:\n{prices}")
-            raise Exception("KeyError, fetch price failed!")
+        test = prices["Offers"] # 暴力判断是否有这个键值，没有则keyerr
         ValPriceList.value = prices  # 所有价格的列表
         # 写入文件
         ValPriceList.save()

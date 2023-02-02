@@ -9,7 +9,7 @@ import aiohttp
 import requests
 import zhconv
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
-from endpoints.Val import *
+from endpoints.valorant.Val import *
 from endpoints.Gtime import *
 
 font_color = '#ffffff'  # 文字颜色：白色
@@ -60,6 +60,8 @@ def bg_comp(bg, img, x, y):
 
 # 获取武器皮肤的图片
 def get_weapon_img(skinuuid: str, skin_icon: str):
+    if skin_icon == None: 
+        print(f"[get_weapon_img] {skinuuid} None-icon") # 出现None
     if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
         layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开本地皮肤图片
     else:
@@ -265,12 +267,12 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
     res_iters = fetch_skin_iters_bylist(skinuuid)  # 在本地文件中查找皮肤等级
     # 画单个皮肤的图片
     if is_169:
-        img = sm_comp_169(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+        img = sm_comp_169(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
                           res_iters['data']['displayIcon'], skinuuid)
         global shop_img_temp_169  # 这里是把处理好的图片存到当前执行用户的临时库中
         shop_img_temp_169[ran].append(img)
     else:
-        img = sm_comp_11(res_item["data"]['levels'][0]["displayIcon"], res_item["data"]["displayName"], price,
+        img = sm_comp_11(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
                          res_iters['data']['displayIcon'], skinuuid)
         global shop_img_temp_11  #这里是把处理好的图片存到本地
         shop_img_temp_11[ran].append(img)

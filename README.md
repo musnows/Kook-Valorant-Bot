@@ -111,7 +111,7 @@ fork本仓库，您可以将Api部署到您的本地进行测试，或直接套�
 
 Api请求返回示例图：
 
-<img src="./screenshot/val_api_img.png" height="300px" alt="api_shop_img">
+<img src="./screenshot/val_api_img2.png" height="300px" alt="api_shop_img">
 
 ----
 

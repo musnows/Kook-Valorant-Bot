@@ -2,7 +2,7 @@ import json
 import traceback
 from aiohttp import web
 from endpoints.Gtime import GetTime
-from endpoints.ApiHandler import tfa_code_requeset, afd_request, login_img_request, img_draw_request
+from endpoints.api.ApiHandler import tfa_code_requeset, afd_request, login_img_request, img_draw_request
 
 # 初始化节点
 routes = web.RouteTableDef()

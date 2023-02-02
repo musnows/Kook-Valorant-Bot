@@ -52,19 +52,18 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 
 结果示例图（16-9）
 
-<img src="https://img.kookapp.cn/assets/2023-01/2Vffq4s9rX1ry0zj.png" weight="400px" alt="16-9-img-result">
+<img src="../screenshot/val_api_img2.png" weight="400px" alt="16-9-img-result">
 
 结果示例图（1-1）
 
-<img src="https://img.kookapp.cn/attachments/2023-01/15/JR3hnXIab60rs0rs.png" weight="300px" hight ="300px" alt="1-1-img-result">
+<img src="../screenshot/val_api_img1.png" weight="300px" hight ="300px" alt="1-1-img-result">
 
 ## 2.注意事项
 
 自定义背景图的url请使用国内可以直接访问的图床，如`阿里云OSS/路过图床/白嫖kook的图床`等。否则无法获取到图片链接的内容，api会报错；
 
 > * 路过图床：https://imgse.com/
-> * 薄荷图床：https://riyugo.com/
-> * kook图床白嫖教程：https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png
+> * kook图床白嫖教程：[点我](https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png)
 
 欢迎大家向朋友宣传此Api，但请不要恶意连续多次调用
 
