@@ -41,16 +41,18 @@ def help_val():
         Module.Context(
             Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...", Types.Text.KMD)))
     text = "使用前，请确认您知晓相关功能可能有风险：\n"
-    text += "1.阿狸的后台不会做任何`打印/保存`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n"
+    text += "1.阿狸的后台不会做任何`打印`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n"
     text += "2.如果您发现登陆后阿狸还提醒您没有登录，那是因为阿狸的作者正在调试阿狸，重启后登录信息会消失。感谢谅解;\n"
-    text += "3.目前查询功能稳定性尚可，但无法排除`封号`风险;\n若担心相关风险，请不要使用如下功能\n"
+    text += "3.目前查询功能稳定性尚可，但无法排除`封号`风险;\n"
+    text += "4.指定save后，账户密码是存在全局变量(内存)中的，并不会存到硬盘里面。只要bot下线(进程退出)就会被清除;\n"
+    text += "若担心相关风险，请不要使用如下功能\n"
     c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
     c3.append(Module.Divider())
     help_1 = "「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
     help_1 += "「/login 账户 密码」请`私聊`使用，登录您的riot账户\n"
-    help_1 += "「/login 账户 密码 1」邮箱验证登录，请`私聊`使用\n"
+    help_1 += "「/login 账户 密码 save」登录并临时保存账户密码 [说明](https://img.kookapp.cn/assets/2023-02/iA5rabCKtT1210az.png)\n"
     help_1 += "「/shop」 查询您的每日商店\n"
-    help_1 += "「/night」查询您的夜市（未完工）\n"
+    help_1 += "「/night」查询您的夜市\n"
     help_1 += "「/uinfo」查询当前装备的卡面/称号/剩余vp和r点\n"
     help_1 += "「/notify-a 皮肤名」查询皮肤，并选择指定皮肤加入每日商店提醒\n"
     help_1 += "「/notify-l 」查看当前设置了提醒的皮肤\n"
@@ -97,7 +99,7 @@ def help_develop():
     text += f"[/open-nm] 打开/关闭夜市\n"
     text += f"[/ban-r 用户id] 禁止用户使用rate相关功能\n"
     text += f"[/notify-test] 执行遍历用户皮肤notify列表\n"
-    text += f"[/inform-user 频道 用户] 出现某些问题的时候通知人员（需要修改代码）\n"
-    text += f"[/lf] 实际上是Login_Forbidden的缩写，在login函数出错时屏蔽所有需要login的命令\n"
+    text += f"[/lf] 实际上是Login_Forbidden的缩写，在login函数403时屏蔽所有需要login的命令\n"
     text += f"[/log] 显示当前阿狸加入的服务器以及用户数量\n```"
+    text += f"[/mem] 显示当前阿狸进程的内存占用和cpu占用\n```"
     return text
