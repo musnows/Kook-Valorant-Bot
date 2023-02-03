@@ -87,13 +87,13 @@ https://val.outpost54.top/shop-url
 
 速率限制：`10r/m`
 
-| params参数 | 说明                  | 是否必填 |
-| ---------- | --------------------- | -------- |
-| token      | API token             | 是       |
-| account    | 拳头账户              | 是       |
-| passwd     | 拳头账户密码          | 是       |
-| img_src    | 自定义背景图的url链接 | 否       |
-| img_ratio    | 自定义背景图比例，值为1代表正方形 | 否       |
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| account    | 拳头账户              | string |是       |
+| passwd     | 拳头账户密码          | string|是       |
+| img_src    | 自定义背景图的url链接 | string | 否       |
+| img_ratio    | 自定义背景图比例，值为1代表正方形 | string |否       |
 
 返回示例
 
@@ -117,11 +117,11 @@ https://val.outpost54.top/tfa
 
 请求方法：`POST`
 
-| params参数 | 说明                  | 是否必填 |
-| ---------- | --------------------- | -------- |
-| token      | API token             | 是       |
-| account    | 拳头账户              | 是       |
-| vcode   | 邮箱验证码 | 是       |
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| account    | 拳头账户              |string  |是       |
+| vcode   | 邮箱验证码 |  string  | 是       |
 
 返回示例
 
@@ -136,18 +136,18 @@ https://val.outpost54.top/tfa
 
 ### 3.3 shop-draw
 
-这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户商店皮肤/vp/rp后，再调用，直接返回图片url
+这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户`商店皮肤/vp/rp`后，再调用此接口，直接返回图片url
 
 请求方法：`GET`
 
-| params参数 | 说明                  | 是否必填 |
-| ---------- | --------------------- | -------- |
-| token      | API token             | 是       |
-| list_shop    | 4个皮肤uuid组成的dict   | 是       |
-| vp   | vp | 否       |
-| rp   | rp  | 否       |
-| img_src    | 自定义背景图的url链接 | 否       |
-| img_ratio    | 自定义背景图比例，值为1代表正方形 | 否       |
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| list_shop    | 4个皮肤uuid      | list |是       |
+| vp   | vp | string | 否       |
+| rp   | rp  | string | 否       |
+| img_src    | 自定义背景图的url链接 | string |否       |
+| img_ratio    | 自定义背景图比例，值为1代表正方形 | string |否       |
 
 其中 `list_shop` 为riot商店返回值中的以下字段，传入 `["SkinsPanelLayout"]["SingleItemOffers"]` 即可
 
@@ -165,7 +165,7 @@ https://val.outpost54.top/tfa
 }
 ```
 
-vp/rp只有16-9的图片需要，如果设置了`img_ratio`为1，则无需给予vp/rp参数
+vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需给予vp/rp参数
 
 返回示例
 ~~~json
@@ -177,6 +177,8 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为1，则无需给�
 ~~~
 
 ## 4.Python示例代码
+
+示例代码1：shop-url
 
 ~~~python
 import requests
@@ -199,3 +201,28 @@ print(res.json())
 ~~~~
 
 
+示例代码2：shop-draw
+
+```python
+def ApiRq2(list_shop:list,background='',img_ratio='0'):
+    url = LocalUrl + "/shop-draw"
+    params = {
+        "token":"da4ec652-4a25-11ed-bff2-525400c9274f",
+        "list_shop": list_shop,
+        "img_src": background,
+        "img_ratio": img_ratio
+    }
+    res = requests.get(url,params=params) # 请求api
+    return res.json()
+
+# 参数
+shop = ["49cea67c-4552-13c2-6b4b-8ba07761504e","9d501eec-4084-5d44-32ef-6e8ed5b0ed49","6f2aefab-439d-140a-4dc6-87818e2d72cd","279e0a89-4dd6-b135-cef9-8ebb1df6f2ac"]
+img_url = "https://img.kookapp.cn/assets/2023-01/l7Q7WQIaE40xc0xc.jpg"
+res = ApiRq2(shop,img_url,'1')
+print(res)
+```
+结果
+
+```
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/03/pSMrv6vCkh0rs0rs.png'}
+```
