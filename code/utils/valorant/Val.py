@@ -7,6 +7,7 @@ from khl.card import Card, CardMessage, Element, Module, Types
 # 预加载文件
 from utils.FileManage import GameIdDict, ValErrDict, ValBundleList, ValItersList, ValPriceList, ValSkinList
 SKIN_ICON_ERR = "https://img.kookapp.cn/assets/2023-02/ekwdy7PiQC0e803m.png"
+X_RIOT_CLIENTVERSION = "release-06.01-shipping-8-820493" 
 
 ####################################保存用户的游戏ID操作#######################################
 
@@ -276,7 +277,7 @@ async def fetch_player_contract(u):
         "Authorization": "Bearer " + u['access_token'],
         "X-Riot-ClientPlatform":
         "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9",
-        "X-Riot-ClientVersion": "release-05.03-shipping-8-745499"
+        "X-Riot-ClientVersion": X_RIOT_CLIENTVERSION
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
