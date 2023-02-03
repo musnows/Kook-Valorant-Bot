@@ -95,9 +95,18 @@ async def img_draw_request(request):
             'info': '缺少参数！示例: /shop-draw?token=api凭证&list_shop=四个皮肤uuid的list&vp=vp（可选）&rp=rp（可选）&img_src=自定义背景图（可选）',
             'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         }
-
-    list_shop = params['list_shop']
+    
+    # params是multidict，传入的list_shop被拆分成了多个键值，需要合并
+    list_shop = list()
+    for key,value in params.items():
+        if key == 'list_shop':
+            list_shop.append(value)
+    # 判断传入的皮肤数量是不是4个
+    if len(list_shop) != 4:
+        return {'code':200,'message':'list_shop len err! should be 4','info':'list_shop长度错误，皮肤数量不为4'}
+    
     token = params['token']
+    print(list_shop)
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}
