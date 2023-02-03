@@ -5,7 +5,7 @@ from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
-from endpoints.FileManage import GameIdDict, ValErrDict, ValBundleList, ValItersList, ValPriceList, ValSkinList
+from utils.FileManage import GameIdDict, ValErrDict, ValBundleList, ValItersList, ValPriceList, ValSkinList
 SKIN_ICON_ERR = "https://img.kookapp.cn/assets/2023-02/ekwdy7PiQC0e803m.png"
 
 ####################################保存用户的游戏ID操作#######################################

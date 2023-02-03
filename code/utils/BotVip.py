@@ -7,10 +7,10 @@ from PIL import Image,UnidentifiedImageError
 from khl import Message, Bot, Channel
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
-from endpoints.KookApi import icon_cm,bot
-from endpoints.Gtime import GetTime
-from endpoints.FileManage import VipShopBgDict,config
-from endpoints.ShopImg import img_requestor
+from utils.KookApi import icon_cm,bot
+from utils.Gtime import GetTime
+from utils.FileManage import VipShopBgDict,config
+from utils.ShopImg import img_requestor
 
 
 #下图用于替换违规的vip图片
@@ -26,7 +26,7 @@ def get_uuid():
 ################################################################################
 
 # 成功兑换vip的用户+vip的uuid
-from endpoints.FileManage import VipUserDict, VipUuidDict
+from utils.FileManage import VipUserDict, VipUuidDict
 
 
 # 计算时间戳，用于给用户设置vip时间

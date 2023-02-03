@@ -3,11 +3,11 @@ import time
 import aiohttp
 from khl import Bot, Message, PublicMessage, Event
 from khl.card import Card, CardMessage, Element, Module, Types
-from endpoints.Gtime import GetTime
+from utils.Gtime import GetTime
 
 # 预加载文件
-from endpoints.FileManage import SponsorDict, ColorIdDict, EmojiDict
-from endpoints.KookApi import kook_headers
+from utils.FileManage import SponsorDict, ColorIdDict, EmojiDict
+from utils.KookApi import kook_headers
 
 
 # 用于记录使用表情回应获取ID颜色的用户

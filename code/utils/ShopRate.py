@@ -3,7 +3,7 @@ import random
 from khl.card import Card, CardMessage, Module, Element, Types
 
 # 皮肤的评价
-from endpoints.FileManage import SkinRateDict
+from utils.FileManage import SkinRateDict
 
 
 async def get_shop_rate_cm(list_shop: dict, kook_user_id: str, cm: CardMessage):

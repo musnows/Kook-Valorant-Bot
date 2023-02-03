@@ -2,16 +2,16 @@ import json
 import time
 import threading
 import traceback
-from endpoints.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
-from endpoints.api.ApiToken import token_ck, ApiTokenDict, save_token_files
-from endpoints.Gtime import GetTime
-from endpoints.KookApi import kook_create_asset
-from endpoints.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
-from endpoints.ShopImg import get_shop_img_11, get_shop_img_169
+from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
+from utils.api.ApiToken import token_ck, ApiTokenDict, save_token_files
+from utils.Gtime import GetTime
+from utils.KookApi import kook_create_asset
+from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
+from utils.ShopImg import get_shop_img_11, get_shop_img_169
 
 TOKEN_RATE_LIMITED = 10
 # bot的token文件
-from endpoints.FileManage import config
+from utils.FileManage import config
 # 用来给kook上传文件的bot token
 api_bot_token = config['api_bot_token']
 Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
@@ -194,7 +194,7 @@ async def tfa_code_requeset(request):
     }
 
 
-from endpoints.FileManage import AfdWebhook
+from utils.FileManage import AfdWebhook
 from khl.card import CardMessage, Card, Module, Types, Element
 
 

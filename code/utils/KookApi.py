@@ -4,7 +4,7 @@ import io
 from khl import Bot, ChannelPrivacyTypes
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from endpoints.FileManage import config
+from utils.FileManage import config
 # 下方更新卡片消息需要bot
 bot = Bot(token=config['token'])
 # kook的base_url和headers

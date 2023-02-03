@@ -1,7 +1,7 @@
 import json
 import aiofiles
 import traceback
-from endpoints.Gtime import GetTime
+from utils.Gtime import GetTime
 
 FileList = []
 

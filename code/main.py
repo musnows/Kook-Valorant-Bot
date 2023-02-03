@@ -12,31 +12,31 @@ import copy
 import zhconv
 import asyncio
 import threading
-from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage, PublicChannel, PublicMessage, requester)
+from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 from aiohttp import client_exceptions
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合成图片
+from PIL import Image,  UnidentifiedImageError  # 用于合成图片
 from riot_auth import RiotAuth, auth_exceptions
 
-from endpoints.Help import help_main, help_val, help_develop
-from endpoints.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
-from endpoints.Other import weather
-from endpoints.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
+from utils.Help import help_main, help_val, help_develop
+from utils.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
+from utils.Other import weather
+from utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                                get_card)
-from endpoints.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
-from endpoints.valorant.Val import *
-from endpoints.valorant.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
-from endpoints.Gtime import GetTime, GetTimeStampOf8AM
-from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
+from utils.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
+from utils.valorant.Val import *
+from utils.valorant.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
+from utils.Gtime import GetTime, GetTimeStampOf8AM
+from utils.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
-from endpoints.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
-from endpoints.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
-from endpoints.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
-from endpoints.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
+from utils.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
+from utils.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
+from utils.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
+from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
 # bot的token文件
-from endpoints.FileManage import config, Save_All_File
+from utils.FileManage import config, Save_All_File
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
 # 只用来上传图片的bot
@@ -425,7 +425,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from endpoints.FileManage import VipShopBgDict,VipRollDcit,UserApLog
+from utils.FileManage import VipShopBgDict,VipRollDcit,UserApLog
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -862,7 +862,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from endpoints.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
+from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}

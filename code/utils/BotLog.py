@@ -3,14 +3,14 @@ import copy
 import traceback
 from khl import Message, PrivateMessage, Bot
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
-from endpoints.KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
+from utils.KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
 from PIL import Image, ImageDraw, ImageFont
 from copy import deepcopy
 
-from endpoints.Gtime import GetTime
+from utils.Gtime import GetTime
 
 # 用户数量的记录文件
-from endpoints.FileManage import BotUserDict
+from utils.FileManage import BotUserDict
 
 
 # 记录私聊的用户信息
