@@ -1493,13 +1493,19 @@ async def get_user_card(msg: Message, *arg):
                     }
                 }
                 print(f"ERR![player_title] Au:{msg.author_id} uuid:{resp['Identity']['PlayerTitleID']}")
-
-            if resp['Guns'] == None or resp['Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
+            # 可能遇到全新账户（没打过游戏）的情况
+            if resp['Guns'] == None or resp['Sprays'] == None:  
                 cm = await get_card(f"状态错误！您是否登录了一个全新的账户？", f"card: `{player_card}`\ntitle: `{player_title}`",
                                     icon_cm.whats_that)
                 await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
                 return
 
+            # 获取玩家等级
+            resp = await fetch_player_level(userdict)
+            player_level = resp["Progress"]["Level"]     # 玩家等级
+            player_level_xp = resp["Progress"]["XP"]     # 玩家等级经验值
+            last_fwin = resp["LastTimeGrantedFirstWin"]  # 上次首胜时间
+            next_fwin = resp["NextTimeFirstWinAvailable"]# 下次首胜重置 
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(
@@ -1507,6 +1513,9 @@ async def get_user_card(msg: Message, *arg):
                     f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
             text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
+            text+= f"玩家等级：{player_level}  经验值：{player_level_xp}\n"
+            text+= f"上次首胜：{last_fwin}\n"
+            text+= f"首胜重置：{next_fwin}"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
             #获取玩家的vp和r点剩余的text

@@ -285,6 +285,19 @@ async def fetch_player_contract(u):
 
     return res
 
+# 获取玩家的等级信息
+async def  fetch_player_level(u):
+    url = "https://pd.ap.a.pvp.net/account-xp/v1/players/"+ u['auth_user_id']
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": u['entitlements_token'],
+        "Authorization": "Bearer " + u['access_token'],
+    }
+    async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                res = json.loads(await response.text())
+
+    return res
 
 # 获取玩家当前通行证情况，uuid
 async def fetch_contract_uuid(id):
