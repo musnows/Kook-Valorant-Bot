@@ -1513,7 +1513,7 @@ async def get_user_card(msg: Message, *arg):
                     f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
             text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
-            text+= f"玩家等级：{player_level}  经验值：{player_level_xp}\n"
+            text+= f"玩家等级：{player_level}  -  经验值：{player_level_xp}\n"
             text+= f"上次首胜：{last_fwin}\n"
             text+= f"首胜重置：{next_fwin}"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
