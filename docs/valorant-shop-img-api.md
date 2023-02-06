@@ -178,7 +178,7 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需�
 
 ## 4.Python示例代码
 
-示例代码1：shop-url
+### 示例代码1：shop-url
 
 ~~~python
 import requests
@@ -200,8 +200,19 @@ print(res.json())
 {'code': 0, 'message': 'https://img.kookapp.cn/attachments/2023-01/15/mLjpR95mZ20rs0rs.png', 'info': '商店图片获取成功'}
 ~~~~
 
+本地循环请求测试，非2fa用户相应时间约为`10-12s`
 
-示例代码2：shop-draw
+```
+[start test]
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/6jt8l2pkxL0rs0rs.png'}
+12  time:  11.670713091999914
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/6jt8l2pkxL0rs0rs.png'}
+11  time:  10.637970628999938
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/6jt8l2pkxL0rs0rs.png'}
+10  time:  11.477466089000018
+```
+
+### 示例代码2：shop-draw
 
 ```python
 def ApiRq2(list_shop:list,background='',img_ratio='0'):
@@ -225,4 +236,21 @@ print(res)
 
 ```
 {'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/03/pSMrv6vCkh0rs0rs.png'}
+```
+
+本地循环请求测试，用时约为4-5s，相对来说较友好
+```
+[start test]
+time:  4.115649149000092
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  4.091482147000079
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.8343799629999467
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.845521912999857
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.9116134020000572
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.822338727999977
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
 ```
