@@ -1,6 +1,6 @@
 ## 欢迎您使用阿狸瓦洛兰特商店Api
 
-Api链接为`val.outpost54.top`。只有这一个网址！
+Api链接为`val.musnow.top`。只有这一个网址！
 
 Api是一个网页链接，能够方便的被用户使用或被开发者调用，以实现特定功能
 
@@ -24,7 +24,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户
 
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码
 ~~~
 
 直接丢浏览器里面打开就行，想看商店直接用这个链接看就行辣，可以浏览器收藏一下哦！
@@ -36,18 +36,18 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 
 若要添加自定义背景图，则链接应该如下
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
 ~~~
 
 如果背景图是1-1的正方形
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
 ~~~
 
 自定义背景图请求示例（16-9）
 
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
 ~~~
 
 结果示例图（16-9）
@@ -80,7 +80,7 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 如果你是开发者，请使用`/shop-url`来获取`json`格式的结果
 
 ~~~
-https://val.outpost54.top/shop-url
+https://val.musnow.top/shop-url
 ~~~
 
 请求方法：`GET`
@@ -112,7 +112,7 @@ https://val.outpost54.top/shop-url
 您需要先请求 `/shop-url` 接口，在用户获取到验证码后，再请求本接口
 
 ~~~
-https://val.outpost54.top/tfa
+https://val.musnow.top/tfa
 ~~~
 
 请求方法：`POST`
@@ -183,7 +183,7 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需�
 ~~~python
 import requests
 
-url = "https://val.outpost54.top/shop-url"
+url = "https://val.musnow.top/shop-url"
 params = {
     "token":"api-token",
     "account": "拳头账户",
