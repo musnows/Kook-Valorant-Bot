@@ -2331,8 +2331,8 @@ async def loading_channel_cookie():
     print("[BOT.TASK] loading cookie finished")
 
 
-# 开机的时候打印一次时间，记录重启时间
-print(f"[BOT] Start at: [%s]" % start_time)
 # 开机 （如果是主文件就开机）
 if __name__ == '__main__':
+    # 开机的时候打印一次时间，记录开启时间
+    print(f"[BOT] Start at: [%s]" % start_time)
     bot.run()

@@ -146,11 +146,11 @@ async def aifadian_webhook(request):
                             content_type='application/json')
 
 
-print(f"[API Start] starting at {GetTime()}")
 app = web.Application()
 app.add_routes(routes)
 if __name__ == '__main__':
-    try:
-        web.run_app(app, host='127.0.0.1', port=14726)
+    try: # host需要设置成0.0.0.0，否则只有本地才能访问
+        print(f"[API Start] starting at {GetTime()}")
+        web.run_app(app, host='0.0.0.0', port=14726)
     except:
         print(traceback.format_exc())
