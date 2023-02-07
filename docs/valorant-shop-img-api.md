@@ -216,9 +216,9 @@ print(res.json())
 
 ```python
 def ApiRq2(list_shop:list,background='',img_ratio='0'):
-    url = LocalUrl + "/shop-draw"
+    url = "https://val.musnow.top/shop-draw"
     params = {
-        "token":"da4ec652-4a25-11ed-bff2-525400c9274f",
+        "token":"api-token",
         "list_shop": list_shop,
         "img_src": background,
         "img_ratio": img_ratio
