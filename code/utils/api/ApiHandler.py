@@ -50,7 +50,7 @@ async def check_token_rate(token: str):
 # 基本画图操作
 async def base_img_request(params, list_shop, vp1='0', rp1='0'):
     # 自定义背景
-    if 'img_src' in params and 'https' in 'img_src':
+    if 'img_src' in params and 'http' in params['img_src']:
         img_src = params['img_src']
     else:
         img_src = img_bak_169  # 默认背景16-9
