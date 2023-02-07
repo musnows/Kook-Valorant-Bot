@@ -118,7 +118,9 @@
 <!-- link点击前 alink点击时 vlink点击后 的颜色-->
 
 <body link="#98F5FF" alink="#8EE5EE" vlink="#76EEC6">
-    <label id="currenttime" style="color: #a5f6ff; "></label>
+    <div id="time-text">
+        <label id="currenttime" style="color: #a5f6ff; "></label>
+    </div>
     <div id="api-docs">
         <font color="#f9dceb">
             <h3>瓦洛兰特商店查询 by 慕雪</h3>
@@ -149,8 +151,8 @@
         <form style="color:#e4e4e4fa;border:2px">
             <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
             <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
-            <label> 自定义背景图url（可选参数）</label><input type="text" value="" id="img_url" /><br>
-            <label> 自定义背景图的比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
+            <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a href="https://img.musnow.top/"> 图片url获取</a><br>
+            <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
         </form>
         <button type="button" onclick="SendXMLHttpRequest()">填好信息了，走你！</button>
         <p id="result" style="color:#f6eb8bfa"></p>
