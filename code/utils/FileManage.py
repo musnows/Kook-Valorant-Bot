@@ -1,7 +1,7 @@
 import json
 import aiofiles
 import traceback
-from endpoints.Gtime import GetTime
+from utils.Gtime import GetTime
 
 FileList = []
 
@@ -151,3 +151,5 @@ VipUserDict = VipUser['data'] # vip 用户
 VipRollDcit = VipUser['roll'] # vip 抽奖信息 
 
 AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求
+
+print(f"[FileManage] load all files") # 走到这里代表所有文件都打开了

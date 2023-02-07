@@ -2,16 +2,16 @@ import json
 import time
 import threading
 import traceback
-from endpoints.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
-from endpoints.api.ApiToken import token_ck, ApiTokenDict, save_token_files
-from endpoints.Gtime import GetTime
-from endpoints.KookApi import kook_create_asset
-from endpoints.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
-from endpoints.ShopImg import get_shop_img_11, get_shop_img_169
+from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
+from utils.api.ApiToken import token_ck, ApiTokenDict, save_token_files
+from utils.Gtime import GetTime
+from utils.KookApi import kook_create_asset
+from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
+from utils.ShopImg import get_shop_img_11, get_shop_img_169
 
 TOKEN_RATE_LIMITED = 10
 # bot的token文件
-from endpoints.FileManage import config
+from utils.FileManage import config
 # 用来给kook上传文件的bot token
 api_bot_token = config['api_bot_token']
 Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
@@ -50,7 +50,7 @@ async def check_token_rate(token: str):
 # 基本画图操作
 async def base_img_request(params, list_shop, vp1='0', rp1='0'):
     # 自定义背景
-    if 'img_src' in params:
+    if 'img_src' in params and 'https' in 'img_src':
         img_src = params['img_src']
     else:
         img_src = img_bak_169  # 默认背景16-9
@@ -95,9 +95,18 @@ async def img_draw_request(request):
             'info': '缺少参数！示例: /shop-draw?token=api凭证&list_shop=四个皮肤uuid的list&vp=vp（可选）&rp=rp（可选）&img_src=自定义背景图（可选）',
             'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         }
-
-    list_shop = params['list_shop']
+    
+    # params是multidict，传入的list_shop被拆分成了多个键值，需要合并
+    list_shop = list()
+    for key,value in params.items():
+        if key == 'list_shop':
+            list_shop.append(value)
+    # 判断传入的皮肤数量是不是4个
+    if len(list_shop) != 4:
+        return {'code':200,'message':'list_shop len err! should be 4','info':'list_shop长度错误，皮肤数量不为4'}
+    
     token = params['token']
+    print(list_shop)
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}
@@ -194,7 +203,7 @@ async def tfa_code_requeset(request):
     }
 
 
-from endpoints.FileManage import AfdWebhook
+from utils.FileManage import AfdWebhook
 from khl.card import CardMessage, Card, Module, Types, Element
 
 

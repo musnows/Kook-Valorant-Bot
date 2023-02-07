@@ -12,31 +12,31 @@ import copy
 import zhconv
 import asyncio
 import threading
-from khl import (Bot, Client, Event, EventTypes, Message, PrivateMessage, PublicChannel, PublicMessage, requester)
+from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 from aiohttp import client_exceptions
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError  # 用于合成图片
+from PIL import Image,  UnidentifiedImageError  # 用于合成图片
 from riot_auth import RiotAuth, auth_exceptions
 
-from endpoints.Help import help_main, help_val, help_develop
-from endpoints.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
-from endpoints.Other import weather
-from endpoints.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
+from utils.Help import help_main, help_val, help_develop
+from utils.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
+from utils.Other import weather
+from utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                                get_card)
-from endpoints.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
-from endpoints.valorant.Val import *
-from endpoints.valorant.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
-from endpoints.Gtime import GetTime, GetTimeStampOf8AM
-from endpoints.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
+from utils.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
+from utils.valorant.Val import *
+from utils.valorant.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
+from utils.Gtime import GetTime, GetTimeStampOf8AM
+from utils.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
-from endpoints.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
-from endpoints.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
-from endpoints.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
-from endpoints.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
+from utils.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
+from utils.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
+from utils.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
+from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
 # bot的token文件
-from endpoints.FileManage import config, Save_All_File
+from utils.FileManage import config, Save_All_File
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token'])
 # 只用来上传图片的bot
@@ -425,7 +425,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from endpoints.FileManage import VipShopBgDict,VipRollDcit,UserApLog
+from utils.FileManage import VipShopBgDict,VipRollDcit,UserApLog
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -862,7 +862,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from endpoints.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
+from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}
@@ -1493,13 +1493,19 @@ async def get_user_card(msg: Message, *arg):
                     }
                 }
                 print(f"ERR![player_title] Au:{msg.author_id} uuid:{resp['Identity']['PlayerTitleID']}")
-
-            if resp['Guns'] == None or resp['Sprays'] == None:  #可能遇到全新账户（没打过游戏）的情况
+            # 可能遇到全新账户（没打过游戏）的情况
+            if resp['Guns'] == None or resp['Sprays'] == None:  
                 cm = await get_card(f"状态错误！您是否登录了一个全新的账户？", f"card: `{player_card}`\ntitle: `{player_title}`",
                                     icon_cm.whats_that)
                 await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
                 return
 
+            # 获取玩家等级
+            resp = await fetch_player_level(userdict)
+            player_level = resp["Progress"]["Level"]     # 玩家等级
+            player_level_xp = resp["Progress"]["XP"]     # 玩家等级经验值
+            last_fwin = resp["LastTimeGrantedFirstWin"]  # 上次首胜时间
+            next_fwin = resp["NextTimeFirstWinAvailable"]# 下次首胜重置 
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(
@@ -1507,6 +1513,9 @@ async def get_user_card(msg: Message, *arg):
                     f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
             text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
+            text+= f"玩家等级：{player_level}  -  经验值：{player_level_xp}\n"
+            text+= f"上次首胜：{last_fwin}\n"
+            text+= f"首胜重置：{next_fwin}"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
             #获取玩家的vp和r点剩余的text
@@ -2205,20 +2214,25 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
 @bot.command(name='update_spb', aliases=['update', 'upd'])
 async def update_skin_price_bundle(msg: Message):
     logging(msg)
-    if msg.author_id == master_id:
-        if await update_skins(msg):
-            await msg.reply(f"成功更新：商店皮肤")
-        if await update_bundle_url(msg, bot_upimg):
-            await msg.reply(f"成功更新：捆绑包")
-        # 获取物品价格需要登录
-        auth = UserAuthDict[msg.author_id]['auth']
-        userdict = {
-            'auth_user_id': auth.user_id,
-            'access_token': auth.access_token,
-            'entitlements_token': auth.entitlements_token
-        }
-        if await update_price(msg, userdict):
-            await msg.reply(f"成功更新：物品价格")
+    try:
+        if msg.author_id == master_id:
+            if await update_skins(msg):
+                await msg.reply(f"成功更新：商店皮肤")
+            if await update_bundle_url(msg, bot_upimg):
+                await msg.reply(f"成功更新：捆绑包")
+            # 获取物品价格需要登录
+            auth = UserAuthDict[msg.author_id]['auth']
+            userdict = {
+                'auth_user_id': auth.user_id,
+                'access_token': auth.access_token,
+                'entitlements_token': auth.entitlements_token
+            }
+            if await update_price(msg, userdict):
+                await msg.reply(f"成功更新：物品价格")
+    except Exception as result:
+        err_str = f"ERR! [{GetTime()}] update_spb\n```\n{traceback.format_exc()}\n```"
+        print(err_str)
+        await msg.reply(err_str)
 
 #######################################################################################################
 #######################################################################################################
@@ -2317,8 +2331,8 @@ async def loading_channel_cookie():
     print("[BOT.TASK] loading cookie finished")
 
 
-# 开机的时候打印一次时间，记录重启时间
-print(f"[BOT] Start at: [%s]" % start_time)
 # 开机 （如果是主文件就开机）
 if __name__ == '__main__':
+    # 开机的时候打印一次时间，记录开启时间
+    print(f"[BOT] Start at: [%s]" % start_time)
     bot.run()

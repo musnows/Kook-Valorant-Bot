@@ -3,9 +3,9 @@ import json
 import io
 from khl import Message, Bot
 from PIL import Image
-from endpoints.Gtime import GetTime
-from endpoints.ShopImg import img_requestor
-from endpoints.valorant.Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValBundleList, ValSkinList, ValPriceList
+from utils.Gtime import GetTime
+from utils.ShopImg import img_requestor
+from utils.valorant.Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValBundleList, ValSkinList, ValPriceList
 
 
 # 更新本地保存的皮肤

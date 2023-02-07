@@ -1,6 +1,6 @@
 ## 欢迎您使用阿狸瓦洛兰特商店Api
 
-Api链接为`val.outpost54.top`。只有这一个网址！
+Api链接为`val.musnow.top`。只有这一个网址！
 
 Api是一个网页链接，能够方便的被用户使用或被开发者调用，以实现特定功能
 
@@ -24,7 +24,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户
 
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码
 ~~~
 
 直接丢浏览器里面打开就行，想看商店直接用这个链接看就行辣，可以浏览器收藏一下哦！
@@ -36,18 +36,18 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 
 若要添加自定义背景图，则链接应该如下
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
 ~~~
 
 如果背景图是1-1的正方形
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
 ~~~
 
 自定义背景图请求示例（16-9）
 
 ~~~
-https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
+https://val.musnow.top/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
 ~~~
 
 结果示例图（16-9）
@@ -80,20 +80,20 @@ https://val.outpost54.top/shop-img?token=API的密钥&account=账户&passwd=密�
 如果你是开发者，请使用`/shop-url`来获取`json`格式的结果
 
 ~~~
-https://val.outpost54.top/shop-url
+https://val.musnow.top/shop-url
 ~~~
 
 请求方法：`GET`
 
 速率限制：`10r/m`
 
-| params参数 | 说明                  | 是否必填 |
-| ---------- | --------------------- | -------- |
-| token      | API token             | 是       |
-| account    | 拳头账户              | 是       |
-| passwd     | 拳头账户密码          | 是       |
-| img_src    | 自定义背景图的url链接 | 否       |
-| img_ratio    | 自定义背景图比例，值为1代表正方形 | 否       |
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| account    | 拳头账户              | string |是       |
+| passwd     | 拳头账户密码          | string|是       |
+| img_src    | 自定义背景图的url链接 | string | 否       |
+| img_ratio    | 自定义背景图比例，值为1代表正方形 | string |否       |
 
 返回示例
 
@@ -112,16 +112,16 @@ https://val.outpost54.top/shop-url
 您需要先请求 `/shop-url` 接口，在用户获取到验证码后，再请求本接口
 
 ~~~
-https://val.outpost54.top/tfa
+https://val.musnow.top/tfa
 ~~~
 
 请求方法：`POST`
 
-| params参数 | 说明                  | 是否必填 |
-| ---------- | --------------------- | -------- |
-| token      | API token             | 是       |
-| account    | 拳头账户              | 是       |
-| vcode   | 邮箱验证码 | 是       |
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| account    | 拳头账户              |string  |是       |
+| vcode   | 邮箱验证码 |  string  | 是       |
 
 返回示例
 
@@ -136,18 +136,18 @@ https://val.outpost54.top/tfa
 
 ### 3.3 shop-draw
 
-这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户商店皮肤/vp/rp后，再调用，直接返回图片url
+这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户`商店皮肤/vp/rp`后，再调用此接口，直接返回图片url
 
 请求方法：`GET`
 
-| params参数 | 说明                  | 是否必填 |
-| ---------- | --------------------- | -------- |
-| token      | API token             | 是       |
-| list_shop    | 4个皮肤uuid组成的dict   | 是       |
-| vp   | vp | 否       |
-| rp   | rp  | 否       |
-| img_src    | 自定义背景图的url链接 | 否       |
-| img_ratio    | 自定义背景图比例，值为1代表正方形 | 否       |
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| list_shop    | 4个皮肤uuid      | list |是       |
+| vp   | vp | string | 否       |
+| rp   | rp  | string | 否       |
+| img_src    | 自定义背景图的url链接 | string |否       |
+| img_ratio    | 自定义背景图比例，值为1代表正方形 | string |否       |
 
 其中 `list_shop` 为riot商店返回值中的以下字段，传入 `["SkinsPanelLayout"]["SingleItemOffers"]` 即可
 
@@ -165,7 +165,7 @@ https://val.outpost54.top/tfa
 }
 ```
 
-vp/rp只有16-9的图片需要，如果设置了`img_ratio`为1，则无需给予vp/rp参数
+vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需给予vp/rp参数
 
 返回示例
 ~~~json
@@ -178,10 +178,12 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为1，则无需给�
 
 ## 4.Python示例代码
 
+### 示例代码1：shop-url
+
 ~~~python
 import requests
 
-url = "https://val.outpost54.top/shop-url"
+url = "https://val.musnow.top/shop-url"
 params = {
     "token":"api-token",
     "account": "拳头账户",
@@ -198,4 +200,57 @@ print(res.json())
 {'code': 0, 'message': 'https://img.kookapp.cn/attachments/2023-01/15/mLjpR95mZ20rs0rs.png', 'info': '商店图片获取成功'}
 ~~~~
 
+本地循环请求测试，非2fa用户相应时间约为`10-12s`
 
+```
+[start test]
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/6jt8l2pkxL0rs0rs.png'}
+12  time:  11.670713091999914
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/6jt8l2pkxL0rs0rs.png'}
+11  time:  10.637970628999938
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/6jt8l2pkxL0rs0rs.png'}
+10  time:  11.477466089000018
+```
+
+### 示例代码2：shop-draw
+
+```python
+def ApiRq2(list_shop:list,background='',img_ratio='0'):
+    url = "https://val.musnow.top/shop-draw"
+    params = {
+        "token":"api-token",
+        "list_shop": list_shop,
+        "img_src": background,
+        "img_ratio": img_ratio
+    }
+    res = requests.get(url,params=params) # 请求api
+    return res.json()
+
+# 参数
+shop = ["49cea67c-4552-13c2-6b4b-8ba07761504e","9d501eec-4084-5d44-32ef-6e8ed5b0ed49","6f2aefab-439d-140a-4dc6-87818e2d72cd","279e0a89-4dd6-b135-cef9-8ebb1df6f2ac"]
+img_url = "https://img.kookapp.cn/assets/2023-01/l7Q7WQIaE40xc0xc.jpg"
+res = ApiRq2(shop,img_url,'1')
+print(res)
+```
+结果
+
+```
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/03/pSMrv6vCkh0rs0rs.png'}
+```
+
+本地循环请求测试，用时约为4-5s，相对来说较友好
+```
+[start test]
+time:  4.115649149000092
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  4.091482147000079
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.8343799629999467
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.845521912999857
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.9116134020000572
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+time:  3.822338727999977
+{'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+```

@@ -1,10 +1,10 @@
 import uuid
 import json
 import time
-from endpoints.Gtime import GetTime
+from utils.Gtime import GetTime
 
 # 所有token
-from endpoints.FileManage import ApiTokenDict
+from utils.FileManage import ApiTokenDict
 
 
 #获取uuid
