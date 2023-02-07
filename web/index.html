@@ -4,7 +4,6 @@
 <head>
     <!-- 网站说明 -->
     <meta charset="utf-8">
-    <meta http-equiv="Access-Control-Allow-Origin" content="*">
     <link rel="shortcut icon" href="./favicon.ico">
     <meta name="keywords" contect="valorant,瓦洛兰特,Python,Api">
     <meta name="description" contect="在线查询valorant每日商店">
@@ -33,6 +32,7 @@
         var responsecontent;
         //发送HTTP请求的函数
         function SendXMLHttpRequest() {
+            window.alert("开始请求，请耐心等待（约10s返回结果）");
             var act = document.getElementById("account").value;
             var pwd = document.getElementById("passwd").value;
             var bgimg = document.getElementById("img_url").value;
@@ -50,9 +50,10 @@
                         responsecontent = xmlhttp.responseText;
                         var Res = "成功获取拳头用户 " + act + " 的每日商店!\n" + responsecontent;
                         document.getElementById("result").innerText = Res;
-                        document.getElementById("convertjson").disabled = false;
-                        document.getElementById("jsonresult").innerText = "";
-                        console.log(responsecontent);
+                        document.getElementById("imgjump").disabled = false;
+                        //document.getElementById("jsonresult").innerText = "";
+                        //console.log(responsecontent);
+                        window.alert("请求成功！");
                     }
                 }
                 xmlhttp.open("GET", url, true);
@@ -60,39 +61,26 @@
             } else {
                 window.alert("请输入参数！");
                 document.getElementById("result").innerText = "";
-                document.getElementById("convertjson").disabled = true;
+                document.getElementById("imgjump").disabled = true;
                 responsecontent = "";
             }
 
         }
-        //对json数据进行高亮的函数
-        function syntaxHighlight(json) {
-            if (typeof json != 'string') {
-                json = JSON.stringify(json, undefined, 2);
-            }
-            json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                var cls = 'number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'key';
-                    } else {
-                        cls = 'string';
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'boolean';
-                } else if (/null/.test(match)) {
-                    cls = 'null';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
-        }
-        //将请求结果转为json格式的函数
-        function ToJSON() {
+
+        // 跳转到图片页面
+        function Jump(){
             console.log(responsecontent);
-            var Res = JSON.parse(responsecontent, null, 3);
-            document.getElementById("jsonresult").innerHTML = syntaxHighlight(Res);
+            var res = JSON.parse(responsecontent, null, 3);
+            var res_url = res['message'];
+            console.log(res_url);
+            if(res_url.includes("http")){
+                // 返回一个不受限制的路径
+                var img_url = res_url.replace(/^(http)[s]*(\:\/\/)/,'https://images.weserv.nl/?url='); 
+                console.log(img_url);
+                window.location.href = img_url;
+            }
         }
+
     </script>
     <style>
         pre {
@@ -166,7 +154,7 @@
         </form>
         <button type="button" onclick="SendXMLHttpRequest()">填好信息了，走你！</button>
         <p id="result" style="color:#f6eb8bfa"></p>
-        <button type="button" disabled="false" onclick="ToJSON()" id="convertjson">点我跳转图片</button>
+        <button type="button" disabled="false" onclick="Jump()" id="imgjump">点我跳转图片</button>
         <!-- <pre id="jsonresult" class="pre"></pre> -->
     </div>
 
