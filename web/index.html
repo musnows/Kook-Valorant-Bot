@@ -38,7 +38,7 @@
             var bgimg = document.getElementById("img_url").value;
             var bgsz = document.getElementById("img_ratio").value;
             if (!isEmptyStr(act) && !isEmptyStr(pwd)) {
-                var xmlhttp, url = "https://val.musnow.top/shop-url?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz;
+                var xmlhttp, url = "https://val.musnow.top/api/shop-url?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz;
                 if (window.XMLHttpRequest) {
                     xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
                 }
@@ -46,7 +46,7 @@
                     xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");// IE6, IE5 浏览器执行代码
                 }
                 xmlhttp.onreadystatechange = function () {
-                    if (xmlhttp.readyState == 4 || xmlhttp.status == 200) {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                         responsecontent = xmlhttp.responseText;
                         var Res = "成功获取拳头用户 " + act + " 的每日商店!\n" + responsecontent;
                         document.getElementById("result").innerText = Res;
