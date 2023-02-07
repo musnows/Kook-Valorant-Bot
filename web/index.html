@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <link rel="shortcut icon" href="./favicon.ico">
+    <meta name="keywords" contect="valorant,瓦洛兰特,Python,Api">
+    <meta name="description" contect="在线查询valorant每日商店">
+    <meta name="author" contect="慕雪">
+    <title>瓦洛兰特商店查询</title>
+    <script>
+        // 获取系统当前时间的函数
+        function gettime() {
+            var a = new Date();
+            var b = a.toLocaleTimeString();
+            var c = a.toLocaleDateString();
+            document.getElementById("currenttime").innerHTML = "现在是 " + c + "&nbsp" + b + "，欢迎光临!";
+        }
+        // 字符串是否为空
+        function isEmptyStr(s) {
+            if (s == undefined || s == null || s == '') {
+                return true
+            }
+            return false
+        }
+        setInterval(function () { gettime() }, 1000);
+        var responsecontent;
+        //发送HTTP请求的函数
+        function SendXMLHttpRequest() {
+            var act = document.getElementById("account").value;
+            var pwd = document.getElementById("passwd").value;
+            var bgimg = document.getElementById("img_url").value;
+            var bgsz = document.getElementById("img_ratio").value;
+            if (!isEmptyStr(act) && !isEmptyStr(pwd)) {
+                var xmlhttp, url = "https://val.musnow.top/shop-url?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz;
+                if (window.XMLHttpRequest) {
+                    xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+                }
+                else {
+                    xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");// IE6, IE5 浏览器执行代码
+                }
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == 4 || xmlhttp.status == 200) {
+                        responsecontent = xmlhttp.responseText;
+                        var Res = "成功获取拳头用户 " + act + " 的每日商店!\n" + responsecontent;
+                        document.getElementById("result").innerText = Res;
+                        document.getElementById("convertjson").disabled = false;
+                        document.getElementById("jsonresult").innerText = "";
+                        console.log(responsecontent);
+                    }
+                }
+                xmlhttp.open("GET", url, true);
+                xmlhttp.send();
+            } else {
+                window.alert("请输入参数！");
+                document.getElementById("result").innerText = "";
+                document.getElementById("convertjson").disabled = true;
+                responsecontent = "";
+            }
+
+        }
+        //对json数据进行高亮的函数
+        function syntaxHighlight(json) {
+            if (typeof json != 'string') {
+                json = JSON.stringify(json, undefined, 2);
+            }
+            json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        //将请求结果转为json格式的函数
+        function ToJSON() {
+            console.log(responsecontent);
+            var Res = JSON.parse(responsecontent, null, 3);
+            document.getElementById("jsonresult").innerHTML = syntaxHighlight(Res);
+        }
+    </script>
+    <style>
+        pre {
+            background-color: rgb(238, 231, 231);
+            outline: 1px solid #ccc;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .string {
+            color: rgb(101, 93, 186);
+        }
+
+        .number {
+            color: rgb(13, 214, 124);
+        }
+
+        .boolean {
+            color: rgb(225, 97, 195);
+        }
+
+        .null {
+            color: rgb(241, 238, 150);
+        }
+
+        .key {
+            color: #cf4914;
+        }
+
+        #api-docs {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<!-- link点击前 alink点击时 vlink点击后 的颜色-->
+
+<body link="#98F5FF" alink="#8EE5EE" vlink="#76EEC6">
+    <label id="currenttime" style="color: #a5f6ff; "></label>
+    <div id="api-docs">
+        <font color="#f9dceb">
+            <h3>瓦洛兰特商店查询 by 慕雪</h3>
+        </font>
+
+        <img src="https://img.shields.io/badge/Python-3.8%2B-green" alt="python"> <img
+            src="https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot" alt="last-commit"> <img
+            src="https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot" alt="release"> <a
+            href="https://kook.top/gpbTwZ"><img
+                src="https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0" alt="kook"></a> <a
+            href="https://github.com/musnows/Kook-Valorant-Bot"><img
+                src="https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social"
+                alt="github stars"></a><br><br>
+
+        <a href="https://gitee.com/musnow/Kook-Valorant-Bot" target="_blank">
+            <img
+                src="https://gitee.com/musnow/Kook-Valorant-Bot/widgets/widget_card.svg?colors=4183c4,ffffff,ffffff,e3e9ed,666666,9b9b9b">
+        </a>
+        <p>本Api基于 Python aiohttp 库，同 Kook-Valorant-Bot 共享画图处理模块;<br>
+            本Api代码已开源，后台不会打印/保存您的账户密码，可放心食用👻</p>
+        <p>邮箱2fa验证接口和更多信息，请查看 <a
+                href="https://gitee.com/musnow/Kook-Valorant-Bot/blob/develop/docs/valorant-shop-img-api.md"
+                target="_blank">
+                Api-Docs
+            </a>📕</p>
+    </div>
+    <div id="api-button">
+        <form style="color:#e4e4e4fa;border:2px">
+            <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
+            <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
+            <label> 自定义背景图url（可选参数）</label><input type="text" value="" id="img_url" /><br>
+            <label> 自定义背景图的比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
+        </form>
+        <button type="button" onclick="SendXMLHttpRequest()">填好信息了，走你！</button>
+        <p id="result" style="color:#f6eb8bfa"></p>
+        <button type="button" disabled="false" onclick="ToJSON()" id="convertjson">点我跳转图片</button>
+        <!-- <pre id="jsonresult" class="pre"></pre> -->
+    </div>
+
+    <body background="./background.png"></body>
+</body>
+
+</html>
