@@ -30,14 +30,17 @@
         }
         setInterval(function () { gettime() }, 1000);
         var responsecontent;
-        //发送HTTP请求的函数
-        function SendXMLHttpRequest() {
+        // 发送HTTP请求的函数，登录接口
+        function SendXMLHttpRequestImg() {
             var act = document.getElementById("account").value;
             var pwd = document.getElementById("passwd").value;
             var bgimg = document.getElementById("img_url").value;
             var bgsz = document.getElementById("img_ratio").value;
             if (!isEmptyStr(act) && !isEmptyStr(pwd)) {
                 window.alert("开始请求，请耐心等待（约10s返回结果）");
+                // 点击了登录按钮后，邮箱验证按钮才会亮起
+                document.getElementById("vcode-btn").disabled = false;
+                // 开始请求
                 var xmlhttp, url = "https://val.musnow.top/api/shop-url?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz;
                 if (window.XMLHttpRequest) {
                     xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
@@ -48,11 +51,10 @@
                 xmlhttp.onreadystatechange = function () {
                     if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                         responsecontent = xmlhttp.responseText;
-                        var Res = "成功获取拳头用户 " + act + " 的每日商店!\n" + responsecontent;
+                        var Res = "Api已返回结果，拳头用户 " + act + " \n" + responsecontent;
                         document.getElementById("result").innerText = Res;
-                        document.getElementById("imgjump").disabled = false;
-                        //document.getElementById("jsonresult").innerText = "";
-                        //console.log(responsecontent);
+                        document.getElementById("imgjump").disabled = false;//取消对imgjump按钮的禁用
+                        console.log(responsecontent);
                         window.alert("请求成功！");
                     }
                 }
@@ -67,9 +69,49 @@
 
         }
 
+        //发送HTTP请求的函数，请求2fa接口
+        function SendXMLHttpRequestTfa() {
+            var act = document.getElementById("account").value;//账户
+            var vcode = document.getElementById("vcode").value;//邮箱验证吗
+            if (!isEmptyStr(act) && !isEmptyStr(vcode)) {
+                window.alert("您的邮箱验证码已发送");
+                var xmlhttp, url = "https://val.musnow.top/api/tfa?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&vcode=" + vcode;
+                if (window.XMLHttpRequest) {
+                    xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+                }
+                else {
+                    xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");// IE6, IE5 浏览器执行代码
+                }
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        responsecontent = xmlhttp.responseText;
+                        console.log(responsecontent);
+                        var res = JSON.parse(responsecontent, null, 3);
+                        if(res['code']==0)
+                        {
+                            window.alert("邮箱验证码接收成功，请等待商店结果返回");
+                        }
+                        else
+                        {
+                            window.alert("邮箱验证码接收失败，请重新操作");
+                            document.getElementById("result").innerText = responsecontent;
+                        }
+                        document.getElementById("vcode-btn").disabled = true;// 恢复禁用邮箱验证按钮
+                    }
+                }
+                xmlhttp.open("POST", url, true);
+                xmlhttp.send();
+            } else {
+                window.alert("请输入Riot账户和6位邮箱验证码！");
+                document.getElementById("result").innerText = "";
+                document.getElementById("imgjump").disabled = true;
+                document.getElementById("vcode-btn").disabled = true;
+                responsecontent = "";
+            }
+        }
+
         // 跳转到图片页面
         function Jump(){
-            console.log(responsecontent);
             var res = JSON.parse(responsecontent, null, 3);
             var res_url = res['message'];
             console.log(res_url);
@@ -153,10 +195,11 @@
             <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
             <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a href="https://img.musnow.top/"> 图片url获取</a><br>
             <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
+            <label> 若您开启了邮箱验证，请先点击左侧按钮发送登录请求 </label><input type="text" value="在此处填写验证码" id="vcode" /><br>
         </form>
-        <button type="button" onclick="SendXMLHttpRequest()">填好信息了，走你！</button>
+        <button type="button" onclick="SendXMLHttpRequestImg()">填好信息了，走你!</button> <button type="button" disabled="true" onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
         <p id="result" style="color:#f6eb8bfa"></p>
-        <button type="button" disabled="false" onclick="Jump()" id="imgjump">点我跳转图片</button>
+        <button type="button" disabled="true" onclick="Jump()" id="imgjump">点我跳转图片</button>
         <!-- <pre id="jsonresult" class="pre"></pre> -->
     </div>
 
