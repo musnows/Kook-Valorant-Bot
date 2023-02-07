@@ -34,7 +34,7 @@ async def get_dailshop_img(request):
     try:
         ret = await img_draw_request(request)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
-                            content_type='application/json')
+                            content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
         print(f"[{GetTime()}] [Api] ERR in /shop-url\n{err_cur}")
@@ -48,6 +48,7 @@ async def get_dailshop_img(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
+                            status=200,
                             content_type='application/json')
 
 
@@ -61,7 +62,7 @@ async def get_dailshop_img(request):
             return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
         else:
             return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
-                                content_type='application/json')
+                                content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
         print(f"[{GetTime()}] [Api] ERR in /shop-img\n{err_cur}")
@@ -75,6 +76,7 @@ async def get_dailshop_img(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
+                            status=200,
                             content_type='application/json')
 
 
@@ -85,7 +87,7 @@ async def get_dailshop_img(request):
     try:
         ret = await login_img_request(request)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
-                            content_type='application/json')
+                            content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
         print(f"[{GetTime()}] [Api] ERR in /shop-url\n{err_cur}")
@@ -99,6 +101,7 @@ async def get_dailshop_img(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
+                            status=200,
                             content_type='application/json')
 
 
@@ -108,7 +111,7 @@ async def post_tfa_code(request):
     try:
         ret = await tfa_code_requeset(request)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
-                            content_type='application/json')
+                            content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
         print(f"[{GetTime()}] [Api] ERR in /tfa\n{err_cur}")
@@ -122,6 +125,7 @@ async def post_tfa_code(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
+                            status=200,
                             content_type='application/json')
 
 
