@@ -13,8 +13,8 @@
 [English](./README_EN.md) | 简体中文
 
 
-![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
-[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot) ![release](https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social)
 
 <img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
@@ -125,7 +125,7 @@ pip install -r requirements.txt
 
 建议根据 [khl.py/example](https://github.com/TWT233/khl.py/tree/main/example) 的教程，学习KOOK机器人的基本搭建（很简单的，相信我）
 
-如果你想直接使用本机器人，可以转到本仓库 [WIKI](https://github.com/Aewait/Valorant-kaiheila-bot/wiki) 查看更多引导内容
+如果你想直接使用本机器人，可以转到本仓库 [WIKI](https://github.com/musnows/Kook-Valorant-Bot/wiki) 查看更多引导内容
 
 ----
 
