@@ -32,12 +32,12 @@
         var responsecontent;
         //发送HTTP请求的函数
         function SendXMLHttpRequest() {
-            window.alert("开始请求，请耐心等待（约10s返回结果）");
             var act = document.getElementById("account").value;
             var pwd = document.getElementById("passwd").value;
             var bgimg = document.getElementById("img_url").value;
             var bgsz = document.getElementById("img_ratio").value;
             if (!isEmptyStr(act) && !isEmptyStr(pwd)) {
+                window.alert("开始请求，请耐心等待（约10s返回结果）");
                 var xmlhttp, url = "https://val.musnow.top/api/shop-url?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz;
                 if (window.XMLHttpRequest) {
                     xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
