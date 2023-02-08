@@ -9,8 +9,8 @@ Kook-Valorant-Bot</h1>
 
 English | [简体中文](./README.md)
 
-![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/Aewait/Valorant-kaiheila-bot) ![release](https://img.shields.io/github/v/release/Aewait/Valorant-kaiheila-bot)
-[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/Aewait/Valorant-kaiheila-bot?style=social)
+![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot) ![release](https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot)
+[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social)
 
 <img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
@@ -111,7 +111,7 @@ pip install -r requirements.txt
 
 It is highly recommand to checkout [khl.py/example](https://github.com/TWT233/khl.py/tree/main/example) first for basic kook bot init
 
-If you want to use this bot, go [WIKI](https://github.com/Aewait/Valorant-kaiheila-bot/wiki) for more infomation
+If you want to use this bot, go [WIKI](https://github.com/musnows/Kook-Valorant-Bot/wiki) for more infomation
 
 
 ---
