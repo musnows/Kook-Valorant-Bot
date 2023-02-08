@@ -116,9 +116,9 @@
             console.log(res_url);
             if (res_url.includes("http")) {
                 // 返回一个不受限制的路径
-                var img_url = res_url.replace(/(https?:\/\/)/, 'https://images.weserv.nl/?url=$1');
-                console.log(img_url);
-                window.location.href = img_url;
+                // var img_url = res_url.replace(/(https?:\/\/)/, 'https://images.weserv.nl/?url=$1');
+                // console.log(img_url);
+                window.location.href = res_url;
                 document.getElementById("jumpinfo").innerText = "若点击此按钮无反应，可手动复制上方图片url到浏览器中访问";
             }
         }
@@ -156,6 +156,8 @@
             color: #ffffff;
         }
     </style>
+    <!-- 将空referrer设置添加到最后面，加载完统计代码再加载空refer -->
+    <meta name="referrer" content="no-referrer">
 </head>
 <!-- link点击前 alink点击时 vlink点击后 的颜色-->
 
