@@ -118,7 +118,8 @@
                 // 返回一个不受限制的路径
                 // var img_url = res_url.replace(/(https?:\/\/)/, 'https://images.weserv.nl/?url=$1');
                 // console.log(img_url);
-                window.location.href = res_url;
+                // window.location.href = res_url;
+                window.open(res_url);
                 document.getElementById("jumpinfo").innerText = "若点击此按钮无反应，可手动复制上方图片url到浏览器中访问";
             }
         }
@@ -152,14 +153,9 @@
             color: #cf4914;
         }
 
-        #api-docs {
-            color: #ffffff;
-        }
-
         html,body{
             height: 100%;
-            background-repeat: no-repeat; /* 图片不会重复显示 */
-            overflow:hidden; /* 隐藏超出部分的图片 */
+
         }
         #container{
             /*保证footer是相对于container位置绝对定位*/
@@ -169,6 +165,7 @@
             /*设置padding-bottom值大于等于footer的height值，以保证main的内容能够全部显示出来而不被footer遮盖；*/  
             padding-bottom: 50px;  
             box-sizing: border-box;
+            left:6px;
         }
         header{
             width: 100%;
@@ -182,11 +179,15 @@
             width: 100%;
             height: 50px;   /* footer的高度一定要是固定值*/ 
             position:fixed;
-            bottom:0px;
-            left:0px;
+            bottom:10px;
+            left: 0px;
             color: #ffffff;
-            font-size: 20%;
+            font-size: 12px;
             text-align: center;
+        }
+
+        #api-docs {
+            color: #ffffff;
         }
     </style>
     <!-- 将空referrer设置添加到最后面，加载完统计代码再加载空refer -->
@@ -238,12 +239,12 @@
                     onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
                 <p id="result" style="color:#f6eb8bfa"></p>
                 <button type="button" disabled="true" onclick="Jump()" id="imgjump">点我跳转图片</button>
-                <p id="jumpinfo" style="color:#ffffff"></p>
+                <p id="jumpinfo" style="color:#ffffff; font-size:15px;"></p>
             </div>
         </div>
         <footer>
             <p><a href="https://val1.musnow.top/">备用站点</a> | Copyright©2023 慕雪 | <a href="https://gitee.com/musnow/Kook-Valorant-Bot/tree/develop/web" target="_blank">SourceCode</a></p>
-            <script id="LA-DATA-WIDGET" crossorigin="anonymous" charset="UTF-8" src="https://v6-widget.51.la/v6/JxtoCdk3eWo0ongd/quote.js?theme=#1690FF,#FFFFFF,#F1F1F1,#CDCDCD,#FFFFFF,#1690FF,12&f=12"></script>
+            <script id="LA-DATA-WIDGET" crossorigin="anonymous" charset="UTF-8" src="https://v6-widget.51.la/v6/JxtoCdk3eWo0ongd/quote.js?theme=#1690FF,#F2F2F2,#F1F1F1,#CDCDCD,#FFFFFF,#1690FF,12&f=12"></script>
         </footer>
     </div>
 </body>
