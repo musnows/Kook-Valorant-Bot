@@ -11,7 +11,7 @@
     <title>瓦洛兰特商店查询</title>
     <!-- 51la 统计 -->
     <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-    <script>LA.init({id:"JxtoCdk3eWo0ongd",ck:"JxtoCdk3eWo0ongd"})</script>
+    <script>LA.init({ id: "JxtoCdk3eWo0ongd", ck: "JxtoCdk3eWo0ongd" })</script>
     <!-- main -->
     <script>
         // 获取系统当前时间的函数
@@ -88,12 +88,10 @@
                         responsecontent = xmlhttp.responseText;
                         console.log(responsecontent);
                         var res = JSON.parse(responsecontent, null, 3);
-                        if(res['code']==0)
-                        {
+                        if (res['code'] == 0) {
                             window.alert("邮箱验证码接收成功，请等待商店结果返回");
                         }
-                        else
-                        {
+                        else {
                             window.alert("邮箱验证码接收失败，请重新操作");
                             document.getElementById("result").innerText = responsecontent;
                         }
@@ -112,11 +110,11 @@
         }
 
         // 跳转到图片页面
-        function Jump(){
+        function Jump() {
             var res = JSON.parse(responsecontent, null, 3);
             var res_url = res['message'];
             console.log(res_url);
-            if(res_url.includes("http")){
+            if (res_url.includes("http")) {
                 // 返回一个不受限制的路径
                 var img_url = res_url.replace(/(https?:\/\/)/, 'https://images.weserv.nl/?url=$1');
                 console.log(img_url);
@@ -166,16 +164,14 @@
         <label id="currenttime" style="color: #a5f6ff; "></label>
     </div> -->
     <div id="api-docs">
-        <font color="#f9dceb">
-            <h3>瓦洛兰特商店查询 by 慕雪</h3>
-        </font>
+        <h3 style="color:#f9dceb">瓦洛兰特商店查询 by 慕雪</h3>
 
         <img src="https://img.shields.io/badge/Python-3.8%2B-green" alt="python"> <img
             src="https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot" alt="last-commit"> <img
             src="https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot" alt="release"> <a
-            href="https://kook.top/gpbTwZ"><img
+            href="https://kook.top/gpbTwZ" target="_blank"><img
                 src="https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0" alt="kook"></a> <a
-            href="https://github.com/musnows/Kook-Valorant-Bot"><img
+            href="https://github.com/musnows/Kook-Valorant-Bot" target="_blank"><img
                 src="https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social"
                 alt="github stars"></a><br><br>
 
@@ -195,14 +191,17 @@
         <form style="color:#e4e4e4fa;border:2px">
             <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
             <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
-            <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a href="https://img.musnow.top/" target="_blank"> 图片url获取</a><br>
+            <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a
+                href="https://img.musnow.top/" target="_blank"> 图片url获取</a><br>
             <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
             <label> 若您开启了邮箱验证，请先点击左侧按钮发送登录请求 </label><input type="text" value="在此处填写验证码" id="vcode" /><br>
         </form>
-        <button type="button" onclick="SendXMLHttpRequestImg()">填好信息了，走你!</button> <button type="button" disabled="true" onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
+        <button type="button" onclick="SendXMLHttpRequestImg()">填好信息了，走你!</button> <button type="button" disabled="true"
+            onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
         <p id="result" style="color:#f6eb8bfa"></p>
         <button type="button" disabled="true" onclick="Jump()" id="imgjump">点我跳转图片</button>
         <p id="jumpinfo" style="color:#ffffff"></p>
     </div>
 </body>
+
 </html>
