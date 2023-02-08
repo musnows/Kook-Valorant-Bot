@@ -2,6 +2,8 @@ import json
 import time
 import threading
 import traceback
+# import requests
+# import asyncio
 from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
 from utils.api.ApiToken import token_ck, ApiTokenDict, save_token_files
 from utils.Gtime import GetTime
@@ -18,7 +20,30 @@ Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
+# gLock = asyncio.Lock() # 创建一把锁，用于保存文件
 
+# # 上传到lsky (这个上传很麻烦，lsky只认open打开的图片)
+# async def lsky_upload(bg):
+#     await gLock.acquire()# 上锁
+#     path = "./log/api_img_temp.png"
+#     bg.save(path, format='PNG')
+#     img = open(path,'rb')
+#     gLock.release()     # 释放锁
+#     # lsky的连接和token写入配置文件，方便修改
+#     url = f"{config['lsky_url']}/api/v1/upload"
+#     header = {
+#         "Authorization": f"Bearer {config['lsky_token']}",
+#         "Accept": "application/json"
+#     }
+#     params = {'strategy_id':3}
+#     myfiles = {'file': img}
+#     ret = requests.post(url, headers=header, params=params,files=myfiles)  # 请求api
+#     ret = ret.json()
+#     print(ret)
+#     if ret['status']: # 上传成功
+#         return {'code':0,'data':ret['data']['links'],'message':ret['message']}
+#     # 上传失败
+#     return {'code':200,'data':ret['data'],'message':ret['message']}
 
 # 检测速率（一分钟只允许10次）
 async def check_token_rate(token: str):
@@ -64,16 +89,17 @@ async def base_img_request(params, list_shop, vp1='0', rp1='0'):
     else:  # 只有16-9的图片需获取vp和r点
         ret = await get_shop_img_169(list_shop, vp=vp1, rp=rp1, bg_img_src=img_src)
     # 打印计时
-    print(f"[{GetTime()}] [IMGdraw]", format(time.perf_counter() - start, '.2f'))  # 结果为浮点数，保留两位小数
+    print(f"[{GetTime()}] [Api imgDraw]", format(time.perf_counter() - start, '.2f'))  # 结果为浮点数，保留两位小数
 
     start = time.perf_counter()
     if ret['status']:
-        bg = ret['value']
-        img_src_ret = await kook_create_asset(api_bot_token, bg)  # 上传图片
+        bg = ret['value'] # 这个值是pil的结果
+        img_src_ret = await kook_create_asset(api_bot_token, bg)  # 上传图片到kook
+        # img_src_ret = await lsky_upload(bg) # 上传图片到lsky
         if img_src_ret['code'] == 0:
             print(f"[{GetTime()}] [Api] kook_create_asset success {format(time.perf_counter() - start, '.2f')}")
             dailyshop_img_src = img_src_ret['data']['url']
-            print(f'[{GetTime()}] [img-url] {dailyshop_img_src}')
+            print(f'[{GetTime()}] [Api imgUrl] {dailyshop_img_src}')
             return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功'}
         else:
             print(f'[{GetTime()}] [Api] kook_create_asset failed')
