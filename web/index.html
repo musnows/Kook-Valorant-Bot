@@ -155,6 +155,39 @@
         #api-docs {
             color: #ffffff;
         }
+
+        html,body{
+            height: 100%;
+            background-repeat: no-repeat; /* 图片不会重复显示 */
+            overflow:hidden; /* 隐藏超出部分的图片 */
+        }
+        #container{
+            /*保证footer是相对于container位置绝对定位*/
+            position:relative;  
+            width:100%;
+            min-height:100%; 
+            /*设置padding-bottom值大于等于footer的height值，以保证main的内容能够全部显示出来而不被footer遮盖；*/  
+            padding-bottom: 50px;  
+            box-sizing: border-box;
+        }
+        header{
+            width: 100%;
+            height: 50px;
+        }
+        .main{
+            width: 100%;
+            height: 200px;
+        }
+        footer{
+            width: 100%;
+            height: 50px;   /* footer的高度一定要是固定值*/ 
+            position:fixed;
+            bottom:0px;
+            left:0px;
+            color: #ffffff;
+            font-size: 20%;
+            text-align: center;
+        }
     </style>
     <!-- 将空referrer设置添加到最后面，加载完统计代码再加载空refer -->
     <meta name="referrer" content="no-referrer">
@@ -162,47 +195,56 @@
 <!-- link点击前 alink点击时 vlink点击后 的颜色-->
 
 <body link="#98F5FF" alink="#8EE5EE" vlink="#76EEC6" background="./background.png">
-    <!-- <div id="time-text">
-        <label id="currenttime" style="color: #a5f6ff; "></label>
-    </div> -->
-    <div id="api-docs">
-        <h3 style="color:#f9dceb">瓦洛兰特商店查询 by 慕雪</h3>
+    <div id="container">
+        <header>
+            <h3 style="color:#f9dceb">瓦洛兰特商店查询 by 慕雪</h3>
+        </header>
+        <div id="main">
+            <!-- <div id="time-text">
+                <label id="currenttime" style="color: #a5f6ff; "></label>
+            </div> -->
+            <div id="api-docs">
+                <img src="https://img.shields.io/badge/Python-3.8%2B-green" alt="python"> <img
+                    src="https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot" alt="last-commit"> <img
+                    src="https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot" alt="release"> <a
+                    href="https://kook.top/gpbTwZ" target="_blank"><img
+                        src="https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0" alt="kook"></a> <a
+                    href="https://github.com/musnows/Kook-Valorant-Bot" target="_blank"><img
+                        src="https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social"
+                        alt="github stars"></a><br><br>
 
-        <img src="https://img.shields.io/badge/Python-3.8%2B-green" alt="python"> <img
-            src="https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot" alt="last-commit"> <img
-            src="https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot" alt="release"> <a
-            href="https://kook.top/gpbTwZ" target="_blank"><img
-                src="https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0" alt="kook"></a> <a
-            href="https://github.com/musnows/Kook-Valorant-Bot" target="_blank"><img
-                src="https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social"
-                alt="github stars"></a><br><br>
-
-        <a href="https://gitee.com/musnow/Kook-Valorant-Bot" target="_blank">
-            <img
-                src="https://gitee.com/musnow/Kook-Valorant-Bot/widgets/widget_card.svg?colors=4183c4,ffffff,ffffff,e3e9ed,666666,9b9b9b">
-        </a>
-        <p>本Api基于 Python aiohttp 库，同 Kook-Valorant-Bot 共享画图处理模块;<br>
-            本Api代码已开源，后台不会打印/保存您的账户密码，可放心食用👻</p>
-        <p>邮箱2fa验证接口和更多信息，请查看 <a
-                href="https://gitee.com/musnow/Kook-Valorant-Bot/blob/develop/docs/valorant-shop-img-api.md"
-                target="_blank">
-                Api-Docs
-            </a>📕<br>接口速率限制为10次/分，请勿多次点击，以免影响其他用户</p>
-    </div>
-    <div id="api-button">
-        <form style="color:#e4e4e4fa;border:2px">
-            <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
-            <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
-            <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a
-                href="https://img.musnow.top/" target="_blank"> 图片url获取</a><br>
-            <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
-            <label> 若您开启了邮箱验证，请先点击左侧按钮发送登录请求 </label><input type="text" value="在此处填写验证码" id="vcode" /><br>
-        </form>
-        <button type="button" onclick="SendXMLHttpRequestImg()">填好信息了，走你!</button> <button type="button" disabled="true"
-            onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
-        <p id="result" style="color:#f6eb8bfa"></p>
-        <button type="button" disabled="true" onclick="Jump()" id="imgjump">点我跳转图片</button>
-        <p id="jumpinfo" style="color:#ffffff"></p>
+                <a href="https://gitee.com/musnow/Kook-Valorant-Bot" target="_blank">
+                    <img
+                        src="https://gitee.com/musnow/Kook-Valorant-Bot/widgets/widget_card.svg?colors=4183c4,ffffff,ffffff,e3e9ed,666666,9b9b9b">
+                </a>
+                <p>本Api基于 Python aiohttp 库，同 Kook-Valorant-Bot 共享画图处理模块;<br>
+                    本Api代码已开源，后台不会打印/保存您的账户密码，可放心食用👻</p>
+                <p>邮箱2fa验证接口和更多信息，请查看 <a
+                        href="https://gitee.com/musnow/Kook-Valorant-Bot/blob/develop/docs/valorant-shop-img-api.md"
+                        target="_blank">
+                        Api-Docs
+                </a>📕<br>接口速率限制为10次/分，请勿多次点击，以免影响其他用户</p>
+            </div>
+            <div id="api-button">
+                <form style="color:#e4e4e4fa;border:2px">
+                    <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
+                    <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
+                    <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a
+                        href="https://img.musnow.top/" target="_blank"> 图片url获取</a><br>
+                    <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
+                    <label> 若您开启了邮箱验证，请先点击左侧按钮发送登录请求 </label><input type="text" value="在此处填写验证码" id="vcode" /><br>
+                </form>
+                <button type="button" onclick="SendXMLHttpRequestImg()">填好信息了，走你!</button> <button type="button" disabled="true"
+                    onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
+                <p id="result" style="color:#f6eb8bfa"></p>
+                <button type="button" disabled="true" onclick="Jump()" id="imgjump">点我跳转图片</button>
+                <p id="jumpinfo" style="color:#ffffff"></p>
+            </div>
+        </div>
+        <footer>
+            <p><a href="https://val1.musnow.top/">备用站点</a> | Copyright©2023 慕雪 | <a href="https://gitee.com/musnow/Kook-Valorant-Bot/tree/develop/web" target="_blank">SourceCode</a></p>
+            <script id="LA-DATA-WIDGET" crossorigin="anonymous" charset="UTF-8" src="https://v6-widget.51.la/v6/JxtoCdk3eWo0ongd/quote.js?theme=#1690FF,#FFFFFF,#F1F1F1,#CDCDCD,#FFFFFF,#1690FF,12&f=12"></script>
+        </footer>
     </div>
 </body>
 
