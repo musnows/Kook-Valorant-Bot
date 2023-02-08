@@ -21,6 +21,8 @@
             var c = a.toLocaleDateString();
             document.getElementById("currenttime").innerHTML = "现在是 " + c + "&nbsp" + b + "，欢迎光临!";
         }
+        // setInterval(function () { gettime() }, 1000);
+
         // 字符串是否为空
         function isEmptyStr(s) {
             if (s == undefined || s == null || s == '') {
@@ -28,8 +30,7 @@
             }
             return false
         }
-        setInterval(function () { gettime() }, 1000);
-        var responsecontent;
+        var responsecontent;// 全局返回的结果
         // 发送HTTP请求的函数，登录接口
         function SendXMLHttpRequestImg() {
             var act = document.getElementById("account").value;
@@ -117,9 +118,10 @@
             console.log(res_url);
             if(res_url.includes("http")){
                 // 返回一个不受限制的路径
-                var img_url = res_url.replace(/^(http)[s]*(\:\/\/)/,'https://images.weserv.nl/?url='); 
+                var img_url = res_url.replace(/(https?:\/\/)/, 'https://images.weserv.nl/?url=$1');
                 console.log(img_url);
                 window.location.href = img_url;
+                document.getElementById("jumpinfo").innerText = "若点击此按钮无反应，可手动复制上方图片url到浏览器中访问";
             }
         }
 
@@ -160,9 +162,9 @@
 <!-- link点击前 alink点击时 vlink点击后 的颜色-->
 
 <body link="#98F5FF" alink="#8EE5EE" vlink="#76EEC6" background="./background.png">
-    <div id="time-text">
+    <!-- <div id="time-text">
         <label id="currenttime" style="color: #a5f6ff; "></label>
-    </div>
+    </div> -->
     <div id="api-docs">
         <font color="#f9dceb">
             <h3>瓦洛兰特商店查询 by 慕雪</h3>
@@ -187,20 +189,20 @@
                 href="https://gitee.com/musnow/Kook-Valorant-Bot/blob/develop/docs/valorant-shop-img-api.md"
                 target="_blank">
                 Api-Docs
-            </a>📕</p>
+            </a>📕<br>接口速率限制为10次/分，请勿多次点击，以免影响其他用户</p>
     </div>
     <div id="api-button">
         <form style="color:#e4e4e4fa;border:2px">
             <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
             <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
-            <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a href="https://img.musnow.top/"> 图片url获取</a><br>
+            <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a href="https://img.musnow.top/" target="_blank"> 图片url获取</a><br>
             <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
             <label> 若您开启了邮箱验证，请先点击左侧按钮发送登录请求 </label><input type="text" value="在此处填写验证码" id="vcode" /><br>
         </form>
         <button type="button" onclick="SendXMLHttpRequestImg()">填好信息了，走你!</button> <button type="button" disabled="true" onclick="SendXMLHttpRequestTfa()" id="vcode-btn">邮箱验证</button>
         <p id="result" style="color:#f6eb8bfa"></p>
         <button type="button" disabled="true" onclick="Jump()" id="imgjump">点我跳转图片</button>
-        <!-- <pre id="jsonresult" class="pre"></pre> -->
+        <p id="jumpinfo" style="color:#ffffff"></p>
     </div>
 </body>
 </html>
