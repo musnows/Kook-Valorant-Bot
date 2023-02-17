@@ -52,7 +52,7 @@ async def get_dailshop_img(request):
                             content_type='application/json')
 
 
-# 直接跳转图片
+# 直接跳转图片（浏览器访问，get方法不安全）
 @routes.get('/shop-img')
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-img")
@@ -81,7 +81,7 @@ async def get_dailshop_img(request):
 
 
 # 获取图片url
-@routes.get('/shop-url')
+@routes.post('/shop-url')
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-url")
     try:
