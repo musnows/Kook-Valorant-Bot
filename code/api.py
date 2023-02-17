@@ -85,7 +85,7 @@ async def get_dailshop_img(request):
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-url")
     try:
-        ret = await login_img_request(request)
+        ret = await login_img_request(request,"POST")
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
@@ -155,6 +155,6 @@ app.add_routes(routes)
 if __name__ == '__main__':
     try: # host需要设置成0.0.0.0，否则只有本地才能访问
         print(f"[API Start] starting at {GetTime()}")
-        web.run_app(app, host='0.0.0.0', port=14726)
+        web.run_app(app, host='0.0.0.0', port=14725)
     except:
         print(traceback.format_exc())
