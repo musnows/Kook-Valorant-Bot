@@ -31,9 +31,9 @@
             return false
         }
         var responsecontent;// 全局返回的结果
+        var api_token = "59a05fbc-9281-11ed-a2f5-525400c9274f" // 全局可用的token
         // 发送HTTP请求的函数，登录接口
         function SendXMLHttpRequestImg() {
-            var api_token = "59a05fbc-9281-11ed-a2f5-525400c9274f"
             var act = document.getElementById("account").value;
             var pwd = document.getElementById("passwd").value;
             var bgimg = document.getElementById("img_url").value;
@@ -60,9 +60,12 @@
                         window.alert("请求成功！");
                     }
                 }
-                xmlhttp.open("POST", url, true);
                 // 利用post在正文发送请求，而不是url中
-                xmlhttp.send("token=" + api_token + "&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz);
+                var sendData = {"token":api_token,"account":act,"passwd":pwd,"img_src":bgimg,"img_ratio":bgsz};
+                //将用户输入值序列化成json字符串，并请求api
+                xmlhttp.setRequestHeader('content-type', 'application/json');
+                xmlhttp.open("POST", url, true);
+                xmlhttp.send(JSON.stringify(sendData));
             } else {
                 window.alert("请输入参数！");
                 document.getElementById("result").innerText = "";
@@ -78,7 +81,7 @@
             var vcode = document.getElementById("vcode").value;//邮箱验证吗
             if (!isEmptyStr(act) && !isEmptyStr(vcode)) {
                 window.alert("您的邮箱验证码已发送");
-                var xmlhttp, url = "https://val.musnow.top/api/tfa?token=59a05fbc-9281-11ed-a2f5-525400c9274f&account=" + act + "&vcode=" + vcode;
+                var xmlhttp, url = "https://val.musnow.top/api/tfa";
                 if (window.XMLHttpRequest) {
                     xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
                 }
@@ -100,8 +103,11 @@
                         document.getElementById("vcode-btn").disabled = true;// 恢复禁用邮箱验证按钮
                     }
                 }
+                var sendData = {"token":api_token,"account":act,"vcode":vcode};
+                //将用户输入值序列化成json字符串，并请求api
+                xmlhttp.setRequestHeader('content-type', 'application/json');
                 xmlhttp.open("POST", url, true);
-                xmlhttp.send();
+                xmlhttp.send(JSON.stringify(sendData));
             } else {
                 window.alert("请输入Riot账户和6位邮箱验证码！");
                 document.getElementById("result").innerText = "";
