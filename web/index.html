@@ -43,7 +43,7 @@
                 // 点击了登录按钮后，邮箱验证按钮才会亮起
                 document.getElementById("vcode-btn").disabled = false;
                 // 开始请求
-                var xmlhttp, url = "https://val.musnow.top/api/shop-url?token=" + api_token + "&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz;
+                var xmlhttp, url = "https://val.musnow.top/api/shop-url";
                 if (window.XMLHttpRequest) {
                     xmlhttp = new XMLHttpRequest();// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
                 }
@@ -61,7 +61,8 @@
                     }
                 }
                 xmlhttp.open("POST", url, true);
-                xmlhttp.send();
+                // 利用post在正文发送请求，而不是url中
+                xmlhttp.send("token=" + api_token + "&account=" + act + "&passwd=" + pwd + "&img_src=" + bgimg + "&img_ratio=" + bgsz);
             } else {
                 window.alert("请输入参数！");
                 document.getElementById("result").innerText = "";
@@ -236,7 +237,7 @@
             <div id="api-button">
                 <form style="color:#e4e4e4fa;border:2px">
                     <label> 请输入您的拳头账户 </label><input type="text" value="" id="account" /><br>
-                    <label> 请输入您的账户密码 </label><input type="text" value="" id="passwd" /><br>
+                    <label> 请输入您的账户密码 </label><input type="password" value="" id="passwd" /><br>
                     <label> 自定义背景图url（可选参数，支持16-9/1-1图片）</label><input type="text" value="" id="img_url" /> <a
                         href="https://img.musnow.top/" target="_blank"> 图片url获取</a><br>
                     <label> 自定义背景图比例（可选参数，若为1-1的图片则填1）</label><input type="text" value="0" id="img_ratio" /><br>
