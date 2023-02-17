@@ -200,7 +200,8 @@ async def login_img_request(request,method:str="GET"):
 
 # 邮箱验证的post
 async def tfa_code_requeset(request):
-    params = request.rel_url.query
+    body = await request.content.read()
+    params = json.loads(body.decode('UTF8'))
     if 'account' not in params or 'vcode' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/vcode")
         return {
