@@ -347,14 +347,12 @@ async def get_shop_img_169(list_shop: dict, vp: str, rp: str, bg_img_src="err"):
     # 写入vp和r点
     draw = ImageDraw.Draw(bg)
     # vp
-    vp_c = (f"{vp}")
-    draw.text((537, 670), vp_c, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
+    draw.text((537, 670), vp, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
     # rp
-    rp_c = (f"{rp}")
     rp_pos = (710, 670)
-    if rp < 100:  #改变位置，避免数字覆盖r点的icon
+    if int(rp) < 100:  #改变位置，避免数字覆盖r点的icon
         rp_pos = (722, 670)
-    draw.text(rp_pos, rp_c, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
+    draw.text(rp_pos, rp, font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 20), fill=font_color)
     # 删除用于获取返回值的临时键值
     if ran in shop_img_temp_169:
         del shop_img_temp_169[ran]
