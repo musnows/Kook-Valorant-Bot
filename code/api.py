@@ -52,7 +52,7 @@ async def get_dailshop_img(request):
                             content_type='application/json')
 
 
-# 直接跳转图片
+# 直接跳转图片（浏览器访问，get方法不安全）
 @routes.get('/shop-img')
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-img")
@@ -81,11 +81,11 @@ async def get_dailshop_img(request):
 
 
 # 获取图片url
-@routes.get('/shop-url')
+@routes.post('/shop-url')
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-url")
     try:
-        ret = await login_img_request(request)
+        ret = await login_img_request(request,"POST")
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
@@ -155,6 +155,6 @@ app.add_routes(routes)
 if __name__ == '__main__':
     try: # host需要设置成0.0.0.0，否则只有本地才能访问
         print(f"[API Start] starting at {GetTime()}")
-        web.run_app(app, host='0.0.0.0', port=14726)
+        web.run_app(app, host='0.0.0.0', port=14725)
     except:
         print(traceback.format_exc())

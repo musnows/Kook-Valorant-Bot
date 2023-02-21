@@ -899,7 +899,7 @@ async def check_GloginRate():
         if (time.time() - login_rate_limit['time']) > RATE_LIMITED_TIME:
             login_rate_limit['limit'] = False  #超出180s解除
         else:  #未超出240s
-            raise auth_exceptions.RiotRatelimitError
+            raise EzAuthExp.RatelimitError
     return True
 
 

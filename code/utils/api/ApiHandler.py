@@ -144,8 +144,12 @@ async def img_draw_request(request):
 
 
 # 登录+画图
-async def login_img_request(request):
+async def login_img_request(request,method:str="GET"):
     params = request.rel_url.query
+    if method=="POST":
+        body = await request.content.read()
+        params = json.loads(body.decode('UTF8'))
+    # 判断必须要的参数是否齐全
     if 'account' not in params or 'passwd' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
         return {
@@ -196,7 +200,8 @@ async def login_img_request(request):
 
 # 邮箱验证的post
 async def tfa_code_requeset(request):
-    params = request.rel_url.query
+    body = await request.content.read()
+    params = json.loads(body.decode('UTF8'))
     if 'account' not in params or 'vcode' not in params or 'token' not in params:
         print(f"ERR! [{GetTime()}] params needed: token/account/vcode")
         return {

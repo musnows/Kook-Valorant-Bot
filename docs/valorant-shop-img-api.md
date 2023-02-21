@@ -71,7 +71,7 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 
 ## 3.开发者接口
 
-由于服务器是个6m小水管，再加上刚开放的时候本地缓存不足，画图耗时长。所以响应很慢，大约12秒。所以，我估摸着也没有开发者愿意用这种慢吞吞的api吧？
+由于服务器是个6m小水管，再加上刚开放的时候本地缓存不足，画图耗时长。所以响应很慢，大约10秒。所以，我估摸着也没有开发者愿意用这种慢吞吞的api吧？
 
 好处就是后台包装了**图片处理+riot登录**，你只需要传入账户密码，剩下的交给api解决！
 
@@ -85,11 +85,11 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 https://val.musnow.top/api/shop-url
 ~~~
 
-请求方法：`GET`
+请求方法： `POST`
 
 速率限制：`10r/m`
 
-| params参数 | 说明                  | 参数类型 |是否必填 |
+| body参数 | 说明                  | 参数类型 |是否必填 |
 | ---------- | --------------------- | -------- | -------- |
 | token      | API token             | string|是       |
 | account    | 拳头账户              | string |是       |
@@ -111,7 +111,7 @@ https://val.musnow.top/api/shop-url
 
 此接口用于两步验证，适用于开启了邮箱验证的用户；
 
-您需要先请求 `/shop-url` 接口，在用户获取到验证码后，再请求本接口
+您需要先请求 `/shop-url` 接口，在用户获取到验证码后，再请求本接口；若在10min内没有收到 `/tfa` 接口请求，后台会以**邮箱验证超时**关闭该账户的会话。
 
 ~~~
 https://val.musnow.top/api/tfa
@@ -119,11 +119,13 @@ https://val.musnow.top/api/tfa
 
 请求方法：`POST`
 
-| params参数 | 说明                  | 参数类型 |是否必填 |
+| body参数 | 说明                  | 参数类型 |是否必填 |
 | ---------- | --------------------- | -------- | -------- |
 | token      | API token             | string|是       |
 | account    | 拳头账户              |string  |是       |
 | vcode   | 邮箱验证码 |  string  | 是       |
+
+这里的account参数是为了在api后台对应上需要2fa的用户，写入验证码。
 
 返回示例
 
@@ -192,8 +194,8 @@ params = {
     "passwd": "拳头密码",
     "img-src": "https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg"
 }
-res = requests.get(url,params=params)
-print(res.json())
+res = requests.post(url,json=params) # 请求api
+return res.json()
 ~~~
 
 运行即可获得商店返回结果

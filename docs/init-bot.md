@@ -105,4 +105,102 @@ kill -9 进程号
 
 好了！配置完本页面的内容，想必你的bot已经可以**正常起步**了！
 
-在频道里面输入 `/Ahri`，让我们来看看本仓库里面一些函数的对应功能吧！
+在频道里面输入 `/ahri`，让我们来看看本仓库里面一些函数的对应功能吧！
+
+## 常见错误参考
+
+bot运行的时候经常会碰到一些常见的错误，在这里做出记录。
+
+### 1.jsonDecode err
+
+如果你学习过网络协议，序列化和反序列化相关知识，应该就会知道这个报错是什么原因。
+
+简单说明就是，json是一个序列化方式，其正在对api的返回值进行`decode`反序列化，这个报错的意思就是反序列化失败了，可以理解为api调用失败！
+
+一般出现这个问题的原因是**短暂连不上riot的服务器**，属于正常情况；如果此报错出现较久且无法去除，请先确认是否是无法链接上riot的api服务器。
+
+```
+Exception in thread Thread-85 (auth2fa):
+Traceback (most recent call last):
+  File "/home/muxue/.local/lib/python3.10/site-packages/requests/models.py", line 971, in json
+    return complexjson.loads(self.text, **kwargs)
+  File "/usr/local/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/local/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/local/lib/python3.10/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/muxue/kook/val-bot/code/utils/valorant/EzAuth.py", line 277, in auth2fa
+    auth.authorize(user, passwd, key=key)
+  File "/home/muxue/kook/val-bot/code/utils/valorant/EzAuth.py", line 156, in authorize
+    self.Region = self.get_Region()
+  File "/home/muxue/kook/val-bot/code/utils/valorant/EzAuth.py", line 213, in get_Region
+    data = r.json()
+  File "/home/muxue/.local/lib/python3.10/site-packages/requests/models.py", line 975, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+```
+
+### 2.channel_name
+
+khl.py的常驻报错，不影响bot运行，忽略即可
+
+```
+Traceback (most recent call last):
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/client.py", line 63, in handle_pkg
+    await self._consume_pkg(pkg)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/client.py", line 75, in _consume_pkg
+    msg = self._make_msg(pkg)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/client.py", line 85, in _make_msg
+    msg = self._make_channel_msg(pkg)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/client.py", line 92, in _make_channel_msg
+    msg = PublicMessage(**pkg, _gate_=self.gate)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/message.py", line 135, in __init__
+    channel = PublicTextChannel(id=self.target_id, name=self.extra['channel_name'], _gate_=self.gate)
+KeyError: 'channel_name'
+'channel_name'
+```
+
+### 3.asyncio
+
+有两个任务被撞到了同一个时间，导致任务被miss临时取消；这也是个正常情况。因为bot里面有不少的定时任务，总有些`@bot.task.add_interval()`运行道一定时间后，时间重合导致撞车
+
+```
+Run time of job "vip_roll_task (trigger: interval[0:01:20], next run at: 2023-02-09 16:54:05 CST)" was missed by 0:00:23.478322
+Run time of job "Save_File_Task (trigger: interval[0:05:00], next run at: 2023-02-09 16:55:45 CST)" was missed by 0:02:24.723250
+error raised during message handling
+Traceback (most recent call last):
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/client.py", line 111, in safe_handler
+    await handler(msg)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/bot/bot.py", line 142, in handler
+    await event_handler(self, event)
+  File "/home/muxue/kook/val-bot/code/main.py", line 230, in Grant_Roles
+    await Color_GrantRole(b, event)
+  File "/home/muxue/kook/val-bot/code/utils/GrantRoles.py", line 36, in Color_GrantRole
+    g = await bot.client.fetch_guild(EmojiDict['guild_id'])  # 填入服务器id
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/client.py", line 163, in fetch_guild
+    await guild.load()
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/guild.py", line 152, in load
+    self._update_fields(**(await self.gate.exec_req(api.Guild.view(self.id))))
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/gateway.py", line 30, in exec_req
+    return await self.requester.exec_req(r)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/requester.py", line 45, in exec_req
+    return await self.request(r.method, r.route, **r.params)
+  File "/home/muxue/.local/lib/python3.10/site-packages/khl/requester.py", line 32, in request
+    async with self._cs.request(method, f'{API}/{route}', **params) as res:
+  File "/home/muxue/.local/lib/python3.10/site-packages/aiohttp/client.py", line 1138, in __aenter__
+    self._resp = await self._coro
+  File "/home/muxue/.local/lib/python3.10/site-packages/aiohttp/client.py", line 466, in _request
+    with timer:
+  File "/home/muxue/.local/lib/python3.10/site-packages/aiohttp/helpers.py", line 721, in __exit__
+    raise asyncio.TimeoutError from None
+asyncio.exceptions.TimeoutError
+```
