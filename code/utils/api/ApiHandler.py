@@ -73,7 +73,7 @@ async def check_token_rate(token: str):
 
 
 # 基本画图操作
-async def base_img_request(params, list_shop, vp1='0', rp1='0'):
+async def base_img_request(params, list_shop, vp1=0, rp1=0):
     # 自定义背景
     if 'img_src' in params and 'http' in params['img_src']:
         img_src = params['img_src']
@@ -140,11 +140,11 @@ async def img_draw_request(request):
     if 'vp' not in params or 'rp' not in params:
         return await base_img_request(params, list_shop)
     else:
-        return await base_img_request(params, list_shop, params['vp'], params['rp'])
+        return await base_img_request(params, list_shop, int(params['vp']), int(params['rp']))
 
 
 # 登录+画图
-async def login_img_request(request,method:str="GET"):
+async def login_img_request(request,method = "GET"):
     params = request.rel_url.query
     if method=="POST":
         body = await request.content.read()
@@ -162,6 +162,9 @@ async def login_img_request(request,method:str="GET"):
     account = params['account']
     passwd = params['passwd']
     token = params['token']
+    isRaw = ('raw' in params) # 用户需要原始uuid
+    isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
+    # 检测token速率，避免撞墙
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}
@@ -191,11 +194,14 @@ async def login_img_request(request,method:str="GET"):
     resp = await fetch_daily_shop(userdict)  #获取每日商店
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = {'vp': '0', 'rp': '0'}  # 先初始化为0
-    if 'img_ratio' not in params or params['img_ratio'] != '1':
+    res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
+    if isimgRatio or isRaw:
         res_vprp = await fetch_vp_rp_dict(userdict)  # 只有16-9的图片需获取vp和r点
-    # 不管什么情况，都请求这个
-    return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
+    # 如果用户需要raw，则返回皮肤uuid和vp rp的dict
+    if isRaw:
+        return { "code":0,"message":"获取原始接口返回值成功","info":"get raw response success","storefront":resp,"wallet":res_vprp}
+    else:
+        return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
 
 
 # 邮箱验证的post
