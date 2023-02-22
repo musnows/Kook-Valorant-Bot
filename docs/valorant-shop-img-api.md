@@ -113,11 +113,47 @@ https://val.musnow.top/api/shop
 
 指定了raw参数的返回示例过长，参考 [shop-raw-resp.json](./shop-raw-resp.json)
 
-* `["storefront"]["SkinsPanelLayout"]` 是每日商店的结果，内部包含了4个皮肤uuid（注意是level 0 的uuid）、皮肤价格、商店剩余刷新时间
-* `["storefront"]["BonusStore"]` 是夜市，包含了皮肤uuid，折扣力度
+* `["storefront"]["SkinsPanelLayout"]` 是每日商店的结果，内部包含了4个皮肤uuid、皮肤价格、商店剩余刷新时间
+* `["storefront"]["BonusStore"]` 是夜市，包含了皮肤uuid，折扣力度;如果夜市没有开启，则不会有该字段
 * `["wallet"]` 是用户的钱包，直接提供了vp和rp字段
 
-获取到uuid后，您可以根据 [valorant-api](https://valorant-api.com/) 提供的接口，获取到皮肤的图片、各语言皮肤名字、和皮肤的等级（蓝紫橙）
+获取到uuid后，您可以根据 [valorant-api](https://valorant-api.com/) 提供的接口，获取到皮肤的图片、各语言皮肤名字、和皮肤的等级（蓝紫
+橙）
+
+其中需要注意的是，商店返回的结果是level0的uuid，并不是皮肤的主uuid。也就是说，您需要使用 `weapons/skinlevels` 接口来查询皮肤的情况
+
+```
+https://valorant-api.com/v1/weapons/skinlevels/
+```
+skinlevels 接口的返回值如下，提供了皮肤的名字和图片
+
+```json
+{
+    "status":200,
+    "data":{
+        "uuid":"155ba654-4afa-1029-9e71-e0b6962d5410","displayName":"Snowfall Wand",
+        "levelItem":null,
+        "displayIcon":"https://media.valorant-api.com/weaponskinlevels/155ba654-4afa-1029-9e71-e0b6962d5410/displayicon.png",
+        "streamedVideo":null,
+        "assetPath":"ShooterGame/Content/Equippables/Melee/Snowglobe/Levels/Melee_Snowglobe_Lv1_PrimaryAsset"
+    }
+}
+```
+个人更加建议，使用 `weapons/skins` 将所有皮肤的键值缓存到本地，直接在本地遍历查找
+```
+https://valorant-api.com/v1/weapons/skins
+```
+
+因为 `weapons/skinlevels` 接口返回的内容中，不包含皮肤的等级uuid，这需要你在本地遍历后找到 `"contentTierUuid"`, 再调用如下接口获取到皮肤的等级
+
+```
+https://valorant-api.com/v1/competitivetiers/{competitivetierUuid}
+```
+
+![resp-exp](https://img.kookapp.cn/assets/2023-02/LHAo1meQAP1jo0rj.png)
+
+还有一件事！部分皮肤返回结果中，是不带皮肤的图片的（我真的不理解为什么会这样）这也需要你遍历本地找皮肤图片！
+
 
 ### 3.2 tfa
 
