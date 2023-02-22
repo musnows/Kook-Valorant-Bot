@@ -124,8 +124,11 @@ class EzAuth:
                 elif "auth_failure" in r.text:
                     User2faCode[key]['err'] = f"[{key}] 2fa auth_failue"
                     raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
-                else: # 大概率是验证码错了
-                    User2faCode[key]['err'] = f"[{key}] auth_failue, maybe wrong 2fa code"
+                elif "multifactor_attempt_failed" in r.text: # 大概率是验证码错了
+                    User2faCode[key]['err'] = f"[{key}] 2fa auth_failue, multifactor_attempt_failed"
+                    raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
+                else:
+                    User2faCode[key]['err'] = f"[{key}] 2fa auth_failue, unkown err"
                     raise EzAuthExp.MultifactorError(User2faCode[key]['err'])
             else: # 2fa等待超出600s
                 User2faCode[key]['err']=f"[{key}] 2fa wait overtime, wait failed"
