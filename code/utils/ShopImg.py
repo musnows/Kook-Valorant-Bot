@@ -279,7 +279,7 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
 
 
 # 获取16比9的每日商店的图片
-async def get_shop_img_169(list_shop: dict, vp: str, rp: str, bg_img_src="err"):
+async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
     """ args:
      - list_shop: user daily shop skin dict
      - bg_img_src: background img url
