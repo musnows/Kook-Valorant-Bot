@@ -1,6 +1,7 @@
 import json
 import random
 import leancloud
+import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
 # 皮肤的评价
@@ -9,29 +10,38 @@ leancloud.init(config["leancloud"]["appid"], master_key=config["leancloud"]["mas
 
 # 获取皮肤评价的信息
 async def get_shop_rate(list_shop: dict, kook_user_id: str):
-    """
+    """皮肤评分和评价，用户不在err_user里面才显示\n
     { "sum":rate_avg,"lv":rate_lv,"text_list":rate_text,"count":rate_count }
     """
-    #皮肤评分和评价，用户不在err_user里面才显示
-    global SkinRateDict
+    # 初始化相关值
     rate_text = []
     rate_count = 0
     rate_total = 0
     rate_avg = 0 # 平均分
-    for sk in list_shop:
-        if sk in SkinRateDict['rate']:
-            rate_count += 1
-            rate_total += SkinRateDict['rate'][sk]['pit']
-            skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-            text = f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n" % skin_name
-            if len(SkinRateDict['rate'][sk]['cmt']) == 1:
-                ran = 0  #元素内只有1个评论，直接选定该评论
-            else:
-                ran = random.randint(0, len(SkinRateDict['rate'][sk]['cmt']) - 1)
-            text += f"「随机评论」 {SkinRateDict['rate'][sk]['cmt'][ran]}\n"
+    # leancould中搜索
+    query = leancloud.Query('SkinRate')
+    # 遍历用户的4个商店皮肤
+    for skin in list_shop:
+        # 查找数据库中和skin uuid相同的评价
+        query.equal_to('skinUuid',skin)
+        objlist = query.find()
+        if len(objlist) > 0: #找到了
+            obj = objlist[0]
+            rate_total += obj.get('rating') # 获取评分
+            skin_name = f"「{obj.get('skinName')}」" # 获取皮肤名
+            text = f"%-50s\t\t评分: {obj.get('rating')}\n" % skin_name
+            # 获取皮肤评价的list
+            cmt = obj.get('comment')
+            if len(cmt) == 0:# 元素内没有评论，出现错误
+                text += f"「随机评论」 NO CMT ERR\n"
+            else:# 有评论，生成随机数
+                ran = random.randint(0, len(cmt) - 1)
+                text += f"「随机评论」 {cmt[ran]}\n"
+            # 插入text
             rate_text.append(text)
 
     rate_lv = "皮肤评价数据仍待收集…"
+    rate_count = len(rate_text) # 直接计算长度
     if rate_count > 0:
         rate_avg = rate_total // rate_count
         #记录当日冠军和屌丝
