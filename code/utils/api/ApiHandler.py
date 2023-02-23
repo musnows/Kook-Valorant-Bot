@@ -15,7 +15,7 @@ TOKEN_RATE_LIMITED = 10
 # bot的token文件
 from utils.FileManage import config
 # 用来给kook上传文件的bot token
-api_bot_token = config['api_bot_token']
+api_bot_token = config['token']['api_bot_token']
 Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
@@ -30,9 +30,9 @@ img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 #     img = open(path,'rb')
 #     gLock.release()     # 释放锁
 #     # lsky的连接和token写入配置文件，方便修改
-#     url = f"{config['lsky_url']}/api/v1/upload"
+#     url = f"{config['lsky']['url']}/api/v1/upload"
 #     header = {
-#         "Authorization": f"Bearer {config['lsky_token']}",
+#         "Authorization": f"Bearer {config['lsky']['token']}",
 #         "Accept": "application/json"
 #     }
 #     params = {'strategy_id':3}
@@ -272,7 +272,7 @@ async def afd_request(request, bot):
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     #print(json.dumps(cm))
-    debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
+    debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
     await bot.client.send(debug_ch, cm)
     print(f"[{GetTime()}] trno:{params['data']['order']['out_trade_no']} afd-cm-send")
     return {"ec": 200, "em": "success"}

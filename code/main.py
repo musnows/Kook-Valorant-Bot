@@ -38,9 +38,9 @@ from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_sk
 # bot的token文件
 from utils.FileManage import config, Save_All_File
 # 用读取来的 config 初始化 bot，字段对应即可
-bot = Bot(token=config['token'])
+bot = Bot(token=config['token']['bot'])
 # 只用来上传图片的bot
-bot_upimg = Bot(token=config['img_upload_token'])
+bot_upimg = Bot(token=config['token']['img_upload_token'])
 
 # 设置全局变量：机器人开发者id/报错频道
 master_id = config['master_id']
@@ -2285,8 +2285,8 @@ async def proc_check(msg:Message,*arg):
 async def loading_channel_cookie():
     try:
         global debug_ch, cm_send_test
-        cm_send_test = await bot_upimg.client.fetch_public_channel(config["img_upload_channel"])
-        debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
+        cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
+        debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         print("[BOT.TASK] fetch_public_channel success")
     except:
         print("[BOT.TASK] fetch_public_channel failed")

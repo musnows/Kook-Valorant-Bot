@@ -252,7 +252,7 @@ async def replace_illegal_img(user_id: str, num: int):
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
         print(err_str)
-        debug_ch = await bot.fetch_public_channel(config['debug_ch'])
+        debug_ch = await bot.fetch_public_channel(config['channel']['debug_ch'])
         await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
 #计算用户背景图的list大小，避免出现空list的情况
@@ -301,7 +301,7 @@ async def get_vip_shop_bg_cm(msg: Message):
                 #把被ban的图片替换成默认的图片，打印url便于日后排错
                 err_str += f"[UnidentifiedImageError] url={VipShopBgDict['bg'][msg.author_id]['background'][i]}\n```"
                 await replace_illegal_img(msg.author_id, i)  #替换图片
-                debug_ch = await bot.fetch_public_channel(config['debug_ch']) 
+                debug_ch = await bot.fetch_public_channel(config['channel']['debug_ch']) 
                 await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
                 print(err_str)
                 return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
