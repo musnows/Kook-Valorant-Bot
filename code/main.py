@@ -31,7 +31,7 @@ from utils.Gtime import GetTime, GetTimeStampOf8AM
 from utils.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
 from utils.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
-from utils.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
+from utils.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate,update_shop_cmp
 from utils.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
 from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
@@ -2021,9 +2021,10 @@ async def auto_skin_notify():
         SkinRateDict["cmp"]["best"]["pit"] = 0
         SkinRateDict["cmp"]["worse"]["skin"] = list()
         SkinRateDict["cmp"]["worse"]["pit"] = 100
-        print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(15)")
-        #睡15s再开始遍历（避免时间不准）
-        await asyncio.sleep(15)
+        update_shop_cmp() # 更新数据库中的记录
+        print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(10)")
+        #睡10s再开始遍历（避免时间不准）
+        await asyncio.sleep(10)
         print("[BOT.TASK.NOTIFY] auto_skin_notify Start")
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)

@@ -113,3 +113,42 @@ async def check_shop_rate(kook_user_id: str, list_shop: list):
         return True
     else:
         return False
+
+# 每日早八，更新leancloud中的ShopCmp（被kill掉的时候也执行此函数）
+def update_shop_cmp():
+    """update shop rate in leancloud
+    """
+    try:
+        # 获取对象
+        ShopCmp = leancloud.Object.extend('ShopCmp')
+        query = ShopCmp.query
+        # 只更新昨日的
+        query.equal_to('today',False)
+        objlist = query.find()
+        if len(objlist) == 0:
+            raise Exception("leancloud find today err!")
+        # 开始更新，先设置为最差
+        platfrom = 'kook'
+        rate_avg = SkinRateDict["kkn"]["worse"]["pit"]
+        list_shop = SkinRateDict["kkn"]["worse"]["skin"]
+        kook_user_id = SkinRateDict["kkn"]["worse"]["kook_id"]
+        for i in objlist:
+            if(i.get('best')): # 是最佳 
+                if SkinRateDict["kkn"]["best"]["pit"] <= i.get('rating'): 
+                    continue # 当前用户分数小于数据库中的,不更新
+                # 设置值
+                rate_avg = SkinRateDict["kkn"]["best"]["pit"]
+                list_shop = SkinRateDict["kkn"]["best"]["skin"]
+                kook_user_id = SkinRateDict["kkn"]["best"]["kook_id"]
+            elif(SkinRateDict["kkn"]["worse"]["pit"] >= i.get('rating')): # 是最差，判断分数
+                continue # 如果本地用户好于数据库记录，不更新
+            
+            # 更新对象并保存
+            i.set('userId',kook_user_id)
+            i.set('skinList',list_shop)
+            i.set('rating',rate_avg)
+            i.set('platfrom',platfrom)
+            i.save()
+            print(f"[update_shop_cmp] saving best:{i.get('best')}")
+    except:
+        print(f"ERR! [update_shop_cmp]\n{traceback.format_exc()}")
