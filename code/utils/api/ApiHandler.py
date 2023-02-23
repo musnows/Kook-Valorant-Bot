@@ -162,7 +162,7 @@ async def login_img_request(request,method = "GET"):
     account = params['account']
     passwd = params['passwd']
     token = params['token']
-    isRaw = ('raw' in params) # 用户需要原始uuid
+    isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
     isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
     # 检测token速率，避免撞墙
     ck_ret = await check_token_rate(token)

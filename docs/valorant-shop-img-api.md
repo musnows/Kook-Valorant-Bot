@@ -24,15 +24,15 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 
 ## 1.使用示例
 
-查询每日商店的链接如下，调用`/shop-img`接口，浏览器会直接跳转图片，适合普通用户快捷查看当日每日商店
+查询每日商店的链接如下，调用 `/shop-img` 接口，浏览器会直接跳转图片，适合普通用户快捷查看当日每日商店
 
-由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户
+由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户，也不建议开发者调用
 
 ~~~
 https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码
 ~~~
 
-直接丢浏览器里面打开就行，想看商店直接用这个链接看就行辣，可以浏览器收藏一下哦！
+补充好上面的链接后，直接丢浏览器里面打开就OK。可以浏览器收藏一下，方便后续查看！
 
 * 添加第四个参数`&img_src=图片url`，此参数用于自定义背景图
 * 添加第五个参数`&img_ratio=图片比例`，将此参数设置为`1`，代表背景图是 `1-1` 的正方形，最终的成果图也将是正方形；默认比例为 `16-9`
@@ -44,7 +44,7 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
 ~~~
 
-如果背景图是1-1的正方形
+如果背景图是正方形（1-1）
 ~~~
 https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
 ~~~
@@ -99,7 +99,16 @@ https://val.musnow.top/api/shop
 | passwd     | 拳头账户密码          | string|是       |
 | img_src    | 自定义背景图的url链接 | string | 否       |
 | img_ratio    | 自定义返回图比例，值为1代表正方形 | int |否       |
-| raw    | 获取Riot接口的原始响应（不会返回画图结果） | int | 否       |
+| raw    | 设置为1，获取Riot接口的原始响应（不画图） | int | 否       |
+
+```python
+# 用户需要原始uuid
+# raw参数在params中，且该参数不为0
+isRaw = ('raw' in params and str(params['raw']) != '0')
+# 判断是否有指定图片比例
+# img_ratio在params中，且该参数不为非1
+isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1')
+```
 
 返回示例
 
