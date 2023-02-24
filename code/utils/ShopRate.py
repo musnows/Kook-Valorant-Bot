@@ -174,6 +174,43 @@ async def update_ShopCmp():
     except:
         print(f"ERR! [update_shop_cmp]\n{traceback.format_exc()}")
 
+# 获取昨日最好/最差用户
+async def get_ShopCmp():
+    """Return:{
+        "status": True/False
+        "best":{
+            "skin_list": list of 4 skin uuid,
+            "rating": avg_rating,
+            "platform": str
+        }
+        "worse":{
+            "skin_list": list of 4 skin uuid,
+            "rating": avg_rating,
+            "platform": str
+        }
+    }
+    """
+    query = leancloud.Query('ShopCmp')
+    query.exists('rating') # 通过键值是否存在，进行查找
+    objlist = query.find()
+    ret = {"status":False}
+    if len(objlist) == 2: # 应该是有两个的
+        ret['status'] = True
+        for i in objlist:
+            infoDict = {
+                'skin_list':i.get('skinList'),
+                'rating': i.get('rating'),
+                'platform':i.get('platform')
+            }
+            # 是最好
+            if i.get('best'):
+                ret['best'] = infoDict
+            else: # 是最差
+                ret['worse'] = infoDict
+    # 返回
+    return ret
+    
+
 # 获取可以购买皮肤的相关信息
 async def query_UserCmt(user_id:str):
     """Return

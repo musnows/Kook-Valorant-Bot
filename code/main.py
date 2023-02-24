@@ -1747,7 +1747,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             cm.append(c)
             # 设置成功并删除list后，再发送提醒事项设置成功的消息
             await msg.reply(cm)
-            print(f"[rts] Au:{msg.author_id} ", text1)
+            print(f"[{GetTime()}] [rts] Au:{msg.author_id} ", text1)
         else:
             await msg.reply(f"您需要执行 `/rate 皮肤名` 来查找皮肤\n再使用 `/rts` 进行选择")
 
@@ -1765,29 +1765,41 @@ async def rate_skin_select(msg: Message):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
         return
     try:
+        # 从数据库中获取
+        cmpRet = await ShopRate.get_ShopCmp()
+        if not cmpRet['status']:
+            await msg.reply(f"获取昨日天选之子和丐帮帮主出错！请重试或联系开发者")
+            return
+        
         cm = CardMessage()
         c = Card(Module.Header(f"来看看昨日天选之子和丐帮帮主吧！"), Module.Divider())
         # best
         text = ""
-        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {SkinRateDict['kkn']['best']['pit']}", Types.Text.KMD)))
-        for sk in SkinRateDict['kkn']['best']['skin']:
-            if sk in SkinRateDict['rate']:
-                skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-                text += f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n" % skin_name
+        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {cmpRet['best']['rating']}", Types.Text.KMD)))
+        c.append(Module.Context(f"来自 {cmpRet['best']['platform']} 平台"))
+        for sk in cmpRet['best']['skin_list']:
+            # 数据库中获取一个皮肤的评分情况
+            skinRet = await ShopRate.query_SkinRate(sk)
+            if skinRet['status']:
+                skin_name = f"「{skinRet['skin_name']}」"
+                text += f"%-50s\t\t评分: {skinRet['rating']}\n" % skin_name
         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c.append(Module.Divider())
         # worse
         text = ""
-        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {SkinRateDict['kkn']['worse']['pit']}", Types.Text.KMD)))
-        for sk in SkinRateDict['kkn']['worse']['skin']:
-            if sk in SkinRateDict['rate']:
-                skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-                text += f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n" % skin_name
+        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {cmpRet['worse']['rating']}", Types.Text.KMD)))
+        c.append(Module.Context(f"来自 {cmpRet['worse']['platform']} 平台"))
+        for sk in cmpRet['worse']['skin_list']:
+            # 数据库中获取一个皮肤的评分情况
+            skinRet = await ShopRate.query_SkinRate(sk)
+            if skinRet['status']:
+                skin_name = f"「{skinRet['skin_name']}」"
+                text += f"%-50s\t\t评分: {skinRet['rating']}\n" % skin_name
         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
 
-        print(f"[kkn] SkinRateDict save success!")
+        print(f"[{GetTime()}] [kkn] reply success")
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
         await APIRequestFailed_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
     except Exception as result:  # 其他错误
