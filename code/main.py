@@ -915,7 +915,7 @@ async def check_UserAuthDict_len(msg: Message):
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
+async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {apSave}")
     log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden, login_rate_limit, UserTokenDict, UserAuthDict
@@ -1029,7 +1029,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
 
 
 @bot.command(name='tfa')
-async def auth_2fa(msg: Message, key: str, tfa: str, *arg):
+async def tfa_verify(msg: Message, key: str, tfa: str, *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /2fa")
     if len(tfa) != 6:
         await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：{tfa}")
@@ -1051,7 +1051,7 @@ async def auth_2fa(msg: Message, key: str, tfa: str, *arg):
 
 # 退出登录
 @bot.command(name='logout')
-async def logout_authtoken(msg: Message, *arg):
+async def logout(msg: Message, *arg):
     logging(msg)
     try:
         global UserTokenDict, UserAuthDict
@@ -1060,14 +1060,21 @@ async def logout_authtoken(msg: Message, *arg):
             await msg.reply(cm)
             return
 
-        #如果id存在， 删除id
-        del UserAuthDict[msg.author_id]  #先删除auth对象
+        log_text = f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        # 如果id存在，删除auth对象
+        # 因为UserTokenDict里面只存放了用户游戏名/uuid，且不作为是否登录的判断，所以不需要删除
+        del UserAuthDict[msg.author_id] 
+        # 如果是vip用户，删除本地保存的cookie
+        cookie_path = f"./log/cookie/{msg.author_id}.cke"
+        # 判断路径是否存在，存在直接删除
+        if os.path.exists(cookie_path):
+            os.remove(cookie_path) # 删除文件
+            log_text+= " - rm cookie file"
+
         text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
         await msg.reply(cm)
-        print(
-            f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        )
+        print(log_text)
 
     except Exception as result:  # 其他错误
         await BaseException_Handler("logout", traceback.format_exc(), msg, bot)
