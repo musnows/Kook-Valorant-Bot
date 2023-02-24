@@ -1,10 +1,11 @@
-import json
+import zhconv
 import random
 import leancloud
 import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
 # 皮肤的评价
+from utils.valorant import Val
 from utils.FileManage import config,SkinRateDict
 leancloud.init(config["leancloud"]["appid"], master_key=config["leancloud"]["master_key"])
 
@@ -150,3 +151,78 @@ def update_shop_cmp():
             print(f"[update_shop_cmp] saving best:{i.get('best')}")
     except:
         print(f"ERR! [update_shop_cmp]\n{traceback.format_exc()}")
+
+# 通过名字查找可以购买的皮肤，并返回一个list
+async def get_available_skinlist(name:str):
+    """name must be zh-CN
+    Return: [{'skin': [{'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}], 'price': price}]
+    """
+    name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
+    sklist = Val.fetch_skin_list_byname(name)
+    if sklist == []:  #空list代表这个皮肤不在里面
+        return []
+
+    retlist = list()  # 用于返回的list
+    for s in sklist:
+        # 查找皮肤价格
+        # 因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
+        res_price = Val.fetch_item_price_bylist(s['lv_uuid'])
+        if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
+            price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+            data = {'skin': s, 'price': price}
+            retlist.append(data)
+
+    return retlist
+
+# 获取可以购买皮肤的相关信息
+async def query_UserCmt(user_id:str):
+    """Return
+     A list containing the skin evaluated by the user,
+    """
+    query = leancloud.Query('UserCmt')
+    query.equal_to('platform', 'kook')
+    query.equal_to('userId', user_id) # 查找usercmt中有没有该用户
+    objlist = query.find()
+    print(objlist)
+    if len(objlist) > 0 : # 存在 
+        # 获取这个用户评价过的皮肤列表
+        return objlist[0].get('skinList') 
+    else: # 不存在
+        return []
+
+# 获取可以购买皮肤的相关信息的text
+async def get_skinlist_rate_text(skinlist:list,user_id:str):
+    """Args:
+    - skinlist: return of get_available_skinlist()
+    - user_id: kook user_id
+
+    Return { "text":text,"sum":len(get_skinlist_rate_text)}\n
+    - text: rating info of the skin in list\n
+    - sum: the total skin rating by user\n
+    `√ rate by user_id`,`+ rate by other_user`,`- no one rate`
+    """
+    # 获取该用户已评价的皮肤列表
+    userCmtList = await query_UserCmt(user_id)
+    print(userCmtList)
+    i=0
+    query = leancloud.Query('UserRate')
+    query.equal_to('platform', 'kook')
+    text = ""  # 模拟一个选择表
+    for w in skinlist:
+        # 先插入皮肤名字和皮肤价格
+        text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}"
+        # 情况1，当前用户评价过这个皮肤
+        if w['skin']['lv_uuid'] in userCmtList:
+            text += " √\n"
+        else:
+            query.equal_to('skinUuid', w['skin']['lv_uuid'])
+            objlist = query.find()
+            # 情况2，其他用户评价过这个皮肤
+            if len(objlist)>0: # 数据库中找到了其他用户的评价
+                text += " +\n"
+            else: # 情况3，无人问津
+                text += " -\n"
+        # 标号+1
+        i += 1
+    # 返回结果
+    return { "text":text,"sum":len(userCmtList)}

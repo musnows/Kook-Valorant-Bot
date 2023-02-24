@@ -19,6 +19,7 @@ from aiohttp import client_exceptions
 from PIL import Image,  UnidentifiedImageError  # 用于合成图片
 from riot_auth import RiotAuth, auth_exceptions
 
+from utils import ShopRate
 from utils.Help import help_main, help_val, help_develop
 from utils.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
 from utils.Other import weather
@@ -31,7 +32,6 @@ from utils.Gtime import GetTime, GetTimeStampOf8AM
 from utils.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
 from utils.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
-from utils.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate,update_shop_cmp
 from utils.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
 from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
@@ -864,7 +864,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
+from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict,SkinRateDict
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}
@@ -1325,7 +1325,7 @@ async def get_daily_shop(msg: Message, *arg):
 
             #皮肤评分和评价，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
             if not check_rate_err_user(msg.author_id):
-                cm = await get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
+                cm = await ShopRate.get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
                 end = time.perf_counter()  #计算获取评分的时间
             # 更新消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1653,51 +1653,26 @@ async def rate_skin_add(msg: Message, *arg):
         return
     try:
         name = " ".join(arg)
-        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist = fetch_skin_list_byname(name)
-        if sklist == []:  #空list代表这个皮肤不在里面
-            await msg.reply(f"该皮肤不在列表中，请重新查询！")
+        retlist = await ShopRate.get_available_skinlist(name)
+        if retlist == []:  # 空list，有问题
+            await msg.reply(f"该皮肤不在列表中[或没有价格]，请重新查询！")
             return
 
-        retlist = list()  #用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
-        for s in sklist:
-            res_price = fetch_item_price_bylist(s['lv_uuid'])
-            if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                data = {'skin': s, 'price': price}
-                retlist.append(data)
-
-        if retlist == []:  #空list代表这个皮肤没有价格
-            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
-            return
-
+        # 将皮肤list插入到选择列表中，用户使用/rts命令选择
         UserRtsDict[msg.author_id] = retlist
-        sum = 0
-        usrin = msg.author_id in SkinRateDict['data']
-        if usrin:
-            sum = len(SkinRateDict['data'][msg.author_id])
-        i = 0
-        text = "```\n"  #模拟一个选择表
-        for w in retlist:
-            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}"
-            i += 1
-            if usrin and w['skin']['lv_uuid'] in SkinRateDict['data'][msg.author_id]:
-                text += " √\n"
-            elif w['skin']['lv_uuid'] in SkinRateDict['rate']:
-                text += " +\n"
-            else:
-                text += " -\n"
+        # 获取选择列表的text
+        ret = await ShopRate.get_skinlist_rate_text(retlist,msg.author_id)
+        text = f"```\n{ret['text']}```"
 
-        text += "```"
         cm = CardMessage()
         c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"), Module.Section(Element.Text(text, Types.Text.KMD)),
-                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分; √代表您已评价过该皮肤，+代表已有玩家评价，-代表无人评价\n", Types.Text.KMD)))
+                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分;\n√代表您已评价过该皮肤，+已有玩家评价，-无人评价\n", Types.Text.KMD)))
         text1 = "```\n/rts 序号 评分 吐槽\n"
         text1 += "序号：上面列表中的皮肤序号\n"
         text1 += "评分：给皮肤打分，范围0~100\n"
         text1 += "吐槽：说说你对这个皮肤的看法\n"
         text1 += "吐槽的时候请注意文明用语！\n```\n"
-        text1 += f"您已经评价过了 {sum} 个皮肤"
+        text1 += f"您已经评价过了 {ret['sum']} 个皮肤"
         c.append(Module.Section(Element.Text(text1, Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
@@ -2030,7 +2005,7 @@ async def auto_skin_notify():
         SkinRateDict["cmp"]["best"]["pit"] = 0
         SkinRateDict["cmp"]["worse"]["skin"] = list()
         SkinRateDict["cmp"]["worse"]["pit"] = 100
-        update_shop_cmp() # 更新数据库中的记录
+        ShopRate.update_shop_cmp() # 更新数据库中的记录
         print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(10)")
         #睡10s再开始遍历（避免时间不准）
         await asyncio.sleep(10)
@@ -2066,7 +2041,7 @@ async def auto_skin_notify():
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
-                        await check_shop_rate(vip, list_shop)  #计算用户商店得分
+                        await ShopRate.check_shop_rate(vip, list_shop)  #计算用户商店得分
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
                         UserShopDict[vip] = {}
                         UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
@@ -2165,7 +2140,7 @@ async def auto_skin_notify():
                         else:
                             resp = await fetch_daily_shop(userdict)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                            await check_shop_rate(vip, list_shop)  #计算非vip用户商店得分
+                            await ShopRate.check_shop_rate(vip, list_shop)  #计算非vip用户商店得分
 
                         # 然后再遍历列表查看是否有提醒皮肤
                         # 关于下面这一行参考 https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
