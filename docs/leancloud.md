@@ -12,7 +12,7 @@
 
 ----
 
-目前设置了3个class，字段如下：
+目前设置了多个class，字段如下：
 
 ## 1.SkinRate
 
@@ -56,3 +56,21 @@
 | skinList | ARRAY | 商店4个皮肤 uuid | 是 |
 | platform | STRING | 平台 | 是  |
 | userId | STRING | 用户平台id | 否 |
+
+建议在本地维护一个当天（8am之后）的用户最好/最差商店信息，并在次日8am更新到数据库。数据库中维护的是**昨日商店**的最高分/最低分。
+
+由于leancloud的结构化数据存储并不是[线程安全](https://docs.leancloud.cn/sdk/storage/guide/python/#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)的，为了避免多个项目同时在8am访问并更新ShopCmp，请加入开发者频道和我确认，约定一个时间（不同项目错开）来更新数据!
+
+## 4.UserCmt
+
+用户user_id和其评论过的皮肤uuid的对照表
+
+| 字段 | 类型 | 含义 | 是否必填 | 
+| --- | --- | --- | ------- | 
+| skinList | ARRAY | 用户评价过的所有皮肤uuid | 是 |
+| platform | STRING | 平台 | 是  |
+| userId | STRING | 用户平台id | 是 |
+
+此字段是采用“以空间换时间的”思路，如果不维护此表，则需要**遍历**UserRate中的所有评论，找到该用户已评论皮肤，并不是很友好。
+
+如果你的平台并没有用户id，也不需要获取某一用户已评论皮肤列表，则可以不维护此class。
