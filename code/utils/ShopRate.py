@@ -230,6 +230,29 @@ async def query_UserCmt(user_id:str):
         return objlist[0].get('skinList') 
     else: # 不存在
         return []
+    
+# 更新用户已评价皮肤
+async def update_UserCmt(user_id:str,skin_uuid:str):
+    # 初始化为只有当前皮肤uuid的list
+    skinList = [ skin_uuid ]
+    UserCmt = leancloud.Object.extend('UserCmt')
+    query = UserCmt.query
+    # 先查找是否有userid和平台都相同的obj（如有，直接更新评论、评分、时间）
+    query.equal_to('userId', user_id)
+    query.equal_to('platform','kook')
+    objlist = query.find()
+    if len(objlist)>0: # 有，更新
+        obj = objlist[0]
+        skinList = obj.get('skinList')
+        skinList.append(skin_uuid)
+    else: # 没有，新建
+        obj = UserCmt()
+        obj.set('platform','kook')
+        obj.set('userId',user_id)
+
+    obj.set('skinList',skinList)
+    obj.save() # 保存
+
 
 # 获取可以购买皮肤的相关信息的text
 async def get_skinlist_rate_text(skinlist:list,user_id:str):

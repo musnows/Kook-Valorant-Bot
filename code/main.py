@@ -1719,8 +1719,11 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
                 else:  # 差值过大，不计入皮肤平均值
                     point = skin_rate['rating']
                     text2 += f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
-
-            # 无论用户在不在，都设置键值
+            
+            # 用户之前没有评价过，新建键值
+            if msg.author_id not in SkinRateDict['data']:
+                SkinRateDict['data'][msg.author_id] = {}
+            # 设置uuid的键值
             SkinRateDict['data'][msg.author_id][skin_uuid] = {}
             SkinRateDict['data'][msg.author_id][skin_uuid]['name'] = S_skin['skin']['displayName']
             SkinRateDict['data'][msg.author_id][skin_uuid]['cmt'] = comment
@@ -1729,6 +1732,8 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
             # 数据库添加该评论
             await ShopRate.update_UserRate(skin_uuid,SkinRateDict['data'][msg.author_id][skin_uuid],msg.author_id)
+            # 更新用户已评价的皮肤
+            await ShopRate.update_UserCmt(msg.author_id,skin_uuid)
 
             text1 += f"评价成功！{S_skin['skin']['displayName']}"
             text2 += f"您的评分：{_rating}\n"
