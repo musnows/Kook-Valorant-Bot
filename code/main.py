@@ -1705,6 +1705,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             S_skin = UserRtsDict[msg.author_id][_index]
             skin_uuid = S_skin['skin']['lv_uuid']
             comment = " ".join(arg)  #用户对此皮肤的评论
+            point = _rating # 初始化分数
             text1 = ""
             text2 = ""
             # 先从leancloud获取该皮肤的分数
@@ -1714,12 +1715,12 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
                 if abs(float(_rating) - skin_rate['rating']) <= 32:
                     # 计算分数
                     point = (skin_rate['rating'] + float(_rating)) / 2
-                    # 更新数据库中皮肤评分
-                    await ShopRate.update_SkinRate(skin_uuid,point)
                 else:  # 差值过大，不计入皮肤平均值
                     point = skin_rate['rating']
                     text2 += f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
             
+            # 更新数据库中皮肤评分
+            await ShopRate.update_SkinRate(skin_uuid,S_skin['skin']['displayName'],point)
             # 用户之前没有评价过，新建键值
             if msg.author_id not in SkinRateDict['data']:
                 SkinRateDict['data'][msg.author_id] = {}
@@ -1744,7 +1745,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             cm.append(c)
             # 设置成功并删除list后，再发送提醒事项设置成功的消息
             await msg.reply(cm)
-            print(f"[{GetTime()}] [rts] Au:{msg.author_id} ", text1)
+            print(f"[{GetTime()}] [rts] Au:{msg.author_id} {text1} {skin_uuid}")
         else:
             await msg.reply(f"您需要执行 `/rate 皮肤名` 来查找皮肤\n再使用 `/rts` 进行选择")
 

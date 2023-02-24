@@ -347,20 +347,22 @@ async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
 
 
 # 更新皮肤评分
-async def update_SkinRate(skin_uuid:str,rating:float):
-    """
-    - True: update rating success
-    - False: skin_uuid not found
-    """
-    query = leancloud.Query('SkinRate')
+async def update_SkinRate(skin_uuid:str,skin_name:str,rating:float):
+    SkinRate = leancloud.Object.extend('SkinRate')
+    query = SkinRate.query
     query.equal_to('skinUuid', skin_uuid)
     objlist = query.find()
     if len(objlist) > 0: # 找到了
-        # 更新评分
-        objlist[0].set('rating',rating)
-        objlist[0].save() # 保存
-        return True
-    return False
+        obj = objlist[0]
+    else:
+        obj = SkinRate()
+        obj.set('skinUuid',skin_uuid)
+        obj.set('skinName',skin_name)
+
+    # 更新评分
+    obj.set('rating',rating)
+    obj.save() # 保存
+
 
 # 删除皮肤评价（违规言论）
 async def remove_UserRate(skin_uuid:str,user_id:str):
