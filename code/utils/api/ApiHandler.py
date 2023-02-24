@@ -5,14 +5,13 @@ import traceback
 # import requests
 # import asyncio
 from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
-from utils.api.ApiToken import token_ck, ApiTokenDict, save_token_files
+from utils.api.ApiToken import check_token_rate
 from utils.Gtime import GetTime
 from utils.KookApi import kook_create_asset
 from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from utils.ShopImg import get_shop_img_11, get_shop_img_169
 
-TOKEN_RATE_LIMITED = 10
-# bot的token文件
+# bot的配置文件
 from utils.FileManage import config
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
@@ -44,32 +43,6 @@ img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 #         return {'code':0,'data':ret['data']['links'],'message':ret['message']}
 #     # 上传失败
 #     return {'code':200,'data':ret['data'],'message':ret['message']}
-
-# 检测速率（一分钟只允许10次）
-async def check_token_rate(token: str):
-    ret = await token_ck(token)
-    if ret:
-        cur_time = time.time()
-        time_diff = cur_time - ApiTokenDict['data'][token]['rate_time']
-        ApiTokenDict['data'][token]['sum'] += 1
-        if ApiTokenDict['data'][token]['rate_nums'] == 0:  #初次使用
-            ApiTokenDict['data'][token]['rate_time'] = cur_time
-            ApiTokenDict['data'][token]['rate_nums'] = 1
-            save_token_files("token init use")
-            return {'status': True, 'message': 'first use', 'info': '一切正常'}
-        elif time_diff <= 60:  #时间在60s以内
-            if ApiTokenDict['data'][token]['rate_nums'] > TOKEN_RATE_LIMITED:
-                return {'status': False, 'message': 'token rate limited!', 'info': '速率限制，请稍后再试'}
-            else:  #没有引发速率限制
-                ApiTokenDict['data'][token]['rate_nums'] += 1
-                return {'status': True, 'message': 'time_diff <= 60, in rate', 'info': '一切正常'}
-        else:  #时间超过60
-            save_token_files("rate check")
-            ApiTokenDict['data'][token]['rate_time'] = cur_time
-            ApiTokenDict['data'][token]['rate_nums'] = 0
-            return {'status': True, 'message': 'time_diff > 60', 'info': '一切正常'}
-    else:
-        return {'status': False, 'message': 'token not in dict', 'info': '无效token'}
 
 
 # 基本画图操作
