@@ -1611,19 +1611,11 @@ async def set_rate_err_user(msg: Message, user_id: str):
         await msg.reply(f"该用户已在SkinRateDict['err_user']列表中")
     elif user_id in SkinRateDict['data']:
         for skin, info in SkinRateDict['data'][user_id].items():
-            i = 0
-            while (i < len(SkinRateDict['rate'][skin]['cmt'])):
-                #找到这条评论，将其删除
-                if info['cmt'] == SkinRateDict['rate'][skin]['cmt'][i]:
-                    SkinRateDict['rate'][skin]['cmt'].pop(i)
-                    break
-                i += 1
-            #如果删除评论之后，链表为空，说明该链表中只有这一个评论
-            if not SkinRateDict['rate'][skin]['cmt']:  #空列表视为false
-                #删除掉这个皮肤的rate
-                del SkinRateDict['rate'][skin]
+            # 找到这条评论，将其删除
+            if not await ShopRate.remove_UserRate(skin,user_id):
+                await msg.reply(f"Au:{user_id} 删除 {skin} [{info['name']}] 错误")
 
-        #删除完该用户的所有评论之后，将其放入err_user
+        # 删除完该用户的所有评论之后，将其放入err_user
         temp_user = copy.deepcopy(SkinRateDict['data'][user_id])
         del SkinRateDict['data'][user_id]
         SkinRateDict['err_user'][user_id] = temp_user

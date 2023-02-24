@@ -333,3 +333,20 @@ async def update_SkinRate(skin_uuid:str,rating:float):
         objlist[0].save() # 保存
         return True
     return False
+
+# 删除皮肤评价（违规言论）
+async def remove_UserRate(skin_uuid:str,user_id:str):
+    """
+    - True: remove success
+    - False: skin_uuid or user_id not found
+    """
+    query = leancloud.Query('UserRate')
+    query.equal_to('skinUuid', skin_uuid)
+    query.equal_to('userId', user_id)
+    objlist = query.find()
+    # 找到了，直接删除
+    if len(objlist) > 0:
+        objlist[0].destroy()
+        return True
+    
+    return False
