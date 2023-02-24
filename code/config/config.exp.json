@@ -17,5 +17,6 @@
   "leancloud":{
     "appid":"leancloud数据库的appid（可联系作者，共用皮肤评价数据库）",
     "master_key":"leancloud数据库的masterkey"
-  }
+  },
+  "no":1000
 }

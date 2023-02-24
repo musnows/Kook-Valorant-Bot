@@ -77,15 +77,17 @@ async def Save_File_Task():
 
 
 @bot.command(name='kill')
-async def KillBot(msg: Message, *arg):
+async def KillBot(msg: Message,num:str, *arg):
     logging(msg)
-    if msg.author_id == master_id:
+    if msg.author_id == master_id and int(num)==config['no']:
         # 保存所有文件
         await Save_All_File(False)
         await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
         res = await bot_offline()  # 调用接口下线bot
         print(f"[KILL] [{GetTime()}] bot-off: {res}\n")
         os._exit(0)  # 退出程序
+    else:
+        await msg.reply(f"您没有权限或参数错误！\n本Bot编号为：{config['no']}")
 
 
 ##########################################################################################
