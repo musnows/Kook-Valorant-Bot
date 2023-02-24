@@ -1715,49 +1715,32 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             comment = " ".join(arg)  #用户对此皮肤的评论
             text1 = ""
             text2 = ""
-            # 如果rate里面没有，先创立键值
-            if skin_uuid not in SkinRateDict['rate']:
-                SkinRateDict['rate'][skin_uuid] = {}
-                SkinRateDict['rate'][skin_uuid]['pit'] = 0
-                SkinRateDict['rate'][skin_uuid]['cmt'] = list()
-            if SkinRateDict['rate'][skin_uuid]['pit'] == 0:
-                point = float(_rating)
-            elif abs(float(_rating) - SkinRateDict['rate'][skin_uuid]['pit']) <= 32:
+            # 先从leancloud获取该皮肤的分数
+            skin_rate = await ShopRate.query_SkinRate(skin_uuid)
+            if skin_rate['status']: # 找到了
                 #用户的评分和皮肤平均分差值不能超过32，避免有人乱刷分
-                point = (SkinRateDict['rate'][skin_uuid]['pit'] + float(_rating)) / 2
-            else:  #差值过大，不计入皮肤平均值
-                point = SkinRateDict['rate'][skin_uuid]['pit']
-                text2 += f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
-            # 设置皮肤的评分和评论
-            SkinRateDict['rate'][skin_uuid]['pit'] = point
-            SkinRateDict['rate'][skin_uuid]['name'] = S_skin['skin']['displayName']
-            SkinRateDict['rate'][skin_uuid]['cmt'].append(comment)
-            # data内是记录xx用户评论了xx皮肤
-            if msg.author_id in SkinRateDict['data']:
-                #如果用户之前已经评论过这个皮肤，则需要删除之前的评论
-                if skin_uuid in SkinRateDict['data'][msg.author_id]:
-                    i = 0
-                    while (i < len(SkinRateDict['rate'][skin_uuid]['cmt'])):
-                        #找到这条评论，将其删除
-                        if SkinRateDict['data'][
-                                msg.author_id][skin_uuid]['cmt'] == SkinRateDict['rate'][skin_uuid]['cmt'][i]:
-                            SkinRateDict['rate'][skin_uuid]['cmt'].pop(i)
-                            text1 += "更新"
-                            break
-                        i += 1
-            else:  #用户不存在，创建用户的dict
-                SkinRateDict['data'][msg.author_id] = {}
-            #无论用户在不在，都设置键值
+                if abs(float(_rating) - skin_rate['rating']) <= 32:
+                    # 计算分数
+                    point = (skin_rate['rating'] + float(_rating)) / 2
+                    # 更新数据库中皮肤评分
+                    await ShopRate.update_SkinRate(skin_uuid,point)
+                else:  # 差值过大，不计入皮肤平均值
+                    point = skin_rate['rating']
+                    text2 += f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
+
+            # 无论用户在不在，都设置键值
             SkinRateDict['data'][msg.author_id][skin_uuid] = {}
             SkinRateDict['data'][msg.author_id][skin_uuid]['name'] = S_skin['skin']['displayName']
             SkinRateDict['data'][msg.author_id][skin_uuid]['cmt'] = comment
             SkinRateDict['data'][msg.author_id][skin_uuid]['pit'] = point
-            SkinRateDict['data'][msg.author_id][skin_uuid]['time'] = GetTime()
+            SkinRateDict['data'][msg.author_id][skin_uuid]['time'] = int(time.time()) # 秒级
             SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
+            # 数据库添加该评论
+            await ShopRate.update_UserRate(skin_uuid,SkinRateDict['data'][msg.author_id][skin_uuid],msg.author_id)
 
             text1 += f"评价成功！{S_skin['skin']['displayName']}"
             text2 += f"您的评分：{_rating}\n"
-            text2 += f"皮肤平均分：{SkinRateDict['rate'][skin_uuid]['pit']}\n"
+            text2 += f"皮肤平均分：{point}\n"
             text2 += f"您的评语：{comment}"
             cm = CardMessage()
             c = Card(Module.Header(text1), Module.Divider(), Module.Section(Element.Text(text2, Types.Text.KMD)))
@@ -2005,7 +1988,7 @@ async def auto_skin_notify():
         SkinRateDict["cmp"]["best"]["pit"] = 0
         SkinRateDict["cmp"]["worse"]["skin"] = list()
         SkinRateDict["cmp"]["worse"]["pit"] = 100
-        ShopRate.update_shop_cmp() # 更新数据库中的记录
+        await ShopRate.update_ShopCmp() # 更新数据库中的记录
         print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(10)")
         #睡10s再开始遍历（避免时间不准）
         await asyncio.sleep(10)
