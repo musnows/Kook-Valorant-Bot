@@ -8,6 +8,7 @@ from khl.card import Card, CardMessage, Module, Element, Types
 from utils.valorant import Val
 from utils.FileManage import config,SkinRateDict
 leancloud.init(config["leancloud"]["appid"], master_key=config["leancloud"]["master_key"])
+PLATFORM = "kook"
 
 # 获取皮肤评价的信息
 async def get_shop_rate(list_shop: dict, kook_user_id: str):
@@ -154,7 +155,6 @@ async def update_ShopCmp():
         if len(objlist) == 0:
             raise Exception("leancloud find today err!")
         # 开始更新，先设置为最差
-        platfrom = 'kook'
         rate_avg = SkinRateDict["kkn"]["worse"]["pit"]
         list_shop = SkinRateDict["kkn"]["worse"]["skin"]
         kook_user_id = SkinRateDict["kkn"]["worse"]["kook_id"]
@@ -173,7 +173,7 @@ async def update_ShopCmp():
             i.set('userId',kook_user_id)
             i.set('skinList',list_shop)
             i.set('rating',rate_avg)
-            i.set('platfrom',platfrom)
+            i.set('platform',PLATFORM)
             i.save()
             print(f"[update_shop_cmp] saving best:{i.get('best')}")
     except:
@@ -222,7 +222,7 @@ async def query_UserCmt(user_id:str):
      A list containing the skin evaluated by the user,
     """
     query = leancloud.Query('UserCmt')
-    query.equal_to('platform', 'kook')
+    query.equal_to('platform', PLATFORM)
     query.equal_to('userId', user_id) # 查找usercmt中有没有该用户
     objlist = query.find()
     if len(objlist) > 0 : # 存在 
@@ -239,7 +239,7 @@ async def update_UserCmt(user_id:str,skin_uuid:str):
     query = UserCmt.query
     # 先查找是否有userid和平台都相同的obj（如有，直接更新评论、评分、时间）
     query.equal_to('userId', user_id)
-    query.equal_to('platform','kook')
+    query.equal_to('platform',PLATFORM)
     objlist = query.find()
     if len(objlist)>0: # 有，更新
         obj = objlist[0]
@@ -247,7 +247,7 @@ async def update_UserCmt(user_id:str,skin_uuid:str):
         skinList.append(skin_uuid)
     else: # 没有，新建
         obj = UserCmt()
-        obj.set('platform','kook')
+        obj.set('platform',PLATFORM)
         obj.set('userId',user_id)
 
     obj.set('skinList',skinList)
@@ -269,7 +269,7 @@ async def get_skinlist_rate_text(skinlist:list,user_id:str):
     userCmtList = await query_UserCmt(user_id)
     i=0
     query = leancloud.Query('UserRate')
-    query.equal_to('platform', 'kook')
+    query.equal_to('platform', PLATFORM)
     text = ""  # 模拟一个选择表
     for w in skinlist:
         # 先插入皮肤名字和皮肤价格
@@ -336,7 +336,7 @@ async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
         obj = UserRate()
         obj.set('skinUuid',skin_uuid)
         obj.set('skinName',rate_info['name'])
-        obj.set('platform','kook')
+        obj.set('platform',PLATFORM)
         obj.set('userId',user_id)
 
     obj.set('comment',rate_info['cmt'])
