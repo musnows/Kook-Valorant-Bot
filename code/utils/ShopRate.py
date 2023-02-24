@@ -13,61 +13,59 @@ async def get_shop_rate(list_shop: dict, kook_user_id: str):
     """皮肤评分和评价，用户不在err_user里面才显示\n
     { "sum":rate_avg,"lv":rate_lv,"text_list":rate_text,"count":rate_count }
     """
-    # 初始化相关值
-    rate_text = []
-    rate_count = 0
-    rate_total = 0
-    rate_avg = 0 # 平均分
-    # leancould中搜索
-    query = leancloud.Query('SkinRate')
-    # 遍历用户的4个商店皮肤
-    for skin in list_shop:
-        # 查找数据库中和skin uuid相同的评价
-        query.equal_to('skinUuid',skin)
-        objlist = query.find()
-        if len(objlist) > 0: #找到了
-            obj = objlist[0]
-            rate_total += obj.get('rating') # 获取评分
-            skin_name = f"「{obj.get('skinName')}」" # 获取皮肤名
-            text = f"%-50s\t\t评分: {obj.get('rating')}\n" % skin_name
-            # 获取皮肤评价的list
-            cmt = obj.get('comment')
-            if len(cmt) == 0:# 元素内没有评论，出现错误
-                text += f"「随机评论」 NO CMT ERR\n"
-            else:# 有评论，生成随机数
-                ran = random.randint(0, len(cmt) - 1)
-                text += f"「随机评论」 {cmt[ran]}\n"
-            # 插入text
-            rate_text.append(text)
+    try:
+        # 初始化相关值
+        rate_text = []
+        rate_total = 0
+        rate_avg = 0 # 平均分
+        # leancould中搜索，用户评分列表
+        query = leancloud.Query('UserRate')
+        # 遍历用户的4个商店皮肤
+        for skin in list_shop:
+            # 查找数据库中和skinUuid相同的评价
+            query.equal_to('skinUuid',skin)
+            objlist = query.find()
+            if len(objlist) > 0: # 找到了评论，生成随机数
+                ran = random.randint(0, len(objlist) - 1)
+                obj = objlist[ran] # 随机获取一个对象
+                rate_total += obj.get('rating') # 获取评分
+                skin_name = f"「{obj.get('skinName')}」" # 获取皮肤名
+                text = f"%-50s\t\t评分: {obj.get('rating')}\n" % skin_name
+                text += f"「随机评论」 {obj.get('comment')}\n"
+                # 插入text
+                rate_text.append(text)
+            
+        rate_lv = "皮肤评价数据仍待收集…"
+        rate_count = len(rate_text) # 直接计算长度
+        if rate_count > 0:
+            rate_avg = rate_total // rate_count
+            #记录当日冠军和屌丝
+            if rate_avg > SkinRateDict["cmp"]["best"]["pit"]:
+                SkinRateDict["cmp"]["best"]["pit"] = rate_avg
+                SkinRateDict["cmp"]["best"]["skin"] = list_shop
+                SkinRateDict["cmp"]["best"]["kook_id"] = kook_user_id
+                print(f"[shop] update rate-best  Au:{kook_user_id} = {rate_avg}")
+            elif rate_avg < SkinRateDict["cmp"]["worse"]["pit"]:
+                SkinRateDict["cmp"]["worse"]["pit"] = rate_avg
+                SkinRateDict["cmp"]["worse"]["skin"] = list_shop
+                SkinRateDict["cmp"]["worse"]["kook_id"] = kook_user_id
+                print(f"[shop] update rate-worse Au:{kook_user_id} = {rate_avg}")
 
-    rate_lv = "皮肤评价数据仍待收集…"
-    rate_count = len(rate_text) # 直接计算长度
-    if rate_count > 0:
-        rate_avg = rate_total // rate_count
-        #记录当日冠军和屌丝
-        if rate_avg > SkinRateDict["cmp"]["best"]["pit"]:
-            SkinRateDict["cmp"]["best"]["pit"] = rate_avg
-            SkinRateDict["cmp"]["best"]["skin"] = list_shop
-            SkinRateDict["cmp"]["best"]["kook_id"] = kook_user_id
-            print(f"[shop] update rate-best  Au:{kook_user_id} = {rate_avg}")
-        elif rate_avg < SkinRateDict["cmp"]["worse"]["pit"]:
-            SkinRateDict["cmp"]["worse"]["pit"] = rate_avg
-            SkinRateDict["cmp"]["worse"]["skin"] = list_shop
-            SkinRateDict["cmp"]["worse"]["kook_id"] = kook_user_id
-            print(f"[shop] update rate-worse Au:{kook_user_id} = {rate_avg}")
+            if rate_avg >= 0 and rate_avg <= 20:
+                rate_lv = "丐帮帮主"
+            elif rate_avg > 20 and rate_avg <= 40:
+                rate_lv = "省钱能手"
+            elif rate_avg > 40 and rate_avg <= 60:
+                rate_lv = "差强人意"
+            elif rate_avg > 60 and rate_avg <= 80:
+                rate_lv = "芜湖起飞"
+            elif rate_avg > 80 and rate_avg <= 100:
+                rate_lv = "天选之人"
 
-        if rate_avg >= 0 and rate_avg <= 20:
-            rate_lv = "丐帮帮主"
-        elif rate_avg > 20 and rate_avg <= 40:
-            rate_lv = "省钱能手"
-        elif rate_avg > 40 and rate_avg <= 60:
-            rate_lv = "差强人意"
-        elif rate_avg > 60 and rate_avg <= 80:
-            rate_lv = "芜湖起飞"
-        elif rate_avg > 80 and rate_avg <= 100:
-            rate_lv = "天选之人"
-
-    return { "sum":rate_avg,"lv":rate_lv,"text_list":rate_text,"count":rate_count }
+        return { "sum":rate_avg,"lv":rate_lv,"text_list":rate_text,"count":rate_count }
+    except Exception as result:
+        print(f"ERR! [get_shop_rate]\n{traceback.format_exc()}")
+        return { "sum":0,"lv":"皮肤评价数据仍待收集…","text_list":[],"count":0 }
 
 # 获取皮肤评价的卡片
 async def get_shop_rate_cm(list_shop: dict, kook_user_id: str, cm: CardMessage):
