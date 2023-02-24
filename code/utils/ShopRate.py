@@ -94,9 +94,14 @@ async def check_shop_rate(kook_user_id: str, list_shop: list):
     rate_count = 0
     rate_total = 0
     for sk in list_shop:
-        if sk in SkinRateDict['rate']:
+        # 在云端查找并获取分数
+        query = leancloud.Query('SkinRate')
+        query.equal_to('skinUuid',sk)
+        objlist = query.find()
+        if len(objlist) > 0: # 找到了
             rate_count += 1
-            rate_total += SkinRateDict['rate'][sk]['pit']
+            rate_total += objlist[0].get('rating') # 获取得分
+
 
     if rate_count != 0:
         rate_avg = rate_total // rate_count  #平均分
