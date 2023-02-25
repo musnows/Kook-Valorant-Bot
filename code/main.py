@@ -1275,8 +1275,8 @@ async def get_daily_shop(msg: Message, *arg):
             is_vip = await vip_ck(msg.author_id)  #判断用户是否为VIP
             img_ret = {'status': True, 'value': None}
             upload_flag = True
-            # 每天8点bot遍历完之后会把vip的商店结果图存起来
-            shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
+            # 初始化为一个展示错误的图片
+            dailyshop_img_src = "https://img.kookapp.cn/assets/2023-02/5UxA8W06B70e803m.png"
             # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
             if is_vip and is_CacheLatest(msg.author_id):
                 upload_flag = False  #有缓存图，直接使用本地已有链接
@@ -1290,19 +1290,26 @@ async def get_daily_shop(msg: Message, *arg):
                                                  vp=play_currency['vp'],
                                                  rp=play_currency['rp'],
                                                  bg_img_src=background_img)
-            else:  # 普通用户/没有自定义图片的vip用户
-                img_ret = await get_shop_img_11(list_shop)
+            else:  # 普通用户
+                # 判断是否有缓存命中
+                cache_ret = await ShopRate.query_ShopCache(skinlist=list_shop)
+                if not cache_ret['status']: # 缓存没有命中
+                    img_ret = await get_shop_img_11(list_shop)
+                else: # 命中
+                    upload_flag = False
+                    dailyshop_img_src = cache_ret['img_url']
 
-            if img_ret['status']:  #true
+            # img_ret 代表是否画图成功，如果是缓存命中，也当成功处理
+            if img_ret['status']:  
                 bg = img_ret['value']  #获取图片
-            else:  #出现背景图片违规或其他问题
+            else:  # 出现背景图片违规或其他问题
                 await msg.reply(img_ret['value'])
                 print(f"[GetShopImg] Au:{msg.author_id} {img_ret['value']}")
                 return
 
             # 获取图片成功，打印画图耗时
-            log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}"
-            print(log_time)
+            print(log_time+f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}")
+            # 判断是否需要上传，false不需要
             if upload_flag:
                 imgByteArr = io.BytesIO()
                 bg.save(imgByteArr, format='PNG')
@@ -1313,10 +1320,13 @@ async def get_daily_shop(msg: Message, *arg):
                         VipShopBgDict['bg'][msg.author_id]['status'] = True
                     # 设置商店图片缓存+图片缓存的时间
                     VipShopBgDict['cache'][msg.author_id] = {'cache_img': dailyshop_img_src, 'cache_time': time.time()}
+                else: # 非vip，更新缓存
+                    await ShopRate.update_ShopCache(skinlist=list_shop,img_url=dailyshop_img_src)
+
             # 结束shop的总计时，结果为浮点数，保留两位小数
             shop_using_time = format(time.perf_counter() - start, '.2f')
 
-            # 商店的图片
+            # 商店的图片 卡片
             cm = CardMessage()
             c = Card(color='#fb4b57')
             c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
@@ -1324,7 +1334,7 @@ async def get_daily_shop(msg: Message, *arg):
             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
             cm.append(c)
 
-            #皮肤评分和评价，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
+            # 皮肤评分和评价卡片，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
             if not check_rate_err_user(msg.author_id):
                 cm = await ShopRate.get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
                 end = time.perf_counter()  #计算获取评分的时间
