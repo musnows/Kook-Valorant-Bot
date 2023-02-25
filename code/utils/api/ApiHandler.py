@@ -2,14 +2,13 @@ import json
 import time
 import threading
 import traceback
-# import requests
-# import asyncio
+
 from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
 from utils.api.ApiToken import check_token_rate
 from utils.Gtime import GetTime
 from utils.KookApi import kook_create_asset
 from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
-from utils.ShopImg import get_shop_img_11, get_shop_img_169
+from utils import ShopRate,ShopImg
 
 # bot的配置文件
 from utils.FileManage import config
@@ -19,9 +18,10 @@ Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
-# gLock = asyncio.Lock() # 创建一把锁，用于保存文件
+
 
 # # 上传到lsky (这个上传很麻烦，lsky只认open打开的图片)
+# gLock = asyncio.Lock() # 创建一把锁，用于保存文件
 # async def lsky_upload(bg):
 #     await gLock.acquire()# 上锁
 #     path = "./log/api_img_temp.png"
@@ -56,28 +56,46 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
             img_src = img_bak_11  # 默认背景1-1
 
     # 开始画图
+    ret = { "status": False,"value":"no need to img draw"} # 初始化ret为不需要画图
+    cacheRet = {"status":False,"img_url":"err" } # 是否需要上传图片(false代表需要)
     start = time.perf_counter()
     if 'img_ratio' in params and params['img_ratio'] == '1':
-        ret = await get_shop_img_11(list_shop, bg_img_src=img_src)
+        # 是1-1的图片，检测有没有使用自定义背景图
+        if img_src == img_bak_11: # 没有自定义背景图
+            # 检测是否有缓存命中
+            cacheRet = await ShopRate.query_ShopCache(list_shop)
+        # 缓存命中失败(需要画图)
+        if not cacheRet['status']:
+            ret = await ShopImg.get_shop_img_11(list_shop, bg_img_src=img_src)
     else:  # 只有16-9的图片需获取vp和r点
-        ret = await get_shop_img_169(list_shop, vp=vp1, rp=rp1, bg_img_src=img_src)
+        ret = await ShopImg.get_shop_img_169(list_shop, vp=vp1, rp=rp1, bg_img_src=img_src)
     # 打印计时
     print(f"[{GetTime()}] [Api imgDraw]", format(time.perf_counter() - start, '.2f'))  # 结果为浮点数，保留两位小数
 
-    start = time.perf_counter()
+    # 开始上传图片
+    start = time.perf_counter() # 更新start计时器
+    # 判断缓存是否命中
+    if cacheRet['status']: # 命中了
+        dailyshop_img_src = cacheRet['img_url']
+        print(f'[{GetTime()}] [Api imgUrl(cache)] {dailyshop_img_src}')
+        return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功，缓存命中'}
+    # 缓存没有命中，但是获取画图结果成功
     if ret['status']:
         bg = ret['value'] # 这个值是pil的结果
         img_src_ret = await kook_create_asset(api_bot_token, bg)  # 上传图片到kook
         # img_src_ret = await lsky_upload(bg) # 上传图片到lsky
-        if img_src_ret['code'] == 0:
+        if img_src_ret['code'] == 0: # 上传图片成功
             print(f"[{GetTime()}] [Api] kook_create_asset success {format(time.perf_counter() - start, '.2f')}")
             dailyshop_img_src = img_src_ret['data']['url']
+            # 初始值是err，调用了query_ShopCache失败，返回值更新为空
+            if cacheRet['img_url'] != 'err':
+                await ShopRate.update_ShopCache(skinlist=list_shop,img_url=dailyshop_img_src)
             print(f'[{GetTime()}] [Api imgUrl] {dailyshop_img_src}')
             return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功'}
-        else:
+        else: # 上传图片失败
             print(f'[{GetTime()}] [Api] kook_create_asset failed')
             return {'code': 200, 'message': 'img upload err', 'info': '图片上传错误'}
-    else:  #出现图片违规或者url无法获取
+    else: # 出现图片违规或者背景图url无法获取
         err_str = ret['value']
         print(f'[{GetTime()}] [ERR]', err_str)
         return {'code': 200, 'message': 'img src err', 'info': '自定义图片获取失败'}
@@ -105,7 +123,7 @@ async def img_draw_request(request):
         return {'code':200,'message':'list_shop len err! should be 4','info':'list_shop长度错误，皮肤数量不为4'}
     
     token = params['token']
-    print(list_shop)
+    print(f"[{GetTime()}] [list_shop] {list_shop}")
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}

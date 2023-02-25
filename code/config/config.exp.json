@@ -16,7 +16,11 @@
   },
   "leancloud":{
     "appid":"leancloud数据库的appid（可联系作者，共用皮肤评价数据库）",
-    "master_key":"leancloud数据库的masterkey"
+    "appkey":"leancloud数据库的appkey",
+    "master_key":"leancloud数据库的masterkey",
+    "user_name":"数据库内置用户id",
+    "user_pwd":"数据库内置用户密码"
   },
-  "no":1000
+  "no":1000,
+  "platform":"kook"
 }

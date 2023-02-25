@@ -4,11 +4,21 @@ import leancloud
 import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
-# 皮肤的评价
 from utils.valorant import Val
-from utils.FileManage import config,SkinRateDict
-leancloud.init(config["leancloud"]["appid"], master_key=config["leancloud"]["master_key"])
-PLATFORM = "kook"
+from utils.FileManage import config,SkinRateDict,GetTime
+PLATFORM = config['platform'] # 平台
+
+# 初始化leancloud
+leancloud.init(config["leancloud"]["appid"], config["leancloud"]["appkey"])
+leanUser = leancloud.User() # 登录用户
+leanUser.login(config["leancloud"]["user_name"],config["leancloud"]["user_pwd"])
+# 设置一个leancloud的acl
+leanAcl = leancloud.ACL()
+leanAcl.set_public_read_access(True) # 所有用户可读
+# 设置当前登录用户的的可写权限
+leanAcl.set_write_access(leancloud.User.get_current().id, True)
+# 设置管理员角色写权限
+leanAcl.set_role_write_access(leancloud.Role('admin'), True)
 
 # 获取皮肤评价的信息
 async def get_shop_rate(list_shop: dict, kook_user_id: str):
@@ -174,6 +184,7 @@ async def update_ShopCmp():
             i.set('skinList',list_shop)
             i.set('rating',rate_avg)
             i.set('platform',PLATFORM)
+            i.set_acl(leanAcl)
             i.save()
             print(f"[update_shop_cmp] saving best:{i.get('best')}")
     except:
@@ -251,6 +262,7 @@ async def update_UserCmt(user_id:str,skin_uuid:str):
         obj.set('userId',user_id)
 
     obj.set('skinList',skinList)
+    obj.set_acl(leanAcl)
     obj.save() # 保存
 
 
@@ -343,6 +355,7 @@ async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
     obj.set('rating',rate_info['pit'])
     obj.set('rateAt',rate_info['time'])
     obj.set('msgId',rate_info['msg_id'])
+    obj.set_acl(leanAcl)
     obj.save() # 保存
 
 
@@ -361,6 +374,7 @@ async def update_SkinRate(skin_uuid:str,skin_name:str,rating:float):
 
     # 更新评分
     obj.set('rating',rating)
+    obj.set_acl(leanAcl)
     obj.save() # 保存
 
 
@@ -380,3 +394,91 @@ async def remove_UserRate(skin_uuid:str,user_id:str):
         return True
     
     return False
+
+#########################################hash skin list###############################################
+
+import hashlib
+ 
+# 生成字符串的MD5值
+def md5(content:str=None):
+    """generate md5 for string
+    """
+    if content is None:
+        return ''
+    md5gen = hashlib.md5()
+    md5gen.update(content.encode())
+    md5code = md5gen.hexdigest()
+    md5gen = None
+    return md5code
+
+
+# 生成字符串的SHA256值
+def sha256(content:str=None):
+    if content is None:
+        return ''
+    sha256gen = hashlib.sha256()
+    sha256gen.update(content.encode())
+    sha256code = sha256gen.hexdigest()
+    sha256gen = None
+    return sha256code
+
+# 生成skinlist的md5
+def get_skinlist_md5(skinlist:list):
+    """Args: skinlist with 4 skin_uuid\n
+    Return: md5(md5+sha) str
+    """
+    skinlist = sorted(skinlist) # 排序
+    # 将uuid拼接
+    strlist = "=".join(i for i in skinlist)
+    md5Ret = md5(strlist) # 计算md5
+    shaRet = sha256(strlist) # 计算sha256
+    return md5(md5Ret+shaRet) # 两个一起还撞车，买彩票去吧
+
+# 判断皮肤的值是否有缓存
+async def query_ShopCache(skinlist:list):
+    """Args: skinlist with 4 skin_uuid\n
+    Info: this def only used by none vip shop img
+
+    Return:{
+        "status": True/False,
+        "img_url": shop img url (will be empty when status False)
+    }
+    """
+    md5Ret = get_skinlist_md5(skinlist)
+    ret = { "status": False,"img_url":""}
+    query = leancloud.Query('ShopCache')
+    query.equal_to('md5',md5Ret) # 查找md5值相同的元素
+    objlist = query.find()
+    if len(objlist) > 0: #找到了
+        ret['img_url'] = objlist[0].get('imgUrl')
+        ret['status'] = True
+        print(f"[{GetTime()}] ShopCache hit! [{md5Ret}]")
+ 
+    return ret
+
+# 缓存皮肤（先判断出来没有再操作）
+async def update_ShopCache(skinlist:list,img_url:str):
+    """md5(skinlist), cache imgurl to leancloud
+    """
+    md5Ret = get_skinlist_md5(skinlist)
+    ShopCache = leancloud.Object.extend('ShopCache')
+    query = ShopCache.query
+    query.equal_to('md5',md5Ret) # 查找md5值相同的元素
+    objlist = query.find()
+    obj = ShopCache()
+    retBool = True
+    if len(objlist) > 0: #找到了
+        dbSkinlist = objlist[0].get('skinList')
+        if skinlist == dbSkinlist:
+            return True # 已经有了还缓存什么啊
+        else: # md5撞车
+            obj = objlist[0] # 赋值
+            retBool = False
+    # 没找到或者list不相同（md5撞车了），新建并保存
+    obj.set('md5',md5Ret)
+    obj.set('skinList',skinlist)
+    obj.set('imgUrl',img_url)
+    obj.set_acl(leanAcl)
+    obj.save()
+    print(f"[{GetTime()}] update_ShopCache [{md5Ret}]")
+    return retBool
