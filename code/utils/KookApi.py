@@ -6,10 +6,10 @@ from khl.card import Card, CardMessage, Module, Element, Types
 
 from utils.FileManage import config
 # 下方更新卡片消息需要bot
-bot = Bot(token=config['token'])
+bot = Bot(token=config['token']['bot'])
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
-kook_headers = {f'Authorization': f"Bot {config['token']}"}
+kook_headers = {f'Authorization': f"Bot {config['token']['bot']}"}
 
 
 #################################机器人在玩状态####################################

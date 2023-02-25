@@ -5,17 +5,16 @@ import traceback
 # import requests
 # import asyncio
 from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
-from utils.api.ApiToken import token_ck, ApiTokenDict, save_token_files
+from utils.api.ApiToken import check_token_rate
 from utils.Gtime import GetTime
 from utils.KookApi import kook_create_asset
 from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from utils.ShopImg import get_shop_img_11, get_shop_img_169
 
-TOKEN_RATE_LIMITED = 10
-# bot的token文件
+# bot的配置文件
 from utils.FileManage import config
 # 用来给kook上传文件的bot token
-api_bot_token = config['api_bot_token']
+api_bot_token = config['token']['api_bot_token']
 Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
@@ -30,9 +29,9 @@ img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 #     img = open(path,'rb')
 #     gLock.release()     # 释放锁
 #     # lsky的连接和token写入配置文件，方便修改
-#     url = f"{config['lsky_url']}/api/v1/upload"
+#     url = f"{config['lsky']['url']}/api/v1/upload"
 #     header = {
-#         "Authorization": f"Bearer {config['lsky_token']}",
+#         "Authorization": f"Bearer {config['lsky']['token']}",
 #         "Accept": "application/json"
 #     }
 #     params = {'strategy_id':3}
@@ -45,35 +44,9 @@ img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 #     # 上传失败
 #     return {'code':200,'data':ret['data'],'message':ret['message']}
 
-# 检测速率（一分钟只允许10次）
-async def check_token_rate(token: str):
-    ret = await token_ck(token)
-    if ret:
-        cur_time = time.time()
-        time_diff = cur_time - ApiTokenDict['data'][token]['rate_time']
-        ApiTokenDict['data'][token]['sum'] += 1
-        if ApiTokenDict['data'][token]['rate_nums'] == 0:  #初次使用
-            ApiTokenDict['data'][token]['rate_time'] = cur_time
-            ApiTokenDict['data'][token]['rate_nums'] = 1
-            save_token_files("token init use")
-            return {'status': True, 'message': 'first use', 'info': '一切正常'}
-        elif time_diff <= 60:  #时间在60s以内
-            if ApiTokenDict['data'][token]['rate_nums'] > TOKEN_RATE_LIMITED:
-                return {'status': False, 'message': 'token rate limited!', 'info': '速率限制，请稍后再试'}
-            else:  #没有引发速率限制
-                ApiTokenDict['data'][token]['rate_nums'] += 1
-                return {'status': True, 'message': 'time_diff <= 60, in rate', 'info': '一切正常'}
-        else:  #时间超过60
-            save_token_files("rate check")
-            ApiTokenDict['data'][token]['rate_time'] = cur_time
-            ApiTokenDict['data'][token]['rate_nums'] = 0
-            return {'status': True, 'message': 'time_diff > 60', 'info': '一切正常'}
-    else:
-        return {'status': False, 'message': 'token not in dict', 'info': '无效token'}
-
 
 # 基本画图操作
-async def base_img_request(params, list_shop, vp1='0', rp1='0'):
+async def base_img_request(params, list_shop, vp1=0, rp1=0):
     # 自定义背景
     if 'img_src' in params and 'http' in params['img_src']:
         img_src = params['img_src']
@@ -140,11 +113,11 @@ async def img_draw_request(request):
     if 'vp' not in params or 'rp' not in params:
         return await base_img_request(params, list_shop)
     else:
-        return await base_img_request(params, list_shop, params['vp'], params['rp'])
+        return await base_img_request(params, list_shop, int(params['vp']), int(params['rp']))
 
 
 # 登录+画图
-async def login_img_request(request,method:str="GET"):
+async def login_img_request(request,method = "GET"):
     params = request.rel_url.query
     if method=="POST":
         body = await request.content.read()
@@ -162,6 +135,9 @@ async def login_img_request(request,method:str="GET"):
     account = params['account']
     passwd = params['passwd']
     token = params['token']
+    isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
+    isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
+    # 检测token速率，避免撞墙
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}
@@ -191,11 +167,14 @@ async def login_img_request(request,method:str="GET"):
     resp = await fetch_daily_shop(userdict)  #获取每日商店
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = {'vp': '0', 'rp': '0'}  # 先初始化为0
-    if 'img_ratio' not in params or params['img_ratio'] != '1':
+    res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
+    if isimgRatio or isRaw:
         res_vprp = await fetch_vp_rp_dict(userdict)  # 只有16-9的图片需获取vp和r点
-    # 不管什么情况，都请求这个
-    return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
+    # 如果用户需要raw，则返回皮肤uuid和vp rp的dict
+    if isRaw:
+        return { "code":0,"message":"获取原始接口返回值成功","info":"get raw response success","storefront":resp,"wallet":res_vprp}
+    else:
+        return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
 
 
 # 邮箱验证的post
@@ -266,7 +245,7 @@ async def afd_request(request, bot):
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     #print(json.dumps(cm))
-    debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
+    debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
     await bot.client.send(debug_ch, cm)
     print(f"[{GetTime()}] trno:{params['data']['order']['out_trade_no']} afd-cm-send")
     return {"ec": 200, "em": "success"}

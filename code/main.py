@@ -19,6 +19,7 @@ from aiohttp import client_exceptions
 from PIL import Image,  UnidentifiedImageError  # 用于合成图片
 from riot_auth import RiotAuth, auth_exceptions
 
+from utils import ShopRate
 from utils.Help import help_main, help_val, help_develop
 from utils.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text, APIRequestFailed_Handler, BaseException_Handler,get_proc_info
 from utils.Other import weather
@@ -31,16 +32,15 @@ from utils.Gtime import GetTime, GetTimeStampOf8AM
 from utils.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
 from utils.Translate import ListTL, translate_main, Shutdown_TL, checkTL, Open_TL, Close_TL
-from utils.ShopRate import SkinRateDict, get_shop_rate_cm, check_shop_rate
 from utils.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
 from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
 # bot的token文件
 from utils.FileManage import config, Save_All_File
 # 用读取来的 config 初始化 bot，字段对应即可
-bot = Bot(token=config['token'])
+bot = Bot(token=config['token']['bot'])
 # 只用来上传图片的bot
-bot_upimg = Bot(token=config['img_upload_token'])
+bot_upimg = Bot(token=config['token']['img_upload_token'])
 
 # 设置全局变量：机器人开发者id/报错频道
 master_id = config['master_id']
@@ -77,15 +77,17 @@ async def Save_File_Task():
 
 
 @bot.command(name='kill')
-async def KillBot(msg: Message, *arg):
+async def KillBot(msg: Message,num:str, *arg):
     logging(msg)
-    if msg.author_id == master_id:
+    if msg.author_id == master_id and int(num)==config['no']:
         # 保存所有文件
         await Save_All_File(False)
         await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
         res = await bot_offline()  # 调用接口下线bot
         print(f"[KILL] [{GetTime()}] bot-off: {res}\n")
         os._exit(0)  # 退出程序
+    else:
+        await msg.reply(f"您没有权限或参数错误！\n本Bot编号为：{config['no']}")
 
 
 ##########################################################################################
@@ -862,7 +864,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict
+from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict,SkinRateDict
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}
@@ -915,7 +917,7 @@ async def check_UserAuthDict_len(msg: Message):
 
 # 登录，保存用户的token
 @bot.command(name='login')
-async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
+async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {apSave}")
     log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
     global Login_Forbidden, login_rate_limit, UserTokenDict, UserAuthDict
@@ -1029,7 +1031,7 @@ async def login_authtoken(msg: Message, user: str = 'err', passwd: str = 'err', 
 
 
 @bot.command(name='tfa')
-async def auth_2fa(msg: Message, key: str, tfa: str, *arg):
+async def tfa_verify(msg: Message, key: str, tfa: str, *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /2fa")
     if len(tfa) != 6:
         await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：{tfa}")
@@ -1051,7 +1053,7 @@ async def auth_2fa(msg: Message, key: str, tfa: str, *arg):
 
 # 退出登录
 @bot.command(name='logout')
-async def logout_authtoken(msg: Message, *arg):
+async def logout(msg: Message, *arg):
     logging(msg)
     try:
         global UserTokenDict, UserAuthDict
@@ -1060,14 +1062,21 @@ async def logout_authtoken(msg: Message, *arg):
             await msg.reply(cm)
             return
 
-        #如果id存在， 删除id
-        del UserAuthDict[msg.author_id]  #先删除auth对象
+        log_text = f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        # 如果id存在，删除auth对象
+        # 因为UserTokenDict里面只存放了用户游戏名/uuid，且不作为是否登录的判断，所以不需要删除
+        del UserAuthDict[msg.author_id] 
+        # 如果是vip用户，删除本地保存的cookie
+        cookie_path = f"./log/cookie/{msg.author_id}.cke"
+        # 判断路径是否存在，存在直接删除
+        if os.path.exists(cookie_path):
+            os.remove(cookie_path) # 删除文件
+            log_text+= " - rm cookie file"
+
         text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
         await msg.reply(cm)
-        print(
-            f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
-        )
+        print(log_text)
 
     except Exception as result:  # 其他错误
         await BaseException_Handler("logout", traceback.format_exc(), msg, bot)
@@ -1316,7 +1325,7 @@ async def get_daily_shop(msg: Message, *arg):
 
             #皮肤评分和评价，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
             if not check_rate_err_user(msg.author_id):
-                cm = await get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
+                cm = await ShopRate.get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
                 end = time.perf_counter()  #计算获取评分的时间
             # 更新消息
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1602,19 +1611,11 @@ async def set_rate_err_user(msg: Message, user_id: str):
         await msg.reply(f"该用户已在SkinRateDict['err_user']列表中")
     elif user_id in SkinRateDict['data']:
         for skin, info in SkinRateDict['data'][user_id].items():
-            i = 0
-            while (i < len(SkinRateDict['rate'][skin]['cmt'])):
-                #找到这条评论，将其删除
-                if info['cmt'] == SkinRateDict['rate'][skin]['cmt'][i]:
-                    SkinRateDict['rate'][skin]['cmt'].pop(i)
-                    break
-                i += 1
-            #如果删除评论之后，链表为空，说明该链表中只有这一个评论
-            if not SkinRateDict['rate'][skin]['cmt']:  #空列表视为false
-                #删除掉这个皮肤的rate
-                del SkinRateDict['rate'][skin]
+            # 找到这条评论，将其删除
+            if not await ShopRate.remove_UserRate(skin,user_id):
+                await msg.reply(f"Au:{user_id} 删除 {skin} [{info['name']}] 错误")
 
-        #删除完该用户的所有评论之后，将其放入err_user
+        # 删除完该用户的所有评论之后，将其放入err_user
         temp_user = copy.deepcopy(SkinRateDict['data'][user_id])
         del SkinRateDict['data'][user_id]
         SkinRateDict['err_user'][user_id] = temp_user
@@ -1644,51 +1645,26 @@ async def rate_skin_add(msg: Message, *arg):
         return
     try:
         name = " ".join(arg)
-        name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist = fetch_skin_list_byname(name)
-        if sklist == []:  #空list代表这个皮肤不在里面
-            await msg.reply(f"该皮肤不在列表中，请重新查询！")
+        retlist = await ShopRate.get_available_skinlist(name)
+        if retlist == []:  # 空list，有问题
+            await msg.reply(f"该皮肤不在列表中[或没有价格]，请重新查询！")
             return
 
-        retlist = list()  #用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
-        for s in sklist:
-            res_price = fetch_item_price_bylist(s['lv_uuid'])
-            if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
-                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
-                data = {'skin': s, 'price': price}
-                retlist.append(data)
-
-        if retlist == []:  #空list代表这个皮肤没有价格
-            await msg.reply(f"该皮肤不在列表中 [没有价格]，请重新查询！")
-            return
-
+        # 将皮肤list插入到选择列表中，用户使用/rts命令选择
         UserRtsDict[msg.author_id] = retlist
-        sum = 0
-        usrin = msg.author_id in SkinRateDict['data']
-        if usrin:
-            sum = len(SkinRateDict['data'][msg.author_id])
-        i = 0
-        text = "```\n"  #模拟一个选择表
-        for w in retlist:
-            text += f"[{i}] - {w['skin']['displayName']}  - VP {w['price']}"
-            i += 1
-            if usrin and w['skin']['lv_uuid'] in SkinRateDict['data'][msg.author_id]:
-                text += " √\n"
-            elif w['skin']['lv_uuid'] in SkinRateDict['rate']:
-                text += " +\n"
-            else:
-                text += " -\n"
+        # 获取选择列表的text
+        ret = await ShopRate.get_skinlist_rate_text(retlist,msg.author_id)
+        text = f"```\n{ret['text']}```"
 
-        text += "```"
         cm = CardMessage()
         c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"), Module.Section(Element.Text(text, Types.Text.KMD)),
-                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分; √代表您已评价过该皮肤，+代表已有玩家评价，-代表无人评价\n", Types.Text.KMD)))
+                 Module.Section(Element.Text("请使用以下命令对皮肤进行评分;\n√代表您已评价过该皮肤，+已有玩家评价，-无人评价\n", Types.Text.KMD)))
         text1 = "```\n/rts 序号 评分 吐槽\n"
         text1 += "序号：上面列表中的皮肤序号\n"
         text1 += "评分：给皮肤打分，范围0~100\n"
         text1 += "吐槽：说说你对这个皮肤的看法\n"
         text1 += "吐槽的时候请注意文明用语！\n```\n"
-        text1 += f"您已经评价过了 {sum} 个皮肤"
+        text1 += f"您已经评价过了 {ret['sum']} 个皮肤"
         c.append(Module.Section(Element.Text(text1, Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
@@ -1729,58 +1705,47 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             S_skin = UserRtsDict[msg.author_id][_index]
             skin_uuid = S_skin['skin']['lv_uuid']
             comment = " ".join(arg)  #用户对此皮肤的评论
+            point = _rating # 初始化分数
             text1 = ""
             text2 = ""
-            # 如果rate里面没有，先创立键值
-            if skin_uuid not in SkinRateDict['rate']:
-                SkinRateDict['rate'][skin_uuid] = {}
-                SkinRateDict['rate'][skin_uuid]['pit'] = 0
-                SkinRateDict['rate'][skin_uuid]['cmt'] = list()
-            if SkinRateDict['rate'][skin_uuid]['pit'] == 0:
-                point = float(_rating)
-            elif abs(float(_rating) - SkinRateDict['rate'][skin_uuid]['pit']) <= 32:
+            # 先从leancloud获取该皮肤的分数
+            skin_rate = await ShopRate.query_SkinRate(skin_uuid)
+            if skin_rate['status']: # 找到了
                 #用户的评分和皮肤平均分差值不能超过32，避免有人乱刷分
-                point = (SkinRateDict['rate'][skin_uuid]['pit'] + float(_rating)) / 2
-            else:  #差值过大，不计入皮肤平均值
-                point = SkinRateDict['rate'][skin_uuid]['pit']
-                text2 += f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
-            # 设置皮肤的评分和评论
-            SkinRateDict['rate'][skin_uuid]['pit'] = point
-            SkinRateDict['rate'][skin_uuid]['name'] = S_skin['skin']['displayName']
-            SkinRateDict['rate'][skin_uuid]['cmt'].append(comment)
-            # data内是记录xx用户评论了xx皮肤
-            if msg.author_id in SkinRateDict['data']:
-                #如果用户之前已经评论过这个皮肤，则需要删除之前的评论
-                if skin_uuid in SkinRateDict['data'][msg.author_id]:
-                    i = 0
-                    while (i < len(SkinRateDict['rate'][skin_uuid]['cmt'])):
-                        #找到这条评论，将其删除
-                        if SkinRateDict['data'][
-                                msg.author_id][skin_uuid]['cmt'] == SkinRateDict['rate'][skin_uuid]['cmt'][i]:
-                            SkinRateDict['rate'][skin_uuid]['cmt'].pop(i)
-                            text1 += "更新"
-                            break
-                        i += 1
-            else:  #用户不存在，创建用户的dict
+                if abs(float(_rating) - skin_rate['rating']) <= 32:
+                    # 计算分数
+                    point = (skin_rate['rating'] + float(_rating)) / 2
+                else:  # 差值过大，不计入皮肤平均值
+                    point = skin_rate['rating']
+                    text2 += f"由于您的评分和皮肤平均分差值大于32，所以您的评分不会计入皮肤平均分，但您的评论会进行保留\n"
+            
+            # 更新数据库中皮肤评分
+            await ShopRate.update_SkinRate(skin_uuid,S_skin['skin']['displayName'],point)
+            # 用户之前没有评价过，新建键值
+            if msg.author_id not in SkinRateDict['data']:
                 SkinRateDict['data'][msg.author_id] = {}
-            #无论用户在不在，都设置键值
+            # 设置uuid的键值
             SkinRateDict['data'][msg.author_id][skin_uuid] = {}
             SkinRateDict['data'][msg.author_id][skin_uuid]['name'] = S_skin['skin']['displayName']
             SkinRateDict['data'][msg.author_id][skin_uuid]['cmt'] = comment
             SkinRateDict['data'][msg.author_id][skin_uuid]['pit'] = point
-            SkinRateDict['data'][msg.author_id][skin_uuid]['time'] = GetTime()
+            SkinRateDict['data'][msg.author_id][skin_uuid]['time'] = int(time.time()) # 秒级
             SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
+            # 数据库添加该评论
+            await ShopRate.update_UserRate(skin_uuid,SkinRateDict['data'][msg.author_id][skin_uuid],msg.author_id)
+            # 更新用户已评价的皮肤
+            await ShopRate.update_UserCmt(msg.author_id,skin_uuid)
 
             text1 += f"评价成功！{S_skin['skin']['displayName']}"
             text2 += f"您的评分：{_rating}\n"
-            text2 += f"皮肤平均分：{SkinRateDict['rate'][skin_uuid]['pit']}\n"
+            text2 += f"皮肤平均分：{point}\n"
             text2 += f"您的评语：{comment}"
             cm = CardMessage()
             c = Card(Module.Header(text1), Module.Divider(), Module.Section(Element.Text(text2, Types.Text.KMD)))
             cm.append(c)
             # 设置成功并删除list后，再发送提醒事项设置成功的消息
             await msg.reply(cm)
-            print(f"[rts] Au:{msg.author_id} ", text1)
+            print(f"[{GetTime()}] [rts] Au:{msg.author_id} {text1} {skin_uuid}")
         else:
             await msg.reply(f"您需要执行 `/rate 皮肤名` 来查找皮肤\n再使用 `/rts` 进行选择")
 
@@ -1798,29 +1763,41 @@ async def rate_skin_select(msg: Message):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
         return
     try:
+        # 从数据库中获取
+        cmpRet = await ShopRate.get_ShopCmp()
+        if not cmpRet['status']:
+            await msg.reply(f"获取昨日天选之子和丐帮帮主出错！请重试或联系开发者")
+            return
+        
         cm = CardMessage()
         c = Card(Module.Header(f"来看看昨日天选之子和丐帮帮主吧！"), Module.Divider())
         # best
         text = ""
-        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {SkinRateDict['kkn']['best']['pit']}", Types.Text.KMD)))
-        for sk in SkinRateDict['kkn']['best']['skin']:
-            if sk in SkinRateDict['rate']:
-                skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-                text += f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n" % skin_name
+        c.append(Module.Section(Element.Text(f"**天选之子** 综合评分 {cmpRet['best']['rating']}", Types.Text.KMD)))
+        c.append(Module.Context(f"来自 {cmpRet['best']['platform']} 平台"))
+        for sk in cmpRet['best']['skin_list']:
+            # 数据库中获取一个皮肤的评分情况
+            skinRet = await ShopRate.query_SkinRate(sk)
+            if skinRet['status']:
+                skin_name = f"「{skinRet['skin_name']}」"
+                text += f"%-50s\t\t评分: {skinRet['rating']}\n" % skin_name
         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         c.append(Module.Divider())
         # worse
         text = ""
-        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {SkinRateDict['kkn']['worse']['pit']}", Types.Text.KMD)))
-        for sk in SkinRateDict['kkn']['worse']['skin']:
-            if sk in SkinRateDict['rate']:
-                skin_name = f"「{SkinRateDict['rate'][sk]['name']}」"
-                text += f"%-50s\t\t评分: {SkinRateDict['rate'][sk]['pit']}\n" % skin_name
+        c.append(Module.Section(Element.Text(f"**丐帮帮主** 综合评分 {cmpRet['worse']['rating']}", Types.Text.KMD)))
+        c.append(Module.Context(f"来自 {cmpRet['worse']['platform']} 平台"))
+        for sk in cmpRet['worse']['skin_list']:
+            # 数据库中获取一个皮肤的评分情况
+            skinRet = await ShopRate.query_SkinRate(sk)
+            if skinRet['status']:
+                skin_name = f"「{skinRet['skin_name']}」"
+                text += f"%-50s\t\t评分: {skinRet['rating']}\n" % skin_name
         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
 
-        print(f"[kkn] SkinRateDict save success!")
+        print(f"[{GetTime()}] [kkn] reply success")
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
         await APIRequestFailed_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
     except Exception as result:  # 其他错误
@@ -2021,9 +1998,10 @@ async def auto_skin_notify():
         SkinRateDict["cmp"]["best"]["pit"] = 0
         SkinRateDict["cmp"]["worse"]["skin"] = list()
         SkinRateDict["cmp"]["worse"]["pit"] = 100
-        print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(15)")
-        #睡15s再开始遍历（避免时间不准）
-        await asyncio.sleep(15)
+        await ShopRate.update_ShopCmp() # 更新数据库中的记录
+        print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(10)")
+        #睡10s再开始遍历（避免时间不准）
+        await asyncio.sleep(10)
         print("[BOT.TASK.NOTIFY] auto_skin_notify Start")
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
@@ -2056,7 +2034,7 @@ async def auto_skin_notify():
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
-                        await check_shop_rate(vip, list_shop)  #计算用户商店得分
+                        await ShopRate.check_shop_rate(vip, list_shop)  #计算用户商店得分
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
                         UserShopDict[vip] = {}
                         UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
@@ -2155,7 +2133,7 @@ async def auto_skin_notify():
                         else:
                             resp = await fetch_daily_shop(userdict)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                            await check_shop_rate(vip, list_shop)  #计算非vip用户商店得分
+                            await ShopRate.check_shop_rate(vip, list_shop)  #计算非vip用户商店得分
 
                         # 然后再遍历列表查看是否有提醒皮肤
                         # 关于下面这一行参考 https://img.kookapp.cn/assets/2022-08/oYbf8PM6Z70ae04s.png
@@ -2285,8 +2263,8 @@ async def proc_check(msg:Message,*arg):
 async def loading_channel_cookie():
     try:
         global debug_ch, cm_send_test
-        cm_send_test = await bot_upimg.client.fetch_public_channel(config["img_upload_channel"])
-        debug_ch = await bot.client.fetch_public_channel(config['debug_ch'])
+        cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
+        debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         print("[BOT.TASK] fetch_public_channel success")
     except:
         print("[BOT.TASK] fetch_public_channel failed")
