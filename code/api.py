@@ -15,9 +15,9 @@ def hello_world(request):  # put application's code here
     return web.Response(body=json.dumps(
         {
             'code': 0,
-            'message': 'Hello! Use path /shop-url or /shop-img to get valorant daily shop',
+            'message': 'Hello! Use path /shop or /shop-img to get valorant daily shop',
             'info':
-            '在path后添加/shop-img或者/shop-url来获取每日商店，前者会直接跳转，后者返回一个带图片url的json。示例: /shop-url?account=Riot账户&passwd=Riot密码&img_src=可选参数，自定义背景图',
+            '在path后添加/shop-img或者/shop来获取每日商店，前者会直接跳转，后者返回一个带图片url的json。示例: /shop?account=Riot账户&passwd=Riot密码&img_src=可选参数，自定义背景图',
             'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         },
         indent=2,
@@ -37,7 +37,7 @@ async def get_dailshop_img(request):
                             content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
-        print(f"[{GetTime()}] [Api] ERR in /shop-url\n{err_cur}")
+        print(f"[{GetTime()}] [Api] ERR in /shop\n{err_cur}")
         return web.Response(body=json.dumps(
             {
                 'code': 200,
@@ -90,7 +90,7 @@ async def get_dailshop_img(request):
                             content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
-        print(f"[{GetTime()}] [Api] ERR in /shop-url\n{err_cur}")
+        print(f"[{GetTime()}] [Api] ERR in /shop\n{err_cur}")
         return web.Response(body=json.dumps(
             {
                 'code': 200,

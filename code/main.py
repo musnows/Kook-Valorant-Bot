@@ -77,7 +77,7 @@ async def Save_File_Task():
 
 
 @bot.command(name='kill')
-async def KillBot(msg: Message,num:str, *arg):
+async def KillBot(msg: Message,num:str='124124', *arg):
     logging(msg)
     if msg.author_id == master_id and int(num)==config['no']:
         # 保存所有文件
@@ -1278,11 +1278,12 @@ async def get_daily_shop(msg: Message, *arg):
             # 每天8点bot遍历完之后会把vip的商店结果图存起来
             shop_path = f"./log/img_temp_vip/shop/{msg.author_id}.png"
             # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
-            if is_vip and (os.path.exists(shop_path)) and is_CacheLatest(msg.author_id):
+            if is_vip and is_CacheLatest(msg.author_id):
                 upload_flag = False  #有缓存图，直接使用本地已有链接
                 dailyshop_img_src = VipShopBgDict['cache'][msg.author_id]['cache_img']
-            elif is_vip and (msg.author_id in VipShopBgDict['bg']):  #本地缓存路径不存在，或者缓存过期
+            elif is_vip:  # 本地缓存路径不存在，或者缓存过期
                 play_currency = await fetch_vp_rp_dict(userdict)  #获取用户的vp和rp
+                # 如果没有设置背景图，那就设置为err
                 background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
                                   VipShopBgDict['bg'][msg.author_id]["background"][0])
                 img_ret = await get_shop_img_169(list_shop,

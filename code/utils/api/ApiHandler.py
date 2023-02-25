@@ -199,7 +199,7 @@ async def tfa_code_requeset(request):
         return {
             'code': 200,
             'message': 'Riot account not in Api2faDict',
-            'info': '拳头账户不在dict中，请先请求/shop-img或/shop-url接口'
+            'info': '拳头账户不在dict中，请先请求/shop-img或/shop接口'
         }
 
     key = Api2faDict['data'][account]
