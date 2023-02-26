@@ -144,6 +144,11 @@ async def shop_get_request(params,account:str):
     # 2.1 判断通过，获取auth
     auth = ApiAuthCache['data'][account]['auth']
     assert isinstance(auth,EzAuth)
+    # 2.2 重新登录
+    ret = await auth.reauthorize()
+    if not ret:
+        return { "code":200,"message":"缓存信息失效，需要重新登录",
+                "info":"cache reauthorize failed，please /login" }
     # 3 获取每日商店
     userdict = auth.get_userdict()
     resp = await fetch_daily_shop(userdict)  
