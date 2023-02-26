@@ -170,21 +170,17 @@ async def update_ShopCmp():
         kook_user_id = SkinRateDict["kkn"]["worse"]["kook_id"]
         for i in objlist:
             if(i.get('best')): # 是最佳 
-                if SkinRateDict["kkn"]["best"]["pit"] <= i.get('rating'): 
-                    continue # 当前用户分数小于数据库中的,不更新
                 # 设置值
                 rate_avg = SkinRateDict["kkn"]["best"]["pit"]
                 list_shop = SkinRateDict["kkn"]["best"]["skin"]
                 kook_user_id = SkinRateDict["kkn"]["best"]["kook_id"]
-            elif(SkinRateDict["kkn"]["worse"]["pit"] >= i.get('rating')): # 是最差，判断分数
-                continue # 如果本地用户好于数据库记录，不更新
             
-            # 更新对象并保存
+            # 更新对象并保存(不需要比较，而是强制跟新)
             i.set('userId',kook_user_id)
             i.set('skinList',list_shop)
             i.set('rating',rate_avg)
             i.set('platform',PLATFORM)
-            i.set_acl(leanAcl)
+            # i.set_acl(leanAcl) # ShopCmp 设为所有人可写，不需要更新acl
             i.save()
             print(f"[update_shop_cmp] saving best:{i.get('best')}")
     except:
@@ -374,8 +370,8 @@ async def update_SkinRate(skin_uuid:str,skin_name:str,rating:float):
 
     # 更新评分
     obj.set('rating',rating)
-    obj.set_acl(leanAcl)
-    obj.save() # 保存
+    # obj.set_acl(leanAcl) # 所有人可写，不需要设置acl
+    obj.save() # 保存 
 
 
 # 删除皮肤评价（违规言论）
