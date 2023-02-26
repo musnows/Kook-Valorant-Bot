@@ -3,7 +3,7 @@ import time
 import threading
 import traceback
 
-from utils.valorant.EzAuth import EzAuthExp, auth2fa, auth2faWait, Get2faWait_Key, User2faCode
+from utils.valorant.EzAuth import EzAuthExp,EzAuth
 from utils.api.ApiToken import check_token_rate
 from utils.Gtime import GetTime
 from utils.KookApi import kook_create_asset
@@ -14,7 +14,7 @@ from utils import ShopRate,ShopImg
 from utils.FileManage import config
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
-Api2faDict = {'data': {}}  # 保存2fa用户登录的过程信息
+ApiAuthDict = {'data':{}}
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
@@ -133,9 +133,34 @@ async def img_draw_request(request):
     else:
         return await base_img_request(params, list_shop, int(params['vp']), int(params['rp']))
 
+# 获取商店的请求
+async def shop_get_request(params,account:str):
+    # 1.参数检测
+    isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
+    isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
+    # 2.获取缓存中的auth对象
+    if account not in ApiAuthDict['data']:
+        return { "code":200,"message":"account不在ApiAuthDict缓存中，请先调用/login接口",
+                "info":"account not in ApiAuthDict['data']" }
+    # 2.1 判断通过，获取auth
+    auth = ApiAuthDict['data'][account]['auth']
+    assert isinstance(auth,EzAuth)
+    # 3 获取每日商店
+    userdict = auth.get_userdict()
+    resp = await fetch_daily_shop(userdict)  
+    print(f'[{GetTime()}] [Api] fetch_daily_shop success')
+    list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+    res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
+    if isimgRatio or isRaw:
+        res_vprp = await fetch_vp_rp_dict(userdict)  # 只有16-9的图片需获取vp和r点
+    # 如果用户需要raw，则返回皮肤uuid和vp rp的dict
+    if isRaw:
+        return { "code":0,"message":"获取原始接口返回值成功","info":"get raw response success","storefront":resp,"wallet":res_vprp}
+    else:
+        return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
 
 # 登录+画图
-async def login_img_request(request,method = "GET"):
+async def login_request(request,method = "GET"):
     params = request.rel_url.query
     if method=="POST":
         body = await request.content.read()
@@ -153,22 +178,20 @@ async def login_img_request(request,method = "GET"):
     account = params['account']
     passwd = params['passwd']
     token = params['token']
-    isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
-    isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
     # 检测token速率，避免撞墙
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}
 
     try:
-        key = await Get2faWait_Key()
-        Api2faDict['data'][account] = key
-        # 因为如果使用异步，该执行流会被阻塞住等待，应该使用线程来操作
-        th = threading.Thread(target=auth2fa, args=(account, passwd, key))
-        th.start()
-        resw = await auth2faWait(key=key)  # 随后主执行流来这里等待
-        res_auth = resw['auth']
-        del Api2faDict['data'][account]  # 登录成功，删除账户键值
+        # 登录，获取用户的token
+        auth = EzAuth()
+        resw = await auth.authorize(account,passwd)
+        ApiAuthDict['data'][account] = {"auth": auth, "2fa": auth.is2fa } # 将对象插入
+        # 没有成功，是2fa用户，需要执行/tfa
+        if not resw['status']:
+            return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
+        
     except EzAuthExp.RatelimitError as result:
         print(f"ERR! [{GetTime()}] login - EzAuthExp.RatelimitError")
         return {'code': 200, 'message': "EzAuthExp.RiotRatelimitError", 'info': 'riot登录api超速，请稍后重试'}
@@ -176,23 +199,14 @@ async def login_img_request(request,method = "GET"):
         print(f"ERR! [{GetTime()}] login\n{traceback.format_exc()}")
         return {'code': 200, 'message': f"{result}", 'info': 'riot登录错误，详见message'}
 
-    print(f'[{GetTime()}] [Api] k:{key} - user auth success')
-    userdict = {
-        'auth_user_id': res_auth.user_id,
-        'access_token': res_auth.access_token,
-        'entitlements_token': res_auth.entitlements_token
-    }
-    resp = await fetch_daily_shop(userdict)  #获取每日商店
-    print(f'[{GetTime()}] [Api] fetch_daily_shop success')
-    list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
-    if isimgRatio or isRaw:
-        res_vprp = await fetch_vp_rp_dict(userdict)  # 只有16-9的图片需获取vp和r点
-    # 如果用户需要raw，则返回皮肤uuid和vp rp的dict
-    if isRaw:
-        return { "code":0,"message":"获取原始接口返回值成功","info":"get raw response success","storefront":resp,"wallet":res_vprp}
-    else:
-        return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
+    # 走到这里，代表不是2fa用户，且登陆成功
+    print(f'[{GetTime()}] [Api] user auth success')
+    # 如果是GET方法，直接调用获取商店的操作
+    if method == "GET": # /shop-img 接口是get的
+        return await shop_get_request(params,account)
+    # 保存cookie到本地
+    auth.save_cookies(f"./log/cookie/api/{account}.cke") 
+    return {'code': 0, 'message': "auth success", 'info': '登录成功！'}
 
 
 # 邮箱验证的post
@@ -212,23 +226,25 @@ async def tfa_code_requeset(request):
     vcode = params['vcode']
     token = params['token']
 
-    global Api2faDict
-    if account not in Api2faDict['data']:
-        return {
-            'code': 200,
-            'message': 'Riot account not in Api2faDict',
-            'info': '拳头账户不在dict中，请先请求/shop-img或/shop接口'
-        }
-
-    key = Api2faDict['data'][account]
-    User2faCode[key]['vcode'] = vcode
-    User2faCode[key]['2fa_status'] = True
-    return {
-        'code': 0,
-        'message': 'email verify code post success,wait for shop img return',
-        'info': '两步验证码获取成功，请等待主接口返回',
-        'vcode': vcode
-    }
+    global ApiAuthDict
+    if account not in ApiAuthDict['data']:
+        return { 'code': 200,'message': 'Riot account not in ApiAuthDict',
+            'info': '拳头账户不在dict中，请先请求/shop-img或/login接口' }
+    try:
+        auth = ApiAuthDict['data'][account]['auth']
+        assert isinstance(auth,EzAuth)
+        res = await auth.email_verfiy(vcode)
+    except EzAuthExp.MultifactorError as result:
+        if "multifactor_attempt_failed" in str(result):
+            return { 'code': 200,'message': 'multifactor_attempt_failed',
+                     'info': '两步验证码错误，请在10min内重新调用此接口重传','vcode': vcode }
+        # 其他情况
+        return {'code': 200,'message': '2fa auth_failure','info': '两步验证登陆错误，请重新操作','vcode': vcode}
+    # 走到这里，代表不是2fa用户，且登陆成功
+    print(f'[{GetTime()}] [Api] 2fa user auth success')
+    # 保存cookie到本地
+    auth.save_cookies(f"./log/cookie/api/{account}.cke") 
+    return  {'code': 0, 'message': "2fa auth success", 'info': '2fa用户登录成功！'}
 
 
 # 更新leancloud

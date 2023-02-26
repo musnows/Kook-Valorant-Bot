@@ -82,7 +82,9 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 
 ### 3.1 shop
 
-如果你是开发者，请使用`/shop`来获取`json`格式的结果
+如果你是开发者，请使用`/shop`来获取`json`格式的结果；
+
+注意，请求此接口之前，请先请求 `/login` 和 `/tfa`
 
 ~~~
 https://val.musnow.top/api/shop
@@ -90,13 +92,10 @@ https://val.musnow.top/api/shop
 
 请求方法： `POST`
 
-速率限制：`10r/m`
-
 | body参数 | 说明                  | 参数类型 |是否必填 |
 | ---------- | --------------------- | -------- | -------- |
 | token      | API token             | string|是       |
 | account    | 拳头账户              | string |是       |
-| passwd     | 拳头账户密码          | string|是       |
 | img_src    | 自定义背景图的url链接 | string | 否       |
 | img_ratio    | 自定义返回图比例，值为1代表正方形 | int |否       |
 | raw    | 设置为1，获取Riot接口的原始响应（不画图） | int | 否       |
@@ -163,8 +162,35 @@ https://valorant-api.com/v1/competitivetiers/{competitivetierUuid}
 
 还有一件事！部分皮肤返回结果中，是不带皮肤的图片的（我真的不理解为什么会这样）这也需要你遍历本地找皮肤图片！
 
+### 3.2 login
 
-### 3.2 tfa
+该接口用于登录，后台将会根据account将用户的登录信息缓存到内存中
+
+~~~
+https://val.musnow.top/api/login
+~~~
+
+请求方法：`POST`
+
+速率限制：`10r/m`
+
+| body参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| account    | 拳头账户              | string |是       |
+| passwd   | 拳头账户密码             | string |是       |
+
+返回示例（登陆成功）
+```json
+{"code": 0,"info": "登录成功！", "message": "auth success"}
+```
+返回示例（需要邮箱验证）
+
+```json
+{"code": 0, "info": "2fa用户，请使用/tfa接口提供邮箱验证码", "message": "need provide email verify code"}
+```
+
+### 3.3 tfa
 
 此接口用于两步验证，适用于开启了邮箱验证的用户；
 
@@ -187,15 +213,10 @@ https://val.musnow.top/api/tfa
 返回示例
 
 ~~~json
-{
-    "code": 0, 
-    "message": "email verify code post success,wait for shop img return", 
-    "info": "两步验证码获取成功，请等待主接口返回",
-    "vcode": 114514
-}
+{ "code": 0, "message": "2fa auth success", "info": "2fa用户登录成功！"}
 ~~~
 
-### 3.3 shop-draw
+### 3.4 shop-draw
 
 这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户`商店皮肤/vp/rp`后，再调用此接口，直接返回图片url
 

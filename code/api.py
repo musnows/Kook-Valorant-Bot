@@ -2,7 +2,7 @@ import json
 import traceback
 from aiohttp import web
 from utils.Gtime import GetTime
-from utils.api.ApiHandler import tfa_code_requeset, afd_request, login_img_request, img_draw_request,shop_cmp_request
+from utils.api import ApiHandler
 
 # 初始化节点
 routes = web.RouteTableDef()
@@ -32,7 +32,7 @@ def hello_world(request):  # put application's code here
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-draw")
     try:
-        ret = await img_draw_request(request)
+        ret = await ApiHandler.img_draw_request(request)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
@@ -57,7 +57,7 @@ async def get_dailshop_img(request):
 async def get_dailshop_img(request):
     print(f"[{GetTime()}] [request] /shop-img")
     try:
-        ret = await login_img_request(request)
+        ret = await ApiHandler.login_request(request,"GET")
         if ret['code'] == 0:
             return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
         else:
@@ -80,12 +80,12 @@ async def get_dailshop_img(request):
                             content_type='application/json')
 
 
-# 获取图片url
-@routes.post('/shop')
+# 登录接口
+@routes.post('/login')
 async def get_dailshop_img(request):
-    print(f"[{GetTime()}] [request] /shop")
+    print(f"[{GetTime()}] [request] /login")
     try:
-        ret = await login_img_request(request,"POST")
+        ret = await ApiHandler.login_request(request,"POST")
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
@@ -104,17 +104,52 @@ async def get_dailshop_img(request):
                             status=200,
                             content_type='application/json')
 
-
+# 邮箱验证登录
 @routes.post('/tfa')
 async def post_tfa_code(request):
     print(f"[{GetTime()}] [request] /tfa")
     try:
-        ret = await tfa_code_requeset(request)
+        ret = await ApiHandler.tfa_code_requeset(request)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
         err_cur = traceback.format_exc()
         print(f"[{GetTime()}] [Api] ERR in /tfa\n{err_cur}")
+        return web.Response(body=json.dumps(
+            {
+                'code': 200,
+                'message': 'unkown err',
+                'info': f'未知错误',
+                'except': f'{err_cur}'
+            },
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False),
+                            status=200,
+                            content_type='application/json')
+    
+@routes.post('/shop')
+async def get_dailshop_img(request):
+    print(f"[{GetTime()}] [request] /shop")
+    try:
+        body = await request.content.read()
+        params = json.loads(body.decode('UTF8'))
+        # 判断必须要的参数是否齐全
+        if 'account' not in params or 'token' not in params:
+            print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
+            return {
+                'code': 400,
+                'message': 'params needed: token/account/passwd',
+                'info': '缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）',
+                'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            }
+        # 画图请求，不需要检测token速率
+        ret = await ApiHandler.shop_get_request(params,params['account'])
+        return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
+                            content_type='application/json',status=200)
+    except:
+        err_cur = traceback.format_exc()
+        print(f"[{GetTime()}] [Api] ERR in /shop\n{err_cur}")
         return web.Response(body=json.dumps(
             {
                 'code': 200,
@@ -133,7 +168,7 @@ async def post_tfa_code(request):
 async def post_shop_cmp(request):
     print(f"[{GetTime()}] [request] /shop-cmp")
     try:
-        ret = await shop_cmp_request(request)
+        ret = await ApiHandler.shop_cmp_request(request)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
@@ -160,7 +195,7 @@ from main import bot
 async def aifadian_webhook(request):
     print(f"[{GetTime()}] [request] /afd")
     try:
-        ret = await afd_request(request, bot)
+        ret = await ApiHandler.afd_request(request, bot)
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json')
     except:
