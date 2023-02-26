@@ -143,6 +143,8 @@ GameIdDict = FileManage("./log/game_idsave.json")  # 玩家游戏id保存
 UserAuthID = FileManage("./log/UserAuthID.json")  # 用户游戏id/uuid，账户密码重登记录
 UserTokenDict = UserAuthID['data']  # riot用户游戏id和uuid
 UserApLog = UserAuthID['ap_log']    # 账户密码重登记录
+ApiAuthLog = UserAuthID['api_log']  # api 缓存用户的account记录
+ApiAuthCache = {'data':{}}          # api EzAuth对象缓存
 
 VipUuidDict = FileManage("./log/VipUuid.json")  # vip uuid文件
 VipShopBgDict = FileManage("./log/VipUserShopBg.json")  # vip 背景图设置；商店图缓存

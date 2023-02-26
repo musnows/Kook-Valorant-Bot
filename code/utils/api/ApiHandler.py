@@ -11,10 +11,9 @@ from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from utils import ShopRate,ShopImg
 
 # bot的配置文件
-from utils.FileManage import config
+from utils.FileManage import config,ApiAuthCache,ApiAuthLog
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
-ApiAuthDict = {'data':{}}
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
@@ -139,11 +138,11 @@ async def shop_get_request(params,account:str):
     isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
     isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
     # 2.获取缓存中的auth对象
-    if account not in ApiAuthDict['data']:
-        return { "code":200,"message":"account不在ApiAuthDict缓存中，请先调用/login接口",
-                "info":"account not in ApiAuthDict['data']" }
+    if account not in ApiAuthCache['data']:
+        return { "code":200,"message":"account不在ApiAuthCache缓存中，请先调用/login接口",
+                "info":"account not in ApiAuthCache['data']" }
     # 2.1 判断通过，获取auth
-    auth = ApiAuthDict['data'][account]['auth']
+    auth = ApiAuthCache['data'][account]['auth']
     assert isinstance(auth,EzAuth)
     # 3 获取每日商店
     userdict = auth.get_userdict()
@@ -187,7 +186,7 @@ async def login_request(request,method = "GET"):
         # 登录，获取用户的token
         auth = EzAuth()
         resw = await auth.authorize(account,passwd)
-        ApiAuthDict['data'][account] = {"auth": auth, "2fa": auth.is2fa } # 将对象插入
+        ApiAuthCache['data'][account] = {"auth": auth, "2fa": auth.is2fa } # 将对象插入
         # 没有成功，是2fa用户，需要执行/tfa
         if not resw['status']:
             return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
@@ -205,6 +204,7 @@ async def login_request(request,method = "GET"):
     if method == "GET": # /shop-img 接口是get的
         return await shop_get_request(params,account)
     # 保存cookie到本地
+    ApiAuthLog.append(account) # 记录已缓存的用户账户（方便开机加载）
     auth.save_cookies(f"./log/cookie/api/{account}.cke") 
     return {'code': 0, 'message': "auth success", 'info': '登录成功！'}
 
@@ -226,12 +226,12 @@ async def tfa_code_requeset(request):
     vcode = params['vcode']
     token = params['token']
 
-    global ApiAuthDict
-    if account not in ApiAuthDict['data']:
-        return { 'code': 200,'message': 'Riot account not in ApiAuthDict',
+    global ApiAuthCache
+    if account not in ApiAuthCache['data']:
+        return { 'code': 200,'message': 'Riot account not in ApiAuthCache',
             'info': '拳头账户不在dict中，请先请求/shop-img或/login接口' }
     try:
-        auth = ApiAuthDict['data'][account]['auth']
+        auth = ApiAuthCache['data'][account]['auth']
         assert isinstance(auth,EzAuth)
         res = await auth.email_verfiy(vcode)
     except EzAuthExp.MultifactorError as result:
@@ -243,6 +243,7 @@ async def tfa_code_requeset(request):
     # 走到这里，代表不是2fa用户，且登陆成功
     print(f'[{GetTime()}] [Api] 2fa user auth success')
     # 保存cookie到本地
+    ApiAuthLog.append(account) # 记录已缓存的用户账户（方便开机加载）
     auth.save_cookies(f"./log/cookie/api/{account}.cke") 
     return  {'code': 0, 'message': "2fa auth success", 'info': '2fa用户登录成功！'}
 

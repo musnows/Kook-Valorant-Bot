@@ -35,7 +35,7 @@ from utils.ShopImg import get_shop_img_11, get_shop_img_169, img_requestor
 from utils.valorant.ValFileUpd import update_bundle_url, update_price, update_skins
 
 # bot的token文件
-from utils.FileManage import config, Save_All_File
+from utils.FileManage import config, Save_All_File,ApiAuthLog
 # 用读取来的 config 初始化 bot，字段对应即可
 bot = Bot(token=config['token']['bot'])
 # 只用来上传图片的bot
@@ -2315,7 +2315,7 @@ async def loading_channel_cookie():
     log_str_success = "[BOT.TASK] load cookie success  = Au:"
     log_str_failed = "[BOT.TASK] load cookie failed!  = Au:"
     log_not_exits = "[BOT.TASK] cookie path not exists = Au:"
-    #遍历用户列表
+    # 遍历用户列表
     for user, uinfo in VipUserDict.items():
         cookie_path = f"./log/cookie/{user}.cke"
         #如果路径存在，那么说明已经保存了这个vip用户的cookie
@@ -2337,12 +2337,39 @@ async def loading_channel_cookie():
         else:
             log_not_exits += f"({user}) "
             continue
-    #结束任务
+    # 结束任务
     print(log_str_success)  #打印正常的用户
     print(log_str_failed)  #打印失败的用户
     print(log_not_exits)  #打印路径不存在的用户
-    print("[BOT.TASK] loading cookie finished")
+    print(f"[BOT.TASK] loading user cookie finished {GetTime()}")
 
+    # api缓存的用户列表
+    log_str_success = "[BOT.TASK] api load cookie success  = Au:"
+    log_str_failed = "[BOT.TASK] api load cookie failed!  = Au:"
+    log_not_exits = "[BOT.TASK] api cookie path not exists = Au:"
+    # 遍历api用户列表
+    for user in ApiAuthLog:
+        cookie_path = f"./log/cookie/api/{user}.cke"
+        #如果路径存在，那么说明已经保存了这个vip用户的cookie
+        if os.path.exists(cookie_path):
+            auth = EzAuth()
+            auth.load_cookies(cookie_path)  #加载cookie
+            ret_bool = await auth.reauthorize()  #尝试登录
+            if ret_bool:  # True登陆成功
+                UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
+                log_str_success += f"({user})"
+            else:
+                log_str_failed += f"({user}) "
+                #print(f"[BOT.TASK] Au:{user} - load cookie failed!")
+                continue
+        else:
+            log_not_exits += f"({user}) "
+            continue
+    # 结束任务
+    print(log_str_success)  #打印正常的用户
+    print(log_str_failed)  #打印失败的用户
+    print(log_not_exits)  #打印路径不存在的用户
+    print(f"[BOT.TASK] loading api user cookie finished {GetTime()}")
 
 # 开机 （如果是主文件就开机）
 if __name__ == '__main__':
