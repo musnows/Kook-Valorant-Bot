@@ -239,6 +239,35 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需�
 }
 ~~~
 
+### 3.4 shop-cmt
+
+该接口用于更新leancloud数据库中的ShopCmt，该数据需要在 8am 并发进行修改。leancloud本身并不提供线程安全处理，就此将所有需要修改ShopCmt的操作统一到本端进行
+
+请求方法：`POST`
+
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string |是       |
+| best    | 当日最好用户的商店信息     | json |是       |
+| worse   | 当日最差用户的商店信息 | json | 是       |
+| platform   | 来源平台 | string | 是       |
+
+best/worse应该包含如下字段，其中`user_id`如果么有可以留空（但是不要少这个字段），rating为当前商店4个皮肤的平均分（如一个皮肤么有评分，则不计入平均分计算）
+
+```json
+{
+    "user_id": "用户id",
+    "rating": 97.0,
+    "list_shop": []
+}
+```
+返回示例 
+
+```json
+{"code": 0, "info": "ShopCmp更新成功", "message": true}
+```
+
+
 ## 4.Python示例代码
 
 ### 示例代码1：shop
@@ -316,4 +345,49 @@ time:  3.9116134020000572
 {'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
 time:  3.822338727999977
 {'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+```
+
+### 示例代码3：shop-cmp
+
+```python
+def ApiRq3(best,worse,platform):
+    url = "https://val.musnow.top/api/shop-cmp"
+    params = {
+        "token":"api-token",
+        "best":best,
+        "worse":worse,
+        "platform":platform
+    }
+    res = requests.post(url,json=params) # 请求api
+    print(res)
+    return res.json()
+
+# 调用
+ret = ApiRq3({
+      "user_id": "这是一个测试用例",
+      "rating": 100.0,
+      "list_shop": [
+        "c9678d8c-4327-f397-b0ec-dca3c3d6fb15",
+        "901425cd-405a-d189-3516-ba954965e559",
+        "9f6e4612-433b-aea9-1683-3db7aee90848",
+        "4845a7ab-4120-ae1c-aec1-9e915a7424b1"
+      ]
+    },{
+      "user_id": "这是一个测试用例",
+      "rating": 20.0,
+      "list_shop": [
+        "155ba654-4afa-1029-9e71-e0b6962d5410",
+        "68ee5c6c-4424-e95a-f46f-c08ec2dfeb97",
+        "353c1e5f-4258-c49a-c0d6-319ad33bffea",
+        "e57317ac-4a93-50a9-30e9-93a098513fa9"
+      ]
+    },'qqchannel')
+print(ret)
+```
+
+结果
+
+```
+<Response [200]>
+{'code': 0, 'info': 'ShopCmp更新成功', 'message': True}
 ```
