@@ -17,7 +17,6 @@ from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from khl.command import Rule
 from aiohttp import client_exceptions
 from PIL import Image,  UnidentifiedImageError  # 用于合成图片
-from riot_auth import RiotAuth, auth_exceptions
 
 from utils import ShopRate
 from utils.Help import help_main, help_val, help_develop
@@ -27,7 +26,7 @@ from utils.KookApi import (icon_cm, status_active_game, status_active_music, sta
                                get_card)
 from utils.GrantRoles import (Color_GrantRole, Color_SetGm, Color_SetMsg, THX_Sponser)
 from utils.valorant.Val import *
-from utils.valorant.EzAuth import auth2fa, authflow, auth2faWait, Get2faWait_Key, User2faCode,EzAuthExp
+from utils.valorant.EzAuth import EzAuth,EzAuthExp
 from utils.Gtime import GetTime, GetTimeStampOf8AM
 from utils.BotVip import (VipUserDict, create_vip_uuid, fetch_vip_user, roll_vip_start, using_vip_uuid, vip_ck,
                               vip_time_remain, vip_time_remain_cm, vip_time_stamp,get_vip_shop_bg_cm,replace_illegal_img,illegal_img_169)
@@ -938,20 +937,21 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
 
         # 3.登录，获取用户的token
-        key = await Get2faWait_Key() # 先获取一个key
-        # 如果使用异步运行该函数，执行流会被阻塞住等待，应该使用线程来操作
-        th = threading.Thread(target=auth2fa, args=(user, passwd, key))
-        th.start()
-        resw = await auth2faWait(key=key, msg=msg)  # 随后主执行流来这里等待
-        res_auth = await resw['auth'].get_RiotAuth()  # 直接获取RiotAuth对象
-        is2fa = resw['auth'].is2fa # 是否是2fa用户
+        auth = EzAuth()
+        resw = await auth.authorize(user,passwd)
+        UserAuthDict[msg.author_id] = {"auth": auth, "2fa": auth.is2fa } # 将对象插入
+        # 3.1 没有成功，是2fa用户，需要执行/tfa命令
+        if not resw['status']:
+            cm1 = await get_card("登录中断，需要提供邮箱验证码", "请使用「/tfa 验证码」提供邮箱验证码", icon_cm.val_logo_gif)
+            await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)
+            return
+
         # 4.如果没有抛出异常，那就是完成登录了，设置用户的玩家uuid+昵称
         UserTokenDict[msg.author_id] = {
-            'auth_user_id': res_auth.user_id, 
-            'GameName': resw['auth'].Name, 
-            'TagLine': resw['auth'].Tag
+            'auth_user_id': auth.user_id, 
+            'GameName': auth.Name, 
+            'TagLine': auth.Tag
         }
-        UserAuthDict[msg.author_id] = {"auth": res_auth, "2fa": is2fa } # 将对象插入
         # 设置基础打印信息
         text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
@@ -962,11 +962,10 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
             if msg.author_id in VipShopBgDict['bg']:
                 VipShopBgDict['bg'][msg.author_id]['status'] = False
             # 用于保存cookie的路径,保存vip用户登录信息
-            cookie_path = f"./log/cookie/{msg.author_id}.cke"
-            res_auth._cookie_jar.save(cookie_path)  #保存
+            auth.save_cookies(f"./log/cookie/{msg.author_id}.cke")
 
         # 6.用户自己选择是否保存账户密码，默认是不保存的；2fa用户也不会保存
-        if apSave == 'save' and (not is2fa):
+        if apSave == 'save' and (not auth.is2fa):
             # 不在这里再新建（用于保存阿狸使用账户密码重登的时间，告知用户）
             if msg.author_id not in UserApLog:
                 UserApLog[msg.author_id] = {}
@@ -1031,22 +1030,41 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
 
 
 @bot.command(name='tfa')
-async def tfa_verify(msg: Message, key: str, tfa: str, *arg):
-    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /2fa")
+async def tfa_verify(msg: Message, tfa: str, *arg):
+    print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /tfa")
     if len(tfa) != 6:
         await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：{tfa}")
         return
 
+    send_msg = {'msg_id':''}
     try:
-        global User2faCode
-        key = int(key)
-        if key in User2faCode:
-            User2faCode[key]['vcode'] = tfa
-            User2faCode[key]['2fa_status'] = True
-            await msg.reply(f"两步验证码 `{tfa}` 获取成功，请等待……")
-        else:
-            await msg.reply(f"第二个参数key值错误，请确认您的输入，或重新login")
+        # 1. 先判断用户是否在dict里面
+        if msg.author_id not in UserAuthDict:
+            await msg.reply("您不在UserAuthDict中，请先执行login！")
+            return
+        # 1.1 在，且auth对象是ezauth
+        auth = UserAuthDict[msg.author_id]['auth']
+        assert isinstance(auth,EzAuth)
 
+        # 2.发送提示信息
+        cm0 = await get_card(f"两步验证码「{tfa}」获取成功", "小憩一下，很快就好啦！", icon_cm.val_logo_gif)
+        send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
+
+        # 3.进行邮箱验证
+        res = await auth.email_verfiy(tfa)
+        # 4.成功
+        text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
+        cm = await get_card(text, info_text, icon_cm.correct)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+        
+    except EzAuthExp.MultifactorError as result:
+        if "multifactor_attempt_failed" in str(result):
+            cm = await get_card("两步验证码错误，请重试",str(result),icon_cm.lagging)
+        else:
+            cm = await get_card("邮箱验证错误，请重新login",str(result),icon_cm.lagging)
+        # 更新消息
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except Exception as result:  # 其他错误
         await BaseException_Handler("tfa", traceback.format_exc(), msg, bot)
 
@@ -1107,6 +1125,7 @@ async def login_reauth(kook_user_id: str):
     print(base_print + "auth_token failure,trying reauthorize()")
     global UserAuthDict,UserTokenDict
     auth = UserAuthDict[kook_user_id]['auth']
+    assert isinstance(auth,EzAuth)
     #用cookie重新登录,会返回一个bool是否成功
     ret = await auth.reauthorize()
     if ret:  #会返回一个bool是否成功,成功了重新赋值
@@ -1116,9 +1135,14 @@ async def login_reauth(kook_user_id: str):
         print(base_print + "reauthorize() Failed! T-T")  # 失败打印
         # 有保存账户密码+不是邮箱验证用户
         if kook_user_id in UserAuthDict['AP'] and (not UserAuthDict[kook_user_id]['2fa']):
-            res_auth = await authflow(UserAuthDict['AP'][kook_user_id]['a'], UserAuthDict['AP'][kook_user_id]['p'])
-            UserAuthDict[kook_user_id]['auth'] = res_auth  # 用账户密码重新登录
-            res_auth._cookie_jar.save(f"./log/cookie/{kook_user_id}.cke")  #保存cookie
+            auth = EzAuth()# 用账户密码重新登录
+            resw = await auth.authorize(UserAuthDict['AP'][kook_user_id]['a'], UserAuthDict['AP'][kook_user_id]['p'])
+            if not resw['status']: # 需要邮箱验证，那就直接跳出
+                print(base_print + "authorize() need 2fa, return False")  
+                return False
+            # 更新auth对象
+            UserAuthDict[kook_user_id]['auth'] = auth
+            auth.save_cookies(f"./log/cookie/{kook_user_id}.cke") # 保存cookie
             # 记录使用账户密码重新登录的时间
             UserApLog[kook_user_id][GetTime()] = UserTokenDict[kook_user_id]['GameName']
             print(base_print + "authflow() by AP")
@@ -1139,11 +1163,9 @@ async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
     try:
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
         auth = UserAuthDict[user_id]['auth']
-        userdict = {
-            'auth_user_id': auth.user_id,
-            'access_token': auth.access_token,
-            'entitlements_token': auth.entitlements_token
-        }
+        assert isinstance(auth,EzAuth)
+        # 直接从对象中获取userdict
+        userdict = auth.get_userdict()
         resp = await fetch_valorant_point(userdict)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
@@ -1298,6 +1320,7 @@ async def get_daily_shop(msg: Message, *arg):
                 else: # 命中
                     upload_flag = False
                     dailyshop_img_src = cache_ret['img_url']
+                    log_time+="[cache] "
 
             # img_ret 代表是否画图成功，如果是缓存命中，也当成功处理
             if img_ret['status']:  
@@ -2297,8 +2320,8 @@ async def loading_channel_cookie():
         cookie_path = f"./log/cookie/{user}.cke"
         #如果路径存在，那么说明已经保存了这个vip用户的cookie
         if os.path.exists(cookie_path):
-            auth = RiotAuth()  #新建一个对象
-            auth._cookie_jar.load(cookie_path)  #加载cookie
+            auth = EzAuth()
+            auth.load_cookies(cookie_path)  #加载cookie
             ret_bool = await auth.reauthorize()  #尝试登录
             if ret_bool:  # True登陆成功
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入

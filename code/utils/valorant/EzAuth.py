@@ -1,5 +1,6 @@
-# code from https://github.com/Prodzify/Riot-auth/blob/main/main.py
+# repo: https://github.com/musnows/Riot-auth
 import ssl
+import json
 import time
 import pandas
 import requests
@@ -9,8 +10,8 @@ from collections import OrderedDict
 from re import compile
 
 from utils.valorant import EzAuthExp
-
-RiotClient = "RiotClient/62.0.1.4852117.4789131"
+# get latest version: https://valorant-api.com/v1/version
+RiotClient = "RiotClient/63.0.9.4909983.4789131"
 TFA_TIME_LIMIT = 600  # 600s时间限制
 
 CIPHERS = [
@@ -45,7 +46,6 @@ class EzAuth:
             "Accept": "application/json, text/plain, */*"
         })
         self.session.mount('https://', SSLAdapter())
-        self._cookies_ = self.session.cookies
         self.is2fa = False # 2fa set to false
         self.__mfa_start__ = 0 # 2fa start time
 
@@ -88,7 +88,6 @@ class EzAuth:
             "Authorization": f"{self.token_type} {self.access_token}",
         }
         self.session.headers.update(self.base_headers)
-        self._cookies_ = self.session.cookies
 
         self.entitlements_token = self.get_entitlement_token()
         self.__set_userinfo()
@@ -103,7 +102,7 @@ class EzAuth:
          if False, using email_verify() to send verify code
         """
         if username and password:
-            self._cookies_.clear() # not reauth, clear cookie
+            self.session.cookies.clear() # not reauth, clear cookie
     
         token = {"access_token":"","id_token":"","token_type":"Bearer","expires_in":'0'}  
         body = {
@@ -173,7 +172,6 @@ class EzAuth:
             }
             r = self.session.put(url=URLS.AUTH_URL, json=authdata)
             data = r.json()
-            print(r.text)
 
             if data["type"] == "response":
                 pass
@@ -184,7 +182,6 @@ class EzAuth:
             else:
                 raise EzAuthExp.MultifactorError("2fa auth_failue, unkown err")
         else: # 2fa wait overtime
-            print((time.time() -  self.__mfa_start__))
             raise EzAuthExp.WaitOvertimeError("2fa wait overtime, wait failed")
         
         # get access_token from response
@@ -197,6 +194,16 @@ class EzAuth:
 
         self.__mfa_start__ = 0
         return {"status":True,"auth":self,"2fa":self.is2fa}
+    
+    async def reauthorize(self) -> bool:
+        """reauthorize using cookie
+        """
+        try:
+            await self.authorize("","")
+            return True
+        except Exception as result:
+            print(f"[EzAuth] reauthoreize err!\n{result}")
+            return False
 
     def get_entitlement_token(self):
         r = self.session.post(URLS.ENTITLEMENT_URL, json={})
@@ -284,8 +291,17 @@ class EzAuth:
             'region': self.Region
         }
 
-    async def reauthorize(self):
-        """reauthorize using cookie
+    def save_cookies(self,path:str):
+        """dump cookies_dict to path (w+)
         """
-        await self.authorize("","")
-        return self
+        cookies = requests.utils.dict_from_cookiejar(self.session.cookies)
+        with open(path,"w+") as f:
+            f.write(json.dumps(cookies))
+
+    def load_cookies(self,path:str):
+        """load cookies_dic from path (rb)
+        """
+        with open(path,"r") as f:
+            load_cookies = json.loads(f.read())
+        
+        self.session.cookies = requests.utils.cookiejar_from_dict(load_cookies)
