@@ -2,7 +2,7 @@ import json
 import traceback
 from aiohttp import web
 from utils.Gtime import GetTime
-from utils.api.ApiHandler import tfa_code_requeset, afd_request, login_img_request, img_draw_request
+from utils.api.ApiHandler import tfa_code_requeset, afd_request, login_img_request, img_draw_request,shop_cmp_request
 
 # 初始化节点
 routes = web.RouteTableDef()
@@ -128,11 +128,34 @@ async def post_tfa_code(request):
                             status=200,
                             content_type='application/json')
 
+# 用于控制db中ShopCmp的更新
+@routes.post('/shop-cmp')
+async def post_shop_cmp(request):
+    print(f"[{GetTime()}] [request] /shop-cmp")
+    try:
+        ret = await shop_cmp_request(request)
+        return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
+                            content_type='application/json',status=200)
+    except:
+        err_cur = traceback.format_exc()
+        print(f"[{GetTime()}] [Api] ERR in /shop-cmp\n{err_cur}")
+        return web.Response(body=json.dumps(
+            {
+                'code': 200,
+                'message': 'unkown err',
+                'info': f'未知错误',
+                'except': f'{err_cur}'
+            },
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False),
+                            status=200,
+                            content_type='application/json')
 
-from main import bot
 
 
 # 爱发电的wh
+from main import bot
 @routes.post('/afd')
 async def aifadian_webhook(request):
     print(f"[{GetTime()}] [request] /afd")

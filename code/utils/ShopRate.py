@@ -52,15 +52,15 @@ async def get_shop_rate(list_shop: dict, kook_user_id: str):
         if rate_count > 0:
             rate_avg = rate_total // rate_count
             #记录当日冠军和屌丝
-            if rate_avg > SkinRateDict["cmp"]["best"]["pit"]:
-                SkinRateDict["cmp"]["best"]["pit"] = rate_avg
-                SkinRateDict["cmp"]["best"]["skin"] = list_shop
-                SkinRateDict["cmp"]["best"]["kook_id"] = kook_user_id
+            if rate_avg > SkinRateDict["cmp"]["best"]["rating"]:
+                SkinRateDict["cmp"]["best"]["rating"] = rate_avg
+                SkinRateDict["cmp"]["best"]["list_shop"] = list_shop
+                SkinRateDict["cmp"]["best"]["user_id"] = kook_user_id
                 print(f"[shop] update rate-best  Au:{kook_user_id} = {rate_avg}")
-            elif rate_avg < SkinRateDict["cmp"]["worse"]["pit"]:
-                SkinRateDict["cmp"]["worse"]["pit"] = rate_avg
-                SkinRateDict["cmp"]["worse"]["skin"] = list_shop
-                SkinRateDict["cmp"]["worse"]["kook_id"] = kook_user_id
+            elif rate_avg < SkinRateDict["cmp"]["worse"]["rating"]:
+                SkinRateDict["cmp"]["worse"]["rating"] = rate_avg
+                SkinRateDict["cmp"]["worse"]["list_shop"] = list_shop
+                SkinRateDict["cmp"]["worse"]["user_id"] = kook_user_id
                 print(f"[shop] update rate-worse Au:{kook_user_id} = {rate_avg}")
 
             if rate_avg >= 0 and rate_avg <= 20:
@@ -117,14 +117,14 @@ async def check_shop_rate(kook_user_id: str, list_shop: list):
     if rate_count != 0:
         rate_avg = rate_total // rate_count  #平均分
         #记录冠军和屌丝
-        if rate_avg > SkinRateDict["cmp"]["best"]["pit"]:
-            SkinRateDict["cmp"]["best"]["pit"] = rate_avg
-            SkinRateDict["cmp"]["best"]["skin"] = list_shop
-            SkinRateDict["cmp"]["best"]["kook_id"] = kook_user_id
-        elif rate_avg < SkinRateDict["cmp"]["worse"]["pit"]:
-            SkinRateDict["cmp"]["worse"]["pit"] = rate_avg
-            SkinRateDict["cmp"]["worse"]["skin"] = list_shop
-            SkinRateDict["cmp"]["worse"]["kook_id"] = kook_user_id
+        if rate_avg > SkinRateDict["cmp"]["best"]["rating"]:
+            SkinRateDict["cmp"]["best"]["rating"] = rate_avg
+            SkinRateDict["cmp"]["best"]["list_shop"] = list_shop
+            SkinRateDict["cmp"]["best"]["user_id"] = kook_user_id
+        elif rate_avg < SkinRateDict["cmp"]["worse"]["rating"]:
+            SkinRateDict["cmp"]["worse"]["rating"] = rate_avg
+            SkinRateDict["cmp"]["worse"]["list_shop"] = list_shop
+            SkinRateDict["cmp"]["worse"]["user_id"] = kook_user_id
         return True
     else:
         return False
@@ -152,39 +152,66 @@ async def get_available_skinlist(name:str):
     return retlist
 
 # 每日早八，更新leancloud中的ShopCmp
-async def update_ShopCmp():
+from asyncio import Lock
+Slock = Lock() # 需要加锁
+Slock_no = 0 # 计数器
+async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
     """update shop rate in leancloud
+    Args: best/worse should be: {
+      "user_id": "938324311",
+      "rating": 97.0,
+      "list_shop": []
+    }
+
+    Return: 
+    - { "status":True,"info":"all good"}
+    - { "status":False,"info":err}
     """
     try:
-        # 获取对象
-        ShopCmp = leancloud.Object.extend('ShopCmp')
-        query = ShopCmp.query
-        # 获取到两个已有值
-        query.exists('rating') # 通过键值是否存在，进行查找
-        objlist = query.find()
-        if len(objlist) == 0:
-            raise Exception("leancloud find today err!")
-        # 开始更新，先设置为最差
-        rate_avg = SkinRateDict["kkn"]["worse"]["pit"]
-        list_shop = SkinRateDict["kkn"]["worse"]["skin"]
-        kook_user_id = SkinRateDict["kkn"]["worse"]["kook_id"]
-        for i in objlist:
-            if(i.get('best')): # 是最佳 
-                # 设置值
-                rate_avg = SkinRateDict["kkn"]["best"]["pit"]
-                list_shop = SkinRateDict["kkn"]["best"]["skin"]
-                kook_user_id = SkinRateDict["kkn"]["best"]["kook_id"]
-            
-            # 更新对象并保存(不需要比较，而是强制跟新)
-            i.set('userId',kook_user_id)
-            i.set('skinList',list_shop)
-            i.set('rating',rate_avg)
-            i.set('platform',PLATFORM)
-            # i.set_acl(leanAcl) # ShopCmp 设为所有人可写，不需要更新acl
-            i.save()
-            print(f"[update_shop_cmp] saving best:{i.get('best')}")
+        # 同一时间只允许一个执行流过来操作ShopCmp
+        global Slock_no
+        if resetNo: Slock_no = 0 # 重置
+        async with Slock:
+            # 获取对象
+            ShopCmp = leancloud.Object.extend('ShopCmp')
+            query = ShopCmp.query
+            # 获取到两个已有值
+            query.exists('rating') # 通过键值是否存在，进行查找
+            objlist = query.find()
+            if len(objlist) <= 1: # 应该有两个才对
+                raise Exception("leancloud find rating err!")
+            # 开始更新，先设置为最差
+            for i in objlist:
+                cur_info = f"best:{i.get('best')} no:{Slock_no}"
+                if(i.get('best')): # 是最佳 
+                    # 如果不是第一个更新，那就需要判断分数
+                    if best["rating"] < i.get('rating') and Slock_no!=0: 
+                        print(f"[update_ShopCmp] skipping {cur_info}")
+                        continue # 当前用户分数小于数据库中的,不更新
+                    # 设置值
+                    i.set('userId',best["user_id"])
+                    i.set('skinList',best["list_shop"])
+                    i.set('rating',best["rating"])
+                    i.set('platform',platform)
+                    i.save()# ShopCmp 设为所有人可写，不需要更新acl
+                elif(worse["rating"] > i.get('rating')) and Slock_no!=0: # 是最差，判断分数
+                    print(f"[update_ShopCmp] skipping {cur_info}")
+                    continue # 如果本地用户好于数据库记录，不更新
+                else:
+                    # 更新对象并保存(不需要比较，而是强制跟新)
+                    i.set('userId',worse["user_id"])
+                    i.set('skinList',worse["list_shop"])
+                    i.set('rating',worse["rating"])
+                    i.set('platform',platform)
+                    i.save()# ShopCmp 设为所有人可写，不需要更新acl
+                print(f"[update_ShopCmp] saving {cur_info}")
+            # 处理完，no+1
+            Slock_no+=1
+            return { "status":True,"info":"update all good"}
     except:
-        print(f"ERR! [update_shop_cmp]\n{traceback.format_exc()}")
+        err = f"ERR! [update_ShopCmp]\n{traceback.format_exc()}"
+        print(err)
+        return { "status":False,"info":err}
 
 # 获取昨日最好/最差用户
 async def get_ShopCmp():
@@ -327,7 +354,7 @@ async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
     - rate_info:{
         "name": skin_name,
         "cmt": user comment,
-        "pit": user rating,
+        "rating": user rating,
         "time": time stamp,
         "msg_id: message id
     }
@@ -348,7 +375,7 @@ async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
         obj.set('userId',user_id)
 
     obj.set('comment',rate_info['cmt'])
-    obj.set('rating',rate_info['pit'])
+    obj.set('rating',rate_info['rating'])
     obj.set('rateAt',rate_info['time'])
     obj.set('msgId',rate_info['msg_id'])
     obj.set_acl(leanAcl)

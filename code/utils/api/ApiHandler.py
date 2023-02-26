@@ -231,6 +231,34 @@ async def tfa_code_requeset(request):
     }
 
 
+# 更新leancloud
+from utils.ShopRate import update_ShopCmp
+async def shop_cmp_request(request):
+    body = await request.content.read()
+    params = json.loads(body.decode('UTF8'))
+    if 'best' not in params or 'worse' not in params or 'token' not in params or 'platform' not in params:
+        print(f"ERR! [{GetTime()}] params needed: token/best/worse/platform")
+        return {
+            'code': 400,
+            'message': 'params needed: token/best/worse/platform',
+            'info': '缺少参数！请参考api文档，正确设置您的参数',
+            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+        }
+    
+    best = params['best']
+    worse = params['worse']
+    platform = params['platform']
+    # 调用已有函数更新，保证线程安全
+    upd_ret = await update_ShopCmp(best=best,worse=worse,platform=platform)
+    ret = {'code':0,'message':upd_ret['status'],'info':'ShopCmp更新成功'}
+    # 如果正常，那就是0，否则是200
+    if not upd_ret['status']:
+        ret['code'] = 200
+        ret['info'] = 'ShopCmp更新错误'
+
+    return ret
+
+
 from utils.FileManage import AfdWebhook
 from khl.card import CardMessage, Card, Module, Types, Element
 

@@ -2005,15 +2005,16 @@ async def auto_skin_notify():
         UserShopDict = {}  #清空用户的商店
         #清空昨日最好/最差用户的皮肤表
         SkinRateDict["kkn"] = copy.deepcopy(SkinRateDict["cmp"])
-        SkinRateDict["cmp"]["best"]["skin"] = list()
-        SkinRateDict["cmp"]["best"]["pit"] = 0
-        SkinRateDict["cmp"]["worse"]["skin"] = list()
-        SkinRateDict["cmp"]["worse"]["pit"] = 100
-        await ShopRate.update_ShopCmp() # 更新数据库中的记录
-        print("[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(10)")
+        SkinRateDict["cmp"]["best"]["list_shop"] = list()
+        SkinRateDict["cmp"]["best"]["rating"] = 0
+        SkinRateDict["cmp"]["worse"]["list_shop"] = list()
+        SkinRateDict["cmp"]["worse"]["rating"] = 100
+        # 更新数据库中的记录，并重置计数器
+        await ShopRate.update_ShopCmp(SkinRateDict["kkn"]["best"],SkinRateDict["kkn"]["worse"],'kook',True) 
+        print(f"[BOT.TASK.NOTIFY] SkinRateDict/UserShopDict clear, sleep(10) [{GetTime()}]")
         #睡10s再开始遍历（避免时间不准）
         await asyncio.sleep(10)
-        print("[BOT.TASK.NOTIFY] auto_skin_notify Start")
+        print(f"[BOT.TASK.NOTIFY] skin_notify Start [{GetTime()}]")
         #加载vip用户列表
         VipUserD = copy.deepcopy(VipUserDict)
         err_count = 0  # 设置一个count来计算出错的用户数量
