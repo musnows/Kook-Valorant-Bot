@@ -1,5 +1,4 @@
 # encoding: utf-8:
-import json
 import os
 import io
 import random
@@ -11,10 +10,8 @@ import aiohttp
 import copy
 import zhconv
 import asyncio
-import threading
 from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
-from khl.command import Rule
 from aiohttp import client_exceptions
 from PIL import Image,  UnidentifiedImageError  # 用于合成图片
 
@@ -129,16 +126,17 @@ async def Vhelp(msg: Message, *arg):
 
 
 # 当有人@机器人的时候进行回复，可识别出是否为机器人作者
-@bot.command(regex=r'(.+)', rules=[Rule.is_bot_mentioned(bot)])
-async def atAhri(msg: Message, mention_str: str):
-    logging(msg)
+@bot.on_message()
+async def atAhri(msg: Message):
     try:
-        if msg.author_id == master_id:
-            text = help_develop()
-            await msg.reply(text)
-        else:
-            await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri`打开帮助面板，和阿狸一起玩吧！")
-        print(f"[atAhri] Au:{msg.author_id} msg.reply success!")
+        if f"(met){bot.me.id}(met)" in msg.content:
+            logging(msg)
+            if msg.author_id == master_id:
+                text = help_develop()
+                await msg.reply(text)
+            else:
+                await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri` 或 `/vhelp` 打开帮助面板，和阿狸一起玩吧！")
+            print(f"[atAhri] Au:{msg.author_id} msg.reply success!")
     except:
         err_str = f"ERR! [{GetTime()}] atAhri\n```\n{traceback.format_exc()}\n```"
         await msg.reply(f"{err_str}")
