@@ -141,8 +141,8 @@ SkinRateDict = FileManage("./log/ValSkinRate.json")  # valorant皮肤评分信�
 SkinNotifyDict = FileManage("./log/UserSkinNotify.json")  # 皮肤提醒 用户记录
 GameIdDict = FileManage("./log/game_idsave.json")  # 玩家游戏id保存
 UserAuthID = FileManage("./log/UserAuthID.json")  # 用户游戏id/uuid，账户密码重登记录
-UserTokenDict = UserAuthID['data']  # riot用户游戏id和uuid
-UserApLog = UserAuthID['ap_log']    # 账户密码重登记录
+UserRiotName = UserAuthID['data']  # riot用户游戏id和uuid
+UserPwdReauth = UserAuthID['ap_log']    # 账户密码重登记录
 ApiAuthLog = UserAuthID['api_log']  # api 缓存用户的account记录
 ApiAuthCache = {'data':{}}          # api EzAuth对象缓存
 

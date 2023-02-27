@@ -426,7 +426,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from utils.FileManage import VipShopBgDict,VipRollDcit,UserApLog
+from utils.FileManage import VipShopBgDict,VipRollDcit,UserPwdReauth
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
@@ -863,7 +863,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.FileManage import UserTokenDict,SkinNotifyDict,EmojiDict,SkinRateDict
+from utils.FileManage import UserRiotName,SkinNotifyDict,EmojiDict,SkinRateDict
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}
@@ -889,9 +889,9 @@ def check_rate_err_user(user_id: str):
 
 # 判断uuid是否相等（用户有没有切换登录账户）
 def isSame_Authuuid(msg: Message):
-    """UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
+    """UserShopDict[msg.author_id]["auth_user_id"] == UserRiotName[msg.author_id]["auth_user_id"]
     """
-    return UserShopDict[msg.author_id]["auth_user_id"] == UserTokenDict[msg.author_id]["auth_user_id"]
+    return UserShopDict[msg.author_id]["auth_user_id"] == UserRiotName[msg.author_id]["auth_user_id"]
 
 # 检查全局用户登录速率
 async def check_GloginRate():
@@ -919,7 +919,7 @@ async def check_UserAuthDict_len(msg: Message):
 async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     print(f"[{GetTime()}] Au:{msg.author_id}_{msg.author.username}#{msg.author.identify_num} = /login {apSave}")
     log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
-    global Login_Forbidden, login_rate_limit, UserTokenDict, UserAuthDict
+    global Login_Forbidden, login_rate_limit, UserRiotName, UserAuthDict
     if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
         await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
         return
@@ -947,13 +947,13 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
             return
 
         # 4.如果没有抛出异常，那就是完成登录了，设置用户的玩家uuid+昵称
-        UserTokenDict[msg.author_id] = {
+        UserRiotName[msg.author_id] = {
             'auth_user_id': auth.user_id, 
             'GameName': auth.Name, 
             'TagLine': auth.Tag
         }
         # 设置基础打印信息
-        text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        text = f"登陆成功！欢迎回来，{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
 
         # 5.如果是vip用户，则执行下面的代码
@@ -967,8 +967,8 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         # 6.用户自己选择是否保存账户密码，默认是不保存的；2fa用户也不会保存
         if apSave == 'save' and (not auth.is2fa):
             # 不在这里再新建（用于保存阿狸使用账户密码重登的时间，告知用户）
-            if msg.author_id not in UserApLog:
-                UserApLog[msg.author_id] = {}
+            if msg.author_id not in UserPwdReauth:
+                UserPwdReauth[msg.author_id] = {}
             UserAuthDict['AP'][msg.author_id] = {'a': user, 'p': passwd}
             info_text += "\n您选择了保存账户密码，cookie失效后将使用账户密码重登"
 
@@ -978,7 +978,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
 
         # 8.全部都搞定了，打印登录信息日志
         print(
-            f"[Login] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+            f"[Login] Au:{msg.author_id} - {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         )
     except EzAuthExp.AuthenticationError as result:
         print(f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}")
@@ -1053,7 +1053,12 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         # 3.进行邮箱验证
         res = await auth.email_verfiy(tfa)
         # 4.成功
-        text = f"登陆成功！欢迎回来，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        UserRiotName[msg.author_id] = {
+            'auth_user_id': auth.user_id, 
+            'GameName': auth.Name, 
+            'TagLine': auth.Tag
+        }
+        text = f"登陆成功！欢迎回来，{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
         cm = await get_card(text, info_text, icon_cm.correct)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1074,15 +1079,15 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
 async def logout(msg: Message, *arg):
     logging(msg)
     try:
-        global UserTokenDict, UserAuthDict
+        global UserRiotName, UserAuthDict
         if msg.author_id not in UserAuthDict:  #使用not in判断是否不存在
             cm = await get_card("您尚未登陆！无须logout", "阿巴阿巴？", icon_cm.whats_that)
             await msg.reply(cm)
             return
 
-        log_text = f"[Logout] Au:{msg.author_id} - {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        log_text = f"[Logout] Au:{msg.author_id} - {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         # 如果id存在，删除auth对象
-        # 因为UserTokenDict里面只存放了用户游戏名/uuid，且不作为是否登录的判断，所以不需要删除
+        # 因为UserRiotName里面只存放了用户游戏名/uuid，且不作为是否登录的判断，所以不需要删除
         del UserAuthDict[msg.author_id] 
         # 如果是vip用户，删除本地保存的cookie
         cookie_path = f"./log/cookie/{msg.author_id}.cke"
@@ -1091,7 +1096,7 @@ async def logout(msg: Message, *arg):
             os.remove(cookie_path) # 删除文件
             log_text+= " - rm cookie file"
 
-        text = f"已退出登录！下次再见，{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+        text = f"已退出登录！下次再见，{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
         await msg.reply(cm)
         print(log_text)
@@ -1103,16 +1108,16 @@ async def logout(msg: Message, *arg):
 async def login_acpw(msg:Message,*arg):
     logging(msg)
     try:
-        if msg.author_id not in UserApLog:
+        if msg.author_id not in UserPwdReauth:
             await msg.reply(f"您没有保存账户密码或2fa用户，该命令无效")
             return
         send_text='none'
-        if len(UserApLog[msg.author_id]) == 0:
+        if len(UserPwdReauth[msg.author_id]) == 0:
             send_text = "阿狸还没有用过您的账户密码来重新登录呢"
         else:
             send_text = '以下为账户密码登录日志\n'
-            for i in UserApLog[msg.author_id]:
-                send_text+=f"{i} - {UserApLog[msg.author_id][i]}\n"
+            for i in UserPwdReauth[msg.author_id]:
+                send_text+=f"{i} - {UserPwdReauth[msg.author_id][i]}\n"
         # 发送信息
         await msg.reply(send_text)
     except Exception as result:  # 其他错误
@@ -1123,7 +1128,7 @@ async def login_acpw(msg:Message,*arg):
 async def login_reauth(kook_user_id: str):
     base_print = f"[{GetTime()}] Au:{kook_user_id} = "
     print(base_print + "auth_token failure,trying reauthorize()")
-    global UserAuthDict,UserTokenDict
+    global UserAuthDict,UserRiotName
     auth = UserAuthDict[kook_user_id]['auth']
     assert isinstance(auth,EzAuth)
     #用cookie重新登录,会返回一个bool是否成功
@@ -1144,7 +1149,7 @@ async def login_reauth(kook_user_id: str):
             UserAuthDict[kook_user_id]['auth'] = auth
             auth.save_cookies(f"./log/cookie/{kook_user_id}.cke") # 保存cookie
             # 记录使用账户密码重新登录的时间
-            UserApLog[kook_user_id][GetTime()] = UserTokenDict[kook_user_id]['GameName']
+            UserPwdReauth[kook_user_id][GetTime()] = UserRiotName[kook_user_id]['GameName']
             print(base_print + "authflow() by AP")
             ret = True
     # 正好返回auth.reauthorize()的bool
@@ -1255,7 +1260,7 @@ async def get_daily_shop(msg: Message, *arg):
             reau = await check_reauth("每日商店", msg)
             if reau == False: return  #如果为假说明重新登录失败
             # 重新获取token成功，从dict中获取玩家id
-            player_gamename = f"{UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']}"
+            player_gamename = f"{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
             # 获取玩家id成功了，再提示正在获取商店
             cm = await get_card("正在尝试获取您的每日商店", "阿狸正在施法，很快就好啦！", icon_cm.duck)
             if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
@@ -1288,7 +1293,7 @@ async def get_daily_shop(msg: Message, *arg):
                 timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
                 # 需要设置uuid来保证是同一个用户，方便同日的下次查询
                 UserShopDict[msg.author_id] = {}
-                UserShopDict[msg.author_id]["auth_user_id"] = UserTokenDict[msg.author_id]["auth_user_id"]
+                UserShopDict[msg.author_id]["auth_user_id"] = UserRiotName[msg.author_id]["auth_user_id"]
                 UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                 log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
 
@@ -1437,7 +1442,7 @@ async def get_night_market(msg: Message, *arg):
             c = Card(color='#fb4b57')
             c.append(
                 Module.Header(
-                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的夜市！"))
+                    f"玩家 {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']} 的夜市！"))
             for Bonus in resp["BonusStore"]["BonusStoreOffers"]:
                 skin = fetch_skin_bylist(Bonus["Offer"]["OfferID"])
                 skin_icon = skin["data"]['levels'][0]["displayIcon"]
@@ -1553,7 +1558,7 @@ async def get_user_card(msg: Message, *arg):
             c = Card(color='#fb4b57')
             c.append(
                 Module.Header(
-                    f"玩家 {UserTokenDict[msg.author_id]['GameName']}#{UserTokenDict[msg.author_id]['TagLine']} 的个人信息"))
+                    f"玩家 {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']} 的个人信息"))
             c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
             text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
             text+= f"玩家等级：{player_level}  -  经验值：{player_level_xp}\n"
@@ -2072,7 +2077,7 @@ async def auto_skin_notify():
                         await ShopRate.check_shop_rate(vip, list_shop)  #计算用户商店得分
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
                         UserShopDict[vip] = {}
-                        UserShopDict[vip]["auth_user_id"] = UserTokenDict[vip]["auth_user_id"]
+                        UserShopDict[vip]["auth_user_id"] = UserRiotName[vip]["auth_user_id"]
                         UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                         #直接获取商店图片
                         draw_time = time.time()  #开始计算画图需要的时间
@@ -2114,14 +2119,14 @@ async def auto_skin_notify():
                         if shop_text == "err":
                             c.append(
                                 Module.Header(
-                                    f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']} 的每日商店"))
+                                    f"早安！玩家 {UserRiotName[vip]['GameName']}#{UserRiotName[vip]['TagLine']} 的每日商店"))
                             c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
                             c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
                         else:
                             c.append(
                                 Module.Section(
                                     Element.Text(
-                                        f"早安！玩家 {UserTokenDict[vip]['GameName']}#{UserTokenDict[vip]['TagLine']}",
+                                        f"早安！玩家 {UserRiotName[vip]['GameName']}#{UserRiotName[vip]['TagLine']}",
                                         Types.Text.KMD), Element.Image(src=icon_cm.shot_on_fire, size='sm')))
                             c.append(Module.Section(Element.Text(shop_text, Types.Text.KMD)))
                             c.append(Module.Context(Element.Text(f"这里有没有你想要的枪皮呢？", Types.Text.KMD)))
@@ -2327,8 +2332,8 @@ async def loading_channel_cookie():
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
                 #print(f"[BOT.TASK] Au:{user} - load cookie success!")
-                #不用重新修改UserTokenDict里面的游戏名和uuid
-                #因为UserTokenDict是在login的时候保存的，只要用户没有切换账户
+                #不用重新修改UserRiotName里面的游戏名和uuid
+                #因为UserRiotName是在login的时候保存的，只要用户没有切换账户
                 #那么玩家id和uuid都是不会变化的，也没必要重新加载
             else:
                 log_str_failed += f"({user}) "
