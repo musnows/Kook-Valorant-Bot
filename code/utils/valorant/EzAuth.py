@@ -11,7 +11,8 @@ from re import compile
 
 from . import EzAuthExp
 # get latest version: https://valorant-api.com/v1/version
-RiotClient = "RiotClient/63.0.9.4909983.4789131"
+X_RIOT_CLIENTVERSION = "RiotClient/63.0.9.4909983.4789131"
+X_RIOT_CLIENTVPLATFROM =  "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9"
 TFA_TIME_LIMIT = 600  # 600s时间限制
 
 CIPHERS = [
@@ -52,7 +53,7 @@ class EzAuth:
     def __init__(self) -> None:
         self.session = requests.Session()
         self.session.headers = OrderedDict({
-            "User-Agent": f"{RiotClient} %s (Windows;10;;Professional, x64)",
+            "User-Agent": f"{X_RIOT_CLIENTVERSION} %s (Windows;10;;Professional, x64)",
             "Accept-Language": "en-US,en;q=0.9",
             "Accept": "application/json, text/plain, */*"
         })
@@ -94,7 +95,7 @@ class EzAuth:
         self.token_type = tokens['token_type']
 
         self.base_headers = {
-            "User-Agent": f"{RiotClient} %s (Windows;10;;Professional, x64)",
+            "User-Agent": f"{X_RIOT_CLIENTVERSION} %s (Windows;10;;Professional, x64)",
             "Authorization": f"{self.token_type} {self.access_token}",
         }
         self.session.headers.update(self.base_headers)
