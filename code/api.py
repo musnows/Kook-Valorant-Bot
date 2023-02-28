@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 
 # 基础返回
 @routes.get('/')
-def hello_world(request):  # put application's code here
+async def hello_world(request):  # put application's code here
     print(f"[{GetTime()}] [request] /")
     return web.Response(body=json.dumps(
         {
@@ -29,7 +29,7 @@ def hello_world(request):  # put application's code here
 
 # 提供4个皮肤uuid，返回图片
 @routes.get('/shop-draw')
-async def get_dailshop_img(request):
+async def get_shop_draw(request):
     print(f"[{GetTime()}] [request] /shop-draw")
     try:
         ret = await ApiHandler.img_draw_request(request)
@@ -54,7 +54,7 @@ async def get_dailshop_img(request):
 
 # 直接跳转图片（浏览器访问，get方法不安全）
 @routes.get('/shop-img')
-async def get_dailshop_img(request):
+async def get_shop_img(request):
     print(f"[{GetTime()}] [request] /shop-img")
     try:
         ret = await ApiHandler.login_request(request,"GET")
@@ -82,7 +82,7 @@ async def get_dailshop_img(request):
 
 # 登录接口
 @routes.post('/login')
-async def get_dailshop_img(request):
+async def post_login(request):
     print(f"[{GetTime()}] [request] /login")
     try:
         ret = await ApiHandler.login_request(request,"POST")
@@ -129,20 +129,22 @@ async def post_tfa_code(request):
                             content_type='application/json')
     
 @routes.post('/shop')
-async def get_dailshop_img(request):
+async def post_shop(request):
     print(f"[{GetTime()}] [request] /shop")
     try:
         body = await request.content.read()
         params = json.loads(body.decode('UTF8'))
         # 判断必须要的参数是否齐全
-        if 'account' not in params or 'token' not in params:
+        if 'account' not in params or 'token' not in params: # 不全，报错
             print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
-            return {
+            ret = {
                 'code': 400,
                 'message': 'params needed: token/account/passwd',
                 'info': '缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）',
                 'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
             }
+            return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
+                            content_type='application/json',status=200)
         # 画图请求，不需要检测token速率
         ret = await ApiHandler.shop_get_request(params,params['account'])
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),

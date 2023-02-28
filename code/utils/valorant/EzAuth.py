@@ -9,7 +9,7 @@ from typing import Any
 from collections import OrderedDict
 from re import compile
 
-from utils.valorant import EzAuthExp
+from . import EzAuthExp
 # get latest version: https://valorant-api.com/v1/version
 RiotClient = "RiotClient/63.0.9.4909983.4789131"
 TFA_TIME_LIMIT = 600  # 600s时间限制
@@ -29,6 +29,7 @@ class URLS:
 
 
 class SSLAdapter(HTTPAdapter):
+
     def init_poolmanager(self, *a: Any, **k: Any) -> None:
         c = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         c.set_ciphers(':'.join(CIPHERS))
@@ -36,9 +37,19 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*a, **k)
 
 
+# 用于valorant api调用的UserDict
+class RiotUserToken:
+
+    def __init__(self, user_id: str, access_token: str, entitlements: str, region: str) -> None:
+        self.user_id = user_id
+        self.access_token = access_token
+        self.entitlements_token = entitlements
+        self.region = region
+
+
 class EzAuth:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.session = requests.Session()
         self.session.headers = OrderedDict({
             "User-Agent": f"{RiotClient} %s (Windows;10;;Professional, x64)",
@@ -46,10 +57,10 @@ class EzAuth:
             "Accept": "application/json, text/plain, */*"
         })
         self.session.mount('https://', SSLAdapter())
-        self.is2fa = False # 2fa set to false
-        self.__mfa_start__ = 0 # 2fa start time
+        self.is2fa = False  # 2fa set to false
+        self.__mfa_start__ = 0  # 2fa start time
 
-    def __set_userinfo(self):
+    def __set_userinfo(self) -> None:
         """set_user_info to value"""
         userinfo = self.get_userinfo()
         self.user_id = userinfo['sub']
@@ -58,24 +69,23 @@ class EzAuth:
         self.creationdata = userinfo['create_data']
         self.typeban = userinfo['typeban']
 
-    def __set_region(self):
-        self.Region_headers = {'Content-Type': 'application/json', 'Authorization': f'{self.token_type} {self.access_token}'}
+    def __set_region(self) -> None:
+        self.Region_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'{self.token_type} {self.access_token}'
+        }
         self.Region = self.get_region(self.Region_headers)
-    
-    def __set_access_token(self,data:dict):
+
+    def __set_access_token(self, data: dict) -> dict[str, Any]:
         """get access_token from response"""
         pattern = compile(
-            'access_token=((?:[a-zA-Z]|\d|\.|-|_)*).*id_token=((?:[a-zA-Z]|\d|\.|-|_)*).*token_type=((?:[a-zA-Z]|\d|)*).*expires_in=(\d*)')
+            'access_token=((?:[a-zA-Z]|\d|\.|-|_)*).*id_token=((?:[a-zA-Z]|\d|\.|-|_)*).*token_type=((?:[a-zA-Z]|\d|)*).*expires_in=(\d*)'
+        )
         p_data = pattern.findall(data['response']['parameters']['uri'])[0]
-        tokens = {
-            "access_token":p_data[0],
-            "id_token":p_data[1],
-            "token_type":p_data[2],
-            "expires_in":p_data[3]
-        }
+        tokens = {"access_token": p_data[0], "id_token": p_data[1], "token_type": p_data[2], "expires_in": p_data[3]}
         return tokens
-    
-    def __set_info(self,tokens:dict):
+
+    def __set_info(self, tokens: dict) -> None:
         """auth/reauth success, set entitlements_token, userinfo & region\n
         Args: return value of __set_access_token()
         """
@@ -93,7 +103,7 @@ class EzAuth:
         self.__set_userinfo()
         self.__set_region()
 
-    async def authorize(self, username, password):
+    async def authorize(self, username, password) -> dict:
         """Authenticate using username and password.\n
         if username & password empty, using cookie reauth\n
         Return: 
@@ -102,9 +112,9 @@ class EzAuth:
          if False, using email_verify() to send verify code
         """
         if username and password:
-            self.session.cookies.clear() # not reauth, clear cookie
-    
-        token = {"access_token":"","id_token":"","token_type":"Bearer","expires_in":'0'}  
+            self.session.cookies.clear()  # not reauth, clear cookie
+
+        token = {"access_token": "", "id_token": "", "token_type": "Bearer", "expires_in": '0'}
         body = {
             "acr_values": "urn:riot:bronze",
             "claims": "",
@@ -117,15 +127,9 @@ class EzAuth:
         r = self.session.post(url=URLS.AUTH_URL, json=body)
         data = r.json()
         resp_type = data["type"]
-       
-        if resp_type != "response":   # not reauth
-            body = {
-                "language": "en_US", 
-                "password": password, 
-                "remember": "true", 
-                "type": "auth", 
-                "username": username
-            }
+
+        if resp_type != "response":  # not reauth
+            body = {"language": "en_US", "password": password, "remember": "true", "type": "auth", "username": username}
             r = self.session.put(url=URLS.AUTH_URL, json=body)
             data = r.json()
 
@@ -139,11 +143,11 @@ class EzAuth:
                 raise EzAuthExp.RatelimitError("auth_failure, rate_limited")
 
             # 2fa auth
-            elif 'multifactor' in r.text:  
+            elif 'multifactor' in r.text:
                 print(f"[EzAuth] 2fa user")
-                self.is2fa = True # is 2fa user
+                self.is2fa = True  # is 2fa user
                 self.__mfa_start__ = time.time()
-                return {"status":False,"auth":self,"2fa_status":self.is2fa}
+                return {"status": False, "auth": self, "2fa_status": self.is2fa}
             else:
                 raise EzAuthExp.UnkownError(r.text)
 
@@ -155,15 +159,15 @@ class EzAuth:
         else:
             raise EzAuthExp.UnkownError(r.text)
 
-        return {"status":True,"auth":self,"2fa_status":self.is2fa}
+        return {"status": True, "auth": self, "2fa_status": self.is2fa}
 
-    async def email_verfiy(self,vcode:str):
+    async def email_verfiy(self, vcode: str) -> dict:
         """email_verfiy after trying authorize
         Return {"status":True,"auth":self,"2fa":self.is2fa}
         """
         # no need to 2fa
         if self.__mfa_start__ == 0:
-            return {"status":True,"auth":self,"2fa":self.is2fa}
+            return {"status": True, "auth": self, "2fa": self.is2fa}
         # check time
         if (time.time() - self.__mfa_start__) <= TFA_TIME_LIMIT:
             authdata = {
@@ -177,13 +181,13 @@ class EzAuth:
                 pass
             elif "auth_failure" in r.text:
                 raise EzAuthExp.MultifactorError("2fa auth_failue")
-            elif "multifactor_attempt_failed" in r.text: # verify code err
+            elif "multifactor_attempt_failed" in r.text:  # verify code err
                 raise EzAuthExp.MultifactorError("2fa auth_failue, multifactor_attempt_failed")
             else:
                 raise EzAuthExp.MultifactorError("2fa auth_failue, unkown err")
-        else: # 2fa wait overtime
+        else:  # 2fa wait overtime
             raise EzAuthExp.WaitOvertimeError("2fa wait overtime, wait failed")
-        
+
         # get access_token from response
         if "access_token" in r.text:
             token = self.__set_access_token(data)
@@ -193,13 +197,13 @@ class EzAuth:
             raise EzAuthExp.UnkownError(r.text)
 
         self.__mfa_start__ = 0
-        return {"status":True,"auth":self,"2fa":self.is2fa}
-    
+        return {"status": True, "auth": self, "2fa": self.is2fa}
+
     async def reauthorize(self) -> bool:
         """reauthorize using cookie
         """
         try:
-            await self.authorize("","")
+            await self.authorize("", "")
             return True
         except Exception as result:
             print(f"[EzAuth] reauthoreize err!\n{result}")
@@ -247,9 +251,9 @@ class EzAuth:
                     typeban = "PERMANENT_BAN"
         if data3 == [] or "PBE_LOGIN_TIME_BAN" in data3 or "LEGACY_BAN" in data3:
             typeban = "None"
-        return {'sub':Sub, 'name':Name, 'tag':Tag, 'create_data':Createdat, 'typeban':typeban}
+        return {'sub': Sub, 'name': Name, 'tag': Tag, 'create_data': Createdat, 'typeban': typeban}
 
-    def get_region(self,headers):
+    def get_region(self, headers) -> str:
         """headers {'Content-Type': 'application/json', 'Authorization': f'{self.token_type} {self.access_token}'}
         """
         json = {"id_token": self.id_token}
@@ -259,7 +263,7 @@ class EzAuth:
         Region = data['affinities']['live']
         return Region
 
-    def print(self):
+    def print(self) -> None:
         print("=" * 50)
         print(f"Accestoken: {self.access_token}")
         print("-" * 50)
@@ -276,7 +280,7 @@ class EzAuth:
         print(f"Bantype: {self.typeban}")
         print("=" * 50)
 
-    def get_userdict(self):
+    def get_userdict(self) -> RiotUserToken:
         """Return = {
             'auth_user_id': self.user_id,
             'access_token': self.access_token,
@@ -284,24 +288,23 @@ class EzAuth:
             'region':self.region
         }
         """
-        return {
-            'auth_user_id': self.user_id,
-            'access_token': self.access_token,
-            'entitlements_token': self.entitlements_token,
-            'region': self.Region
-        }
+        ret = RiotUserToken(user_id=self.user_id,
+                            access_token=self.access_token,
+                            entitlements=self.entitlements_token,
+                            region=self.Region)
+        return ret
 
-    def save_cookies(self,path:str):
+    def save_cookies(self, path: str) -> None:
         """dump cookies_dict to path (w+)
         """
         cookies = requests.utils.dict_from_cookiejar(self.session.cookies)
-        with open(path,"w+") as f:
+        with open(path, "w+") as f:
             f.write(json.dumps(cookies))
 
-    def load_cookies(self,path:str):
+    def load_cookies(self, path: str) -> None:
         """load cookies_dic from path (rb)
         """
-        with open(path,"r") as f:
+        with open(path, "r") as f:
             load_cookies = json.loads(f.read())
-        
+
         self.session.cookies = requests.utils.cookiejar_from_dict(load_cookies)
