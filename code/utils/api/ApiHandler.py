@@ -150,13 +150,13 @@ async def shop_get_request(params,account:str):
         return { "code":200,"message":"缓存信息失效，需要重新登录",
                 "info":"cache reauthorize failed，please /login" }
     # 3 获取每日商店
-    userdict = auth.get_userdict()
-    resp = await fetch_daily_shop(userdict)  
+    riotUser = auth.get_riotuser_token()
+    resp = await fetch_daily_shop(riotUser)  
     print(f'[{GetTime()}] [Api] fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
     res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
     if isimgRatio or isRaw:
-        res_vprp = await fetch_vp_rp_dict(userdict)  # 只有16-9的图片需获取vp和r点
+        res_vprp = await fetch_vp_rp_dict(riotUser)  # 只有16-9的图片需获取vp和r点
     # 如果用户需要raw，则返回皮肤uuid和vp rp的dict
     if isRaw:
         return { "code":0,"message":"获取原始接口返回值成功","info":"get raw response success","storefront":resp,"wallet":res_vprp}

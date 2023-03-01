@@ -20,7 +20,7 @@ from utils.BotLog import logging, log_bot_list, log_bot_user, log_bot_list_text,
 from utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                            get_card)
 from utils.valorant.Val import *
-from utils.valorant.EzAuth import EzAuth, EzAuthExp
+from utils.valorant.EzAuth import EzAuth, EzAuthExp,RiotUserToken
 from utils.Gtime import GetTime, GetTimeStampOf8AM
 
 # bot的token文件
@@ -121,7 +121,8 @@ async def Vhelp(msg: Message, *arg):
 @bot.on_message()
 async def atAhri(msg: Message):
     try:
-        if f"(met){bot.me.id}(met)" in msg.content:
+        me = await bot.client.fetch_me()
+        if f"(met){me.id}(met)" in msg.content:
             logging(msg)
             if msg.author_id == master_id:
                 text = Help.help_develop()
@@ -1152,9 +1153,9 @@ async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
         user_id = msg if isinstance(msg, str) else msg.author_id  #如果是str就直接用
         auth = UserAuthDict[user_id]['auth']
         assert isinstance(auth, EzAuth)
-        # 直接从对象中获取userdict
-        userdict = auth.get_userdict()
-        resp = await fetch_valorant_point(userdict)
+        # 直接从对象中获取user的Token
+        riotUser = auth.get_riotuser_token()
+        resp = await fetch_valorant_point(riotUser)
         # resp={'httpStatus': 400, 'errorCode': 'BAD_CLAIMS', 'message': 'Failure validating/decoding RSO Access Token'}
         # 如果没有这个键，会直接报错进except; 如果有这个键，就可以继续执行下面的内容
         test = resp['httpStatus']
@@ -1251,15 +1252,13 @@ async def get_daily_shop(msg: Message, *arg):
             else:
                 send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
-            #计算获取每日商店要多久
+            # 计算获取每日商店要多久
             start = time.perf_counter()  #开始计时
-            #从auth的dict中获取对象
+            # 从auth的dict中获取对象
             auth = UserAuthDict[msg.author_id]['auth']
-            userdict = {
-                'auth_user_id': auth.user_id,
-                'access_token': auth.access_token,
-                'entitlements_token': auth.entitlements_token
-            }
+            assert isinstance(auth, EzAuth)
+            riotUser = auth.get_riotuser_token()
+            # 开始判断是否需要获取商店
             log_time = ""
             a_time = time.time()
             global UserShopDict, VipShopBgDict
@@ -1269,7 +1268,7 @@ async def get_daily_shop(msg: Message, *arg):
                 timeout = shop_time_remain()  # 通过当前时间计算商店剩余时间
                 log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
             else:
-                resp = await fetch_daily_shop(userdict)  #本地没有，api获取每日商店
+                resp = await fetch_daily_shop(riotUser)  #本地没有，api获取每日商店
                 list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                 timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  # 剩余时间
                 timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
@@ -1291,7 +1290,7 @@ async def get_daily_shop(msg: Message, *arg):
                 upload_flag = False  #有缓存图，直接使用本地已有链接
                 dailyshop_img_src = VipShopBgDict['cache'][msg.author_id]['cache_img']
             elif is_vip:  # 本地缓存路径不存在，或者缓存过期
-                play_currency = await fetch_vp_rp_dict(userdict)  #获取用户的vp和rp
+                play_currency = await fetch_vp_rp_dict(riotUser)  #获取用户的vp和rp
                 # 如果没有设置背景图，那就设置为err
                 background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
                                   VipShopBgDict['bg'][msg.author_id]["background"][0])
@@ -1404,12 +1403,10 @@ async def get_night_market(msg: Message, *arg):
             #计算获取时间
             start = time.perf_counter()  #开始计时
             auth = UserAuthDict[msg.author_id]['auth']
-            userdict = {
-                'auth_user_id': auth.user_id,
-                'access_token': auth.access_token,
-                'entitlements_token': auth.entitlements_token
-            }
-            resp = await fetch_daily_shop(userdict)  #获取商店（夜市是相同接口）
+            assert isinstance(auth, EzAuth)
+            riotUser = auth.get_riotuser_token()
+            # 获取商店（夜市是相同接口）
+            resp = await fetch_daily_shop(riotUser)  
             if "BonusStore" not in resp:  # 如果没有这个字段，说明夜市取消了
                 NightMarketOff = False
                 cm1 = await get_card("嗷~ 夜市已关闭 或 Api没能正确返回结果", "night_market closed! 'BonusStore' not in resp",
@@ -1506,12 +1503,9 @@ async def get_user_card(msg: Message, *arg):
                 send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
             auth = UserAuthDict[msg.author_id]['auth']
-            userdict = {
-                'auth_user_id': auth.user_id,
-                'access_token': auth.access_token,
-                'entitlements_token': auth.entitlements_token
-            }
-            resp = await fetch_player_loadout(userdict)  #获取玩家装备栏
+            assert isinstance(auth, EzAuth)
+            riotUser = auth.get_riotuser_token()
+            resp = await fetch_player_loadout(riotUser)  #获取玩家装备栏
             player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
             player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
             if 'data' not in player_card or player_card['status'] != 200:
@@ -1532,7 +1526,7 @@ async def get_user_card(msg: Message, *arg):
                 return
 
             # 获取玩家等级
-            resp = await fetch_player_level(userdict)
+            resp = await fetch_player_level(riotUser)
             player_level = resp["Progress"]["Level"]  # 玩家等级
             player_level_xp = resp["Progress"]["XP"]  # 玩家等级经验值
             last_fwin = resp["LastTimeGrantedFirstWin"]  # 上次首胜时间
@@ -1550,7 +1544,7 @@ async def get_user_card(msg: Message, *arg):
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
             #获取玩家的vp和r点剩余的text
-            resp = await fetch_vp_rp_dict(userdict)
+            resp = await fetch_vp_rp_dict(riotUser)
             text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {resp['rp']}    "
             text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {resp['vp']}\n"
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
@@ -2038,13 +2032,10 @@ async def auto_skin_notify():
                         shop_text = "err"
                         start = time.perf_counter()  #开始计时
                         auth = UserAuthDict[vip]['auth']
-                        userdict = {
-                            'auth_user_id': auth.user_id,
-                            'access_token': auth.access_token,
-                            'entitlements_token': auth.entitlements_token
-                        }
+                        assert isinstance(auth, EzAuth)
+                        riotUser = auth.get_riotuser_token()
                         a_time = time.time()  # 获取token的时间
-                        resp = await fetch_daily_shop(userdict)  # 获取每日商店
+                        resp = await fetch_daily_shop(riotUser)  # 获取每日商店
 
                         # 判断夜市有没有开，只会判断一次
                         global NightMarketOff  #true代表夜市没有开启
@@ -2063,7 +2054,7 @@ async def auto_skin_notify():
                         #直接获取商店图片
                         draw_time = time.time()  #开始计算画图需要的时间
                         img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
-                        play_currency = await fetch_vp_rp_dict(userdict)  #获取用户的vp和rp
+                        play_currency = await fetch_vp_rp_dict(riotUser)  #获取用户的vp和rp
                         # 设置用户背景图，如果在则用，否则返回err
                         background_img = ('err' if vip not in VipShopBgDict['bg'] else
                                           VipShopBgDict['bg'][vip]["background"][0])
@@ -2143,16 +2134,13 @@ async def auto_skin_notify():
                 if aid in UserAuthDict:
                     if await check_reauth("定时获取玩家商店", aid) == True:  # 重新登录,如果为假说明重新登录失败
                         auth = UserAuthDict[aid]['auth']
-                        userdict = {
-                            'auth_user_id': auth.user_id,
-                            'access_token': auth.access_token,
-                            'entitlements_token': auth.entitlements_token
-                        }
+                        assert isinstance(auth, EzAuth)
+                        riotUser = auth.get_riotuser_token()
                         #vip用户在前面已经获取过商店了
                         if await BotVip.vip_ck(aid):
                             list_shop = UserShopDict[aid]["SkinsPanelLayout"]["SingleItemOffers"]
                         else:
-                            resp = await fetch_daily_shop(userdict)  # 获取每日商店
+                            resp = await fetch_daily_shop(riotUser)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                             await ShopRate.check_shop_rate(vip, list_shop)  #计算非vip用户商店得分
 
@@ -2223,12 +2211,9 @@ async def update_skin_price_bundle(msg: Message):
                 await msg.reply(f"成功更新：捆绑包")
             # 获取物品价格需要登录
             auth = UserAuthDict[msg.author_id]['auth']
-            userdict = {
-                'auth_user_id': auth.user_id,
-                'access_token': auth.access_token,
-                'entitlements_token': auth.entitlements_token
-            }
-            if await ValFileUpd.update_price(msg, userdict):
+            assert isinstance(auth, EzAuth)
+            riotUser = auth.get_riotuser_token()
+            if await ValFileUpd.update_price(msg, riotUser):
                 await msg.reply(f"成功更新：物品价格")
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] update_spb\n```\n{traceback.format_exc()}\n```"

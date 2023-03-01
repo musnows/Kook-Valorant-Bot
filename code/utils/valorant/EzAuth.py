@@ -281,13 +281,11 @@ class EzAuth:
         print(f"Bantype: {self.typeban}")
         print("=" * 50)
 
-    def get_userdict(self) -> RiotUserToken:
-        """Return = {
-            'auth_user_id': self.user_id,
-            'access_token': self.access_token,
-            'entitlements_token': self.entitlements_token,
-            'region':self.region
-        }
+    def get_riotuser_token(self) -> RiotUserToken:
+        """RiotUserToken(user_id=self.user_id,
+                            access_token=self.access_token,
+                            entitlements=self.entitlements_token,
+                            region=self.Region)
         """
         ret = RiotUserToken(user_id=self.user_id,
                             access_token=self.access_token,
