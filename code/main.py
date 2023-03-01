@@ -2270,8 +2270,8 @@ async def proc_check(msg: Message, *arg):
 
 
 #在阿狸开机的时候自动加载所有保存过的cookie
-@bot.task.add_date()
-async def loading_channel_cookie():
+@bot.on_startup
+async def loading_cache(bot:Bot):
     try:
         global debug_ch, cm_send_test
         cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
@@ -2302,21 +2302,15 @@ async def loading_channel_cookie():
             if ret_bool:  # True登陆成功
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
-                #print(f"[BOT.TASK] Au:{user} - load cookie success!")
-                #不用重新修改UserRiotName里面的游戏名和uuid
-                #因为UserRiotName是在login的时候保存的，只要用户没有切换账户
-                #那么玩家id和uuid都是不会变化的，也没必要重新加载
             else:
+                del auth # 删除对象
                 log_str_failed += f"({user}) "
-                #print(f"[BOT.TASK] Au:{user} - load cookie failed!")
                 continue
         else:
             log_not_exits += f"({user}) "
             continue
     # 结束任务
-    print(log_str_success)  #打印正常的用户
-    print(log_str_failed)  #打印失败的用户
-    print(log_not_exits)  #打印路径不存在的用户
+    print(log_str_success + "\n" + log_str_failed + "\n" + log_not_exits)
     print(f"[BOT.TASK] loading user cookie finished {GetTime()}")
 
     # api缓存的用户列表
@@ -2335,16 +2329,14 @@ async def loading_channel_cookie():
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
             else:
+                del auth # 删除对象
                 log_str_failed += f"({user}) "
-                #print(f"[BOT.TASK] Au:{user} - load cookie failed!")
                 continue
         else:
             log_not_exits += f"({user}) "
             continue
     # 结束任务
-    print(log_str_success)  #打印正常的用户
-    print(log_str_failed)  #打印失败的用户
-    print(log_not_exits)  #打印路径不存在的用户
+    print(log_str_success + "\n" + log_str_failed + "\n" + log_not_exits)
     print(f"[BOT.TASK] loading api user cookie finished {GetTime()}")
 
 
