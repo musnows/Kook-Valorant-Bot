@@ -80,6 +80,7 @@ async def token_ck(token: str):
         if ApiTokenDict['data'][token]['od_time'] == 0:
             od_time = time.time() + ApiTokenDict['data'][token]['days'] * 86400
             ApiTokenDict['data'][token]['od_time']  = od_time
+            save_token_files("token init use")
         # 用户的token是否过期？
         if time.time() > ApiTokenDict['data'][token]['od_time']:
             # 过期了，删除该token
@@ -110,7 +111,7 @@ async def check_token_rate(token: str):
         if ApiTokenDict['data'][token]['rate_nums'] == 0:  
             ApiTokenDict['data'][token]['rate_time'] = cur_time
             ApiTokenDict['data'][token]['rate_nums'] = 1
-            save_token_files("token init use") 
+            # save_token_files("token init use") 
             return {'status': True, 'message': 'first use', 'info': '一切正常'}
         # rate_nums不为0，代表检测周期内有调用
         elif time_diff <= TOKEN_RATE_TIME:  # 和上次调用的时间差在60s以内
@@ -121,7 +122,7 @@ async def check_token_rate(token: str):
                 ApiTokenDict['data'][token]['rate_nums'] += 1
                 return {'status': True, 'message': 'time_diff <= 60, in rate', 'info': '一切正常'}
         else:  # 时间超过60s
-            save_token_files("rate check")
+            # save_token_files("rate check")
             # 重置rate_time为当前时间，重置计数器（开始新一轮速率检测）
             ApiTokenDict['data'][token]['rate_time'] = cur_time
             ApiTokenDict['data'][token]['rate_nums'] = 0

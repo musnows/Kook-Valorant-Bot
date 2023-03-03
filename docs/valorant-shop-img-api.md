@@ -2,7 +2,7 @@
 
 > Api展示页 https://val.musnow.top/
 >
-> Api根连接 https://val.musnow.top/api/
+> Api根连接 https://val.musnow.top/api/v2/
 
 Api是一个网页链接，能够方便的被用户使用或被开发者调用，以实现特定功能。
 
@@ -29,7 +29,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户，也不建议开发者调用
 
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码
 ~~~
 
 补充好上面的链接后，直接丢浏览器里面打开就OK。可以浏览器收藏一下，方便后续查看！
@@ -41,18 +41,18 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 
 若要添加自定义背景图，则链接应该如下
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
 ~~~
 
 如果背景图是正方形（1-1）
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
 ~~~
 
 自定义背景图请求示例（16-9）
 
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
 ~~~
 
 结果示例图（16-9）
@@ -82,21 +82,20 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 
 ### 3.1 shop
 
-如果你是开发者，请使用`/shop`来获取`json`格式的结果
+如果你是开发者，请使用`/shop`来获取`json`格式的结果；
+
+注意，请求此接口之前，请先请求 `/login` 和 `/tfa`
 
 ~~~
-https://val.musnow.top/api/shop
+https://val.musnow.top/api/v2/shop
 ~~~
 
 请求方法： `POST`
-
-速率限制：`10r/m`
 
 | body参数 | 说明                  | 参数类型 |是否必填 |
 | ---------- | --------------------- | -------- | -------- |
 | token      | API token             | string|是       |
 | account    | 拳头账户              | string |是       |
-| passwd     | 拳头账户密码          | string|是       |
 | img_src    | 自定义背景图的url链接 | string | 否       |
 | img_ratio    | 自定义返回图比例，值为1代表正方形 | int |否       |
 | raw    | 设置为1，获取Riot接口的原始响应（不画图） | int | 否       |
@@ -163,15 +162,42 @@ https://valorant-api.com/v1/competitivetiers/{competitivetierUuid}
 
 还有一件事！部分皮肤返回结果中，是不带皮肤的图片的（我真的不理解为什么会这样）这也需要你遍历本地找皮肤图片！
 
+### 3.2 login
 
-### 3.2 tfa
+该接口用于登录，后台将会根据account将用户的登录信息缓存到内存中
+
+~~~
+https://val.musnow.top/api/v2/login
+~~~
+
+请求方法：`POST`
+
+速率限制：`10r/m`
+
+| body参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string|是       |
+| account    | 拳头账户              | string |是       |
+| passwd   | 拳头账户密码             | string |是       |
+
+返回示例（登陆成功）
+```json
+{"code": 0,"info": "登录成功！", "message": "auth success"}
+```
+返回示例（需要邮箱验证）
+
+```json
+{"code": 0, "info": "2fa用户，请使用/tfa接口提供邮箱验证码", "message": "need provide email verify code"}
+```
+
+### 3.3 tfa
 
 此接口用于两步验证，适用于开启了邮箱验证的用户；
 
 您需要先请求 `/shop-url` 接口，在用户获取到验证码后，再请求本接口；若在10min内没有收到 `/tfa` 接口请求，后台会以**邮箱验证超时**关闭该账户的会话。
 
 ~~~
-https://val.musnow.top/api/tfa
+https://val.musnow.top/api/v2/tfa
 ~~~
 
 请求方法：`POST`
@@ -187,15 +213,10 @@ https://val.musnow.top/api/tfa
 返回示例
 
 ~~~json
-{
-    "code": 0, 
-    "message": "email verify code post success,wait for shop img return", 
-    "info": "两步验证码获取成功，请等待主接口返回",
-    "vcode": 114514
-}
+{ "code": 0, "message": "2fa auth success", "info": "2fa用户登录成功！"}
 ~~~
 
-### 3.3 shop-draw
+### 3.4 shop-draw
 
 这个接口更加适合在本地管理用户的登录信息，本地调用riot api获取用户`商店皮肤/vp/rp`后，再调用此接口，直接返回图片url
 
@@ -239,6 +260,35 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需�
 }
 ~~~
 
+### 3.4 shop-cmt
+
+该接口用于更新leancloud数据库中的ShopCmt，该数据需要在 8am 并发进行修改。leancloud本身并不提供线程安全处理，就此将所有需要修改ShopCmt的操作统一到本端进行
+
+请求方法：`POST`
+
+| params参数 | 说明                  | 参数类型 |是否必填 |
+| ---------- | --------------------- | -------- | -------- |
+| token      | API token             | string |是       |
+| best    | 当日最好用户的商店信息     | json |是       |
+| worse   | 当日最差用户的商店信息 | json | 是       |
+| platform   | 来源平台 | string | 是       |
+
+best/worse应该包含如下字段，其中`user_id`如果么有可以留空（但是不要少这个字段），rating为当前商店4个皮肤的平均分（如一个皮肤么有评分，则不计入平均分计算）
+
+```json
+{
+    "user_id": "用户id",
+    "rating": 97.0,
+    "list_shop": []
+}
+```
+返回示例 
+
+```json
+{"code": 0, "info": "ShopCmp更新成功", "message": true}
+```
+
+
 ## 4.Python示例代码
 
 ### 示例代码1：shop
@@ -246,7 +296,7 @@ vp/rp只有16-9的图片需要，如果设置了`img_ratio`为`'1'`，则无需�
 ~~~python
 import requests
 
-url = "https://val.musnow.top/api/shop"
+url = "https://val.musnow.top/api/v2/shop"
 params = {
     "token":"api-token",
     "account": "拳头账户",
@@ -279,7 +329,7 @@ return res.json()
 
 ```python
 def ApiRq2(list_shop:list,background='',img_ratio='0'):
-    url = "https://val.musnow.top/api/shop-draw"
+    url = "https://val.musnow.top/api/v2/shop-draw"
     params = {
         "token":"api-token",
         "list_shop": list_shop,
@@ -316,4 +366,49 @@ time:  3.9116134020000572
 {'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
 time:  3.822338727999977
 {'code': 0, 'info': '商店图片获取成功', 'message': 'https://img.kookapp.cn/attachments/2023-02/06/xgbRjMQeLQ0rs0rs.png'}
+```
+
+### 示例代码3：shop-cmp
+
+```python
+def ApiRq3(best,worse,platform):
+    url = "https://val.musnow.top/api/v2/shop-cmp"
+    params = {
+        "token":"api-token",
+        "best":best,
+        "worse":worse,
+        "platform":platform
+    }
+    res = requests.post(url,json=params) # 请求api
+    print(res)
+    return res.json()
+
+# 调用
+ret = ApiRq3({
+      "user_id": "这是一个测试用例",
+      "rating": 100.0,
+      "list_shop": [
+        "c9678d8c-4327-f397-b0ec-dca3c3d6fb15",
+        "901425cd-405a-d189-3516-ba954965e559",
+        "9f6e4612-433b-aea9-1683-3db7aee90848",
+        "4845a7ab-4120-ae1c-aec1-9e915a7424b1"
+      ]
+    },{
+      "user_id": "这是一个测试用例",
+      "rating": 20.0,
+      "list_shop": [
+        "155ba654-4afa-1029-9e71-e0b6962d5410",
+        "68ee5c6c-4424-e95a-f46f-c08ec2dfeb97",
+        "353c1e5f-4258-c49a-c0d6-319ad33bffea",
+        "e57317ac-4a93-50a9-30e9-93a098513fa9"
+      ]
+    },'qqchannel')
+print(ret)
+```
+
+结果
+
+```
+<Response [200]>
+{'code': 0, 'info': 'ShopCmp更新成功', 'message': True}
 ```

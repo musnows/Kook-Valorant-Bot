@@ -9,8 +9,8 @@ import aiohttp
 import requests
 import zhconv
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
-from utils.valorant.Val import *
-from utils.Gtime import *
+from .valorant.Val import *
+from .Gtime import *
 
 font_color = '#ffffff'  # 文字颜色：白色
 #用于临时存放图片的dict

@@ -7,10 +7,10 @@ from PIL import Image,UnidentifiedImageError
 from khl import Message, Bot, Channel
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
-from utils.KookApi import icon_cm,bot
-from utils.Gtime import GetTime
-from utils.FileManage import VipShopBgDict,config
-from utils.ShopImg import img_requestor
+from .KookApi import icon_cm
+from .Gtime import GetTime
+from .FileManage import bot,VipShopBgDict,config
+from .ShopImg import img_requestor
 
 
 #下图用于替换违规的vip图片

@@ -1,16 +1,14 @@
 import json
-import copy
 import traceback
-from khl import Message, PrivateMessage, Bot
-from khl.card import Card, CardMessage, Element, Module, Types, Struct
-from utils.KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
-from PIL import Image, ImageDraw, ImageFont
 from copy import deepcopy
-
-from utils.Gtime import GetTime
+from khl import Message, PrivateMessage, Bot
+from khl.card import Card, CardMessage, Element, Module, Types
+from PIL import Image, ImageDraw, ImageFont
 
 # 用户数量的记录文件
-from utils.FileManage import BotUserDict
+from .FileManage import bot,BotUserDict, FileManage
+from .Gtime import GetTime
+from .KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
 
 
 # 记录私聊的用户信息
@@ -25,9 +23,8 @@ def log_bot_user(user_id: str):
 
 
 # 记录服务器中的用户信息
-def log_bot_guild(user_id: str, guild_id: str, time):
+def log_bot_guild(user_id: str, guild_id: str, time) -> str:
     global BotUserDict
-    # BotUserDict['cmd_total']+=1
     log_bot_user(user_id)
     # 服务器不存在，新的用户服务器
     if guild_id not in BotUserDict['guild']['data']:
@@ -46,7 +43,7 @@ def log_bot_guild(user_id: str, guild_id: str, time):
 
 
 # 在控制台打印msg内容，用作日志
-def logging(msg: Message):
+def logging(msg: Message) -> None:
     try:
         now_time = GetTime()
         if isinstance(msg, PrivateMessage):
@@ -70,7 +67,7 @@ log_base_img = Image.open("../screenshot/log_base.png")
 
 
 # 画图，把当前加入的服务器总数等等信息以图片形式显示在README中
-async def log_bot_img():
+async def log_bot_img() -> None:
     bg = deepcopy(log_base_img)  # 新建一个画布
     draw = ImageDraw.Draw(bg)  # 让bg这个图层能被写字
     # 第一个参数 standard_text_position 是固定参数坐标 ， 第二个是文字内容 ， 第三个是字体 ， 第四个是字体颜色
@@ -91,43 +88,38 @@ async def log_bot_img():
 
 
 # bot用户记录dict处理
-async def log_bot_list(msg: Message):
+async def log_bot_list(msg: Message) -> FileManage:
     global BotUserDict
-    try:
-        # 加入的服务器数量，api获取
-        Glist = await guild_list()
-        Glist = Glist['data']['meta']['total']
-        # api正常返回结果，赋值给全局变量
-        BotUserDict['guild']['guild_total'] = Glist
-        # dict里面保存的服务器，有用户活跃的服务器数量
-        BotUserDict['guild']['guild_active'] = len(BotUserDict['guild']['data'])
-        # 计算用户总数
-        BotUserDict['user']['user_total'] = len(BotUserDict['user']['data'])
-        # 遍历列表，获取服务器名称
-        tempDict = copy.deepcopy(BotUserDict)
-        for gu in tempDict['guild']['data']:
-            if 'name' not in tempDict['guild']['data'][gu]:
-                Gret = await guild_view(gu)
-                if Gret['code'] !=0: # 没有正常返回，可能是服务器被删除
-                    del BotUserDict['guild']['data'][gu] # 删除键值
-                    print(f"[log_bot_list] G:{gu} guild-view {Gret}")
-                    continue
-                # 正常返回，赋值
-                BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
-            else:
+    # 加入的服务器数量，api获取
+    Glist = await guild_list()
+    Glist = Glist['data']['meta']['total']
+    # api正常返回结果，赋值给全局变量
+    BotUserDict['guild']['guild_total'] = Glist
+    # dict里面保存的服务器，有用户活跃的服务器数量
+    BotUserDict['guild']['guild_active'] = len(BotUserDict['guild']['data'])
+    # 计算用户总数
+    BotUserDict['user']['user_total'] = len(BotUserDict['user']['data'])
+    # 遍历列表，获取服务器名称
+    tempDict = deepcopy(BotUserDict)
+    for gu in tempDict['guild']['data']:
+        if 'name' not in tempDict['guild']['data'][gu]:
+            Gret = await guild_view(gu)
+            if Gret['code'] != 0:  # 没有正常返回，可能是服务器被删除
+                del BotUserDict['guild']['data'][gu]  # 删除键值
+                print(f"[log_bot_list] G:{gu} guild-view {Gret}")
                 continue
-        # 保存图片和文件
-        await log_bot_img()
-        print("[log_bot_list] file handling finish, return BotUserDict")
-        return BotUserDict
-    except:
-        err_str = f"ERR! [{GetTime()}] log-list\n```\n{traceback.format_exc()}\n```"
-        await msg.reply(f"{err_str}")
-        print(err_str)
+            # 正常返回，赋值
+            BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
+        else:
+            continue
+    # 保存图片和文件
+    await log_bot_img()
+    print("[log_bot_list] file handling finish, return BotUserDict")
+    return BotUserDict
 
 
 # 通过log_bot_list分选出两列服务器名和服务器用户数
-async def log_bot_list_text(logDict: dict):
+async def log_bot_list_text(logDict: dict) -> dict[str, str]:
     i = 1
     text_name = "No  服务器名\n"
     text_user = "用户数\n"
@@ -146,7 +138,20 @@ async def log_bot_list_text(logDict: dict):
 
 
 # 出现kook api异常的通用处理
-async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, send_msg=None, cm: CardMessage = None):
+async def APIRequestFailed_Handler(def_name: str,
+                                   excp: str,
+                                   msg: Message,
+                                   bot: Bot,
+                                   cm: CardMessage = None,
+                                   send_msg: dict[str, str] = {}) -> None:
+    """Args:
+    - def_name: name of def to print in log
+    - excp: taraceback.fromat_exc()
+    - msg: khl.Message
+    - bot: khl.Bot
+    - cm: khl.card.CardMessage, for json.dumps / resend
+    - send_msg: return value of msg.reply or bot.send
+    """
     err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
     print(err_str)
     text = f"啊哦，出现了一些问题"
@@ -168,7 +173,7 @@ async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, 
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
     cm0 = await get_card(text, text_sub, icon_cm.lagging)
-    if send_msg != None:  # 非none则执行更新消息，而不是直接发送
+    if send_msg:  # 非none则执行更新消息，而不是直接发送
         await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
     else:
         await msg.reply(cm0)
@@ -176,12 +181,19 @@ async def APIRequestFailed_Handler(def_name: str, excp, msg: Message, bot: Bot, 
 
 # 基础错误的处理，带login提示(部分命令不需要这个提示)
 async def BaseException_Handler(def_name: str,
-                                excp,
+                                excp: str,
                                 msg: Message,
-                                bot: Bot,
-                                send_msg=None,
-                                cm: CardMessage = None,
-                                help="您可能需要重新执行/login操作"):
+                                send_msg: dict[str, str] = {},
+                                debug_send = None,
+                                help="建议加入帮助频道找我康康到底是啥问题") -> None:  # type: ignore
+    """Args:
+    - def_name: name of def to print in log
+    - excp: taraceback.fromat_exc()
+    - msg: khl.Message
+    - send_msg: return value of msg.reply or bot.send
+    - debug_send: Channel obj for sending err_str, send if not None
+    - help: str for help_info, replyed in msg.reply
+    """
     err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
     print(err_str)
     cm0 = CardMessage()
@@ -192,28 +204,30 @@ async def BaseException_Handler(def_name: str,
     c.append(Module.Divider())
     c.append(Module.Section('有任何问题，请加入帮助服务器与我联系', Element.Button('帮助', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
     cm0.append(c)
-    if send_msg != None:  # 非none则执行更新消息，而不是直接发送
+    if send_msg:  # 非{}则执行更新消息，而不是直接发送
         await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
     else:
         await msg.reply(cm0)
+    # 如果debug_send不是None，则发送信息到报错频道
+    if debug_send:
+        await bot.client.send(debug_send, err_str)
 
 
 #############################################################################################
 
-import psutil,os
+import psutil, os
+
+
 # 获取进程信息
-async def get_proc_info():
+async def get_proc_info() -> CardMessage:
     p = psutil.Process(os.getpid())
-    text =f"霸占的CPU百分比：{p.cpu_percent()} %\n"
-    text+=f"占用的MEM百分比：{format(p.memory_percent(), '.3f')} %\n"
-    text+=f"吃下的物理内存：{format((p.memory_info().rss / 1024 / 1024), '.4f')} MB\n"
-    text+=f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
-    text+=f"IO信息：\n{p.io_counters()}"
+    text = f"霸占的CPU百分比：{p.cpu_percent()} %\n"
+    text += f"占用的MEM百分比：{format(p.memory_percent(), '.3f')} %\n"
+    text += f"吃下的物理内存：{format((p.memory_info().rss / 1024 / 1024), '.4f')} MB\n"
+    text += f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
+    text += f"IO信息：\n{p.io_counters()}"
     cm = CardMessage()
-    c = Card(
-        Module.Header(f"来看看阿狸当前的负载吧！"),
-        Module.Context(f"记录于 {GetTime()}"),Module.Divider(),
-        Module.Section(Element.Text(text,Types.Text.KMD))
-    )
+    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"记录于 {GetTime()}"), Module.Divider(),
+             Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     return cm

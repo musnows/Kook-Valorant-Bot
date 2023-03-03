@@ -1,15 +1,15 @@
 import traceback
-import json
 import io
 from khl import Message, Bot
 from PIL import Image
-from utils.Gtime import GetTime
-from utils.ShopImg import img_requestor
-from utils.valorant.Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValBundleList, ValSkinList, ValPriceList
+from ..Gtime import GetTime
+from ..ShopImg import img_requestor
+from ..FileManage import ValBundleList
+from .Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValSkinList, ValPriceList
 
 
 # 更新本地保存的皮肤
-async def update_skins(msg: Message):
+async def update_skins(msg: Message) -> bool:
     try:
         global ValSkinList
         skins = await fetch_skins_all()
@@ -26,14 +26,14 @@ async def update_skins(msg: Message):
 
 
 # 更新捆绑包
-async def update_bundle_url(msg: Message, bot_upimg: Bot):
+async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
     try:
         global ValBundleList
         resp = await fetch_bundles_all()  #从官方获取最新list
         if len(resp['data']) == len(ValBundleList):  #长度相同代表没有更新
             print(f"[{GetTime()}] len is the same, doesn't need update!")
             await msg.reply("BundleList_len相同，无需更新")
-            return
+            return True
 
         for b in resp['data']:
             flag = 0
@@ -64,7 +64,7 @@ async def update_bundle_url(msg: Message, bot_upimg: Bot):
 
 
 # 因为下方获取物品价格的操作需要authtoken，自动更新容易遇到token失效的情况
-async def update_price(msg: Message, userdict):
+async def update_price(msg: Message, userdict) -> bool:
     try:
         global ValPriceList
         # 调用api获取价格列表

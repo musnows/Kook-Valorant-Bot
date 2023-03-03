@@ -3,8 +3,7 @@ import aiofiles
 import traceback
 from utils.Gtime import GetTime
 
-FileList = []
-
+FileList = [] # 用于保存需要写入到磁盘的文件
 
 def open_file(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -141,8 +140,10 @@ SkinRateDict = FileManage("./log/ValSkinRate.json")  # valorant皮肤评分信�
 SkinNotifyDict = FileManage("./log/UserSkinNotify.json")  # 皮肤提醒 用户记录
 GameIdDict = FileManage("./log/game_idsave.json")  # 玩家游戏id保存
 UserAuthID = FileManage("./log/UserAuthID.json")  # 用户游戏id/uuid，账户密码重登记录
-UserTokenDict = UserAuthID['data']  # riot用户游戏id和uuid
-UserApLog = UserAuthID['ap_log']    # 账户密码重登记录
+UserRiotName = UserAuthID['data']  # riot用户游戏id和uuid
+UserPwdReauth = UserAuthID['ap_log']    # 账户密码重登记录
+ApiAuthLog = UserAuthID['api_log']  # api 缓存用户的account记录
+ApiAuthCache = {'data':{}}          # api EzAuth对象缓存
 
 VipUuidDict = FileManage("./log/VipUuid.json")  # vip uuid文件
 VipShopBgDict = FileManage("./log/VipUserShopBg.json")  # vip 背景图设置；商店图缓存
@@ -152,4 +153,7 @@ VipRollDcit = VipUser['roll'] # vip 抽奖信息
 
 AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求
 
+# 实例化一个khl的bot，方便其他模组调用
+from khl import Bot
+bot = Bot(token=config['token']['bot'])
 print(f"[FileManage] load all files") # 走到这里代表所有文件都打开了
