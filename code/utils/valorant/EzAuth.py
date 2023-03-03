@@ -60,6 +60,7 @@ class EzAuth:
         self.session.mount('https://', SSLAdapter())
         self.is2fa = False  # 2fa set to false
         self.__mfa_start__ = 0  # 2fa start time
+        self.__is_init__ = False # is_init finised?
 
     def __set_userinfo(self) -> None:
         """set_user_info to value"""
@@ -87,8 +88,9 @@ class EzAuth:
         return tokens
 
     def __set_info(self, tokens: dict) -> None:
-        """auth/reauth success, set entitlements_token, userinfo & region\n
-        Args: return value of __set_access_token()
+        """auth/reauth success, set entitlements_token, userinfo & region.\n
+        Args:
+        - tokens: return value of __set_access_token()
         """
         self.access_token = tokens['access_token']
         self.id_token = tokens['id_token']
@@ -103,6 +105,7 @@ class EzAuth:
         self.entitlements_token = self.get_entitlement_token()
         self.__set_userinfo()
         self.__set_region()
+        self.__is_init__ = True # set init as finised
 
     async def authorize(self, username, password) -> dict:
         """Authenticate using username and password.\n
@@ -145,7 +148,6 @@ class EzAuth:
 
             # 2fa auth
             elif 'multifactor' in r.text:
-                print(f"[EzAuth] 2fa user")
                 self.is2fa = True  # is 2fa user
                 self.__mfa_start__ = time.time()
                 return {"status": False, "auth": self, "2fa_status": self.is2fa}
@@ -216,6 +218,7 @@ class EzAuth:
         return entitlement
 
     def get_emailverifed(self):
+        """ get if account has emailverifed (not MFA)"""
         r = self.session.get(url=URLS.VERIFED_URL, json={})
         Emailverifed = r.json()["emailVerified"]
         return Emailverifed
@@ -282,16 +285,21 @@ class EzAuth:
         print("=" * 50)
 
     def get_riotuser_token(self) -> RiotUserToken:
-        """RiotUserToken(user_id=self.user_id,
+        """Return:
+        - RiotUserToken(user_id=self.user_id,
                             access_token=self.access_token,
                             entitlements=self.entitlements_token,
                             region=self.Region)
+        - if is_init==False, raise init not finished err
         """
-        ret = RiotUserToken(user_id=self.user_id,
-                            access_token=self.access_token,
-                            entitlements=self.entitlements_token,
-                            region=self.Region)
-        return ret
+        if self.__is_init__:
+            ret = RiotUserToken(user_id=self.user_id,
+                                access_token=self.access_token,
+                                entitlements=self.entitlements_token,
+                                region=self.Region)    
+            return ret
+        else:
+            raise EzAuthExp.InitError("EzAuth Obj not initialized")
 
     def save_cookies(self, path: str) -> None:
         """dump cookies_dict to path (w+)

@@ -910,6 +910,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         if not resw['status']:
             cm1 = await get_card("登录中断，需要提供邮箱验证码", "请使用「/tfa 验证码」提供邮箱验证码", icon_cm.val_logo_gif)
             await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)
+            print(f"[{GetTime()}] [login] 2fa user - Au:{msg.author_id}") # 打印信息
             return
 
         # 4.如果没有抛出异常，那就是完成登录了，设置用户的玩家uuid+昵称
@@ -940,7 +941,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
 
         # 8.全部都搞定了，打印登录信息日志
         print(
-            f"[Login] Au:{msg.author_id} - {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+            f"[{GetTime()}] [Login] Au:{msg.author_id} - {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         )
     except EzAuthExp.AuthenticationError as result:
         print(f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}")
