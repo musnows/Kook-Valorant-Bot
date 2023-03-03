@@ -716,22 +716,26 @@ async def vip_roll_log(b: Bot, event: Event):
 @bot.command(name='vip-r', aliases=['vip-roll'])
 async def vip_roll(msg: Message, vday: int = 7, vnum: int = 5, rday: float = 1.0):
     BotLog.logging(msg)
-    if msg.author_id != master_id:
-        await msg.reply(f"您没有权限执行本命令")
-        return
-    # 设置开始抽奖
-    global VipRollDcit
-    cm = BotVip.roll_vip_start(vnum, vday, rday)
-    roll_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
-    roll_send = await bot.client.send(roll_ch, cm)
-    VipRollDcit[roll_send['msg_id']] = {}
-    VipRollDcit[roll_send['msg_id']]['time'] = time.time() + rday * 86400
-    VipRollDcit[roll_send['msg_id']]['nums'] = vnum
-    VipRollDcit[roll_send['msg_id']]['days'] = vday
-    VipRollDcit[roll_send['msg_id']]['channel_id'] = msg.ctx.channel.id
-    VipRollDcit[roll_send['msg_id']]['guild_id'] = msg.ctx.guild.id
-    VipRollDcit[roll_send['msg_id']]['user'] = list()
-    print(f"[vip-roll] card message send to {msg.ctx.channel.id}")
+    try:
+        if msg.author_id != master_id:
+            await msg.reply(f"您没有权限执行本命令")
+            return
+        # 设置开始抽奖
+        global VipRollDcit
+        cm = BotVip.roll_vip_start(vnum, vday, rday)
+        roll_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
+        roll_send = await bot.client.send(roll_ch, cm)
+        VipRollDcit[roll_send['msg_id']] = { # type: ignore
+            'time': time.time() + rday * 86400,
+            'nums': vnum,
+            'days': vday,
+            'channel_id': msg.ctx.channel.id,
+            'guild_id': msg.ctx.guild.id,
+            'user': []
+        }
+        print(f"[vip-roll] card message send to {msg.ctx.channel.id}")
+    except:
+        await BotLog.BaseException_Handler("vip-r",traceback.format_exc(),msg)
 
 
 @bot.task.add_interval(seconds=80)
@@ -1291,11 +1295,13 @@ async def get_daily_shop(msg: Message, *arg):
             print(log_time + f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}")
             # 判断是否需要上传，false不需要
             if upload_flag:
+                # 上传图片
                 imgByteArr = io.BytesIO()
                 bg.save(imgByteArr, format='PNG')
-                imgByte = imgByteArr.getvalue()
-                dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # 上传图片
-                if is_vip:  # 如果在bg里面代表有自定义背景图，需更新status
+                imgByte = imgByteArr.getvalue() 
+                dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # type: ignore 
+                # 如果在bg里面代表有自定义背景图，需更新status
+                if is_vip:  
                     if msg.author_id in VipShopBgDict['bg']:
                         VipShopBgDict['bg'][msg.author_id]['status'] = True
                     # 设置商店图片缓存+图片缓存的时间
@@ -1743,7 +1749,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
 
 # 查看昨日牛人/屌丝
 @bot.command(name="kkn")
-async def rate_skin_select(msg: Message):
+async def show_shoprate(msg: Message):
     BotLog.logging(msg)
     if check_rate_err_user(msg.author_id):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
