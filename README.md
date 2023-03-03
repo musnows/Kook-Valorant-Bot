@@ -1,7 +1,7 @@
 
 
 
-<h1 align="center">Kook-Valorant--bot</h1>
+<h1 align="center">Kook-Valorant-Bot</h1>
 
 
 <h4 align="center">这是一个KOOK的「Valorant」小机器人</h4>

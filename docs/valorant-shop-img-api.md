@@ -2,7 +2,7 @@
 
 > Api展示页 https://val.musnow.top/
 >
-> Api根连接 https://val.musnow.top/api/
+> Api根连接 https://val.musnow.top/api/v2/
 
 Api是一个网页链接，能够方便的被用户使用或被开发者调用，以实现特定功能。
 
@@ -29,7 +29,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户，也不建议开发者调用
 
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码
 ~~~
 
 补充好上面的链接后，直接丢浏览器里面打开就OK。可以浏览器收藏一下，方便后续查看！
@@ -41,18 +41,18 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 
 若要添加自定义背景图，则链接应该如下
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接
 ~~~
 
 如果背景图是正方形（1-1）
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=背景图片链接&img_ratio=1
 ~~~
 
 自定义背景图请求示例（16-9）
 
 ~~~
-https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
+https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码&img_src=https://img.kookapp.cn/assets/2022-09/KV5krdRx080qo0f0.jpg
 ~~~
 
 结果示例图（16-9）
@@ -87,7 +87,7 @@ https://val.musnow.top/api/shop-img?token=API的密钥&account=账户&passwd=密
 注意，请求此接口之前，请先请求 `/login` 和 `/tfa`
 
 ~~~
-https://val.musnow.top/api/shop
+https://val.musnow.top/api/v2/shop
 ~~~
 
 请求方法： `POST`
@@ -167,7 +167,7 @@ https://valorant-api.com/v1/competitivetiers/{competitivetierUuid}
 该接口用于登录，后台将会根据account将用户的登录信息缓存到内存中
 
 ~~~
-https://val.musnow.top/api/login
+https://val.musnow.top/api/v2/login
 ~~~
 
 请求方法：`POST`
@@ -197,7 +197,7 @@ https://val.musnow.top/api/login
 您需要先请求 `/shop-url` 接口，在用户获取到验证码后，再请求本接口；若在10min内没有收到 `/tfa` 接口请求，后台会以**邮箱验证超时**关闭该账户的会话。
 
 ~~~
-https://val.musnow.top/api/tfa
+https://val.musnow.top/api/v2/tfa
 ~~~
 
 请求方法：`POST`
@@ -296,7 +296,7 @@ best/worse应该包含如下字段，其中`user_id`如果么有可以留空（�
 ~~~python
 import requests
 
-url = "https://val.musnow.top/api/shop"
+url = "https://val.musnow.top/api/v2/shop"
 params = {
     "token":"api-token",
     "account": "拳头账户",
@@ -329,7 +329,7 @@ return res.json()
 
 ```python
 def ApiRq2(list_shop:list,background='',img_ratio='0'):
-    url = "https://val.musnow.top/api/shop-draw"
+    url = "https://val.musnow.top/api/v2/shop-draw"
     params = {
         "token":"api-token",
         "list_shop": list_shop,
@@ -372,7 +372,7 @@ time:  3.822338727999977
 
 ```python
 def ApiRq3(best,worse,platform):
-    url = "https://val.musnow.top/api/shop-cmp"
+    url = "https://val.musnow.top/api/v2/shop-cmp"
     params = {
         "token":"api-token",
         "best":best,
