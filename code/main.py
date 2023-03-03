@@ -9,23 +9,21 @@ import aiohttp
 import copy
 import zhconv
 import asyncio
-from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester)
+from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester,Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from aiohttp import client_exceptions
 from PIL import Image, UnidentifiedImageError  # 用于合成图片
 
-from utils import ShopRate, ShopImg, Help, GrantRoles, Translate, BotVip, BotLog, Other
-from utils.valorant import ValFileUpd
-from utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
+from .utils import ShopRate, ShopImg, Help, GrantRoles, Translate, BotVip, BotLog, Other
+from .utils.valorant import ValFileUpd
+from .utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                            get_card)
-from utils.valorant.Val import *
-from utils.valorant.EzAuth import EzAuth, EzAuthExp
-from utils.Gtime import GetTime, GetTimeStampOf8AM
+from .utils.valorant.Val import *
+from .utils.valorant.EzAuth import EzAuth, EzAuthExp
+from .utils.Gtime import GetTime, GetTimeStampOf8AM
 
 # bot的token文件
-from utils.FileManage import config, ApiAuthLog, Save_All_File
-# 用读取来的 config 初始化 bot，字段对应即可
-bot = Bot(token=config['token']['bot'])
+from .utils.FileManage import config,bot,ApiAuthLog,Save_All_File
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 
@@ -33,8 +31,8 @@ bot_upimg = Bot(token=config['token']['img_upload_token'])
 master_id = config['master_id']
 
 #在bot一开机的时候就获取log频道作为全局变量
-debug_ch = None
-cm_send_test = None
+debug_ch:Channel
+cm_send_test:Channel
 NOTIFY_NUM = 3  # 非vip用户皮肤提醒栏位
 VIP_BG_SIZE = 4  # vip用户背景图片数量限制
 RATE_LIMITED_TIME = 180  # 全局登录速率超速等待秒数
@@ -96,10 +94,7 @@ async def Ahri(msg: Message, *arg):
         cm = Help.help_main(start_time)
         await msg.reply(cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("ahri", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] ahri\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
+        await BotLog.BaseException_Handler("ahri", traceback.format_exc(),msg,debug_send=debug_ch)
 
 
 # help命令(瓦洛兰特相关)
@@ -110,10 +105,7 @@ async def Vhelp(msg: Message, *arg):
         cm = Help.help_val()
         await msg.reply(cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("vhelp", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] vhelp\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
+        await BotLog.BaseException_Handler("vhelp", traceback.format_exc(),msg,debug_send=debug_ch)
 
 
 # 当有人@机器人的时候进行回复，可识别出是否为机器人作者
@@ -130,9 +122,7 @@ async def atAhri(msg: Message):
                 await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri` 或 `/vhelp` 打开帮助面板，和阿狸一起玩吧！")
             print(f"[atAhri] Au:{msg.author_id} msg.reply success!")
     except:
-        err_str = f"ERR! [{GetTime()}] atAhri\n```\n{traceback.format_exc()}\n```"
-        await msg.reply(f"{err_str}")
-        print(err_str)
+        await BotLog.BaseException_Handler("at_help", traceback.format_exc(),msg)
 
 
 #################################################################################################
@@ -157,10 +147,7 @@ async def countdown(msg: Message, time: int = 60, *args):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("countdown", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] countdown\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
+        await BotLog.BaseException_Handler("countdown", traceback.format_exc(), msg,debug_send=debug_ch)
 
 
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
@@ -181,10 +168,7 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
-        await BotLog.BaseException_Handler("roll", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] roll\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
+        await BotLog.BaseException_Handler("roll", traceback.format_exc(), msg,debug_send=debug_ch)
 
 
 # 返回天气
@@ -198,10 +182,7 @@ async def Weather(msg: Message, city: str = "err"):
     try:
         await Other.weather(msg, city)
     except Exception as result:
-        await BotLog.BaseException_Handler("Weather", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] Weather\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
+        await BotLog.BaseException_Handler("Weather", traceback.format_exc(), msg,debug_send=debug_ch)
 
 
 ################################ grant roles for user ##########################################
@@ -455,10 +436,7 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
         global VipShopBgDict  #在用户兑换vip的时候就创建此键值
         VipShopBgDict['cache'][msg.author_id] = {'cache_time': 0, 'cache_img': None}
     except Exception as result:
-        await BotLog.BaseException_Handler("vip-u", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] vip-u\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
+        await BotLog.BaseException_Handler("vip-u", traceback.format_exc(), msg,debug_send=debug_ch)
 
 
 # 看vip剩余时间
@@ -473,11 +451,7 @@ async def check_vip_timeremain(msg: Message, *arg):
         ret_cm = await BotVip.vip_time_remain_cm(ret_t)
         await msg.reply(ret_cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("vip-c", traceback.format_exc(), msg, bot, None, None, "建议加入帮助频道找我康康到底是啥问题")
-        err_str = f"ERR! [{GetTime()}] vip-c\n```\n{traceback.format_exc()}\n```"
-        #发送错误信息到指定频道
-        await bot.client.send(debug_ch, err_str)
-
+        await BotLog.BaseException_Handler("vip-c", traceback.format_exc(), msg,debug_send=debug_ch)
 
 # 看vip用户列表
 @bot.command(name="vip-l")
@@ -494,9 +468,7 @@ async def list_vip_user(msg: Message, *arg):
         else:
             await msg.reply("您没有权限操作此命令！")
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] list_vip_user\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+        await BotLog.BaseException_Handler("vip-l", traceback.format_exc(), msg)
 
 
 async def check_vip_img():
@@ -626,11 +598,11 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         print(f"[vip-shop] Au:{msg.author_id} add ", x3)
 
     except requester.HTTPRequester.APIRequestFailed as result:
-        await BotLog.APIRequestFailed_Handler("vip_shop", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.APIRequestFailed_Handler("vip_shop", traceback.format_exc(), msg, bot,cm)
         VipShopBgDict['bg'][msg.author_id]["background"].remove(x3)  #删掉里面的图片
         print(f"[vip_shop] Au:{msg.author_id} remove(err_img)")
     except Exception as result:
-        await BotLog.BaseException_Handler("vip_shop", traceback.format_exc(), msg, bot, None, cm, "建议加入帮助频道找我康康到底是啥问题")
+        await BotLog.BaseException_Handler("vip_shop", traceback.format_exc(), msg)
 
 
 @bot.command(name="vip-shop-s")
@@ -677,9 +649,9 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
 
         print(f"[vip-shop-s] Au:{msg.author_id} switch to [{VipShopBgDict['bg'][msg.author_id]['background'][0]}]")
     except requester.HTTPRequester.APIRequestFailed as result:
-        await BotLog.APIRequestFailed_Handler("vip_shop_s", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.APIRequestFailed_Handler("vip_shop_s", traceback.format_exc(), msg, bot, cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("vip_shop_s", traceback.format_exc(), msg, bot, None, cm, "您可能需要重新执行操作")
+        await BotLog.BaseException_Handler("vip_shop_s", traceback.format_exc(), msg)
 
 
 @bot.command(name="vip-shop-d")
@@ -716,9 +688,9 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
 
         print(f"[vip-shop-d] Au:{msg.author_id} delete [{del_img_url}]")
     except requester.HTTPRequester.APIRequestFailed as result:
-        await BotLog.APIRequestFailed_Handler("vip_shop_d", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.APIRequestFailed_Handler("vip_shop_d", traceback.format_exc(), msg, bot, cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("vip_shop_d", traceback.format_exc(), msg, bot, None, cm, "您可能需要重新执行操作")
+        await BotLog.BaseException_Handler("vip_shop_d", traceback.format_exc(), msg)
 
 
 # 判断消息的emoji回应，并记录id
@@ -1008,11 +980,11 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         cm = await get_card(text, text_sub, icon_cm.that_it)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("login", traceback.format_exc(), msg, bot, send_msg, cm)
+        await BotLog.APIRequestFailed_Handler("login", traceback.format_exc(), msg, bot, cm,send_msg=send_msg)
     except Exception as result:  # 其他错误
         err_str = f"[login] Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
         await upd_card(send_msg['msg_id'], err_str, channel_type=msg.channel_type)
-        await BotLog.BaseException_Handler("login", traceback.format_exc(), msg, bot, send_msg, cm)
+        await BotLog.BaseException_Handler("login", traceback.format_exc(), msg, send_msg=send_msg,help="请加入帮助频道咨询，或尝试重新执行login命令")
 
 
 @bot.command(name='tfa')
@@ -1053,7 +1025,7 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         # 更新消息
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("tfa", traceback.format_exc(), msg, bot)
+        await BotLog.BaseException_Handler("tfa", traceback.format_exc(), msg,help="请加入帮助频道咨询，或尝试重新执行login命令")
 
 
 # 退出登录
@@ -1084,7 +1056,7 @@ async def logout(msg: Message, *arg):
         print(log_text)
 
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("logout", traceback.format_exc(), msg, bot)
+        await BotLog.BaseException_Handler("logout", traceback.format_exc(), msg)
 
 
 @bot.command(name='login-ap')
@@ -1104,7 +1076,7 @@ async def login_acpw(msg: Message, *arg):
         # 发送信息
         await msg.reply(send_text)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("login-ap", traceback.format_exc(), msg, bot)
+        await BotLog.BaseException_Handler("login-ap", traceback.format_exc(), msg)
 
 
 # cookie重新登录
@@ -1358,7 +1330,7 @@ async def get_daily_shop(msg: Message, *arg):
             return
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("shop", traceback.format_exc(), msg, bot, send_msg, cm)
+        await BotLog.APIRequestFailed_Handler("shop", traceback.format_exc(), msg, bot,cm,send_msg=send_msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```"
         if "SkinsPanelLayout" in str(result):
@@ -1367,7 +1339,7 @@ async def get_daily_shop(msg: Message, *arg):
             cm = await get_card(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         else:
-            await BotLog.BaseException_Handler("shop", traceback.format_exc(), msg, bot, send_msg, cm)
+            await BotLog.BaseException_Handler("shop", traceback.format_exc(), msg, send_msg=send_msg)
 
 
 # 获取夜市
@@ -1452,9 +1424,9 @@ async def get_night_market(msg: Message, *arg):
             return
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("night", traceback.format_exc(), msg, bot, send_msg, cm)
+        await BotLog.APIRequestFailed_Handler("night", traceback.format_exc(), msg, bot,cm,send_msg=send_msg)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("night", traceback.format_exc(), msg, bot, send_msg, cm)
+        await BotLog.BaseException_Handler("night", traceback.format_exc(), msg, send_msg=send_msg)
 
 
 # 设置全局变量，打开/关闭夜市
@@ -1557,7 +1529,7 @@ async def get_user_card(msg: Message, *arg):
             return
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, send_msg, cm)
+        await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm,send_msg=send_msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
         if "Identity" in str(result) or "Balances" in str(result):
@@ -1565,7 +1537,7 @@ async def get_user_card(msg: Message, *arg):
             cm2 = await get_card(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
             await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         else:
-            await BotLog.BaseException_Handler("uinfo", traceback.format_exc(), msg, bot, send_msg, cm)
+            await BotLog.BaseException_Handler("uinfo", traceback.format_exc(), msg, send_msg=send_msg)
 
 
 # 获取捆绑包信息(无需登录)
@@ -1684,9 +1656,9 @@ async def rate_skin_add(msg: Message, *arg):
         await msg.reply(cm)
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("rate", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.APIRequestFailed_Handler("rate", traceback.format_exc(), msg, bot,cm)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("rate", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.BaseException_Handler("rate", traceback.format_exc(), msg)
 
 
 #选择皮肤（这个命令必须跟着上面的命令用）
@@ -1764,9 +1736,9 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             await msg.reply(f"您需要执行 `/rate 皮肤名` 来查找皮肤\n再使用 `/rts` 进行选择")
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.APIRequestFailed_Handler("rts", traceback.format_exc(), msg, bot, cm)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.BaseException_Handler("rts", traceback.format_exc(), msg)
 
 
 # 查看昨日牛人/屌丝
@@ -1813,9 +1785,9 @@ async def rate_skin_select(msg: Message):
 
         print(f"[{GetTime()}] [kkn] reply success")
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.APIRequestFailed_Handler("rts", traceback.format_exc(), msg, bot, cm)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("rts", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.BaseException_Handler("rts", traceback.format_exc(), msg)
 
 
 # 检查用户是否在错误用户里面
@@ -1905,7 +1877,7 @@ async def add_skin_notify(msg: Message, *arg):
         await msg.reply(cm)
 
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("notify-add", traceback.format_exc(), msg, bot, None, cm)
+        await BotLog.BaseException_Handler("notify-add", traceback.format_exc(), msg)
 
 
 #选择皮肤（这个命令必须跟着上面的命令用）
@@ -1945,11 +1917,11 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
     except requester.HTTPRequester.APIRequestFailed as result:  #消息发送失败
         err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
         await bot.client.send(debug_ch, err_str)
-        await BotLog.APIRequestFailed_Handler("sts", traceback.format_exc(), msg, bot, None)
+        await BotLog.APIRequestFailed_Handler("sts", traceback.format_exc(), msg, bot)
     except Exception as result:  # 其他错误
         err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
         await bot.client.send(debug_ch, err_str)
-        await BotLog.BaseException_Handler("sts", traceback.format_exc(), msg, bot, None)
+        await BotLog.BaseException_Handler("sts", traceback.format_exc(), msg)
 
 
 # 显示当前设置好了的皮肤通知
@@ -1971,7 +1943,7 @@ async def list_skin_notify(msg: Message, *arg):
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] notify-list\n```\n{traceback.format_exc()}\n```"
         await bot.client.send(debug_ch, err_str)
-        await BotLog.BaseException_Handler("notify-list", traceback.format_exc(), msg, bot, None)
+        await BotLog.BaseException_Handler("notify-list", traceback.format_exc(), msg)
 
 
 # 删除已有皮肤通知
@@ -1996,7 +1968,7 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] notify-del\n```\n{traceback.format_exc()}\n```"
         await bot.client.send(debug_ch, err_str)
-        await BotLog.BaseException_Handler("notify-del", traceback.format_exc(), msg, bot, None)
+        await BotLog.BaseException_Handler("notify-del", traceback.format_exc(), msg)
 
 
 #独立函数，为了封装成命令+定时
