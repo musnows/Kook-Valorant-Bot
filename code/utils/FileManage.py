@@ -3,8 +3,7 @@ import aiofiles
 import traceback
 from utils.Gtime import GetTime
 
-FileList = []
-
+FileList = [] # 用于保存需要写入到磁盘的文件
 
 def open_file(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -154,4 +153,7 @@ VipRollDcit = VipUser['roll'] # vip 抽奖信息
 
 AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求
 
+# 实例化一个khl的bot，方便其他模组调用
+from khl import Bot
+bot = Bot(token=config['token']['bot'])
 print(f"[FileManage] load all files") # 走到这里代表所有文件都打开了

@@ -6,7 +6,7 @@ from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key
-from utils.FileManage import config
+from .FileManage import config
 # 彩云key
 CyKey = config['caiyun']
 

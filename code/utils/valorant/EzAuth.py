@@ -296,7 +296,7 @@ class EzAuth:
     def save_cookies(self, path: str) -> None:
         """dump cookies_dict to path (w+)
         """
-        cookies = requests.utils.dict_from_cookiejar(self.session.cookies)
+        cookies = requests.utils.dict_from_cookiejar(self.session.cookies) # type: ignore
         with open(path, "w+") as f:
             f.write(json.dumps(cookies))
 
@@ -306,4 +306,4 @@ class EzAuth:
         with open(path, "r") as f:
             load_cookies = json.loads(f.read())
 
-        self.session.cookies = requests.utils.cookiejar_from_dict(load_cookies)
+        self.session.cookies = requests.utils.cookiejar_from_dict(load_cookies) # type: ignore

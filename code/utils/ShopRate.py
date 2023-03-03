@@ -4,8 +4,8 @@ import leancloud
 import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from utils.valorant import Val
-from utils.FileManage import config,SkinRateDict,GetTime
+from .valorant import Val
+from .FileManage import config,SkinRateDict,GetTime
 PLATFORM = config['platform'] # 平台
 
 # 初始化leancloud

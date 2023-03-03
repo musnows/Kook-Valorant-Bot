@@ -1,14 +1,12 @@
 import json
-import time
 import aiohttp
 from khl import Bot, Message, PublicMessage, Event
 from khl.card import Card, CardMessage, Element, Module, Types
-from utils.Gtime import GetTime
 
 # 预加载文件
-from utils.FileManage import SponsorDict, ColorIdDict, EmojiDict
-from utils.KookApi import kook_headers
-
+from .FileManage import SponsorDict, ColorIdDict, EmojiDict
+from .KookApi import kook_headers
+from .Gtime import GetTime
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid: str, emoji: str):
