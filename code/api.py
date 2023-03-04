@@ -192,7 +192,7 @@ async def post_shop_cmp(request):
 
 
 # 爱发电的wh
-from main import bot
+from utils.FileManage import bot
 @routes.post('/afd')
 async def aifadian_webhook(request):
     print(f"[{GetTime()}] [request] /afd")

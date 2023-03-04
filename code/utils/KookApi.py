@@ -4,7 +4,7 @@ import io
 from khl import Bot, ChannelPrivacyTypes
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from .FileManage import config,bot
+from .FileManage import config,bot,_log
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
 kook_headers = {f'Authorization': f"Bot {config['token']['bot']}"}
@@ -37,7 +37,7 @@ async def status_delete(d: int):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=params, headers=kook_headers) as response:
             return json.loads(await response.text())
-            #print(ret)
+            #_log.debug(ret)
 
 
 # 获取服务器用户数量用于更新（现在已经移植到了另外一个bot上）
@@ -47,7 +47,7 @@ async def guild_userlist(Guild_ID: str = "3566823018281801"):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
-            #print(ret1)
+            #_log.debug(ret1)
             return ret1
 
 
@@ -57,7 +57,7 @@ async def guild_list():
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
-            #print(ret1)
+            #_log.debug(ret1)
             return ret1
 
 
@@ -68,7 +68,7 @@ async def guild_view(Guild_ID: str):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
-            #print(ret1)
+            #_log.debug(ret1)
             return ret1
 
 

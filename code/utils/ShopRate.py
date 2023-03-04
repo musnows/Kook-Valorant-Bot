@@ -5,7 +5,8 @@ import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
 from .valorant import Val
-from .FileManage import config,SkinRateDict,GetTime
+from .FileManage import config,SkinRateDict
+from .Gtime import GetTime
 PLATFORM = config['platform'] # 平台
 
 # 初始化leancloud

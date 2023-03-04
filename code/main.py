@@ -14,16 +14,18 @@ from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from aiohttp import client_exceptions
 from PIL import Image, UnidentifiedImageError  # 用于合成图片
 
-from .utils import ShopRate, ShopImg, Help, GrantRoles, Translate, BotVip, BotLog, Other
-from .utils.valorant import ValFileUpd
-from .utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
+from utils import ShopRate, ShopImg, Help, GrantRoles, Translate, BotVip, Other
+from utils.log import BotLog
+from utils.log.Logging import _log
+from utils.valorant import ValFileUpd
+from utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                            get_card)
-from .utils.valorant.Val import *
-from .utils.valorant.EzAuth import EzAuth, EzAuthExp
-from .utils.Gtime import GetTime, GetTimeStampOf8AM
+from utils.valorant.Val import *
+from utils.valorant.EzAuth import EzAuth, EzAuthExp
+from utils.Gtime import GetTime, GetTimeStampOf8AM
 
 # bot的token文件
-from .utils.FileManage import config,bot,ApiAuthLog,Save_All_File
+from utils.FileManage import config,bot,ApiAuthLog,Save_All_File
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 
@@ -2321,5 +2323,5 @@ async def loading_cache(bot:Bot):
 # 开机 （如果是主文件就开机）
 if __name__ == '__main__':
     # 开机的时候打印一次时间，记录开启时间
-    print(f"[BOT] Start at: [%s]" % start_time)
+    _log.info(f"[BOT] Start at: [%s]" % start_time)
     bot.run()
