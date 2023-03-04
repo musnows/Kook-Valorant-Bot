@@ -55,7 +55,7 @@ def log_bot_guild(user_id: str, guild_id: str) -> str:
 
 
 # 在控制台打印msg内容，用作日志
-def logging(msg: Message) -> None:
+def logMsg(msg: Message) -> None:
     try:
         # 私聊用户没有频道和服务器id
         if isinstance(msg, PrivateMessage):

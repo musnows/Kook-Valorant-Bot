@@ -65,7 +65,7 @@ async def Save_File_Task():
 
 @bot.command(name='kill')
 async def KillBot(msg: Message, num: str = '124124', *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id == master_id and int(num) == config['no']:
         # 保存所有文件
         await Save_All_File(False)
@@ -84,14 +84,14 @@ async def KillBot(msg: Message, num: str = '124124', *arg):
 # hello命令，一般用于测试阿狸在不在线
 @bot.command(name='hello', aliases=['HELLO'])
 async def world(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     await msg.reply('你好呀~')
 
 
 # help命令,触发指令为 `/Ahri`,因为help指令和其他机器人冲突
 @bot.command(name='Ahri', aliases=['ahri', '阿狸'])
 async def Ahri(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         cm = Help.help_main(start_time)
         await msg.reply(cm)
@@ -102,7 +102,7 @@ async def Ahri(msg: Message, *arg):
 # help命令(瓦洛兰特相关)
 @bot.command(name='Vhelp', aliases=['vhelp'])
 async def Vhelp(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         cm = Help.help_val()
         await msg.reply(cm)
@@ -116,7 +116,7 @@ async def atAhri(msg: Message):
     try:
         me = await bot.client.fetch_me()
         if f"(met){me.id}(met)" in msg.content:
-            BotLog.logging(msg)
+            BotLog.logMsg(msg)
             if msg.author_id == master_id:
                 text = Help.help_develop()
                 await msg.reply(text)
@@ -134,7 +134,7 @@ async def atAhri(msg: Message):
 # 倒计时函数，单位为秒，默认60秒
 @bot.command()
 async def countdown(msg: Message, time: int = 60, *args):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if args != ():
         await msg.reply(f"参数错误，countdown命令只支持1个参数\n正确用法: `/countdown 120` 生成一个120s的倒计时")
         return
@@ -155,7 +155,7 @@ async def countdown(msg: Message, time: int = 60, *args):
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
 @bot.command()
 async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if args != ():
         await msg.reply(
             f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 3 生成三个1到100之间的随机数\n```")
@@ -176,7 +176,7 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args
 # 返回天气
 @bot.command(name='we')
 async def Weather(msg: Message, city: str = "err"):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if city == "err":
         await msg.reply(f"函数参数错误，城市: `{city}`\n")
         return
@@ -193,7 +193,7 @@ async def Weather(msg: Message, city: str = "err"):
 # 在不修改代码的前提下设置上色功能的服务器和监听消息
 @bot.command()
 async def Color_Set_GM(msg: Message, Card_Msg_id: str):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id == master_id:
         await GrantRoles.Color_SetGm(msg, Card_Msg_id)
 
@@ -207,7 +207,7 @@ async def Grant_Roles(b: Bot, event: Event):
 # 给用户上色（在发出消息后，机器人自动添加回应）
 @bot.command(name='Color_Set', aliases=['color_set'])
 async def Color_Set(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id == master_id:
         await GrantRoles.Color_SetMsg(bot, msg)
 
@@ -224,21 +224,21 @@ async def thanks_sponser():
 # 普通翻译指令
 @bot.command(name='TL', aliases=['tl'])
 async def translation(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     await Translate.translate_main(msg, ' '.join(arg))
 
 
 #查看当前占用的实时翻译栏位
 @bot.command()
 async def CheckTL(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     await msg.reply(f"目前已使用栏位:{Translate.checkTL()}/{len(Translate.ListTL)}")
 
 
 # 关闭所有栏位的实时翻译（避免有些人用完不关）
 @bot.command(name='ShutdownTL', aliases=['SDTL'])
 async def ShutdownTL(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author.id != master_id:
         return  #这条命令只有bot的作者可以调用
     await Translate.Shutdown_TL(bot, msg)
@@ -253,21 +253,21 @@ async def TL_Realtime(msg: Message, *arg):
         if word == "/TLOFF" or word == "/tloff" or word == '/tlon' or word == '/TLON':
             return
         # 翻译
-        BotLog.logging(msg)
+        BotLog.logMsg(msg)
         await Translate.translate_main(msg, ' '.join(arg))
 
 
 # 开启实时翻译功能
 @bot.command(name='TLON', aliases=['tlon'])
 async def TLON(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     await Translate.Open_TL(msg)
 
 
 # 关闭实时翻译功能
 @bot.command(name='TLOFF', aliases=['tloff'])
 async def TLOFF(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     await Translate.Close_TL(msg)
 
 
@@ -279,7 +279,7 @@ async def TLOFF(msg: Message):
 # 开始打游戏
 @bot.command()
 async def gaming(msg: Message, game: int = 1):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     #await bot.client.update_playing_game(3,1)# 英雄联盟
     if game == 1:
         ret = await status_active_game(453027)  # 瓦洛兰特
@@ -292,7 +292,7 @@ async def gaming(msg: Message, game: int = 1):
 # 开始听歌
 @bot.command()
 async def singing(msg: Message, music: str = "err", singer: str = "err"):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if music == "err" or singer == "err":
         await msg.reply(f"函数参数错误，music: `{music}` singer: `{singer}`")
         return
@@ -304,7 +304,7 @@ async def singing(msg: Message, music: str = "err", singer: str = "err"):
 # 停止打游戏1/听歌2
 @bot.command(name='sleeping')
 async def sleeping(msg: Message, d: int = 1):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     ret = await status_delete(d)
     if d == 1:
         await msg.reply(f"{ret['message']}，阿狸下号休息啦!")
@@ -324,7 +324,7 @@ async def Login_Forbidden_send(msg: Message):
 # 手动设置禁止登录的全局变量状态
 @bot.command(name='lf')
 async def Login_Forbidden_Change(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id == master_id:
         global Login_Forbidden
         if Login_Forbidden:
@@ -338,7 +338,7 @@ async def Login_Forbidden_Change(msg: Message):
 # 存储用户游戏id
 @bot.command()
 async def saveid(msg: Message, *args):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if args == ():
         await msg.reply(f"您没有提供您的游戏id：`{args}`")
         return
@@ -354,7 +354,7 @@ async def saveid(msg: Message, *args):
 # 已保存id总数
 @bot.command(name='saveid-a')
 async def saveid_all(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         await saveid_count(msg)
     except Exception as result:
@@ -366,7 +366,7 @@ async def saveid_all(msg: Message):
 # 实现读取用户游戏ID并返回
 @bot.command(name="myid", aliases=['MYID'])  # 这里的aliases是别名
 async def myid(msg: Message, *args):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if args != ():
         await msg.reply(f"`/myid`命令不需要参数！")
         return
@@ -382,7 +382,7 @@ async def myid(msg: Message, *args):
 # 查询游戏错误码
 @bot.command(name='val', aliases=['van', 'VAN', 'VAL'])
 async def val_err(msg: Message, numS: str = "-1", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         await val_errcode(msg, numS)
     except Exception as result:
@@ -392,7 +392,7 @@ async def val_err(msg: Message, numS: str = "-1", *arg):
 #关于dx报错的解决方法
 @bot.command(name='DX', aliases=['dx'])  # 新增别名dx
 async def dx(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     await dx123(msg)
 
 
@@ -405,7 +405,7 @@ from utils.FileManage import VipShopBgDict, VipRollDcit, UserPwdReauth,VipUserDi
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
 @bot.command(name="vip-a")
 async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
             text = await BotVip.create_vip_uuid(num, day)
@@ -428,7 +428,7 @@ async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
 # 兑换vip
 @bot.command(name="vip-u", aliases=['兑换'])
 async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if uuid == 'err':
         await msg.reply(f"只有输入vip的兑换码才可以操作哦！uuid: `{uuid}`")
         return
@@ -444,7 +444,7 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
 # 看vip剩余时间
 @bot.command(name="vip-c")
 async def check_vip_timeremain(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if not await BotVip.vip_ck(msg):
             return
@@ -458,7 +458,7 @@ async def check_vip_timeremain(msg: Message, *arg):
 # 看vip用户列表
 @bot.command(name="vip-l")
 async def list_vip_user(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
             text = await BotVip.fetch_vip_user()
@@ -531,7 +531,7 @@ async def check_vip_img_task():
 
 @bot.command(name="vip-img")
 async def check_vip_img_task(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id == master_id:
         await check_vip_img()
         await msg.reply("背景图片diy检查完成！")
@@ -542,7 +542,7 @@ async def check_vip_img_task(msg: Message, *arg):
 
 @bot.command(name="vip-shop")
 async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if icon != 'err' and ('http' not in icon or '](' not in icon):
         await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
         return
@@ -609,7 +609,7 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
 
 @bot.command(name="vip-shop-s")
 async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if num == 'err':
         await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
         return
@@ -658,7 +658,7 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
 
 @bot.command(name="vip-shop-d")
 async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if num == 'err':
         await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
         return
@@ -717,7 +717,7 @@ async def vip_roll_log(b: Bot, event: Event):
 # 开启一波抽奖
 @bot.command(name='vip-r', aliases=['vip-roll'])
 async def vip_roll(msg: Message, vday: int = 7, vnum: int = 5, rday: float = 1.0):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id != master_id:
             await msg.reply(f"您没有权限执行本命令")
@@ -806,7 +806,7 @@ async def vip_roll_task():
 # 给所有vip用户添加时间，避免出现某些错误的时候浪费vip时间
 @bot.command(name='vip-ta')
 async def vip_time_add(msg: Message, vday: int = 1, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id != master_id:
         await msg.reply(f"您没有权限执行此命令！")
         return
@@ -875,7 +875,7 @@ async def check_GloginRate():
 #查询当前有多少用户登录了
 @bot.command(name="ckau")
 async def check_UserAuthDict_len(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     sz = len(UserAuthDict)
     res = f"UserAuthDict_len: `{sz}`"
     print(res)
@@ -1038,7 +1038,7 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
 # 退出登录
 @bot.command(name='logout')
 async def logout(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         global UserRiotName, UserAuthDict
         if msg.author_id not in UserAuthDict:  #使用not in判断是否不存在
@@ -1068,7 +1068,7 @@ async def logout(msg: Message, *arg):
 
 @bot.command(name='login-ap')
 async def login_acpw(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id not in UserPwdReauth:
             await msg.reply(f"您没有保存账户密码或2fa用户，该命令无效")
@@ -1208,7 +1208,7 @@ def is_CacheLatest(kook_user_id: str):
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if arg != ():
         await msg.reply(f"`/shop`命令不需要参数。您是否想`/login`？")
         return
@@ -1354,7 +1354,7 @@ async def get_daily_shop(msg: Message, *arg):
 # 获取夜市
 @bot.command(name='night', aliases=['NIGHT'])
 async def get_night_market(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     global NightMarketOff
     if arg != ():
         await msg.reply(f"`/night`命令不需要参数。您是否想`/login`？")
@@ -1441,7 +1441,7 @@ async def get_night_market(msg: Message, *arg):
 # 设置全局变量，打开/关闭夜市
 @bot.command(name='open-nm')
 async def open_night_market(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
             global NightMarketOff
@@ -1462,7 +1462,7 @@ async def open_night_market(msg: Message, *arg):
 # 获取玩家卡面(添加point的别名)
 @bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
 async def get_user_card(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if arg != ():
         await msg.reply(f"`/uinfo`命令不需要参数。您是否想`/login`？")
         return
@@ -1552,7 +1552,7 @@ async def get_user_card(msg: Message, *arg):
 # 获取捆绑包信息(无需登录)
 @bot.command(name='bundle', aliases=['skin'])
 async def get_bundle(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if arg == ():
         await msg.reply(f"函数参数错误，name: `{arg}`\n")
         return
@@ -1631,7 +1631,7 @@ async def clear_rate_err_user():
 # 给一个皮肤评分（灵感来自微信小程序”瓦的小卖铺“）
 @bot.command(name="rate", aliases=['评分'])
 async def rate_skin_add(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if check_rate_err_user(msg.author_id):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
         return
@@ -1673,7 +1673,7 @@ async def rate_skin_add(msg: Message, *arg):
 #选择皮肤（这个命令必须跟着上面的命令用）
 @bot.command(name="rts")
 async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if check_rate_err_user(msg.author_id):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
         return
@@ -1753,7 +1753,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
 # 查看昨日牛人/屌丝
 @bot.command(name="kkn")
 async def show_shoprate(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if check_rate_err_user(msg.author_id):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
         return
@@ -1830,7 +1830,7 @@ async def check_notify_err_user(msg: Message):
 #设置提醒（出现xx皮肤）
 @bot.command(name="notify-add", aliases=['notify-a'])
 async def add_skin_notify(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if arg == ():
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`")
         return
@@ -1892,7 +1892,7 @@ async def add_skin_notify(msg: Message, *arg):
 #选择皮肤（这个命令必须跟着上面的命令用）
 @bot.command(name="sts")
 async def select_skin_notify(msg: Message, n: str = "err", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if n == "err" or '-' in n:
         await msg.reply(f"参数不正确！请选择您需要提醒的皮肤序号")
         return
@@ -1936,7 +1936,7 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 # 显示当前设置好了的皮肤通知
 @bot.command(name="notify-list", aliases=['notify-l'])
 async def list_skin_notify(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if await check_notify_err_user(msg):
             return
@@ -1958,7 +1958,7 @@ async def list_skin_notify(msg: Message, *arg):
 # 删除已有皮肤通知
 @bot.command(name="notify-del", aliases=['notify-d'])
 async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if uuid == 'err':
         await msg.reply(f"请提供正确的皮肤uuid：`{uuid}`")
         return
@@ -2174,7 +2174,7 @@ async def auto_skin_notify_task():
 # 手动执行notify task
 @bot.command(name='notify-test')
 async def auto_skin_notify_cmd(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     if msg.author_id == master_id:
         await auto_skin_notify()
 
@@ -2182,7 +2182,7 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
 # 手动更新商店物品和价格
 @bot.command(name='update_spb', aliases=['update', 'upd'])
 async def update_skin_price_bundle(msg: Message):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
             if await ValFileUpd.update_skins(msg):
@@ -2208,7 +2208,7 @@ async def update_skin_price_bundle(msg: Message):
 # 显示当前阿狸加入了多少个服务器，以及用户数量
 @bot.command(name='log-list', aliases=['log-l', 'log'])
 async def bot_log_list(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
             retDict = await BotLog.log_bot_list(msg)  # 获取用户/服务器列表
@@ -2238,7 +2238,7 @@ async def bot_log_list(msg: Message, *arg):
 
 @bot.command(name='mem')
 async def proc_check(msg: Message, *arg):
-    BotLog.logging(msg)
+    BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
             cm = await BotLog.get_proc_info()
