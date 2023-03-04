@@ -60,8 +60,8 @@ class EzAuth:
         })
         self.session.mount('https://', SSLAdapter())
         self.is2fa = False  # 2fa set to false
-        self.__mfa_start__ = 0  # 2fa start time
-        self.__is_init__ = False # is_init finised?
+        self.__mfa_start = 0  # 2fa start time
+        self.is_init = False # is_init finised?
 
     def __set_userinfo(self) -> None:
         """set_user_info to value"""
@@ -106,7 +106,7 @@ class EzAuth:
         self.entitlements_token = self.get_entitlement_token()
         self.__set_userinfo()
         self.__set_region()
-        self.__is_init__ = True # set init as finised
+        self.is_init = True # set init as finised
 
     async def authorize(self, username, password) -> dict:
         """Authenticate using username and password.\n
@@ -150,7 +150,7 @@ class EzAuth:
             # 2fa auth
             elif 'multifactor' in r.text:
                 self.is2fa = True  # is 2fa user
-                self.__mfa_start__ = time.time()
+                self.__mfa_start = time.time()
                 return {"status": False, "auth": self, "2fa_status": self.is2fa}
             else:
                 raise EzAuthExp.UnkownError(r.text)
@@ -170,10 +170,10 @@ class EzAuth:
         Return {"status":True,"auth":self,"2fa":self.is2fa}
         """
         # no need to 2fa
-        if self.__mfa_start__ == 0:
+        if self.__mfa_start == 0:
             return {"status": True, "auth": self, "2fa": self.is2fa}
         # check time
-        if (time.time() - self.__mfa_start__) <= TFA_TIME_LIMIT:
+        if (time.time() - self.__mfa_start) <= TFA_TIME_LIMIT:
             authdata = {
                 'type': 'multifactor',
                 'code': vcode,
@@ -200,7 +200,7 @@ class EzAuth:
         else:
             raise EzAuthExp.UnkownError(r.text)
 
-        self.__mfa_start__ = 0
+        self.__mfa_start = 0
         return {"status": True, "auth": self, "2fa": self.is2fa}
 
     async def reauthorize(self,exp_print=True) -> bool:
@@ -294,7 +294,7 @@ class EzAuth:
                             region=self.Region)
         - if is_init==False, raise init not finished err
         """
-        if self.__is_init__:
+        if self.is_init:
             ret = RiotUserToken(user_id=self.user_id,
                                 access_token=self.access_token,
                                 entitlements=self.entitlements_token,
@@ -317,3 +317,26 @@ class EzAuth:
             load_cookies = json.loads(f.read())
 
         self.session.cookies = requests.utils.cookiejar_from_dict(load_cookies) # type: ignore
+
+
+
+#################################################################################################
+# 缓存登录对象
+from ..FileManage import UserAuthCache
+
+async def cache_auth_object(platfrom:str,key:str,auth:EzAuth) -> None:
+    # 在data中插入对象
+    UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": auth.is2fa}
+
+    # 判断缓存的来源
+    if platfrom == 'kook':
+        # 用户id键值不存在，新建key
+        if key not in UserAuthCache['kook']:
+            UserAuthCache['kook'][key] = []
+        # 如果该账户已经登陆过了，则不进行操作
+        if auth.user_id not in UserAuthCache['kook'][key]:
+            UserAuthCache['kook'][key].append(auth.user_id) # 往用户id缓存list中插入Riot用户的uuid
+    
+    elif platfrom == 'api':
+        # 往缓存键值中插入Riot用户的uuid (api的键值是用户账户，有唯一性，不需弄list)
+        UserAuthCache['api'][key] = auth.user_id
