@@ -2258,7 +2258,7 @@ async def loading_cache(bot: Bot):
         if os.path.exists(cookie_path):
             auth = EzAuth()
             auth.load_cookies(cookie_path)  #加载cookie
-            ret_bool = await auth.reauthorize()  #尝试登录
+            ret_bool = await auth.reauthorize(exp_print=False)  #尝试登录
             if ret_bool:  # True登陆成功
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
@@ -2284,7 +2284,7 @@ async def loading_cache(bot: Bot):
         if os.path.exists(cookie_path):
             auth = EzAuth()
             auth.load_cookies(cookie_path)  #加载cookie
-            ret_bool = await auth.reauthorize()  #尝试登录
+            ret_bool = await auth.reauthorize(exp_print=False)  #尝试登录
             if ret_bool:  # True登陆成功
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
