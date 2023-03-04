@@ -203,14 +203,15 @@ class EzAuth:
         self.__mfa_start__ = 0
         return {"status": True, "auth": self, "2fa": self.is2fa}
 
-    async def reauthorize(self) -> bool:
+    async def reauthorize(self,exp_print=True) -> bool:
         """reauthorize using cookie
+        - won't print exception if exp_print == False
         """
         try:
             await self.authorize("", "")
             return True
         except Exception as result:
-            _log.exception(f"Exception in reauthoreize")
+            if exp_print: _log.exception(f"Exception in reauthoreize")
             return False
 
     def get_entitlement_token(self):
