@@ -9,7 +9,7 @@ import aiohttp
 import copy
 import zhconv
 import asyncio
-from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester,Channel)
+from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from aiohttp import client_exceptions
 from PIL import Image, UnidentifiedImageError  # 用于合成图片
@@ -25,7 +25,7 @@ from utils.valorant.EzAuth import EzAuth, EzAuthExp
 from utils.Gtime import GetTime, GetTimeStampOf8AM
 
 # bot的token文件
-from utils.FileManage import config,bot,ApiAuthLog,Save_All_File
+from utils.FileManage import config, bot, ApiAuthLog, Save_All_File
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 
@@ -33,8 +33,8 @@ bot_upimg = Bot(token=config['token']['img_upload_token'])
 master_id = config['master_id']
 
 #在bot一开机的时候就获取log频道作为全局变量
-debug_ch:Channel
-cm_send_test:Channel
+debug_ch: Channel
+cm_send_test: Channel
 NOTIFY_NUM = 3  # 非vip用户皮肤提醒栏位
 VIP_BG_SIZE = 4  # vip用户背景图片数量限制
 RATE_LIMITED_TIME = 180  # 全局登录速率超速等待秒数
@@ -96,7 +96,7 @@ async def Ahri(msg: Message, *arg):
         cm = Help.help_main(start_time)
         await msg.reply(cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("ahri", traceback.format_exc(),msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("ahri", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 # help命令(瓦洛兰特相关)
@@ -107,7 +107,7 @@ async def Vhelp(msg: Message, *arg):
         cm = Help.help_val()
         await msg.reply(cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("vhelp", traceback.format_exc(),msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("vhelp", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 # 当有人@机器人的时候进行回复，可识别出是否为机器人作者
@@ -124,7 +124,7 @@ async def atAhri(msg: Message):
                 await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri` 或 `/vhelp` 打开帮助面板，和阿狸一起玩吧！")
             _log.info(f"Au:{msg.author_id} | msg.reply success!")
     except:
-        await BotLog.BaseException_Handler("at_help", traceback.format_exc(),msg)
+        await BotLog.BaseException_Handler("at_help", traceback.format_exc(), msg)
 
 
 #################################################################################################
@@ -149,7 +149,7 @@ async def countdown(msg: Message, time: int = 60, *args):
         cm.append(c1)
         await msg.reply(cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("countdown", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("countdown", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
@@ -170,7 +170,7 @@ async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args
         result = [random.randint(t_min, t_max) for i in range(n)]
         await msg.reply(f'掷出来啦: {result}')
     except Exception as result:
-        await BotLog.BaseException_Handler("roll", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("roll", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 # 返回天气
@@ -184,7 +184,7 @@ async def Weather(msg: Message, city: str = "err"):
     try:
         await Other.weather(msg, city)
     except Exception as result:
-        await BotLog.BaseException_Handler("Weather", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("Weather", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 ################################ grant roles for user ##########################################
@@ -336,7 +336,7 @@ async def Login_Forbidden_Change(msg: Message):
 
 
 # 存储用户游戏id
-@bot.command()
+@bot.command(name="saveid", case_sensitive=False)
 async def saveid(msg: Message, *args):
     BotLog.logMsg(msg)
     if args == ():
@@ -346,9 +346,7 @@ async def saveid(msg: Message, *args):
         game_id = " ".join(args)  #避免用户需要输入双引号
         await saveid_main(msg, game_id)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] saveid\n```\n{traceback.format_exc()}\n```"
-        _log.exception("Exception occur")
-        await msg.reply(err_str)
+        await BotLog.BaseException_Handler("saveid", traceback.format_exc(), msg)
 
 
 # 已保存id总数
@@ -358,25 +356,17 @@ async def saveid_all(msg: Message):
     try:
         await saveid_count(msg)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] saveid2 = {result}"
-        _log.exception("Exception occur")
-        await msg.reply(err_str)
+        await BotLog.BaseException_Handler("saveid-a", traceback.format_exc(), msg)
 
 
 # 实现读取用户游戏ID并返回
-@bot.command(name="myid", aliases=['MYID'])  # 这里的aliases是别名
+@bot.command(name="myid", case_sensitive=False) 
 async def myid(msg: Message, *args):
     BotLog.logMsg(msg)
-    if args != ():
-        await msg.reply(f"`/myid`命令不需要参数！")
-        return
-
     try:
         await myid_main(msg)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] myid\n```\n{traceback.format_exc()}\n```"
-        _log.exception("Exception occur")
-        await msg.reply(err_str)
+        await BotLog.BaseException_Handler("myid", traceback.format_exc(), msg)
 
 
 # 查询游戏错误码
@@ -386,7 +376,7 @@ async def val_err(msg: Message, numS: str = "-1", *arg):
     try:
         await val_errcode(msg, numS)
     except Exception as result:
-        await msg.reply(f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
+        await BotLog.BaseException_Handler("val", traceback.format_exc(), msg,help=f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
 
 
 #关于dx报错的解决方法
@@ -399,7 +389,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from utils.FileManage import VipShopBgDict, VipRollDcit, UserPwdReauth,VipUserDict
+from utils.FileManage import VipShopBgDict, VipRollDcit, UserPwdReauth, VipUserDict
 
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
@@ -420,9 +410,7 @@ async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
         else:
             await msg.reply("您没有权限操作此命令！")
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] create_vip_uuid\n```\n{traceback.format_exc()}\n```"
-        _log.exception("Exception occur")
-        await msg.reply(err_str)
+        await BotLog.BaseException_Handler("vip-a", traceback.format_exc(), msg)
 
 
 # 兑换vip
@@ -438,7 +426,7 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
         global VipShopBgDict  #在用户兑换vip的时候就创建此键值
         VipShopBgDict['cache'][msg.author_id] = {'cache_time': 0, 'cache_img': None}
     except Exception as result:
-        await BotLog.BaseException_Handler("vip-u", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("vip-u", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 # 看vip剩余时间
@@ -453,7 +441,8 @@ async def check_vip_timeremain(msg: Message, *arg):
         ret_cm = await BotVip.vip_time_remain_cm(ret_t)
         await msg.reply(ret_cm)
     except Exception as result:
-        await BotLog.BaseException_Handler("vip-c", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("vip-c", traceback.format_exc(), msg, debug_send=debug_ch)
+
 
 # 看vip用户列表
 @bot.command(name="vip-l")
@@ -600,7 +589,7 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         _log.info(f"Au:{msg.author_id} img add | {x3}")
 
     except requester.HTTPRequester.APIRequestFailed as result:
-        await BotLog.APIRequestFailed_Handler("vip_shop", traceback.format_exc(), msg, bot,cm)
+        await BotLog.APIRequestFailed_Handler("vip_shop", traceback.format_exc(), msg, bot, cm)
         VipShopBgDict['bg'][msg.author_id]["background"].remove(x3)  #删掉里面的图片
         _log.error(f"Au:{msg.author_id} | remove({x3})")
     except Exception as result:
@@ -727,7 +716,7 @@ async def vip_roll(msg: Message, vday: int = 7, vnum: int = 5, rday: float = 1.0
         cm = BotVip.roll_vip_start(vnum, vday, rday)
         roll_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
         roll_send = await bot.client.send(roll_ch, cm)
-        VipRollDcit[roll_send['msg_id']] = { # type: ignore
+        VipRollDcit[roll_send['msg_id']] = {  # type: ignore
             'time': time.time() + rday * 86400,
             'nums': vnum,
             'days': vday,
@@ -737,7 +726,7 @@ async def vip_roll(msg: Message, vday: int = 7, vnum: int = 5, rday: float = 1.0
         }
         _log.info(f"card message send | C:{msg.ctx.channel.id}")
     except:
-        await BotLog.BaseException_Handler("vip-r",traceback.format_exc(),msg)
+        await BotLog.BaseException_Handler("vip-r", traceback.format_exc(), msg)
 
 
 @bot.task.add_interval(seconds=80)
@@ -829,7 +818,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.FileManage import UserRiotName, SkinNotifyDict, EmojiDict, SkinRateDict,ValBundleList
+from utils.FileManage import UserRiotName, SkinNotifyDict, EmojiDict, SkinRateDict, ValBundleList
 
 # 用来存放auth对象（无法直接保存到文件）
 UserAuthDict = {'AP': {}}
@@ -912,7 +901,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         if not resw['status']:
             cm1 = await get_card("登录中断，需要提供邮箱验证码", "请使用「/tfa 验证码」提供邮箱验证码", icon_cm.val_logo_gif)
             await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)
-            _log.info(f"login | 2fa user | Au:{msg.author_id}") # 打印信息
+            _log.info(f"login | 2fa user | Au:{msg.author_id}")  # 打印信息
             return
 
         # 4.如果没有抛出异常，那就是完成登录了，设置用户的玩家uuid+昵称
@@ -958,7 +947,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         err_str = f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}"
         # 更新全局速率限制
         login_rate_limit = {'limit': True, 'time': time.time()}
-        _log.error(err_str+" set login_rate_limit = True")
+        _log.error(err_str + " set login_rate_limit = True")
         # 这里是第一个出现速率限制err的用户,更新消息提示
         cm = await get_card(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -987,9 +976,13 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         cm = await get_card(text, text_sub, icon_cm.that_it)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("login", traceback.format_exc(), msg, bot, cm,send_msg=send_msg)
+        await BotLog.APIRequestFailed_Handler("login", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("login", traceback.format_exc(), msg, send_msg=send_msg,help="请加入帮助频道咨询，或尝试重新执行login命令")
+        await BotLog.BaseException_Handler("login",
+                                           traceback.format_exc(),
+                                           msg,
+                                           send_msg=send_msg,
+                                           help="请加入帮助频道咨询，或尝试重新执行login命令")
 
 
 @bot.command(name='tfa')
@@ -1030,7 +1023,7 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         # 更新消息
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except Exception as result:  # 其他错误
-        await BotLog.BaseException_Handler("tfa", traceback.format_exc(), msg,help="请加入帮助频道咨询，或尝试重新执行login命令")
+        await BotLog.BaseException_Handler("tfa", traceback.format_exc(), msg, help="请加入帮助频道咨询，或尝试重新执行login命令")
 
 
 # 退出登录
@@ -1150,7 +1143,7 @@ async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
         elif ret == True and is_msg:  #正常重新登录，且传过来了消息
             return send_msg  #返回发送出去的消息（用于更新）
 
-        return ret  #返回假
+        return ret  #返回是否成功重登
 
     except client_exceptions.ClientResponseError as result:
         err_str = f"[Check_re_auth] aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
@@ -1165,6 +1158,10 @@ async def check_reauth(def_name: str = "", msg: Union[Message, str] = ''):
 
         _log.error(err_str)
         await bot.client.send(debug_ch, err_str)
+        return False
+    # 用户在EzAuth初始化完毕之前调用了其他命令
+    except EzAuthExp.InitError as result:
+        _log.error(f"Au:{user_id} | EzAuth used before init")
         return False
     except Exception as result:
         if 'httpStatus' in str(result):
@@ -1215,133 +1212,131 @@ async def get_daily_shop(msg: Message, *arg):
         return
     send_msg = None
     try:
-        if msg.author_id in UserAuthDict:
-            reau = await check_reauth("每日商店", msg)
-            if reau == False: return  #如果为假说明重新登录失败
-            # 重新获取token成功，从dict中获取玩家id
-            player_gamename = f"{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
-            # 获取玩家id成功了，再提示正在获取商店
-            cm = await get_card("正在尝试获取您的每日商店", "阿狸正在施法，很快就好啦！", icon_cm.duck)
-            if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
-                await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
-                send_msg = reau
-            else:
-                send_msg = await msg.reply(cm)  #记录消息id用于后续更新
-
-            # 计算获取每日商店要多久
-            start = time.perf_counter()  #开始计时
-            # 从auth的dict中获取对象
-            auth = UserAuthDict[msg.author_id]['auth']
-            assert isinstance(auth, EzAuth)
-            riotUser = auth.get_riotuser_token()
-            # 开始判断是否需要获取商店
-            log_time = ""
-            a_time = time.time()
-            global UserShopDict, VipShopBgDict
-            # UserShopDict每天早八会被清空，如果用户在里面且玩家id一样，那么说明已经获取过当日商店了
-            if msg.author_id in UserShopDict and isSame_Authuuid(msg):  #直接使用本地已有的当日商店
-                list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = shop_time_remain()  # 通过当前时间计算商店剩余时间
-                log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
-            else:
-                resp = await fetch_daily_shop(riotUser)  #本地没有，api获取每日商店
-                list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-                timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  # 剩余时间
-                timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
-                # 需要设置uuid来保证是同一个用户，方便同日的下次查询
-                UserShopDict[msg.author_id] = {}
-                UserShopDict[msg.author_id]["auth_user_id"] = UserRiotName[msg.author_id]["auth_user_id"]
-                UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
-                log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
-
-            # 开始画图
-            draw_time = time.time()  #计算画图需要的时间
-            is_vip = await BotVip.vip_ck(msg.author_id)  #判断用户是否为VIP
-            img_ret = {'status': True, 'value': None}
-            upload_flag = True
-            # 初始化为一个展示错误的图片
-            dailyshop_img_src = "https://img.kookapp.cn/assets/2023-02/5UxA8W06B70e803m.png"
-            # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
-            if is_vip and is_CacheLatest(msg.author_id):
-                upload_flag = False  #有缓存图，直接使用本地已有链接
-                dailyshop_img_src = VipShopBgDict['cache'][msg.author_id]['cache_img']
-            elif is_vip:  # 本地缓存路径不存在，或者缓存过期
-                play_currency = await fetch_vp_rp_dict(riotUser)  #获取用户的vp和rp
-                # 如果没有设置背景图，那就设置为err
-                background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
-                                  VipShopBgDict['bg'][msg.author_id]["background"][0])
-                img_ret = await ShopImg.get_shop_img_169(list_shop,
-                                                         vp=play_currency['vp'],
-                                                         rp=play_currency['rp'],
-                                                         bg_img_src=background_img)
-            else:  # 普通用户
-                # 判断是否有缓存命中
-                cache_ret = await ShopRate.query_ShopCache(skinlist=list_shop)
-                if not cache_ret['status']:  # 缓存没有命中
-                    img_ret = await ShopImg.get_shop_img_11(list_shop)
-                else:  # 命中
-                    upload_flag = False
-                    dailyshop_img_src = cache_ret['img_url']
-                    log_time += "[cache] "
-
-            # img_ret 代表是否画图成功，如果是缓存命中，也当成功处理
-            if img_ret['status']:
-                bg = img_ret['value']  #获取图片
-            else:  # 出现背景图片违规或其他问题
-                await msg.reply(img_ret['value'])
-                _log.info(f"[GetShopImg] Au:{msg.author_id} | {img_ret['value']}")
-                return
-
-            # 获取图片成功，打印画图耗时
-            _log.info(log_time + f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}")
-            # 判断是否需要上传，false不需要
-            if upload_flag:
-                # 上传图片
-                imgByteArr = io.BytesIO()
-                bg.save(imgByteArr, format='PNG')
-                imgByte = imgByteArr.getvalue() 
-                dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # type: ignore 
-                # 如果在bg里面代表有自定义背景图，需更新status
-                if is_vip:  
-                    if msg.author_id in VipShopBgDict['bg']:
-                        VipShopBgDict['bg'][msg.author_id]['status'] = True
-                    # 设置商店图片缓存+图片缓存的时间
-                    VipShopBgDict['cache'][msg.author_id] = {'cache_img': dailyshop_img_src, 'cache_time': time.time()}
-                else:  # 非vip，更新缓存
-                    await ShopRate.update_ShopCache(skinlist=list_shop, img_url=dailyshop_img_src)
-
-            # 结束shop的总计时，结果为浮点数，保留两位小数
-            shop_using_time = format(time.perf_counter() - start, '.2f')
-
-            # 商店的图片 卡片
-            cm = CardMessage()
-            c = Card(color='#fb4b57')
-            c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
-            c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {shop_using_time}s"))
-            c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
-            cm.append(c)
-
-            # 皮肤评分和评价卡片，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
-            if not check_rate_err_user(msg.author_id):
-                cm = await ShopRate.get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
-                end = time.perf_counter()  #计算获取评分的时间
-            # 更新消息
-            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-            # 结束，打印结果
-            _log.info(
-                f"Au:{msg.author_id} | daily_shop reply successful [{shop_using_time}/{format(end - start, '.2f')}]"
-            )
-        else:
+        # 如果用户不在Authdict里面，代表没有登录，直接退出
+        if msg.author_id not in UserAuthDict:
             cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)
             await msg.reply(cm)
             return
 
+        reau = await check_reauth("每日商店", msg)
+        if reau == False: return  #如果为假说明重新登录失败
+        # 重新获取token成功，从dict中获取玩家id
+        player_gamename = f"{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+        # 获取玩家id成功了，再提示正在获取商店
+        cm = await get_card("正在尝试获取您的每日商店", "阿狸正在施法，很快就好啦！", icon_cm.duck)
+        if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
+            await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
+            send_msg = reau
+        else:
+            send_msg = await msg.reply(cm)  #记录消息id用于后续更新
+
+        # 计算获取每日商店要多久
+        start = time.perf_counter()  #开始计时
+        # 从auth的dict中获取对象
+        auth = UserAuthDict[msg.author_id]['auth']
+        assert isinstance(auth, EzAuth)
+        riotUser = auth.get_riotuser_token()
+        # 开始判断是否需要获取商店
+        log_time = ""
+        a_time = time.time()
+        global UserShopDict, VipShopBgDict
+        # UserShopDict每天早八会被清空，如果用户在里面且玩家id一样，那么说明已经获取过当日商店了
+        if msg.author_id in UserShopDict and isSame_Authuuid(msg):  #直接使用本地已有的当日商店
+            list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+            timeout = shop_time_remain()  # 通过当前时间计算商店剩余时间
+            log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
+        else:
+            resp = await fetch_daily_shop(riotUser)  #本地没有，api获取每日商店
+            list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+            timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  # 剩余时间
+            timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
+            # 需要设置uuid来保证是同一个用户，方便同日的下次查询
+            UserShopDict[msg.author_id] = {}
+            UserShopDict[msg.author_id]["auth_user_id"] = UserRiotName[msg.author_id]["auth_user_id"]
+            UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+            log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
+
+        # 开始画图
+        draw_time = time.time()  #计算画图需要的时间
+        is_vip = await BotVip.vip_ck(msg.author_id)  #判断用户是否为VIP
+        img_ret = {'status': True, 'value': None}
+        upload_flag = True
+        # 初始化为一个展示错误的图片
+        dailyshop_img_src = "https://img.kookapp.cn/assets/2023-02/5UxA8W06B70e803m.png"
+        # 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
+        if is_vip and is_CacheLatest(msg.author_id):
+            upload_flag = False  #有缓存图，直接使用本地已有链接
+            dailyshop_img_src = VipShopBgDict['cache'][msg.author_id]['cache_img']
+        elif is_vip:  # 本地缓存路径不存在，或者缓存过期
+            play_currency = await fetch_vp_rp_dict(riotUser)  #获取用户的vp和rp
+            # 如果没有设置背景图，那就设置为err
+            background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
+                              VipShopBgDict['bg'][msg.author_id]["background"][0])
+            img_ret = await ShopImg.get_shop_img_169(list_shop,
+                                                     vp=play_currency['vp'],
+                                                     rp=play_currency['rp'],
+                                                     bg_img_src=background_img)
+        else:  # 普通用户
+            # 判断是否有缓存命中
+            cache_ret = await ShopRate.query_ShopCache(skinlist=list_shop)
+            if not cache_ret['status']:  # 缓存没有命中
+                img_ret = await ShopImg.get_shop_img_11(list_shop)
+            else:  # 命中
+                upload_flag = False
+                dailyshop_img_src = cache_ret['img_url']
+                log_time += "[cache] "
+
+        # img_ret 代表是否画图成功，如果是缓存命中，也当成功处理
+        if img_ret['status']:
+            bg = img_ret['value']  #获取图片
+        else:  # 出现背景图片违规或其他问题
+            await msg.reply(img_ret['value'])
+            _log.info(f"[GetShopImg] Au:{msg.author_id} | {img_ret['value']}")
+            return
+
+        # 获取图片成功，打印画图耗时
+        _log.info(log_time + f"- [Drawing] {format(time.time() - draw_time,'.4f')} - [Au] {msg.author_id}")
+        # 判断是否需要上传，false不需要
+        if upload_flag:
+            # 上传图片
+            imgByteArr = io.BytesIO()
+            bg.save(imgByteArr, format='PNG')
+            imgByte = imgByteArr.getvalue()
+            dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # type: ignore
+            # 如果在bg里面代表有自定义背景图，需更新status
+            if is_vip:
+                if msg.author_id in VipShopBgDict['bg']:
+                    VipShopBgDict['bg'][msg.author_id]['status'] = True
+                # 设置商店图片缓存+图片缓存的时间
+                VipShopBgDict['cache'][msg.author_id] = {'cache_img': dailyshop_img_src, 'cache_time': time.time()}
+            else:  # 非vip，更新缓存
+                await ShopRate.update_ShopCache(skinlist=list_shop, img_url=dailyshop_img_src)
+
+        # 结束shop的总计时，结果为浮点数，保留两位小数
+        shop_using_time = format(time.perf_counter() - start, '.2f')
+
+        # 商店的图片 卡片
+        cm = CardMessage()
+        c = Card(color='#fb4b57')
+        c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
+        c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {shop_using_time}s"))
+        c.append(Module.Container(Element.Image(src=dailyshop_img_src)))
+        cm.append(c)
+
+        # 皮肤评分和评价卡片，用户不在rate_err_user里面才显示(在评论中发表违规言论的用户)
+        if not check_rate_err_user(msg.author_id):
+            cm = await ShopRate.get_shop_rate_cm(list_shop, msg.author_id, cm=cm)
+            end = time.perf_counter()  #计算获取评分的时间
+        # 更新消息
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+        # 结束，打印结果
+        _log.info(f"Au:{msg.author_id} | daily_shop reply successful [{shop_using_time}/{format(end - start, '.2f')}]")
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("shop", traceback.format_exc(), msg, bot,cm,send_msg=send_msg)
+        await BotLog.APIRequestFailed_Handler("shop", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```\n"
         if "SkinsPanelLayout" in str(result):
-            _log.error(err_str+resp)
+            _log.error(err_str + resp)
             btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
             cm = await get_card(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1384,7 +1379,7 @@ async def get_night_market(msg: Message, *arg):
             assert isinstance(auth, EzAuth)
             riotUser = auth.get_riotuser_token()
             # 获取商店（夜市是相同接口）
-            resp = await fetch_daily_shop(riotUser)  
+            resp = await fetch_daily_shop(riotUser)
             if "BonusStore" not in resp:  # 如果没有这个字段，说明夜市取消了
                 NightMarketOff = False
                 cm1 = await get_card("嗷~ 夜市已关闭 或 Api没能正确返回结果", "night_market closed! 'BonusStore' not in resp",
@@ -1431,7 +1426,7 @@ async def get_night_market(msg: Message, *arg):
             return
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("night", traceback.format_exc(), msg, bot,cm,send_msg=send_msg)
+        await BotLog.APIRequestFailed_Handler("night", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:  # 其他错误
         await BotLog.BaseException_Handler("night", traceback.format_exc(), msg, send_msg=send_msg)
 
@@ -1536,7 +1531,7 @@ async def get_user_card(msg: Message, *arg):
             return
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm,send_msg=send_msg)
+        await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] uinfo\n```\n{traceback.format_exc()}\n```"
         if "Identity" in str(result) or "Balances" in str(result):
@@ -1577,7 +1572,7 @@ async def get_bundle(msg: Message, *arg):
                         else:  # 找不到价格就直接插入武器名字
                             text += f"{w['displayName']}\n"
 
-                    text += "```\n"  
+                    text += "```\n"
                     c.append(Module.Section(Element.Text(text, Types.Text.KMD)))  #插入皮肤
                 cm.append(c)
                 await msg.reply(cm)
@@ -1663,7 +1658,7 @@ async def rate_skin_add(msg: Message, *arg):
         await msg.reply(cm)
 
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
-        await BotLog.APIRequestFailed_Handler("rate", traceback.format_exc(), msg, bot,cm)
+        await BotLog.APIRequestFailed_Handler("rate", traceback.format_exc(), msg, bot, cm)
     except Exception as result:  # 其他错误
         await BotLog.BaseException_Handler("rate", traceback.format_exc(), msg)
 
@@ -1946,7 +1941,7 @@ async def list_skin_notify(msg: Message, *arg):
             text += "注：`=`号前面很长的那一串就是uuid\n"
             await msg.reply(text)
     except Exception as result:
-        await BotLog.BaseException_Handler("notify-list", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("notify-list", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 # 删除已有皮肤通知
@@ -1969,7 +1964,7 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
                 await msg.reply(f"您提供的uuid不在列表中！")
                 return
     except Exception as result:
-        await BotLog.BaseException_Handler("notify-del", traceback.format_exc(), msg,debug_send=debug_ch)
+        await BotLog.BaseException_Handler("notify-del", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
 #独立函数，为了封装成命令+定时
@@ -2240,7 +2235,7 @@ async def proc_check(msg: Message, *arg):
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 @bot.on_startup
-async def loading_cache(bot:Bot):
+async def loading_cache(bot: Bot):
     try:
         global debug_ch, cm_send_test
         cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
@@ -2268,14 +2263,14 @@ async def loading_cache(bot:Bot):
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
             else:
-                del auth # 删除对象
+                del auth  # 删除对象
                 log_str_failed += f"({user}) "
                 continue
         else:
             log_not_exits += f"({user}) "
             continue
     # 结束任务
-    _log.info("TASK.INFO\n\t"+log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
+    _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
     _log.info(f"[BOT.TASK] loading user cookie finished")
 
     # api缓存的用户列表
@@ -2294,14 +2289,14 @@ async def loading_cache(bot:Bot):
                 UserAuthDict[user] = {"auth": auth, "2fa": False}  #将对象插入
                 log_str_success += f"({user})"
             else:
-                del auth # 删除对象
+                del auth  # 删除对象
                 log_str_failed += f"({user}) "
                 continue
         else:
             log_not_exits += f"({user}) "
             continue
     # 结束任务
-    _log.info("TASK.INFO\n\t"+log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
+    _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
     _log.info(f"[BOT.TASK] loading api user cookie finished")
 
 
