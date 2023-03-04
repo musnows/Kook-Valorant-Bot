@@ -6,14 +6,14 @@ from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key
-from .FileManage import config
+from .FileManage import config,_log
 # 彩云key
 CyKey = config['caiyun']
 
 
 # youdao code is from https://github.com/Chinese-boy/Many-Translaters
 def youdao_translate(txt: str):
-    #print(txt)
+    _log.debug(txt)
     url = 'http://fanyi.youdao.com/translate?smartresult=dict&smartresult=rule&sessionFrom=https://www.baidu.com/link'
     data = {
         'from': 'AUTO',
@@ -34,7 +34,7 @@ def youdao_translate(txt: str):
     wy = urllib.request.urlopen(url, data)
     html = wy.read().decode('utf-8')
     ta = json.loads(html)
-    #print(ta['translateResult'][0][0]['tgt'])
+    _log.debug(ta['translateResult'][0][0]['tgt'])
     return ta['translateResult'][0][0]['tgt']
 
 
@@ -83,7 +83,7 @@ def deleteByStartAndEnd(s, start, end):
         # 将内容替换为空字符串s
         s = s.replace(x3, "")
 
-    print(f'Handel{start}: {s}')
+    _log.info(f'Handel {start} | {s}')
     return s
 
 

@@ -61,11 +61,11 @@ def logMsg(msg: Message) -> None:
         if isinstance(msg, PrivateMessage):
             log_bot_user(msg.author_id)  # 记录用户
             _log.info(
-                f"PrivateMessage - Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}")
+                f"PrivateMsg | Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | {msg.content}")
         else:
             Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id)  # 记录服务器和用户
             _log.info(
-                f"G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
+                f"G:{msg.ctx.guild.id} | C:{msg.ctx.channel.id} | {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
     except:
         _log.exception("Exception occurred")
@@ -89,7 +89,7 @@ async def log_bot_img() -> None:
         i += 1
     # 保存图片
     bg.save(f'../screenshot/log.png')
-    _log.info("[log_bot_img] log.png draw finished")
+    _log.info("log.png draw finished")
 
 
 # bot用户记录dict处理
@@ -157,9 +157,9 @@ async def APIRequestFailed_Handler(def_name: str,
     - cm: khl.card.CardMessage, for json.dumps / resend
     - send_msg: return value of msg.reply or bot.send
     """
+    _log.exception(f"APIRequestFailed in {def_name} | Au:{msg.author_id}")
     err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
-    _log.exception(f"APIRequestFailed in {def_name}")
-    text = f"啊哦，出现了一些问题"
+    text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
     # 如果cm是None，则将cm赋值为空卡片消息
     cm = cm if cm else CardMessage() 
@@ -180,7 +180,7 @@ async def APIRequestFailed_Handler(def_name: str,
         _log.error(f"Au:{msg.author_id} | 用户屏蔽或权限不足")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
-    cm0 = await get_card(text, text_sub, icon_cm.lagging)
+    cm0 = await get_card(text, text_sub)
     if send_msg:  # 非none则执行更新消息，而不是直接发送
         await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
     else:
@@ -203,7 +203,7 @@ async def BaseException_Handler(def_name: str,
     - help: str for help_info, replyed in msg.reply
     """
     err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
-    _log.exception(f"Exception in {def_name}")
+    _log.exception(f"Exception in {def_name} | Au:{msg.author_id}")
     cm0 = CardMessage()
     c = Card(color='#fb4b57')
     c.append(Module.Header(f"很抱歉，发生了一些错误"))

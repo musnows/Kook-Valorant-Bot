@@ -11,7 +11,7 @@ from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from utils import ShopRate,ShopImg
 
 # bot的配置文件
-from utils.FileManage import config,ApiAuthCache,ApiAuthLog
+from utils.FileManage import config,ApiAuthCache,ApiAuthLog,_log
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
 # 默认的背景图
@@ -37,7 +37,7 @@ img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 #     myfiles = {'file': img}
 #     ret = requests.post(url, headers=header, params=params,files=myfiles)  # 请求api
 #     ret = ret.json()
-#     print(ret)
+#     _log.debug(ret)
 #     if ret['status']: # 上传成功
 #         return {'code':0,'data':ret['data']['links'],'message':ret['message']}
 #     # 上传失败
@@ -69,14 +69,14 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
     else:  # 只有16-9的图片需获取vp和r点
         ret = await ShopImg.get_shop_img_169(list_shop, vp=vp1, rp=rp1, bg_img_src=img_src)
     # 打印计时
-    print(f"[{GetTime()}] [Api imgDraw]", format(time.perf_counter() - start, '.2f'))  # 结果为浮点数，保留两位小数
+    _log.info(f"Api imgDraw | {format(time.perf_counter() - start, '.3f')}")  # 结果为浮点数，保留两位小数
 
     # 开始上传图片
     start = time.perf_counter() # 更新start计时器
     # 判断缓存是否命中
     if cacheRet['status']: # 命中了
         dailyshop_img_src = cacheRet['img_url']
-        print(f'[{GetTime()}] [Api imgUrl(cache)] {dailyshop_img_src}')
+        _log.info(f"Api imgUrl(cache) | {dailyshop_img_src}")
         return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功，缓存命中'}
     # 缓存没有命中，但是获取画图结果成功
     if ret['status']:
@@ -84,19 +84,19 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
         img_src_ret = await kook_create_asset(api_bot_token, bg)  # 上传图片到kook
         # img_src_ret = await lsky_upload(bg) # 上传图片到lsky
         if img_src_ret['code'] == 0: # 上传图片成功
-            print(f"[{GetTime()}] [Api] kook_create_asset success {format(time.perf_counter() - start, '.2f')}")
+            _log.info(f"Api | kook_create_asset success | {format(time.perf_counter() - start, '.3f')}")
             dailyshop_img_src = img_src_ret['data']['url']
             # 初始值是err，调用了query_ShopCache失败，返回值更新为空
             if cacheRet['img_url'] != 'err':
                 await ShopRate.update_ShopCache(skinlist=list_shop,img_url=dailyshop_img_src)
-            print(f'[{GetTime()}] [Api imgUrl] {dailyshop_img_src}')
+            _log.info(f"Api imgUrl | {dailyshop_img_src}")
             return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功'}
         else: # 上传图片失败
-            print(f'[{GetTime()}] [Api] kook_create_asset failed')
+            _log.info(f"Api | kook_create_asset failed")
             return {'code': 200, 'message': 'img upload err', 'info': '图片上传错误'}
     else: # 出现图片违规或者背景图url无法获取
         err_str = ret['value']
-        print(f'[{GetTime()}] [ERR]', err_str)
+        _log.error(err_str)
         return {'code': 200, 'message': 'img src err', 'info': '自定义图片获取失败'}
 
 
@@ -104,7 +104,7 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
 async def img_draw_request(request):
     params = request.rel_url.query
     if "list_shop" not in params or 'token' not in params:
-        print(f"ERR! [{GetTime()}] params needed: token/list_shop")
+        _log.error(f"params needed: token/list_shop")
         return {
             'code': 400,
             'message': 'params needed: token/list_shop',
@@ -122,7 +122,7 @@ async def img_draw_request(request):
         return {'code':200,'message':'list_shop len err! should be 4','info':'list_shop长度错误，皮肤数量不为4'}
     
     token = params['token']
-    print(f"[{GetTime()}] [list_shop] {list_shop}")
+    _log.debug(f"list_shop | {list_shop}")
     ck_ret = await check_token_rate(token)
     if not ck_ret['status']:
         return {'code': 200, 'message': ck_ret['message'], 'info': ck_ret['info']}
@@ -152,7 +152,7 @@ async def shop_get_request(params,account:str):
     # 3 获取每日商店
     riotUser = auth.get_riotuser_token()
     resp = await fetch_daily_shop(riotUser)  
-    print(f'[{GetTime()}] [Api] fetch_daily_shop success')
+    _log.info(f'Api | fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
     res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
     if isimgRatio or isRaw:
@@ -171,7 +171,7 @@ async def login_request(request,method = "GET"):
         params = json.loads(body.decode('UTF8'))
     # 判断必须要的参数是否齐全
     if 'account' not in params or 'passwd' not in params or 'token' not in params:
-        print(f"ERR! [{GetTime()}] params needed: token/account/passwd")
+        _log.error(f"params needed: token/account/passwd")
         return {
             'code': 400,
             'message': 'params needed: token/account/passwd',
@@ -197,14 +197,11 @@ async def login_request(request,method = "GET"):
             return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
         
     except EzAuthExp.RatelimitError as result:
-        print(f"ERR! [{GetTime()}] login - EzAuthExp.RatelimitError")
+        _log.exception(f"Api login | RatelimitError")
         return {'code': 200, 'message': "EzAuthExp.RiotRatelimitError", 'info': 'riot登录api超速，请稍后重试'}
-    except Exception as result:
-        print(f"ERR! [{GetTime()}] login\n{traceback.format_exc()}")
-        return {'code': 200, 'message': f"{result}", 'info': 'riot登录错误，详见message'}
 
     # 走到这里，代表不是2fa用户，且登陆成功
-    print(f'[{GetTime()}] [Api] user auth success')
+    _log.info(f"Api login | user auth success")
     # 如果是GET方法，直接调用获取商店的操作
     if method == "GET": # /shop-img 接口是get的
         return await shop_get_request(params,account)
@@ -220,7 +217,7 @@ async def tfa_code_requeset(request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     if 'account' not in params or 'vcode' not in params or 'token' not in params:
-        print(f"ERR! [{GetTime()}] params needed: token/account/vcode")
+        _log.error(f"params needed: token/account/vcode")
         return {
             'code': 400,
             'message': 'params needed: token/account/vcode',
@@ -241,13 +238,14 @@ async def tfa_code_requeset(request):
         assert isinstance(auth,EzAuth)
         res = await auth.email_verfiy(vcode)
     except EzAuthExp.MultifactorError as result:
+        _log.exception("Api tfa | MultifactorError")
         if "multifactor_attempt_failed" in str(result):
             return { 'code': 200,'message': 'multifactor_attempt_failed',
                      'info': '两步验证码错误，请在10min内重新调用此接口重传','vcode': vcode }
         # 其他情况
         return {'code': 200,'message': '2fa auth_failure','info': '两步验证登陆错误，请重新操作','vcode': vcode}
-    # 走到这里，代表不是2fa用户，且登陆成功
-    print(f'[{GetTime()}] [Api] 2fa user auth success')
+    # 走到这里，代表是2fa用户，且登陆成功
+    _log.info("Api tfa | 2fa user auth success")
     # 保存cookie到本地
     if account not in ApiAuthLog:
         ApiAuthLog.append(account) # 记录已缓存的用户账户（方便开机加载）
@@ -261,7 +259,7 @@ async def shop_cmp_request(request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     if 'best' not in params or 'worse' not in params or 'token' not in params or 'platform' not in params:
-        print(f"ERR! [{GetTime()}] params needed: token/best/worse/platform")
+        _log.error("params needed: token/best/worse/platform")
         return {
             'code': 400,
             'message': 'params needed: token/best/worse/platform',
@@ -314,8 +312,8 @@ async def afd_request(request, bot):
     c = Card(Module.Header(f"爱发电有新动态啦！"), Module.Context(Element.Text(f"订单号: {trno_f}")), Module.Divider(),
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
-    #print(json.dumps(cm))
+    _log.debug(json.dumps(cm))
     debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
     await bot.client.send(debug_ch, cm)
-    print(f"[{GetTime()}] trno:{params['data']['order']['out_trade_no']} afd-cm-send")
+    _log.info(f"trno:{params['data']['order']['out_trade_no']} | afd-cm-send")
     return {"ec": 200, "em": "success"}
