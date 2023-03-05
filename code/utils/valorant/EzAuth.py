@@ -317,26 +317,3 @@ class EzAuth:
             load_cookies = json.loads(f.read())
 
         self.session.cookies = requests.utils.cookiejar_from_dict(load_cookies) # type: ignore
-
-
-
-#################################################################################################
-# 缓存登录对象
-from ..FileManage import UserAuthCache
-
-async def cache_auth_object(platfrom:str,key:str,auth:EzAuth) -> None:
-    # 在data中插入对象
-    UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": auth.is2fa}
-
-    # 判断缓存的来源
-    if platfrom == 'kook':
-        # 用户id键值不存在，新建key
-        if key not in UserAuthCache['kook']:
-            UserAuthCache['kook'][key] = []
-        # 如果该账户已经登陆过了，则不进行操作
-        if auth.user_id not in UserAuthCache['kook'][key]:
-            UserAuthCache['kook'][key].append(auth.user_id) # 往用户id缓存list中插入Riot用户的uuid
-    
-    elif platfrom == 'api':
-        # 往缓存键值中插入Riot用户的uuid (api的键值是用户账户，有唯一性，不需弄list)
-        UserAuthCache['api'][key] = auth.user_id

@@ -122,20 +122,20 @@ class FileManage:
 
 
 ###################################################################################################
-
+# 配置相关
 config = FileManage("./config/config.json", True)  # 机器人配置文件
 BotUserDict = FileManage("./log/BotUserLog.json")  # 机器人用户信息
 ApiTokenDict = FileManage("./log/ApiToken.json")  # API token
 ColorIdDict = FileManage("./log/color_idsave.json")  # 自动上色 信息保存
 EmojiDict = FileManage("./config/color_emoji.json", True)  # 自动上色 服务器角色配置
 SponsorDict = FileManage("./log/sponsor_roles.json")  # 感谢助力者 信息保存
-
+# valorant资源相关
 ValErrDict = FileManage("./log/ValErrCode.json")  # valorant错误码解决办法
 ValSkinList = FileManage("./log/ValSkin.json")  # valorant皮肤
 ValPriceList = FileManage("./log/ValPrice.json")  # valorant皮肤价格
 ValBundleList = FileManage("./log/ValBundle.json")  # valorant捆绑包
 ValItersList = FileManage("./log/ValIters.json")  # valorant皮肤等级
-
+# valorant功能相关
 SkinRateDict = FileManage("./log/ValSkinRate.json")  # valorant皮肤评分信息
 SkinNotifyDict = FileManage("./log/UserSkinNotify.json")  # 皮肤提醒 用户记录
 GameIdDict = FileManage("./log/game_idsave.json")  # 玩家游戏id保存
@@ -143,15 +143,26 @@ UserAuthID = FileManage("./log/UserAuthID.json")  # 用户游戏id/uuid，账户
 UserRiotName = UserAuthID['data']  # riot用户游戏id和uuid
 UserPwdReauth = UserAuthID['ap_log']    # 账户密码重登记录
 ApiAuthLog = UserAuthID['api_log']  # api 缓存用户的account记录
-ApiAuthCache = {'data':{}}          # api EzAuth对象缓存
-
+# vip相关
 VipUuidDict = FileManage("./log/VipUuid.json")  # vip uuid文件
 VipShopBgDict = FileManage("./log/VipUserShopBg.json")  # vip 背景图设置；商店图缓存
 VipUser = FileManage("./log/VipUser.json")  # vip 用户列表
 VipUserDict = VipUser['data'] # vip 用户
 VipRollDcit = VipUser['roll'] # vip 抽奖信息 
-
+# 爱发电webhook
 AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求
+# 缓存相关
+Login_Forbidden = False # 403禁止重登
+UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}  
+"""{'api':{},'kook':{},'data':{},'acpw':{}}\n 
+api/bot 公用EzAuth对象缓存:
+- api  | 用户账户:riot_user_uuid
+- kook | kook_user_id:[uuid1,uuid2]  值为list,支持多账户登录
+- data | riot_user_uuid:{"auth": EzAuth Obj, "2fa": EzAuth.is2fa}
+- acpw | riot_user_uuid:{'a':账户,'p':密码}  用于bot中的账户密码存储。只存储在全局变量中，不写入磁盘
+- tfa  | 用户id:EzAuth对象  临时使用的缓存
+"""
+ApiAuthCache = {'data':{}}       # api EzAuth对象缓存
 
 # 实例化一个khl的bot，方便其他模组调用
 from khl import Bot
