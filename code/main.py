@@ -1716,7 +1716,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             SkinRateDict['data'][msg.author_id][skin_uuid] = {}
             SkinRateDict['data'][msg.author_id][skin_uuid]['name'] = S_skin['skin']['displayName']
             SkinRateDict['data'][msg.author_id][skin_uuid]['cmt'] = comment
-            SkinRateDict['data'][msg.author_id][skin_uuid]['pit'] = point
+            SkinRateDict['data'][msg.author_id][skin_uuid]['rating'] = point
             SkinRateDict['data'][msg.author_id][skin_uuid]['time'] = int(time.time())  # 秒级
             SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
             # 数据库添加该评论
