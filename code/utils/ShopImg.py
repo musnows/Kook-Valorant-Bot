@@ -11,6 +11,7 @@ import zhconv
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from .valorant.Val import *
 from .Gtime import *
+from .log.Logging import _log
 
 font_color = '#ffffff'  # 文字颜色：白色
 #用于临时存放图片的dict
@@ -61,7 +62,7 @@ def bg_comp(bg, img, x, y):
 # 获取武器皮肤的图片
 def get_weapon_img(skinuuid: str, skin_icon: str):
     if skin_icon == None: 
-        print(f"[get_weapon_img] {skinuuid} None-icon") # 出现None
+        _log.error(f"None-icon | {skinuuid}") # 出现None
     if os.path.exists(f'./log/img_temp/weapon/{skinuuid}.png'):
         layer_icon = Image.open(f'./log/img_temp/weapon/{skinuuid}.png')  # 打开本地皮肤图片
     else:
@@ -88,7 +89,7 @@ def resize_skin(standard_x, img, standard_y=''):
         w_s = int(w / sizeco)
         h_s = int(h / sizeco)
     log_info += f"缩放后大小:({w_s},{h_s})"
-    print(log_info)
+    _log.info(log_info)
     img = img.resize((w_s, h_s), Image.Resampling.LANCZOS)
     return img
 
@@ -151,7 +152,7 @@ def sm_comp_169(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
         level_icon = skin_level_icon_temp[skin_level_icon]
     end = time.perf_counter()  # 结束获取皮肤等级图片的计时
     log_time += f"- [GetIters] {format(end - start, '.4f')} "  # 记录皮肤等级图片用时
-    print(log_time)  #打印用时
+    _log.info(log_time)  #打印用时
 
     # 缩放皮肤等级图标
     level_icon = level_icon.resize((25, 25), Image.Resampling.LANCZOS)
@@ -199,7 +200,7 @@ def sm_comp_11(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
         level_icon = skin_level_icon_temp[skin_level_icon]
     end = time.perf_counter()
     log_time += f"- [GetIters] {format(end - start, '.4f')} "
-    print(log_time)  # 打印获取皮肤和皮肤等级用了多久时间
+    _log.info(log_time)  # 打印获取皮肤和皮肤等级用了多久时间
 
     w, h = level_icon.size  # 读取武器等级图片长宽
     new_w = int(w * standard_level_icon_reszie_ratio)  # 按比例缩放的长
@@ -210,7 +211,7 @@ def sm_comp_11(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
 
     name = zhconv.convert(skin_name, 'zh-cn')  # 将名字简体化
     name_list = name.split(' ')  # 将武器名字分割换行
-    # print(name_list)
+    _log.debug(str(name_list))
     if '' in name_list:  # 避免出现返回值后面带空格的情况，如'重力鈾能神經爆破者 制式手槍 '
         name_list.remove('')
 
@@ -224,7 +225,7 @@ def sm_comp_11(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
         i = 1
         while i <= len(name_list) - 2:
             name_list[0] = name_list[0] + ' ' + name_list[i]
-            # print(name_list[0])
+            _log.debug(name_list[0])
             i += 1
         interval = len(name_list[0])
         name_list[1] = name_list[len(name_list) - 1]
@@ -295,7 +296,7 @@ async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
             err_str = f"ERR! [{GetTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
-            print(err_str)  #写入文件后打印log信息
+            _log.exception("Exception in bg_img check")
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
         # 打开成功
         bg_img = resize_standard(1280, 720, bg_img)  #缩放到720p
@@ -378,7 +379,7 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
             err_str = f"ERR! [{GetTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
-            print(err_str)  #写入文件后打印log信息
+            _log.exception("Exception in bg_img check") 
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
         # 打开成功
         bg_img = resize_standard(1000, 1000, bg_img)  #缩放到1000*1000 必须有，否则报错images do not match

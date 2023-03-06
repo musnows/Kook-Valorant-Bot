@@ -1,7 +1,7 @@
 import json
 import aiofiles
 import traceback
-from utils.Gtime import GetTime
+from .log.Logging import _log
 
 FileList = [] # 用于保存需要写入到磁盘的文件
 
@@ -30,9 +30,9 @@ async def Save_All_File(is_Aio=True):
             else:
                 i.save()
         except:
-            print(f"ERR! [{GetTime()}] [Save.All.File] {i.path}\n{traceback.format_exc()}")
+            _log.exception(f"Save.All.File | {i.path}")
 
-    print(f"[Save.All.File] save finished at [{GetTime()}]")
+    _log.info(f"Save.All.File | save finished")
 
 
 # 文件管理类
@@ -156,4 +156,4 @@ AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求
 # 实例化一个khl的bot，方便其他模组调用
 from khl import Bot
 bot = Bot(token=config['token']['bot'])
-print(f"[FileManage] load all files") # 走到这里代表所有文件都打开了
+_log.info(f"Loading all files") # 走到这里代表所有文件都打开了

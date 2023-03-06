@@ -9,7 +9,7 @@ from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
 from .KookApi import icon_cm
 from .Gtime import GetTime
-from .FileManage import bot,VipShopBgDict,config
+from .FileManage import bot,VipShopBgDict,config,_log
 from .ShopImg import img_requestor
 
 
@@ -43,7 +43,7 @@ def vip_time_stamp(kook_user_id: str, day: int = 0):
         times_end = VipUserDict[kook_user_id]['time']
         # 当前结束时间戳+下n个月的时间戳
         next_end = times_end + times_diff
-        #print(next_end)
+        #_log.debug(next_end)
         return next_end
 
 
@@ -86,7 +86,7 @@ async def create_vip_uuid(num: int = 10, day: int = 30):
     for uuid in NewUuid:
         text += f"{uuid}" + "\n"
 
-    print(f"[vip-c] create_vip_uuid - num:{num} - day:{day}")
+    _log.info(f"[vip-c] create_vip_uuid - num:{num} - day:{day}")
     return text
 
 
@@ -132,7 +132,7 @@ async def using_vip_uuid(msg: Message, uuid1: str, bot: Bot, debug_ch: Channel):
         c.append(Module.Context(Element.Text("或许是填错了？一个兑换码只能用一次哦", Types.Text.KMD)))
         cm.append(c)
         await msg.reply(cm)
-        print(log_str)
+        _log.error(log_str)
         return False
 
     # 发送卡片消息
@@ -145,7 +145,7 @@ async def using_vip_uuid(msg: Message, uuid1: str, bot: Bot, debug_ch: Channel):
                                                                      Types.Click.LINK)))
     cm.append(c)
     await msg.reply(cm)
-    print(log_str)
+    _log.info(log_str)
     # 发送消息到日志频道
     await bot.client.send(debug_ch, f"用户「{user_id}_{VipUserDict[user_id]['name_tag']}」兑换了「{days}」天阿狸vip！")
     return True
@@ -182,15 +182,15 @@ async def vip_ck(msg):
             #如果是消息，那就发送提示
             if flag:
                 await msg.reply(cm)
-                print(f"[vip-ck] Au:{user_id} msg.reply(vip out of date)")
+                _log.info(f"[vip-ck] Au:{user_id} msg.reply(vip out of date)")
             return False
         else:  #没有过期，返回真
-            print(f"[vip-ck] Au:{user_id} is vip")
+            _log.info(f"[vip-ck] Au:{user_id} is vip")
             return True
     else:  #用户不是vip
         if flag:  #如果是消息，那就发送提示
             await msg.reply(cm)
-            print(f"[vip-ck] Au:{user_id} msg.reply(not vip)")
+            _log.info(f"[vip-ck] Au:{user_id} msg.reply(not vip)")
         return False
 
 
@@ -209,7 +209,7 @@ async def fetch_vip_user():
     if vipuserdict_temp != VipUserDict:
         #将修改存放到文件中
         VipUserDict.save()
-        print(f"[vip-r] update VipUserDict")
+        _log.info(f"[vip-r] update VipUserDict")
 
     return text
 
@@ -248,10 +248,10 @@ async def replace_illegal_img(user_id: str, num: int):
         img_str = VipShopBgDict['bg'][user_id]["background"][num]
         VipShopBgDict['bg'][user_id]["background"][num] = illegal_img_169
         VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
-        print(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
+        _log.info(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
     except Exception as result:
         err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
+        _log.exception("Exception occur")
         debug_ch = await bot.fetch_public_channel(config['channel']['debug_ch'])
         await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
 
@@ -267,7 +267,7 @@ def len_VusBg(user_id: str):
         return 0
 
 # 获取自定义背景图的展示卡片
-async def get_vip_shop_bg_cm(msg: Message):
+async def get_vip_shop_bg_cm(msg: Message) -> CardMessage | str:
     global VipShopBgDict
     if msg.author_id not in VipShopBgDict['bg']:
         return "您尚未自定义商店背景图！"
@@ -299,11 +299,12 @@ async def get_vip_shop_bg_cm(msg: Message):
             except UnidentifiedImageError as result:
                 err_str = f"ERR! [{GetTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
                 #把被ban的图片替换成默认的图片，打印url便于日后排错
-                err_str += f"[UnidentifiedImageError] url={VipShopBgDict['bg'][msg.author_id]['background'][i]}\n```"
                 await replace_illegal_img(msg.author_id, i)  #替换图片
+                err_str += f"[UnidentifiedImageError] url={VipShopBgDict['bg'][msg.author_id]['background'][i]}\n```"
+                # 发送消息到debug频道
                 debug_ch = await bot.fetch_public_channel(config['channel']['debug_ch']) 
-                await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
-                print(err_str)
+                await bot.client.send(debug_ch, err_str)
+                _log.exception("UnidentifiedImageError")
                 return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
 
     cm.append(c1)

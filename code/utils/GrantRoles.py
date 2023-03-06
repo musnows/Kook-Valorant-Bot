@@ -4,7 +4,7 @@ from khl import Bot, Message, PublicMessage, Event
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
-from .FileManage import SponsorDict, ColorIdDict, EmojiDict
+from .FileManage import SponsorDict, ColorIdDict, EmojiDict,_log
 from .KookApi import kook_headers
 from .Gtime import GetTime
 
@@ -34,8 +34,7 @@ async def Color_GrantRole(bot: Bot, event: Event):
     g = await bot.client.fetch_guild(EmojiDict['guild_id'])  # 填入服务器id
     #将msg_id和event.body msg_id进行对比，确认是我们要的那一条消息的表情回应
     if event.body['msg_id'] == EmojiDict['msg_id']:
-        now_time = GetTime()  #记录时间
-        print(f"[{now_time}] React:{event.body}")  # 这里的打印eventbody的完整内容，包含emoji_id
+        _log.info(f"React: {event.body}")  # 这里的打印eventbody的完整内容，包含emoji_id
 
         channel = await bot.client.fetch_public_channel(event.body['channel_id'])  #获取事件频道
         s = await bot.client.fetch_user(event.body['user_id'])  #通过event获取用户id(对象)
@@ -98,7 +97,7 @@ def check_sponsor(it: dict):
 
 
 async def THX_Sponser(bot: Bot, kook_header=kook_headers):
-    print("[BOT.TASK] thanks_sponser start!")
+    _log.info("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = f"https://www.kaiheila.cn/api/v3/guild/user-list?guild_id={EmojiDict['guild_id']}&role_id={EmojiDict['sp_role_id']}"
     async with aiohttp.ClientSession() as session:
@@ -108,12 +107,12 @@ async def THX_Sponser(bot: Bot, kook_header=kook_headers):
     #长度相同无需更新
     sz = len(SponsorDict)
     if json_dict['data']['meta']['total'] == sz:
-        print(f"[BOT.TASK] No new sponser, same_len [{sz}]")
+        _log.info(f"[BOT.TASK] No new sponser, same_len [{sz}]")
         return
 
     for its in json_dict['data']['items']:
         if check_sponsor(its) == 0:
             channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
-            print(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
-    print("[BOT.TASK] thanks_sponser finished!")
+            _log.info(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
+    _log.info("[BOT.TASK] thanks_sponser finished!")

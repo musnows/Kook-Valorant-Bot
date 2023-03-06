@@ -1,10 +1,8 @@
 import uuid
-import json
 import time
-from utils.Gtime import GetTime
 
 # 所有token
-from utils.FileManage import ApiTokenDict
+from utils.FileManage import ApiTokenDict,_log
 # token速率限制为10，检测周期为60s
 TOKEN_RATE_LIMITED = 10
 TOKEN_RATE_TIME = 60
@@ -18,7 +16,7 @@ def get_uuid():
 def save_token_files(text=''):
     global ApiTokenDict
     ApiTokenDict.save()
-    print(f"[{GetTime()}] [API token] files saved! [{text}]")
+    _log.info(f"ApiTokenDict.save | {text}")
 
 
 # 生成uuid
@@ -63,7 +61,7 @@ def create_token_uuid(num: int = 10, day: int = 30):
     for uuid in NewUuid:
         text += f"{uuid}" + "\n"
 
-    print(f"[{GetTime()}] [token] create_token_uuid - num:{num} - day:{day}")
+    _log.info(f"Api token | create_token_uuid | num:{num} | day:{day}")
     return text
 
 
@@ -87,13 +85,13 @@ async def token_ck(token: str):
             del ApiTokenDict['data'][token]
             # 更新本地文件
             save_token_files("token expire")
-            print(f"[{GetTime()}] [token-ck] T:{token} out of date")
+            _log.info(f"T:{token} | out of date")
             return False
         else:  # 没有过期，返回真
-            print(f"[{GetTime()}] [token-ck] T:{token} is token")
+            _log.info(f"T:{token} | is token")
             return True
     else:  # token不在
-        print(f"[{GetTime()}] [token-ck] T:{token} not token")
+        _log.info(f"T:{token} | not token")
         return False
 
 

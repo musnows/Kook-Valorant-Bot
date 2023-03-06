@@ -6,13 +6,17 @@ from khl.card import Card, CardMessage, Element, Module, Types
 from PIL import Image, ImageDraw, ImageFont
 
 # 用户数量的记录文件
-from .FileManage import bot,BotUserDict, FileManage
-from .Gtime import GetTime
-from .KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
+from .Logging import _log
+from ..FileManage import bot, BotUserDict, FileManage
+from ..Gtime import GetTime
+from ..KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
 
+# 记录频道/服务器信息的底图
+font_color = '#000000'  # 黑色字体
+log_base_img = Image.open("../screenshot/log_base.png")  # 文件路径
 
 # 记录私聊的用户信息
-def log_bot_user(user_id: str):
+def log_bot_user(user_id: str) -> None:
     global BotUserDict
     BotUserDict['cmd_total'] += 1
     # 判断用户是否存在于总用户列表中
@@ -23,10 +27,18 @@ def log_bot_user(user_id: str):
 
 
 # 记录服务器中的用户信息
-def log_bot_guild(user_id: str, guild_id: str, time) -> str:
+def log_bot_guild(user_id: str, guild_id: str) -> str:
+    """Return:
+    - GNAu: new user in new guild
+    - NAu:  new user in old guild
+    - Au:   old user
+    """
     global BotUserDict
+    # 先记录用户
     log_bot_user(user_id)
-    # 服务器不存在，新的用户服务器
+    # 获取当前时间
+    time = GetTime()
+    # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}  #不能连续创建两个键值！
         BotUserDict['guild']['data'][guild_id]['user'] = {}
@@ -36,34 +48,27 @@ def log_bot_guild(user_id: str, guild_id: str, time) -> str:
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
         return "NAu"
-    # 旧用户更新执行命令的时间，但是不保存文件
+    # 旧用户，更新执行命令的时间
     else:
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
         return "Au"
 
 
 # 在控制台打印msg内容，用作日志
-def logging(msg: Message) -> None:
+def logMsg(msg: Message) -> None:
     try:
-        now_time = GetTime()
+        # 私聊用户没有频道和服务器id
         if isinstance(msg, PrivateMessage):
             log_bot_user(msg.author_id)  # 记录用户
-            print(
-                f"[{now_time}] PrivateMessage - Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
-            )
+            _log.info(
+                f"PrivateMsg | Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | {msg.content}")
         else:
-            Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id, now_time)  # 记录服务器和用户
-            print(
-                f"[{now_time}] G:{msg.ctx.guild.id} - C:{msg.ctx.channel.id} - {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
+            Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id)  # 记录服务器和用户
+            _log.info(
+                f"G:{msg.ctx.guild.id} | C:{msg.ctx.channel.id} | {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
     except:
-        err_str = f"ERR! [{GetTime()}] logging\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-
-
-# 记录信息的底图
-font_color = '#000000'  # 黑色
-log_base_img = Image.open("../screenshot/log_base.png")
+        _log.exception("Exception occurred")
 
 
 # 画图，把当前加入的服务器总数等等信息以图片形式显示在README中
@@ -84,7 +89,7 @@ async def log_bot_img() -> None:
         i += 1
     # 保存图片
     bg.save(f'../screenshot/log.png')
-    print("[log_bot_img] log.png draw finished")
+    _log.info("log.png draw finished")
 
 
 # bot用户记录dict处理
@@ -106,7 +111,7 @@ async def log_bot_list(msg: Message) -> FileManage:
             Gret = await guild_view(gu)
             if Gret['code'] != 0:  # 没有正常返回，可能是服务器被删除
                 del BotUserDict['guild']['data'][gu]  # 删除键值
-                print(f"[log_bot_list] G:{gu} guild-view {Gret}")
+                _log.info(f"G:{gu} | guild-view: {Gret}")
                 continue
             # 正常返回，赋值
             BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
@@ -114,7 +119,7 @@ async def log_bot_list(msg: Message) -> FileManage:
             continue
     # 保存图片和文件
     await log_bot_img()
-    print("[log_bot_list] file handling finish, return BotUserDict")
+    _log.info("file handling finish, return BotUserDict")
     return BotUserDict
 
 
@@ -152,27 +157,30 @@ async def APIRequestFailed_Handler(def_name: str,
     - cm: khl.card.CardMessage, for json.dumps / resend
     - send_msg: return value of msg.reply or bot.send
     """
+    _log.exception(f"APIRequestFailed in {def_name} | Au:{msg.author_id}")
     err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
-    print(err_str)
-    text = f"啊哦，出现了一些问题"
+    text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
-    if "引用不存在" in excp:  #引用不存在的时候，直接向频道或者用户私聊重新发送消息
+    # 如果cm是None，则将cm赋值为空卡片消息
+    cm = cm if cm else CardMessage() 
+    # 引用不存在的时候，直接向频道或者用户私聊重新发送消息
+    if "引用不存在" in excp:  
         if isinstance(msg, PrivateMessage):
             cur_user = await bot.client.fetch_user(msg.author_id)
             await cur_user.send(cm)
         else:
             cur_ch = await bot.client.fetch_public_channel(msg.ctx.channel.id)
             await bot.send(cur_ch, cm)
-        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} 引用不存在, cm_send success!")
+        _log.error(f"Au:{msg.author_id} | 引用不存在, 直接发送cm")
         return
     elif "json没有通过验证" in excp:
-        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} json.dumps = {json.dumps(cm)}")
+        _log.error(f"Au:{msg.author_id} | json.dumps: {json.dumps(cm)}")
         text_sub = f"卡片消息json没有通过验证或者不存在"
     elif "屏蔽" in excp:
-        print(f"[APIRequestFailed.Handler] Au:{msg.author_id} json.dumps = {json.dumps(cm)}")
+        _log.error(f"Au:{msg.author_id} | 用户屏蔽或权限不足")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
-    cm0 = await get_card(text, text_sub, icon_cm.lagging)
+    cm0 = await get_card(text, text_sub)
     if send_msg:  # 非none则执行更新消息，而不是直接发送
         await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
     else:
@@ -184,7 +192,7 @@ async def BaseException_Handler(def_name: str,
                                 excp: str,
                                 msg: Message,
                                 send_msg: dict[str, str] = {},
-                                debug_send = None,
+                                debug_send=None,
                                 help="建议加入帮助频道找我康康到底是啥问题") -> None:  # type: ignore
     """Args:
     - def_name: name of def to print in log
@@ -195,7 +203,7 @@ async def BaseException_Handler(def_name: str,
     - help: str for help_info, replyed in msg.reply
     """
     err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
-    print(err_str)
+    _log.exception(f"Exception in {def_name} | Au:{msg.author_id}")
     cm0 = CardMessage()
     c = Card(color='#fb4b57')
     c.append(Module.Header(f"很抱歉，发生了一些错误"))

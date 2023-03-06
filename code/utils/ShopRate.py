@@ -5,7 +5,8 @@ import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
 from .valorant import Val
-from .FileManage import config,SkinRateDict,GetTime
+from .FileManage import config,SkinRateDict,_log
+from .Gtime import GetTime
 PLATFORM = config['platform'] # 平台
 
 # 初始化leancloud
@@ -56,12 +57,12 @@ async def get_shop_rate(list_shop: dict, kook_user_id: str):
                 SkinRateDict["cmp"]["best"]["rating"] = rate_avg
                 SkinRateDict["cmp"]["best"]["list_shop"] = list_shop
                 SkinRateDict["cmp"]["best"]["user_id"] = kook_user_id
-                print(f"[shop] update rate-best  Au:{kook_user_id} = {rate_avg}")
+                _log.info(f"update rate-best | Au:{kook_user_id} | {rate_avg}")
             elif rate_avg < SkinRateDict["cmp"]["worse"]["rating"]:
                 SkinRateDict["cmp"]["worse"]["rating"] = rate_avg
                 SkinRateDict["cmp"]["worse"]["list_shop"] = list_shop
                 SkinRateDict["cmp"]["worse"]["user_id"] = kook_user_id
-                print(f"[shop] update rate-worse Au:{kook_user_id} = {rate_avg}")
+                _log.info(f"update rate-worse | Au:{kook_user_id} | {rate_avg}")
 
             if rate_avg >= 0 and rate_avg <= 20:
                 rate_lv = "丐帮帮主"
@@ -76,7 +77,7 @@ async def get_shop_rate(list_shop: dict, kook_user_id: str):
 
         return { "sum":rate_avg,"lv":rate_lv,"text_list":rate_text,"count":rate_count }
     except Exception as result:
-        print(f"ERR! [get_shop_rate]\n{traceback.format_exc()}")
+        _log.exception("Exception occur")
         return { "sum":0,"lv":"皮肤评价数据仍待收集…","text_list":[],"count":0 }
 
 # 获取皮肤评价的卡片
@@ -186,7 +187,7 @@ async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
                 if(i.get('best')): # 是最佳 
                     # 如果不是第一个更新，那就需要判断分数
                     if best["rating"] < i.get('rating') and Slock_no!=0: 
-                        print(f"[update_ShopCmp] skipping {cur_info}")
+                        _log.info(f"rating < i.get('rating') | skip: {cur_info}")
                         continue # 当前用户分数小于数据库中的,不更新
                     # 设置值
                     i.set('userId',best["user_id"])
@@ -195,7 +196,7 @@ async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
                     i.set('platform',platform)
                     i.save()# ShopCmp 设为所有人可写，不需要更新acl
                 elif(worse["rating"] > i.get('rating')) and Slock_no!=0: # 是最差，判断分数
-                    print(f"[update_ShopCmp] skipping {cur_info}")
+                    _log.info(f"rating > i.get('rating') | skip: {cur_info}")
                     continue # 如果本地用户好于数据库记录，不更新
                 else:
                     # 更新对象并保存(不需要比较，而是强制跟新)
@@ -204,13 +205,13 @@ async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
                     i.set('rating',worse["rating"])
                     i.set('platform',platform)
                     i.save()# ShopCmp 设为所有人可写，不需要更新acl
-                print(f"[update_ShopCmp] saving {cur_info}")
+                _log.info(f"saving: {cur_info}")
             # 处理完，no+1
             Slock_no+=1
             return { "status":True,"info":"update all good"}
     except:
+        _log.exception("Exception occur")
         err = f"ERR! [update_ShopCmp]\n{traceback.format_exc()}"
-        print(err)
         return { "status":False,"info":err}
 
 # 获取昨日最好/最差用户
@@ -475,7 +476,7 @@ async def query_ShopCache(skinlist:list):
     if len(objlist) > 0: #找到了
         ret['img_url'] = objlist[0].get('imgUrl')
         ret['status'] = True
-        print(f"[{GetTime()}] ShopCache hit! [{md5Ret}]")
+        _log.info(f"ShopCache hit [{md5Ret}]")
  
     return ret
 
@@ -503,5 +504,5 @@ async def update_ShopCache(skinlist:list,img_url:str):
     obj.set('imgUrl',img_url)
     obj.set_acl(leanAcl)
     obj.save()
-    print(f"[{GetTime()}] update_ShopCache [{md5Ret}]")
+    _log.info(f"update_ShopCache [{md5Ret}]")
     return retBool

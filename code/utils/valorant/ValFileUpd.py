@@ -2,11 +2,10 @@ import traceback
 import io
 from khl import Message, Bot
 from PIL import Image
-from ..Gtime import GetTime
 from ..ShopImg import img_requestor
 from ..FileManage import ValBundleList
 from .Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValSkinList, ValPriceList
-
+from ..log.Logging import _log
 
 # 更新本地保存的皮肤
 async def update_skins(msg: Message) -> bool:
@@ -16,12 +15,11 @@ async def update_skins(msg: Message) -> bool:
         ValSkinList.value = skins
         # 写入文件
         ValSkinList.save()
-        print(f"[{GetTime()}] update_skins finished!")
+        _log.info(f"update_skins finished!")
         return True
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_skins\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+        _log.exception("Exception occur")
+        await msg.reply(f"ERR! update_skins\n```\n{traceback.format_exc()}\n```")
         return False
 
 
@@ -31,7 +29,7 @@ async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
         global ValBundleList
         resp = await fetch_bundles_all()  #从官方获取最新list
         if len(resp['data']) == len(ValBundleList):  #长度相同代表没有更新
-            print(f"[{GetTime()}] len is the same, doesn't need update!")
+            _log.info(f"len is the same, not need update")
             await msg.reply("BundleList_len相同，无需更新")
             return True
 
@@ -47,19 +45,18 @@ async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
                 imgByteArr = io.BytesIO()
                 bg_bundle_icon.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
-                print(f"Uploading - {b['displayName']}")
+                _log.info(f"Uploading | {b['displayName']}")
                 bundle_img_src = await bot_upimg.client.create_asset(imgByte)
-                print(f"{b['displayName']} - url: {bundle_img_src}")
+                _log.info(f"{b['displayName']} | url: {bundle_img_src}")
                 b['displayIcon2'] = bundle_img_src  #修改url
                 ValBundleList.append(b)  #插入
 
         ValBundleList.save()
-        print(f"[{GetTime()}] update_bundle_url finished!")
+        _log.info(f"update_bundle_url finished!")
         return True
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_bundle_url\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+        _log.exception("Exception occur")
+        await msg.reply(f"ERR! update_bundle_url\n```\n{traceback.format_exc()}\n```")
         return False
 
 
@@ -73,10 +70,9 @@ async def update_price(msg: Message, userdict) -> bool:
         ValPriceList.value = prices  # 所有价格的列表
         # 写入文件
         ValPriceList.save()
-        print(f"[{GetTime()}] update_item_price finished!")
+        _log.info(f"update_item_price finished!")
         return True
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] update_price\n```\n{traceback.format_exc()}\n```"
-        print(err_str)
-        await msg.reply(err_str)
+        _log.exception("Exception occur")
+        await msg.reply(f"ERR! update_price\n```\n{traceback.format_exc()}\n```")
         return False
