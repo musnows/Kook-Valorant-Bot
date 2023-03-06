@@ -823,7 +823,7 @@ NightMarketOff = False
 # 全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 login_rate_limit = {'limit': False, 'time': time.time()}
 # 用来存放用户每天的商店（早八会清空）
-UserShopDict = {}
+UserShopCache = { 'clear_time':time.time(),'data':{}}
 # 用户皮肤评分选择列表
 UserRtsDict = {}
 # 用户皮肤提醒选择列表
@@ -832,18 +832,40 @@ UserStsDict = {}
 ValItersEmoji = EmojiDict['val_iters_emoji']
 
 
-#检查皮肤评分的错误用户（违规用户）
-def check_rate_err_user(user_id: str):
-    """user_id in SkinRateDict['err_user']
+def check_rate_err_user(kook_user_id: str)-> bool:
+    """检查皮肤评分的错误用户（违规用户）
+
+    Return:
+    - kook_user_id in SkinRateDict['err_user']
     """
-    return (user_id in SkinRateDict['err_user'])
+    return (kook_user_id in SkinRateDict['err_user'])
 
 
-# 判断uuid是否相等（用户有没有切换登录账户）
-def isSame_Authuuid(msg: Message):
-    """UserShopDict[msg.author_id]["auth_user_id"] == UserRiotName[msg.author_id]["auth_user_id"]
+def isSame_Authuuid(kook_user_id:str) -> bool:
+    """判断UserShopCache["data"]商店缓存中的riot用户uuid是否相等。如果不相等，需要获取新商店
+
+    Return:
+    - False: kook_user_id not in UserShopCache["data"]
+    - UserShopCache["data"][kook_user_id]["auth_user_id"] == UserRiotName[kook_user_id]["auth_user_id"]
     """
-    return UserShopDict[msg.author_id]["auth_user_id"] == UserRiotName[msg.author_id]["auth_user_id"]
+    # 用户不在缓存中，也是错误的
+    if kook_user_id not in UserShopCache["data"]:
+        return False
+    # 用户在，则判断uuid是否相等
+    return UserShopCache["data"][kook_user_id]["auth_user_id"] == UserRiotName[kook_user_id]["auth_user_id"]
+
+def isClear_UserShopCache() -> bool:
+    """判断UserShopCache["data"]是否在当日早八被清空（避免定时任务没有正常执行）
+    - True: 如果已经清空，则返回True且啥都不做
+    - False: 如果没有清空，则清空并返回False（这一次请求需要调用api获取商店）
+    """
+    # 判断清空的时间戳是否大于当日早上8点时间戳
+    global UserShopCache
+    if UserShopCache["clear_time"] >= GetTimeStampOf8AM():
+        return True
+    else: # 如果不大于，则代表定时任务没有正常执行，清空dict并返回FALSE
+        UserShopCache["data"] = {}
+        return False
 
 
 # 检查全局用户登录速率
@@ -1170,10 +1192,10 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         riotUser = auth.get_riotuser_token()
         # 4.3 开始判断是否需要获取商店（是否有缓存）
         a_time = time.time()
-        global UserShopDict, VipShopBgDict
+        global UserShopCache, VipShopBgDict
         # 4.3.1 UserShopDict每天早八会被清空，如果用户在里面且玩家id一样，那么说明已经获取过当日商店了
-        if msg.author_id in UserShopDict and isSame_Authuuid(msg):  #直接使用本地已有的当日商店
-            list_shop = UserShopDict[msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+        if isClear_UserShopCache() and isSame_Authuuid(msg.author_id):  # 直接使用本地已有的当日商店
+            list_shop = UserShopCache["data"][msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
             timeout = shop_time_remain()  # 通过当前时间计算商店剩余时间
             log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
         # 4.3.2 本地没有，api获取每日商店
@@ -1183,9 +1205,10 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  # 剩余时间
             timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
             # 需要设置uuid来保证是同一个用户，方便同日的下次查询
-            UserShopDict[msg.author_id] = {}
-            UserShopDict[msg.author_id]["auth_user_id"] = UserRiotName[msg.author_id]["auth_user_id"]
-            UserShopDict[msg.author_id]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+            UserShopCache["data"][msg.author_id] = {
+                "auth_user_id":UserRiotName[msg.author_id]["auth_user_id"],
+                "SkinsPanelLayout":resp["SkinsPanelLayout"]
+            }
             log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
 
         # 5.开始画图
@@ -1656,7 +1679,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             SkinRateDict['data'][msg.author_id][skin_uuid] = {}
             SkinRateDict['data'][msg.author_id][skin_uuid]['name'] = S_skin['skin']['displayName']
             SkinRateDict['data'][msg.author_id][skin_uuid]['cmt'] = comment
-            SkinRateDict['data'][msg.author_id][skin_uuid]['pit'] = point
+            SkinRateDict['data'][msg.author_id][skin_uuid]['rating'] = point
             SkinRateDict['data'][msg.author_id][skin_uuid]['time'] = int(time.time())  # 秒级
             SkinRateDict['data'][msg.author_id][skin_uuid]['msg_id'] = msg.id
             # 数据库添加该评论
@@ -1909,10 +1932,11 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
     
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
-    global SkinNotifyDict, SkinRateDict, UserShopDict, VipShopBgDict
+    global SkinNotifyDict, SkinRateDict, UserShopCache, VipShopBgDict
     try:
-        _log.info(f"Start")  #开始的时候打印一下
-        UserShopDict = {}  #清空用户的商店
+        _log.info(f"[BOT.TASK.NOTIFY] Start")  #开始的时候打印一下
+        UserShopCache["data"] = {}  # 清空用户的商店
+        UserShopCache["clear_time"] = time.time() # 更新时间
         #清空昨日最好/最差用户的皮肤表
         SkinRateDict["kkn"] = copy.deepcopy(SkinRateDict["cmp"])
         SkinRateDict["cmp"]["best"]["list_shop"] = list()
@@ -1921,7 +1945,7 @@ async def auto_skin_notify():
         SkinRateDict["cmp"]["worse"]["rating"] = 100
         # 更新数据库中的记录，并重置计数器
         await ShopRate.update_ShopCmp(SkinRateDict["kkn"]["best"], SkinRateDict["kkn"]["worse"], 'kook', True)
-        _log.info(f"SkinRateDict/UserShopDict clear, sleep(10)")
+        _log.info(f"[BOT.TASK.NOTIFY] SkinRateDict/UserShopCache clear, sleep(10)")
         #睡10s再开始遍历（避免时间不准）
         await asyncio.sleep(10)
         _log.info(f"skin_notify Start")
@@ -1964,9 +1988,9 @@ async def auto_skin_notify():
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
                         await ShopRate.check_shop_rate(vip, list_shop)  #计算用户商店得分
                         #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
-                        UserShopDict[vip] = {}
-                        UserShopDict[vip]["auth_user_id"] = UserRiotName[vip]["auth_user_id"]
-                        UserShopDict[vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+                        UserShopCache["data"][vip] = {}
+                        UserShopCache["data"][vip]["auth_user_id"] = UserRiotName[vip]["auth_user_id"]
+                        UserShopCache["data"][vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
                         #直接获取商店图片
                         draw_time = time.time()  #开始计算画图需要的时间
                         img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
@@ -2052,7 +2076,7 @@ async def auto_skin_notify():
                         riotUser = auth.get_riotuser_token()
                         # vip用户在前面已经获取过商店了，直接在缓存里面取
                         if await BotVip.vip_ck(aid):
-                            list_shop = UserShopDict[aid]["SkinsPanelLayout"]["SingleItemOffers"]
+                            list_shop = UserShopCache["data"][aid]["SkinsPanelLayout"]["SingleItemOffers"]
                         else: # 非vip用户，调用api获取每日商店
                             resp = await fetch_daily_shop(riotUser)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
