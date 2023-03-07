@@ -228,14 +228,14 @@ async def translation(msg: Message, *arg):
 
 #查看当前占用的实时翻译栏位
 @bot.command()
-async def CheckTL(msg: Message):
+async def TLCheck(msg: Message):
     BotLog.logMsg(msg)
     await msg.reply(f"目前已使用栏位:{Translate.checkTL()}/{len(Translate.ListTL)}")
 
 
 # 关闭所有栏位的实时翻译（避免有些人用完不关）
-@bot.command(name='ShutdownTL', aliases=['SDTL'])
-async def ShutdownTL(msg: Message):
+@bot.command(name='ShutdownTL', aliases=['TLSD','tlsd'])
+async def TLShutdown(msg: Message):
     BotLog.logMsg(msg)
     if msg.author.id != master_id:
         return  #这条命令只有bot的作者可以调用
@@ -243,17 +243,18 @@ async def ShutdownTL(msg: Message):
 
 
 # 通过频道id判断是否实时翻译本频道内容
-@bot.command(regex=r'(.+)')
-async def TL_Realtime(msg: Message, *arg):
+@bot.on_message()
+async def TLRealtime(msg: Message):
     if msg.ctx.channel.id in Translate.ListTL:  #判断频道是否已开启实时翻译
-        word = " ".join(arg)
+        word = msg.content
         # 不翻译关闭实时翻译的指令
-        if word == "/TLOFF" or word == "/tloff" or word == '/tlon' or word == '/TLON':
-            return
+        ignore_list = ["/TLOFF","/tloff","/tlon","/TLON"]
+        for i in ignore_list:
+            if i in word:
+                return
         # 翻译
         BotLog.logMsg(msg)
-        await Translate.translate_main(msg, ' '.join(arg))
-
+        await Translate.translate_main(msg,word)
 
 # 开启实时翻译功能
 @bot.command(name='TLON', aliases=['tlon'])

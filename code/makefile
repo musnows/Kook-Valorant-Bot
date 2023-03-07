@@ -1,6 +1,6 @@
 .PHONY:run
 run:
-	nohup py3 -u start.py >> ./log/bot.log 2>&1 &
+	nohup python3.10 -u start.py >> ./log/out.log 2>&1 &
 
 .PHONY:ps
 ps:
