@@ -2236,7 +2236,7 @@ async def loading_cache(bot: Bot):
         debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         _log.info("[BOT.TASK] fetch_public_channel success")
     except:
-        _log.error("[BOT.TASK] fetch_public_channel failed")
+        _log.fatal("[BOT.TASK] fetch_public_channel failed")
         _log.exception("Exception occur")
         os._exit(-1)  #出现错误直接退出程序
 

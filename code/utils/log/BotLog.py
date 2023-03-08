@@ -124,7 +124,7 @@ async def log_bot_list(msg: Message) -> FileManage:
 
 
 # 通过log_bot_list分选出两列服务器名和服务器用户数
-async def log_bot_list_text(logDict: dict) -> dict[str, str]:
+async def log_bot_list_text(logDict: dict|FileManage) -> dict[str, str]:
     i = 1
     text_name = "No  服务器名\n"
     text_user = "用户数\n"
