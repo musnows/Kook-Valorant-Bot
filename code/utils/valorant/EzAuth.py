@@ -66,7 +66,7 @@ class EzAuth:
         """is riot account MFA turn-on?"""
         self.__mfa_start = 0  
         """2fa start time, default to 0"""
-        self.init_time = 0 
+        self.init_time = 0.0
         """when auth init? default to 0"""
 
     def __set_userinfo(self) -> None:
@@ -123,7 +123,9 @@ class EzAuth:
         - False: init_time==0
         - True: init_time!=0
         """
-        return not self.init_time
+        if self.init_time == 0:
+            return False
+        return True
 
     async def authorize(self, username, password) -> dict:
         """Authenticate using username and password.\n

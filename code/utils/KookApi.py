@@ -152,8 +152,7 @@ async def upd_card(msg_id: str,
 
 
 # 获取常用的卡片消息
-async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', img_sz='sm'):
-    cm = CardMessage()
+async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', img_sz='sm',full_cm:bool=True):
     c = Card(color=card_color)
     if img_url != 'e':
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=img_url, size=img_sz)))
@@ -161,5 +160,9 @@ async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', i
         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
     if sub_text != 'e':
         c.append(Module.Context(Element.Text(sub_text, Types.Text.KMD)))
-    cm.append(c)
-    return cm
+    if full_cm:
+        cm = CardMessage()
+        cm.append(c)
+        return cm
+    else:
+        return c

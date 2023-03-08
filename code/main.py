@@ -1304,6 +1304,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         shop_using_time = format(end - start, '.2f')
 
         # 7.商店的图片 卡片
+        cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
         c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {shop_using_time}s"))
@@ -1391,6 +1392,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         timeout = resp["BonusStore"]["BonusStoreRemainingDurationInSeconds"]  #剩余时间
         timeout = time.strftime("%d %H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
 
+        cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(
             Module.Header(
@@ -1454,86 +1456,87 @@ async def get_user_card(msg: Message, *arg):
         return
     # 初始化变量
     send_msg = {'msg_id':''}
-    cm = CardMessage()
     try:
         # 1.判断用户是否登录
         if msg.author_id not in UserAuthCache['kook']:
             await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
             return
-        
+        # 1.1 发送开始的提示信息
+        cm = await get_card("获取您所有账户的 玩家卡面/VP/R点", "阿狸正在施法！很快就好啦~", icon_cm.rgx_card,card_color="#BBFFFF")
+        send_msg = await msg.reply(cm)
         # 2.uinfo直接使用for循环来获取不同用户的信息
+        cm = CardMessage()
         for riot_user_id in UserAuthCache['kook'][msg.author_id]:
-            # 执行cookie重登
-            reau = await Reauth.check_reauth("玩家信息",msg.author_id,riot_user_id,debug_ch,msg)
-            if reau == False: return  #如果为假说明重新登录失败
+            try:
+                # 执行cookie重登
+                reau = await Reauth.check_reauth("玩家信息",msg.author_id,riot_user_id,debug_ch,msg)
+                if reau == False: return  #如果为假说明重新登录失败
 
-            cm = await get_card("正在尝试获取您的 玩家卡面/VP/R点", "阿狸正在施法，很快就好啦！", icon_cm.rgx_card)
-            if isinstance(reau, dict):  # 如果传过来的是一个dict，说明重新登录成功且发送了消息
-                await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
-                send_msg = reau
-            else:  # 如果不需要重新登录，则直接发消息
-                send_msg = await msg.reply(cm)  #记录消息id用于后续更新
+                if isinstance(reau, dict):  # 如果传过来的是一个dict，说明重新登录成功且发送了消息
+                    await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
+                    send_msg = reau  # 再次覆盖更新消息
 
-            auth = UserAuthCache['data'][riot_user_id]['auth']
-            assert isinstance(auth, EzAuth)
-            riotUser = auth.get_riotuser_token()
-            resp = await fetch_player_loadout(riotUser)  #获取玩家装备栏
-            player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
-            player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
-            if 'data' not in player_card or player_card['status'] != 200:
-                player_card = {'data': {'wideArt': 'https://img.kookapp.cn/assets/2022-09/PDlf7DcoUH0ck03k.png'}}
-                _log.warning(f"player_card | Au:{msg.author_id} | uuid:{resp['Identity']['PlayerCardID']}")
-            if 'data' not in player_title or player_title['status'] != 200:
-                player_title = {
-                    'data': {
-                        "displayName": f"未知玩家卡面uuid！\nUnknow uuid: `{resp['Identity']['PlayerTitleID']}`"
+                auth = UserAuthCache['data'][riot_user_id]['auth']
+                assert isinstance(auth, EzAuth)
+                riotUser = auth.get_riotuser_token()
+                resp = await fetch_player_loadout(riotUser)  #获取玩家装备栏
+                player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
+                player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
+                if 'data' not in player_card or player_card['status'] != 200:
+                    player_card = {'data': {'wideArt': 'https://img.kookapp.cn/assets/2022-09/PDlf7DcoUH0ck03k.png'}}
+                    _log.warning(f"player_card | Au:{msg.author_id} | uuid:{resp['Identity']['PlayerCardID']}")
+                if 'data' not in player_title or player_title['status'] != 200:
+                    player_title = {
+                        'data': {
+                            "displayName": f"未知玩家卡面uuid！\nUnknow uuid: `{resp['Identity']['PlayerTitleID']}`"
+                        }
                     }
-                }
-                _log.warning(f"player_title | Au:{msg.author_id} | uuid:{resp['Identity']['PlayerTitleID']}")
-            # 可能遇到全新账户（没打过游戏）的情况
-            if resp['Guns'] == None or resp['Sprays'] == None:
-                cm = await get_card(f"状态错误！您是否登录了一个全新（没上过号）账户？", f"card: `{player_card}`\ntitle: `{player_title}`",
-                                    icon_cm.whats_that)
-                await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-                return
+                    _log.warning(f"player_title | Au:{msg.author_id} | uuid:{resp['Identity']['PlayerTitleID']}")
+                # 可能遇到全新账户（没打过游戏）的情况
+                if resp['Guns'] == None or resp['Sprays'] == None:
+                    c = await get_card(f"状态错误！您是否登录了一个全新（没上过号）账户？", 
+                                        f"card:\n```\n{player_card}\n```\ntitle:\n```\n{player_title}\n```",
+                                        icon_cm.whats_that,full_cm=False)
+                    cm.append(c)
+                    continue
 
-            # 获取玩家等级
-            resp = await fetch_player_level(riotUser)
-            player_level = resp["Progress"]["Level"]  # 玩家等级
-            player_level_xp = resp["Progress"]["XP"]  # 玩家等级经验值
-            last_fwin = resp["LastTimeGrantedFirstWin"]  # 上次首胜时间
-            next_fwin = resp["NextTimeFirstWinAvailable"]  # 下次首胜重置
-            c = Card(color='#fb4b57')
-            c.append(
-                Module.Header(
-                    f"玩家 {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']} 的个人信息"))
-            c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
-            text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
-            text += f"玩家等级：{player_level}  -  经验值：{player_level_xp}\n"
-            text += f"上次首胜：{last_fwin}\n"
-            text += f"首胜重置：{next_fwin}"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+                # 获取玩家等级
+                resp = await fetch_player_level(riotUser)
+                player_level = resp["Progress"]["Level"]  # 玩家等级
+                player_level_xp = resp["Progress"]["XP"]  # 玩家等级经验值
+                last_fwin = resp["LastTimeGrantedFirstWin"]  # 上次首胜时间
+                next_fwin = resp["NextTimeFirstWinAvailable"]  # 下次首胜重置
+                c = Card(color='#fb4b57')
+                c.append(
+                    Module.Header(
+                        f"玩家 {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']} 的个人信息"))
+                c.append(Module.Container(Element.Image(src=player_card['data']['wideArt'])))  #将图片插入进去
+                text = f"玩家称号：" + player_title['data']['displayName'] + "\n"
+                text += f"玩家等级：{player_level}  -  经验值：{player_level_xp}\n"
+                text += f"上次首胜：{last_fwin}\n"
+                text += f"首胜重置：{next_fwin}"
+                c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
-            #获取玩家的vp和r点剩余的text
-            resp = await fetch_vp_rp_dict(riotUser)
-            text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {resp['rp']}    "
-            text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {resp['vp']}\n"
-            c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-            cm.append(c)
+                #获取玩家的vp和r点剩余的text
+                resp = await fetch_vp_rp_dict(riotUser)
+                text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {resp['rp']}    "
+                text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {resp['vp']}\n"
+                c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
+                cm.append(c)
+            except KeyError as result:
+                if "Identity" in str(result) or "Balances" in str(result):
+                    _log.exception(f"KeyErr while Ru:{riot_user_id}")
+                    cm2 = await get_card(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
+                    await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         
-        # 多个账户都获取完毕，输出结果
+        # 多个账户都获取完毕，发送卡片并输出结果
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         _log.info(f"Au:{msg.author_id} | uinfo reply successful!")
 
     except requester.HTTPRequester.APIRequestFailed as result:  # 卡片消息发送失败
         await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:
-        if "Identity" in str(result) or "Balances" in str(result):
-            _log.exception("Exception occur")
-            cm2 = await get_card(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
-            await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
-        else:
-            await BotLog.BaseException_Handler("uinfo", traceback.format_exc(), msg, send_msg=send_msg)
+        await BotLog.BaseException_Handler("uinfo", traceback.format_exc(), msg, send_msg=send_msg)
 
 
 # 获取捆绑包信息(无需登录)
