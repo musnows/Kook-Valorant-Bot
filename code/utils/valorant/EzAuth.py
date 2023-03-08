@@ -11,6 +11,7 @@ from re import compile
 
 from . import EzAuthExp
 from ..log.Logging import _log
+from ..Gtime import GetTime
 # get latest version: https://valorant-api.com/v1/version
 X_RIOT_CLIENTVERSION = "RiotClient/63.0.9.4909983.4789131"
 X_RIOT_CLIENTVPLATFROM =  "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9"
@@ -61,6 +62,7 @@ class EzAuth:
         self.session.mount('https://', SSLAdapter())
         self.is2fa = False  # 2fa set to false
         self.__mfa_start = 0  # 2fa start time
+        self.init_time = 0 # when auth init?
         self.is_init = False # is_init finised?
 
     def __set_userinfo(self) -> None:
@@ -106,6 +108,7 @@ class EzAuth:
         self.entitlements_token = self.get_entitlement_token()
         self.__set_userinfo()
         self.__set_region()
+        self.init_time = GetTime() # get current localtime
         self.is_init = True # set init as finised
 
     async def authorize(self, username, password) -> dict:

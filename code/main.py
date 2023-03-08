@@ -31,13 +31,14 @@ bot_upimg = Bot(token=config['token']['img_upload_token'])
 # 设置全局变量：机器人开发者id/报错频道
 master_id = config['master_id']
 
-#在bot一开机的时候就获取log频道作为全局变量
+# 在bot一开机的时候就获取log频道作为全局变量
 debug_ch: Channel
 cm_send_test: Channel
 NOTIFY_NUM = 3  # 非vip用户皮肤提醒栏位
 VIP_BG_SIZE = 4  # vip用户背景图片数量限制
 RATE_LIMITED_TIME = 180  # 全局登录速率超速等待秒数
-#记录开机时间
+LOGIN_LIMITED = 3 # 所有用户最多都只能登录3个riot账户
+# 记录开机时间
 start_time = GetTime()
 
 
@@ -1095,6 +1096,8 @@ async def logout(msg: Message, *arg):
 
 @bot.command(name='login-ap')
 async def login_acpw(msg: Message, *arg):
+    """获取bot使用riot的账户密码登录的记录（用户自己选择了save账户密码的）
+    """
     BotLog.logMsg(msg)
     try:
         if msg.author_id not in UserPwdReauth:
@@ -1111,6 +1114,40 @@ async def login_acpw(msg: Message, *arg):
         await msg.reply(send_text)
     except Exception as result:  # 其他错误
         await BotLog.BaseException_Handler("login-ap", traceback.format_exc(), msg)
+
+
+@bot.command(name='login-l',aliases=['login-list'],case_sensitive=False)
+async def login_list(msg:Message,*arg):
+    """获取用户已经登录的账户
+    """
+    BotLog.logMsg(msg)
+    cm = CardMessage()
+    try:
+        if msg.author_id not in UserAuthCache["kook"]:
+            await msg.reply(f"您尚未登录任何valorant账户")
+            return
+        i = 0
+        text="```\n"
+        for ru in UserAuthCache["kook"][msg.author_id]:
+            auth = UserAuthCache["data"][ru]["auth"]
+            assert isinstance(auth, EzAuth)
+            text+=f"[{i}] {auth.Name}#{auth.Tag} 登陆于 {auth.init_time}\n"
+            i+=1
+        text+="```"
+    
+        c = Card()
+        c.append(Module.Header(f"您当前已登录的riot账户列表"))
+        c.append(Module.Context(f"您还可以登录 {LOGIN_LIMITED-i} 个账户"))
+        c.append(Module.Divider())
+        c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+        c.append(Module.Context("查询商店/夜市时，需要指定账户前的编号，默认为0\n如「/shop 1」查询已登录账户中编号为1的账户"))
+        cm.append(c)
+        await msg.reply(cm)
+        _log.info(f"Au:{msg.author_id} | login-list reply success")
+    except requester.HTTPRequester.APIRequestFailed as result:
+        await BotLog.APIRequestFailed_Handler("login-l", traceback.format_exc(), msg,bot,cm)
+    except Exception as result:
+        await BotLog.BaseException_Handler("login-l", traceback.format_exc(), msg)
 
 
 # 计算当前时间和明天早上8点的差值
