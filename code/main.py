@@ -1072,7 +1072,7 @@ async def logout(msg: Message, *arg):
             await msg.reply(cm)
             return
 
-        log_text = f"[Logout] Au:{msg.author_id} - {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+        log_text = f"Logout | Au:{msg.author_id}"
         # 2.如果id存在，删除auth对象; 删除UserRiotName里面存放的用户游戏名/uuid
         # 2.1 删除对象
         riot_user_id_list = UserAuthCache['kook'][msg.author_id]
@@ -1086,9 +1086,9 @@ async def logout(msg: Message, *arg):
         # 3.1 判断路径是否存在，存在直接删除
         if os.path.exists(cookie_path):
             os.remove(cookie_path)  # 删除文件
-            log_text += " - rm cookie file"
+            log_text += " | rm cookie file"
         # 4.成功，发提示信息
-        text = f"已退出登录！下次再见，{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+        text = f"已退出所有账户的登录！下次再见~"
         cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
         await msg.reply(cm)
         _log.info(log_text)
