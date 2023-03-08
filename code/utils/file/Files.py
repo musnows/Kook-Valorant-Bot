@@ -86,7 +86,10 @@ UserRtsDict = {}
 UserStsDict = {}
 """用户商店皮肤提醒notify功能选择列表"""
 ValItersEmoji = EmojiDict['val_iters_emoji']
-"""valorant皮肤等级对应的kook自定义表情"""
+"""valorant皮肤等级对应的kook自定义表情。
+
+对应配置文件`./config/color_emoji.json`中的 `val_iters_emoji` 键值
+"""
 
 # 实例化一个khl的bot，方便其他模组调用
 from khl import Bot

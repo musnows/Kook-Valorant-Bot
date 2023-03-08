@@ -28,9 +28,9 @@ from utils.file.FileManage import FileManage,save_all_file
 from utils.file.Files import config, bot, ApiAuthLog, LoginForbidden
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
-
-# 设置全局变量：机器人开发者id/报错频道
+"""用来上传图片的bot"""
 master_id = config['master_id']
+"""机器人开发者用户id"""
 
 # 在bot一开机的时候就获取log频道作为全局变量
 debug_ch: Channel
@@ -1395,7 +1395,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
             discPercent = Bonus["DiscountPercent"]  # 打折百分比
             discPrice = Bonus["DiscountCosts"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #打折后的价格
             text = f"(emj){res_iters['data']['uuid']}(emj)[{iter_emoji}] {skin_name}\n"
-            text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] {discPrice} ~~{basePrice}~~ {discPercent}%Off"
+            text += f"(emj)vp(emj)[{ValItersEmoji['vp']}] {discPrice} ~~{basePrice}~~ {discPercent}%Off"
             #c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=skin_icon, size='sm')))
             c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
@@ -1504,8 +1504,8 @@ async def get_user_card(msg: Message, *arg):
 
                 #获取玩家的vp和r点剩余的text
                 resp = await fetch_vp_rp_dict(riotUser)
-                text = f"(emj)r点(emj)[3986996654014459/X3cT7QzNsu03k03k] RP  {resp['rp']}    "
-                text += f"(emj)vp(emj)[3986996654014459/qGVLdavCfo03k03k] VP  {resp['vp']}\n"
+                text = f"(emj)r点(emj)[{ValItersEmoji['rp']}] RP  {resp['rp']}    "
+                text += f"(emj)vp(emj)[{ValItersEmoji['vp']}] VP  {resp['vp']}\n"
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
                 cm.append(c)
             except KeyError as result:
