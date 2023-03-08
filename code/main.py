@@ -424,8 +424,6 @@ async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
     try:
         #把bot传过去是为了让阿狸在有人成兑换激活码之后发送消息到log频道
         ret = await BotVip.using_vip_uuid(msg, uuid, bot, debug_ch)
-        global VipShopBgDict  #在用户兑换vip的时候就创建此键值
-        VipShopBgDict['cache'][msg.author_id] = {'cache_time': 0, 'cache_img': None}
     except Exception as result:
         await BotLog.BaseException_Handler("vip-u", traceback.format_exc(), msg, debug_send=debug_ch)
 
@@ -839,25 +837,10 @@ ValItersEmoji = EmojiDict['val_iters_emoji']
 
 def check_rate_err_user(kook_user_id: str)-> bool:
     """检查皮肤评分的错误用户（违规用户）
-
-    Return:
     - kook_user_id in SkinRateDict['err_user']
     """
     return (kook_user_id in SkinRateDict['err_user'])
 
-
-def isSame_Authuuid(kook_user_id:str) -> bool:
-    """判断UserShopCache["data"]商店缓存中的riot用户uuid是否相等。如果不相等，需要获取新商店
-
-    Return:
-    - False: kook_user_id not in UserShopCache["data"]
-    - UserShopCache["data"][kook_user_id]["auth_user_id"] == UserRiotName[kook_user_id]["auth_user_id"]
-    """
-    # 用户不在缓存中，也是错误的
-    if kook_user_id not in UserShopCache["data"]:
-        return False
-    # 用户在，则判断uuid是否相等
-    return UserShopCache["data"][kook_user_id]["auth_user_id"] == UserRiotName[kook_user_id]["auth_user_id"]
 
 def isClear_UserShopCache() -> bool:
     """判断UserShopCache["data"]是否在当日早八被清空（避免定时任务没有正常执行）
@@ -871,6 +854,24 @@ def isClear_UserShopCache() -> bool:
     else: # 如果不大于，则代表定时任务没有正常执行，清空dict并返回FALSE
         UserShopCache["data"] = {}
         return False
+
+def is_CacheLatest(kook_user_id: str,riot_user_id:str) -> bool:
+    """判断vip用户缓存好的图片是否可用，需要满足几个条件：
+    - vip用户有配置自定义背景图
+    - vip用户没有切换登录账户/切换背景图
+    - 当前需要获取商店的拳头用户id在缓存中
+    """
+    is_Status = False
+    # 1.判断vip用户是否在背景图配置中，且没有切换登录用户/切换背景图
+    if kook_user_id in VipShopBgDict['bg']:
+        is_Status = VipShopBgDict['bg'][kook_user_id]['status']  # 如果有切换登录用户/背景图，此为false
+    # 2.拳头用户在vip缓存中
+    if riot_user_id in VipShopBgDict['cache']:
+        # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
+        is_Today = (VipShopBgDict['cache'][riot_user_id]['cache_time'] - getTimeStampOf8AM()) > 0
+        return is_Today and is_Status  # 有一个为false，结果就是false
+
+    return False
 
 
 # 检查全局用户登录速率
@@ -1153,24 +1154,6 @@ async def login_list(msg:Message,*arg):
         await BotLog.BaseException_Handler("login-l", traceback.format_exc(), msg)
 
 
-
-
-# 判断缓存好的图片是否可用
-def is_CacheLatest(kook_user_id: str):
-    # 判断vip用户是否在背景图中，且没有 切换登录用户/切换背景图
-    is_Status = False
-    if kook_user_id in VipShopBgDict['bg']:
-        is_Status = VipShopBgDict['bg'][kook_user_id]['status']  # 如果有切换登录用户/背景图，此为false
-    # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
-    if kook_user_id in VipShopBgDict['cache']:
-        is_Today = (VipShopBgDict['cache'][kook_user_id]['cache_time'] - getTimeStampOf8AM()) >= 0
-        is_Cache = VipShopBgDict['cache'][kook_user_id]['cache_img'] != None
-        return is_Today and is_Status and is_Cache  # 有一个为false，结果就是false
-    else:  # 如果不在，初始化为none，时间戳为0
-        VipShopBgDict['cache'][kook_user_id] = {'cache_time': 0, 'cache_img': None}
-    return False
-
-
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message,index:str = "0",*arg):
@@ -1226,8 +1209,8 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         a_time = time.time()
         global UserShopCache, VipShopBgDict
         # 4.3.1 UserShopDict每天早八会被清空，如果用户在里面且玩家id一样，那么说明已经获取过当日商店了
-        if isClear_UserShopCache() and isSame_Authuuid(msg.author_id):  # 直接使用本地已有的当日商店
-            list_shop = UserShopCache["data"][msg.author_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
+        if isClear_UserShopCache() and auth.user_id in UserShopCache["data"]:  # 直接使用本地已有的当日商店
+            list_shop = UserShopCache["data"][auth.user_id]["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
             timeout = shop_time_remain()  # 通过当前时间计算商店剩余时间
             log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
         # 4.3.2 本地没有，api获取每日商店
@@ -1237,8 +1220,8 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  # 剩余时间
             timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
             # 需要设置uuid来保证是同一个用户，方便同日的下次查询
-            UserShopCache["data"][msg.author_id] = {
-                "auth_user_id":UserRiotName[msg.author_id]["auth_user_id"],
+            UserShopCache["data"][auth.user_id] = {
+                "kook_user_id": msg.author_id,
                 "SkinsPanelLayout":resp["SkinsPanelLayout"]
             }
             log_time += f"[Api_shop] {format(time.time()-a_time,'.4f')} "
@@ -1247,14 +1230,15 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         draw_time = time.time()  # 计算画图需要的时间
         is_vip = await BotVip.vip_ck(msg.author_id)  # 判断用户是否为VIP
         img_ret = {'status': True, 'value': None}
-        upload_flag = True
+        upload_flag = True # 是否有缓存（无须上传图片）
         # 5.1 初始化商店图片的url为一个展示错误的图片
         dailyshop_img_src = "https://img.kookapp.cn/assets/2023-02/5UxA8W06B70e803m.png"
         # 5.1.1 如果是vip而且path存在,背景图/登录用户没有更改过,图片缓存时间正确
-        if is_vip and is_CacheLatest(msg.author_id):
+        if is_vip and is_CacheLatest(msg.author_id,auth.user_id):
             upload_flag = False  # 有缓存图，直接使用本地已有链接
-            dailyshop_img_src = VipShopBgDict['cache'][msg.author_id]['cache_img']
-        elif is_vip:  # 5.1.2 本地缓存路径不存在，或者缓存过期
+            dailyshop_img_src = VipShopBgDict['cache'][auth.user_id]['cache_img']
+        # 5.1.2 本地缓存路径不存在，或者缓存过期
+        elif is_vip:
             play_currency = await fetch_vp_rp_dict(riotUser)  # 获取用户的vp和rp
             # 如果没有设置背景图，那就设置为err
             background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
@@ -1263,7 +1247,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
                                                      vp=play_currency['vp'],
                                                      rp=play_currency['rp'],
                                                      bg_img_src=background_img)
-        else:  # 5.1.3 普通用户
+        else: # 5.1.3 普通用户
             # 判断是否有缓存命中
             cache_ret = await ShopRate.query_ShopCache(skinlist=list_shop)
             if not cache_ret['status']:  # 缓存没有命中
@@ -1295,7 +1279,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
                 if msg.author_id in VipShopBgDict['bg']:
                     VipShopBgDict['bg'][msg.author_id]['status'] = True
                 # 设置商店图片缓存+图片缓存的时间
-                VipShopBgDict['cache'][msg.author_id] = {'cache_img': dailyshop_img_src, 'cache_time': time.time()}
+                VipShopBgDict['cache'][auth.user_id] = {'cache_img': dailyshop_img_src, 'cache_time': time.time()}
             else:  # 非vip，更新缓存
                 await ShopRate.update_ShopCache(skinlist=list_shop, img_url=dailyshop_img_src)
 
@@ -2018,10 +2002,11 @@ async def auto_skin_notify():
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
                         await ShopRate.check_shop_rate(vip, list_shop)  #计算用户商店得分
-                        #vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
-                        UserShopCache["data"][vip] = {}
-                        UserShopCache["data"][vip]["auth_user_id"] = UserRiotName[vip]["auth_user_id"]
-                        UserShopCache["data"][vip]["SkinsPanelLayout"] = resp["SkinsPanelLayout"]
+                        # vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
+                        UserShopCache["data"][auth.user_id] = {
+                            "kook_user_id": vip,
+                            "SkinsPanelLayout":resp["SkinsPanelLayout"]
+                        }
                         #直接获取商店图片
                         draw_time = time.time()  #开始计算画图需要的时间
                         img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
@@ -2042,7 +2027,7 @@ async def auto_skin_notify():
                             _log.info(log_time)
                             dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
                             # 缓存图片的url+设置图片缓存的时间
-                            VipShopBgDict['cache'][vip] = { 'cache_img': dailyshop_img_src,'cache_time': time.time()} 
+                            VipShopBgDict['cache'][auth.user_id] = { 'cache_img': dailyshop_img_src,'cache_time': time.time()} 
                             # 更新商店图片status为True，代表用户当天执行/shop命令不需再画图 
                             if vip in VipShopBgDict['bg']: VipShopBgDict['bg'][vip]['status'] = True
                         else:  # 如果图片没有正常返回，那就发送文字版本
@@ -2106,8 +2091,8 @@ async def auto_skin_notify():
                         assert isinstance(auth, EzAuth)
                         riotUser = auth.get_riotuser_token()
                         # vip用户在前面已经获取过商店了，直接在缓存里面取
-                        if await BotVip.vip_ck(aid):
-                            list_shop = UserShopCache["data"][aid]["SkinsPanelLayout"]["SingleItemOffers"]
+                        if await BotVip.vip_ck(aid) and auth.user_id in UserShopCache["data"]:
+                            list_shop = UserShopCache["data"][auth.user_id]["SkinsPanelLayout"]["SingleItemOffers"]
                         else: # 非vip用户，调用api获取每日商店
                             resp = await fetch_daily_shop(riotUser)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
