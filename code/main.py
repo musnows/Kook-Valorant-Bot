@@ -21,7 +21,7 @@ from utils.KookApi import (icon_cm, status_active_game, status_active_music, sta
                            get_card)
 from utils.valorant.Val import *
 from utils.valorant.EzAuth import EzAuth, EzAuthExp
-from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain
+from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp
 
 # bot的token文件
 from utils.FileManage import config, bot, ApiAuthLog, Save_All_File, Login_Forbidden
@@ -917,6 +917,11 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
     try:
         # 1.检查全局登录速率
         await check_GloginRate()  # 无须接收此函数返回值，直接raise
+        # 1.1 检查当前已经登录的用户数量，超过限制直接提示并返回
+        if msg.author_id in UserAuthCache["kook"] and len(UserAuthCache["kook"][msg.author_id]) >= LOGIN_LIMITED:
+            await msg.reply(get_card("您当前已经登录了3个拳头账户！",
+                                     "为避免后台缓存压力过大，您最多只能登录3个Riot账户",icon_cm.im_good_phoniex))
+            return
         # 2.发送开始登录的提示消息
         cm = await get_card("正在尝试获取您的riot账户token", "小憩一下，很快就好啦！", icon_cm.val_logo_gif)
         send_msg = await msg.reply(cm)  #记录消息id用于后续更新
@@ -1135,7 +1140,7 @@ async def login_list(msg:Message,*arg):
         for ru in UserAuthCache["kook"][msg.author_id]:
             auth = UserAuthCache["data"][ru]["auth"]
             assert isinstance(auth, EzAuth)
-            text+=f"[{i}] {auth.Name}#{auth.Tag} 登陆于 {auth.init_time}\n"
+            text+=f"[{i}] {auth.Name}#{auth.Tag} 登陆于 {getTimeFromStamp(auth.init_time)}\n"
             i+=1
         text+="```"
     
