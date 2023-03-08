@@ -24,7 +24,8 @@ from utils.valorant.EzAuth import EzAuth, EzAuthExp
 from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp
 
 # bot的token文件
-from utils.FileManage import config, bot, ApiAuthLog, Save_All_File, Login_Forbidden
+from utils.file.FileManage import FileManage,save_all_file
+from utils.file.Files import config, bot, ApiAuthLog, LoginForbidden
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 
@@ -33,14 +34,19 @@ master_id = config['master_id']
 
 # 在bot一开机的时候就获取log频道作为全局变量
 debug_ch: Channel
+"""发送错误信息的日志频道"""
 cm_send_test: Channel
-NOTIFY_NUM = 3  # 非vip用户皮肤提醒栏位
-VIP_BG_SIZE = 4  # vip用户背景图片数量限制
-RATE_LIMITED_TIME = 180  # 全局登录速率超速等待秒数
-LOGIN_LIMITED = 3 # 所有用户最多都只能登录3个riot账户
-cm = CardMessage() # 全局空卡片消息，覆盖exception里面的
-# 记录开机时间
+"""进行卡片消息发送测试的频道"""
+NOTIFY_NUM = 3 
+"""非vip用户皮肤提醒栏位"""
+VIP_BG_SIZE = 4
+"""vip用户背景图片数量限制"""
+RATE_LIMITED_TIME = 180 
+"""全局登录速率超速等待秒数"""
+LOGIN_LIMITED = 3
+"""所有用户最多都只能登录3个riot账户"""
 start_time = getTime()
+"""记录开机时间"""
 
 
 # 向botmarket通信
@@ -56,25 +62,28 @@ async def botmarket():
 @bot.task.add_interval(minutes=5)
 async def Save_File_Task():
     try:
-        await Save_All_File()
+        await save_all_file()
     except:
         err_cur = f"ERR! [{getTime()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
-        _log.error(err_cur)
+        _log.exception("ERR in Save_File_Task")
         await bot.client.send(debug_ch, err_cur)
 
 
 @bot.command(name='kill')
 async def KillBot(msg: Message, num: str = '124124', *arg):
     BotLog.logMsg(msg)
-    if msg.author_id == master_id and int(num) == config['no']:
-        # 保存所有文件
-        await Save_All_File(False)
-        await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
-        res = await bot_offline()  # 调用接口下线bot
-        _log.info(f"KILL | bot-off: {res}\n")
-        os._exit(0)  # 退出程序
-    else:
-        await msg.reply(f"您没有权限或参数错误！\n本Bot编号为：{config['no']}")
+    try:
+        if msg.author_id == master_id and int(num) == config['no']:
+            # 保存所有文件
+            await save_all_file(False)
+            await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
+            res = await bot_offline()  # 调用接口下线bot
+            _log.info(f"KILL | bot-off: {res}\n")
+            os._exit(0)  # 退出程序
+        else:
+            await msg.reply(f"您没有权限或参数错误！\n本Bot编号为：{config['no']}")
+    except:
+        await BotLog.BaseException_Handler("kill",traceback.format_exc(),msg)
 
 
 ##########################################################################################
@@ -315,7 +324,7 @@ async def sleeping(msg: Message, d: int = 1):
 
 
 # 拳头api调用被禁止的时候用这个变量取消所有相关命令
-async def Login_Forbidden_send(msg: Message):
+async def LoginForbidden_send(msg: Message):
     _log.info(f"Au:{msg.author_id} Command Failed")
     await msg.reply(
         f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
@@ -324,16 +333,16 @@ async def Login_Forbidden_send(msg: Message):
 
 # 手动设置禁止登录的全局变量状态
 @bot.command(name='lf')
-async def Login_Forbidden_Change(msg: Message):
+async def LoginForbidden_Change(msg: Message):
     BotLog.logMsg(msg)
     if msg.author_id == master_id:
-        global Login_Forbidden
-        if Login_Forbidden:
-            Login_Forbidden = False
+        global LoginForbidden
+        if LoginForbidden:
+            LoginForbidden = False
         else:
-            Login_Forbidden = True
+            LoginForbidden = True
 
-        await msg.reply(f"Update Login_Forbidden status: {Login_Forbidden}")
+        await msg.reply(f"Update LoginForbidden status: {LoginForbidden}")
 
 
 # 存储用户游戏id
@@ -390,7 +399,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from utils.FileManage import VipShopBgDict, VipRollDcit, UserPwdReauth, VipUserDict
+from utils.file.Files import VipShopBgDict, VipRollDcit, VipUserDict
 
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
@@ -819,21 +828,8 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.FileManage import UserRiotName, SkinNotifyDict, EmojiDict, SkinRateDict, ValBundleList,UserAuthCache
-
-# 判断夜市有没有开
-NightMarketOff = False
-# 全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
-login_rate_limit = {'limit': False, 'time': time.time()}
-# 用来存放用户每天的商店（早八会清空）
-UserShopCache = { 'clear_time':time.time(),'data':{}}
-# 用户皮肤评分选择列表
-UserRtsDict = {}
-# 用户皮肤提醒选择列表
-UserStsDict = {}
-# valorant皮肤等级对应的kook自定义表情
-ValItersEmoji = EmojiDict['val_iters_emoji']
-
+from utils.file.Files import (UserRiotName, SkinNotifyDict, SkinRateDict, ValBundleList,UserAuthCache,UserPwdReauth,ValItersEmoji,
+                              UserStsDict,UserRtsDict)
 
 def check_rate_err_user(kook_user_id: str)-> bool:
     """检查皮肤评分的错误用户（违规用户）
@@ -902,15 +898,15 @@ async def check_UserAuthCache_len(msg: Message):
 async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /login {apSave}")
     BotLog.log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
-    global Login_Forbidden, login_rate_limit, UserRiotName, UserAuthCache
+    global LoginForbidden, login_rate_limit, UserRiotName, UserAuthCache
     if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
         await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
         return
     elif passwd == 'err' or user == 'err':
         await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
         return
-    elif Login_Forbidden:
-        await Login_Forbidden_send(msg)
+    elif LoginForbidden:
+        await LoginForbidden_send(msg)
         return
     # 提前定义，避免报错
     send_msg = {'msg_id':''}
@@ -988,8 +984,8 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
     except client_exceptions.ClientResponseError as result:
         err_str = f"ERR! [{getTime()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
         if 'auth.riotgames.com' and '403' in str(result):
-            Login_Forbidden = True
-            err_str += f"[Login] 403 err! set Login_Forbidden = True"
+            LoginForbidden = True
+            err_str += f"[Login] 403 err! set LoginForbidden = True"
         elif '404' in str(result):
             err_str += f"[Login] 404 err! network err, try again"
         else:
@@ -1163,8 +1159,8 @@ async def login_list(msg:Message,*arg):
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message,index:str = "0",*arg):
     BotLog.logMsg(msg)
-    if Login_Forbidden:
-        await Login_Forbidden_send(msg)
+    if LoginForbidden:
+        await LoginForbidden_send(msg)
         return
     # index参数是下标，应该为一个正整数
     elif "-" in index or "." in index:
@@ -1329,8 +1325,8 @@ async def get_night_market(msg: Message,index:str="0", *arg):
     if "-" in index or "." in index:
         await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的账户，并指定正确的编号（默认为0，即第一个账户）")
         return
-    elif Login_Forbidden:
-        await Login_Forbidden_send(msg)
+    elif LoginForbidden:
+        await LoginForbidden_send(msg)
         return
     elif NightMarketOff:
         await msg.reply(f"夜市暂未开放！请等开放了之后再使用本命令哦~")
@@ -1440,8 +1436,8 @@ async def open_night_market(msg: Message, *arg):
 @bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
 async def get_user_card(msg: Message, *arg):
     BotLog.logMsg(msg)
-    if Login_Forbidden:
-        await Login_Forbidden_send(msg)
+    if LoginForbidden:
+        await LoginForbidden_send(msg)
         return
     # 初始化变量
     send_msg = {'msg_id':''}
@@ -1630,6 +1626,7 @@ async def rate_skin_add(msg: Message, *arg):
         ret = await ShopRate.get_skinlist_rate_text(retlist, msg.author_id)
         text = f"```\n{ret['text']}```"
 
+        cm = CardMessage()
         c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"), Module.Section(Element.Text(text, Types.Text.KMD)),
                  Module.Section(Element.Text("请使用以下命令对皮肤进行评分;\n√代表您已评价过该皮肤，+已有玩家评价，-无人评价\n", Types.Text.KMD)))
         text1 = "```\n/rts 序号 评分 吐槽\n"
@@ -1664,6 +1661,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
     elif arg == ():
         await msg.reply(f"您似乎没有评论此皮肤呢，多少说点什么吧~\n正确用法：`/rts 序号 评分 吐槽`")
         return
+    cm = CardMessage()
     try:
         if msg.author_id in UserRtsDict:
             _index = int(index)  #转成int下标（不能处理负数）
@@ -1734,6 +1732,7 @@ async def show_shoprate(msg: Message):
     if check_rate_err_user(msg.author_id):
         await msg.reply(f"您有过不良评论记录，阿狸现已不允许您使用相关功能\n后台存放了所有用户的评论内容和评论时间。在此提醒，请不要在评论的时候发送不雅言论！")
         return
+    cm = CardMessage()
     try:
         # 从数据库中获取
         cmpRet = await ShopRate.get_ShopCmp()

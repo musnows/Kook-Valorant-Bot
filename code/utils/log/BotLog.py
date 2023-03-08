@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # 用户数量的记录文件
 from .Logging import _log
-from ..FileManage import bot, BotUserDict, FileManage
+from ..file.Files import bot, BotUserDict,FileManage
 from ..Gtime import getTime
 from ..KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
 

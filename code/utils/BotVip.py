@@ -9,7 +9,8 @@ from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
 from .KookApi import icon_cm
 from .Gtime import getTime
-from .FileManage import bot,VipShopBgDict,config,_log
+from .log.Logging import _log
+from .file.Files import bot,config,VipShopBgDict,VipUserDict, VipUuidDict
 from .ShopImg import img_requestor
 
 
@@ -24,9 +25,6 @@ def get_uuid():
 
 
 ################################################################################
-
-# 成功兑换vip的用户+vip的uuid
-from utils.FileManage import VipUserDict, VipUuidDict
 
 
 # 计算时间戳，用于给用户设置vip时间

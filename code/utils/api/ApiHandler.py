@@ -1,7 +1,8 @@
 import json
 import time
-import threading
 import traceback
+
+from khl.card import CardMessage, Card, Module, Types, Element
 
 from utils.valorant.EzAuth import EzAuthExp,EzAuth
 from utils.api.ApiToken import check_token_rate
@@ -11,7 +12,7 @@ from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from utils import ShopRate,ShopImg
 
 # bot的配置文件
-from utils.FileManage import config,ApiAuthCache,ApiAuthLog,_log
+from ..file.Files import config,ApiAuthCache,ApiAuthLog,AfdWebhook,_log
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
 # 默认的背景图
@@ -281,8 +282,6 @@ async def shop_cmp_request(request):
     return ret
 
 
-from utils.FileManage import AfdWebhook
-from khl.card import CardMessage, Card, Module, Types, Element
 
 
 # 爱发电webhook

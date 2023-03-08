@@ -4,7 +4,7 @@ from khl import Bot, Message, PublicMessage, Event
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
-from .FileManage import SponsorDict, ColorIdDict, EmojiDict,_log
+from .file.Files import SponsorDict, ColorIdDict, EmojiDict,_log
 from .KookApi import kook_headers
 from .Gtime import getTime
 

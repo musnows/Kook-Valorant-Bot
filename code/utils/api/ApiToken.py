@@ -2,7 +2,7 @@ import uuid
 import time
 
 # 所有token
-from utils.FileManage import ApiTokenDict,_log
+from ..file.Files import ApiTokenDict,_log
 # token速率限制为10，检测周期为60s
 TOKEN_RATE_LIMITED = 10
 TOKEN_RATE_TIME = 60

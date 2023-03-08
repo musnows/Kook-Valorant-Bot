@@ -2,7 +2,7 @@ import traceback
 from khl import Message, Channel
 from aiohttp import client_exceptions
 from .EzAuth import EzAuth, EzAuthExp
-from ..FileManage import UserAuthCache, UserRiotName, UserPwdReauth, Login_Forbidden,SkinNotifyDict, bot
+from ..file.Files import UserAuthCache, UserRiotName, UserPwdReauth, LoginForbidden,SkinNotifyDict, bot
 from .Val import fetch_valorant_point
 from ..log.Logging import _log
 from .. import KookApi, Gtime
@@ -11,9 +11,9 @@ from .. import KookApi, Gtime
 # 检查aiohttp错误的类型
 def client_exceptions_handler(result:str,err_str:str) -> str:
     if 'auth.riotgames.com' and '403' in result:
-        global Login_Forbidden
-        Login_Forbidden = True
-        err_str += f"[check_reauth] 403 err! set Login_Forbidden = True"
+        global LoginForbidden
+        LoginForbidden = True
+        err_str += f"[check_reauth] 403 err! set LoginForbidden = True"
     elif '404' in result:
         err_str += f"[check_reauth] 404 err! network err, try again"
     else:

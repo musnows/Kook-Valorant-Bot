@@ -1,10 +1,10 @@
 import json
 import aiohttp
 import io
-from khl import Bot, ChannelPrivacyTypes
+from khl import ChannelPrivacyTypes
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from .FileManage import config,bot,_log
+from .file.Files import config,bot,_log
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
 kook_headers = {f'Authorization': f"Bot {config['token']['bot']}"}

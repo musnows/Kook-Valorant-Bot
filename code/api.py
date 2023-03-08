@@ -193,7 +193,7 @@ async def post_shop_cmp(request):
 
 
 # 爱发电的wh
-from utils.FileManage import bot
+from utils.file.Files import bot
 @routes.post('/afd')
 async def aifadian_webhook(request):
     _log.info(f"request | /afd")

@@ -3,7 +3,7 @@ import io
 from khl import Message, Bot
 from PIL import Image
 from ..ShopImg import img_requestor
-from ..FileManage import ValBundleList
+from ..file.Files import ValBundleList
 from .Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValSkinList, ValPriceList
 from ..log.Logging import _log
 

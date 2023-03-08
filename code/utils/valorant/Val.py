@@ -6,7 +6,7 @@ from khl.card import Card, Element, Module, Types
 
 # 预加载文件
 from .EzAuth import X_RIOT_CLIENTVERSION,X_RIOT_CLIENTVPLATFROM,RiotUserToken
-from ..FileManage import GameIdDict, ValErrDict, ValItersList, ValPriceList, ValSkinList
+from ..file.Files import GameIdDict, ValErrDict, ValItersList, ValPriceList, ValSkinList
 SKIN_ICON_ERR = "https://img.kookapp.cn/assets/2023-02/ekwdy7PiQC0e803m.png"
 
 ####################################保存用户的游戏ID操作#######################################

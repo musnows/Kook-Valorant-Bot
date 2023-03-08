@@ -1,6 +1,6 @@
 # 缓存登录对象
 from .EzAuth import EzAuth
-from ..FileManage import UserAuthCache
+from ..file.Files import UserAuthCache
 
 Auth2faCache = UserAuthCache['tfa']
 
