@@ -21,7 +21,7 @@ from utils.KookApi import (icon_cm, status_active_game, status_active_music, sta
                            get_card)
 from utils.valorant.Val import *
 from utils.valorant.EzAuth import EzAuth, EzAuthExp
-from utils.Gtime import getTime, getTimeStampOf8AM
+from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain
 
 # bot的token文件
 from utils.FileManage import config, bot, ApiAuthLog, Save_All_File, Login_Forbidden
@@ -38,6 +38,7 @@ NOTIFY_NUM = 3  # 非vip用户皮肤提醒栏位
 VIP_BG_SIZE = 4  # vip用户背景图片数量限制
 RATE_LIMITED_TIME = 180  # 全局登录速率超速等待秒数
 LOGIN_LIMITED = 3 # 所有用户最多都只能登录3个riot账户
+cm = CardMessage() # 全局空卡片消息，覆盖exception里面的
 # 记录开机时间
 start_time = getTime()
 
@@ -536,19 +537,19 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
         await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
         return
 
+    x3 = "[None]"
     try:
         if not await BotVip.vip_ck(msg):
             return
-
-        x3 = "[None]"
-        if icon != 'err':
-            user_ind = (msg.author_id in VipShopBgDict['bg'])  #判断当前用户在不在dict中
+        
+        if icon != 'err': # 不为空且走到这里了，代表通过了对icon参数是否为http链接的检查
+            user_ind = (msg.author_id in VipShopBgDict['bg']) # 判断当前用户在不在dict中
             if user_ind and len(VipShopBgDict['bg'][msg.author_id]["background"]) >= VIP_BG_SIZE:
                 cm = await get_card(f"当前仅支持保存{VIP_BG_SIZE}个自定义图片", "您可用「/vip-shop-d 图片编号」删除已有图片再添加", icon_cm.that_it)
                 await msg.reply(cm)
                 return
 
-            #提取图片url
+            # 提取图片url
             x1 = icon.find('](')
             x2 = icon.find(')', x1 + 2)
             x3 = icon[x1 + 2:x2]
@@ -611,7 +612,8 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
             return
 
         num = int(num) # type: ignore
-        if num < len(VipShopBgDict['bg'][msg.author_id]["background"]):  # type: ignore
+        assert isinstance(num,int)
+        if num < len(VipShopBgDict['bg'][msg.author_id]["background"]):
             try:  #打开用户需要切换的图片
                 bg_vip = Image.open(
                     io.BytesIO(await ShopImg.img_requestor(VipShopBgDict['bg'][msg.author_id]["background"][num])))
@@ -658,7 +660,8 @@ async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
             await msg.reply("您尚未自定义商店背景图！")
             return
 
-        num = int(num)
+        num = int(num) # type: ignore
+        assert isinstance(num,int)
         if num < len(VipShopBgDict['bg'][msg.author_id]["background"]) and num > 0:
             # 删除图片
             del_img_url = VipShopBgDict['bg'][msg.author_id]["background"][num]
@@ -914,8 +917,8 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         # 1.检查全局登录速率
         await check_GloginRate()  # 无须接收此函数返回值，直接raise
         # 2.发送开始登录的提示消息
-        cm0 = await get_card("正在尝试获取您的riot账户token", "小憩一下，很快就好啦！", icon_cm.val_logo_gif)
-        send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
+        cm = await get_card("正在尝试获取您的riot账户token", "小憩一下，很快就好啦！", icon_cm.val_logo_gif)
+        send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
         # 3.登录，获取用户的token
         auth = EzAuth()
@@ -924,8 +927,8 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         await AuthCache.cache_auth_object('kook',msg.author_id,auth)
         # 3.2 没有成功，是2fa用户，需要执行/tfa命令
         if not resw['status']:
-            cm1 = await get_card("请使用「/tfa 验证码」提供邮箱验证码","登录中断，需要提供邮箱验证码",icon_cm.whats_that)
-            await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)
+            cm = await get_card("请使用「/tfa 验证码」提供邮箱验证码","登录中断，需要提供邮箱验证码",icon_cm.whats_that)
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             _log.info(f"login | 2fa user | Au:{msg.author_id}")  # 打印信息
             return
 
@@ -1297,10 +1300,10 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
                 await ShopRate.update_ShopCache(skinlist=list_shop, img_url=dailyshop_img_src)
 
         # 6.结束shop的总计时，结果为浮点数，保留两位小数
-        shop_using_time = format(time.perf_counter() - start, '.2f')
+        end = time.perf_counter()
+        shop_using_time = format(end - start, '.2f')
 
         # 7.商店的图片 卡片
-        cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(Module.Header(f"玩家 {player_gamename} 的每日商店！"))
         c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {shop_using_time}s"))
@@ -1320,7 +1323,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
     except Exception as result:
         err_str = f"ERR! [{getTime()}] shop\n```\n{traceback.format_exc()}\n```\n"
         if "SkinsPanelLayout" in str(result):
-            _log.error(err_str + resp)
+            _log.error(err_str + str(resp))
             btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
             cm = await get_card(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
@@ -1388,20 +1391,19 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         timeout = resp["BonusStore"]["BonusStoreRemainingDurationInSeconds"]  #剩余时间
         timeout = time.strftime("%d %H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
 
-        cm = CardMessage()
         c = Card(color='#fb4b57')
         c.append(
             Module.Header(
                 f"玩家 {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']} 的夜市！"))
         for Bonus in resp["BonusStore"]["BonusStoreOffers"]:
+            # 获取皮肤信息
             skin = fetch_skin_bylist(Bonus["Offer"]["OfferID"])
             skin_icon = skin["data"]['levels'][0]["displayIcon"]
             skin_name = skin["data"]["displayName"]
-            for it in ValSkinList['data']:  #查找皮肤的等级
-                if it['levels'][0]['uuid'] == Bonus["Offer"]["OfferID"]:
-                    res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
-                    break
-            iter_emoji = ValItersEmoji[res_iters['data']['devName']]
+            # 获取皮肤的等级
+            res_iters = fetch_skin_iters_bylist(Bonus["Offer"]["OfferID"])
+            # 从预先上传的自定义emoji里面，选择一个和皮肤等级对应的emoji
+            iter_emoji = ValItersEmoji[res_iters['data']['devName']] 
             basePrice = Bonus["Offer"]["Cost"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #原价
             discPercent = Bonus["DiscountPercent"]  # 打折百分比
             discPrice = Bonus["DiscountCosts"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #打折后的价格
@@ -1636,7 +1638,6 @@ async def rate_skin_add(msg: Message, *arg):
         ret = await ShopRate.get_skinlist_rate_text(retlist, msg.author_id)
         text = f"```\n{ret['text']}```"
 
-        cm = CardMessage()
         c = Card(Module.Header(f"查询到 {name} 相关皮肤如下"), Module.Section(Element.Text(text, Types.Text.KMD)),
                  Module.Section(Element.Text("请使用以下命令对皮肤进行评分;\n√代表您已评价过该皮肤，+已有玩家评价，-无人评价\n", Types.Text.KMD)))
         text1 = "```\n/rts 序号 评分 吐槽\n"
@@ -1720,7 +1721,6 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
             text2 += f"您的评分：{_rating}\n"
             text2 += f"皮肤平均分：{point}\n"
             text2 += f"您的评语：{comment}"
-            cm = CardMessage()
             c = Card(Module.Header(text1), Module.Divider(), Module.Section(Element.Text(text2, Types.Text.KMD)))
             cm.append(c)
             # 设置成功并删除list后，再发送提醒事项设置成功的消息
@@ -1749,7 +1749,6 @@ async def show_shoprate(msg: Message):
             await msg.reply(f"获取昨日天选之子和丐帮帮主出错！请重试或联系开发者")
             return
 
-        cm = CardMessage()
         c = Card(Module.Header(f"来看看昨日天选之子和丐帮帮主吧！"), Module.Divider())
         # best
         text = ""

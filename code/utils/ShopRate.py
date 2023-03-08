@@ -6,7 +6,6 @@ from khl.card import Card, CardMessage, Module, Element, Types
 
 from .valorant import Val
 from .FileManage import config,SkinRateDict,_log
-from .Gtime import getTime
 PLATFORM = config['platform'] # 平台
 
 # 初始化leancloud
@@ -17,7 +16,7 @@ leanUser.login(config["leancloud"]["user_name"],config["leancloud"]["user_pwd"])
 leanAcl = leancloud.ACL()
 leanAcl.set_public_read_access(True) # 所有用户可读
 # 设置当前登录用户的的可写权限
-leanAcl.set_write_access(leancloud.User.get_current().id, True)
+leanAcl.set_write_access(leancloud.User.get_current().id, True) #type:ignore
 # 设置管理员角色写权限
 leanAcl.set_role_write_access(leancloud.Role('admin'), True)
 
@@ -215,7 +214,7 @@ async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
         return { "status":False,"info":err}
 
 # 获取昨日最好/最差用户
-async def get_ShopCmp():
+async def get_ShopCmp() -> dict:
     """Return:{
         "status": True/False
         "best":{
@@ -233,7 +232,7 @@ async def get_ShopCmp():
     query = leancloud.Query('ShopCmp')
     query.exists('rating') # 通过键值是否存在，进行查找
     objlist = query.find()
-    ret = {"status":False}
+    ret = {"status":False,'best':{},'worse':{}}
     if len(objlist) == 2: # 应该是有两个的
         ret['status'] = True
         for i in objlist:
@@ -424,7 +423,7 @@ async def remove_UserRate(skin_uuid:str,user_id:str):
 import hashlib
  
 # 生成字符串的MD5值
-def md5(content:str=None):
+def md5(content:str):
     """generate md5 for string
     """
     if content is None:
@@ -437,7 +436,7 @@ def md5(content:str=None):
 
 
 # 生成字符串的SHA256值
-def sha256(content:str=None):
+def sha256(content:str):
     if content is None:
         return ''
     sha256gen = hashlib.sha256()
