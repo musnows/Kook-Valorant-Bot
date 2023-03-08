@@ -11,7 +11,6 @@ from re import compile
 
 from . import EzAuthExp
 from ..log.Logging import _log
-from ..Gtime import GetTime
 # get latest version: https://valorant-api.com/v1/version
 X_RIOT_CLIENTVERSION = "RiotClient/63.0.9.4909983.4789131"
 X_RIOT_CLIENTVPLATFROM =  "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9"
@@ -42,7 +41,10 @@ class SSLAdapter(HTTPAdapter):
 
 # 用于valorant api调用的UserDict
 class RiotUserToken:
-
+    """a class contains:
+    
+    riot_user_id, access_token, entitlements_token, region
+    """
     def __init__(self, user_id: str, access_token: str, entitlements: str, region: str) -> None:
         self.user_id = user_id
         self.access_token = access_token
@@ -51,7 +53,7 @@ class RiotUserToken:
 
 
 class EzAuth:
-
+    """a class for getting riot auth token"""
     def __init__(self) -> None:
         self.session = requests.Session()
         self.session.headers = OrderedDict({
@@ -60,13 +62,15 @@ class EzAuth:
             "Accept": "application/json, text/plain, */*"
         })
         self.session.mount('https://', SSLAdapter())
-        self.is2fa = False  # 2fa set to false
-        self.__mfa_start = 0  # 2fa start time
-        self.init_time = 0 # when auth init?
-        self.is_init = False # is_init finised?
+        self.is2fa = False 
+        """is riot account MFA turn-on?"""
+        self.__mfa_start = 0  
+        """2fa start time, default to 0"""
+        self.init_time = 0 
+        """when auth init? default to 0"""
 
     def __set_userinfo(self) -> None:
-        """set_user_info to value"""
+        """get and set user_info to self.value"""
         userinfo = self.get_userinfo()
         self.user_id = userinfo['sub']
         self.Name = userinfo['name']
@@ -75,14 +79,18 @@ class EzAuth:
         self.typeban = userinfo['typeban']
 
     def __set_region(self) -> None:
+        """get and set account region to `self.Region`"""
         self.Region_headers = {
             'Content-Type': 'application/json',
             'Authorization': f'{self.token_type} {self.access_token}'
         }
         self.Region = self.get_region(self.Region_headers)
 
-    def __set_access_token(self, data: dict) -> dict[str, Any]:
-        """get access_token from response"""
+    def __set_access_token(self, data: dict) -> dict[str, str]:
+        """get access_token from response
+        
+        Return: {"access_token": p_data[0], "id_token": p_data[1], "token_type": p_data[2], "expires_in": p_data[3]}
+        """
         pattern = compile(
             'access_token=((?:[a-zA-Z]|\d|\.|-|_)*).*id_token=((?:[a-zA-Z]|\d|\.|-|_)*).*token_type=((?:[a-zA-Z]|\d|)*).*expires_in=(\d*)'
         )
@@ -108,8 +116,14 @@ class EzAuth:
         self.entitlements_token = self.get_entitlement_token()
         self.__set_userinfo()
         self.__set_region()
-        self.init_time = GetTime() # get current localtime
-        self.is_init = True # set init as finised
+        self.init_time = time.time() # get current timestamp
+
+    def is_init(self) -> bool:
+        """get if obj init finished, base on `self.init_time`, which will be set after init
+        - False: init_time==0
+        - True: init_time!=0
+        """
+        return not self.init_time
 
     async def authorize(self, username, password) -> dict:
         """Authenticate using username and password.\n
@@ -273,6 +287,8 @@ class EzAuth:
         return Region
 
     def print(self) -> None:
+        """print self.value
+        """
         print("=" * 50)
         print(f"Accestoken: {self.access_token}")
         print("-" * 50)
@@ -314,7 +330,7 @@ class EzAuth:
             f.write(json.dumps(cookies))
 
     def load_cookies(self, path: str) -> None:
-        """load cookies_dic from path (rb)
+        """load cookies_dic from path (r)
         """
         with open(path, "r") as f:
             load_cookies = json.loads(f.read())

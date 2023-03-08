@@ -31,7 +31,7 @@ async def check_user_send_err(result:str,kook_user_id:str,is_vip:bool) ->str:
             del SkinNotifyDict['data'][kook_user_id] 
             text+=f"del SkinNotifyDict['data'][{kook_user_id}], "
         # 添加到err_user中
-        SkinNotifyDict['err_user'][kook_user_id] = Gtime.GetTime()
+        SkinNotifyDict['err_user'][kook_user_id] = Gtime.getTime()
         text+= "add to ['err_user']"
         return text
     
@@ -68,7 +68,7 @@ async def login_reauth(kook_user_id: str, riot_user_id: str) -> bool:
             UserAuthCache['data'][riot_user_id]['auth'] = auth
             auth.save_cookies(f"./log/cookie/{kook_user_id}.cke")  # 保存cookie
             # 记录使用账户密码重新登录的时间，和对应的账户
-            UserPwdReauth[kook_user_id][Gtime.GetTime()] = f"{auth.Name}#{auth.Tag}"
+            UserPwdReauth[kook_user_id][Gtime.getTime()] = f"{auth.Name}#{auth.Tag}"
             _log.info(base_print + "authorize by account/passwd")
             ret = True
     # 正好返回auth.reauthorize()的bool

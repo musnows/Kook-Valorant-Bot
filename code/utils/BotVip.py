@@ -8,7 +8,7 @@ from khl import Message, Bot, Channel
 from khl.card import Card, CardMessage, Element, Module, Types
 from datetime import datetime, timedelta
 from .KookApi import icon_cm
-from .Gtime import GetTime
+from .Gtime import getTime
 from .FileManage import bot,VipShopBgDict,config,_log
 from .ShopImg import img_requestor
 
@@ -250,7 +250,7 @@ async def replace_illegal_img(user_id: str, num: int):
         VipShopBgDict['bg'][user_id]["status"] = False  #需要重新加载图片
         _log.info(f"[Replace_img] Au:{user_id} [{img_str}]")  #写入文件后打印log信息
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{getTime()}] replace_illegal_img\n```\n{traceback.format_exc()}\n```"
         _log.exception("Exception occur")
         debug_ch = await bot.fetch_public_channel(config['channel']['debug_ch'])
         await bot.client.send(debug_ch, err_str)  #发送消息到debug频道
@@ -297,7 +297,7 @@ async def get_vip_shop_bg_cm(msg: Message) -> CardMessage | str:
                                    Element.Image(src=VipShopBgDict['bg'][msg.author_id]["background"][i])))
                 i += 1
             except UnidentifiedImageError as result:
-                err_str = f"ERR! [{GetTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
+                err_str = f"ERR! [{getTime()}] checking [{msg.author_id}] img\n```\n{result}\n"
                 #把被ban的图片替换成默认的图片，打印url便于日后排错
                 await replace_illegal_img(msg.author_id, i)  #替换图片
                 err_str += f"[UnidentifiedImageError] url={VipShopBgDict['bg'][msg.author_id]['background'][i]}\n```"

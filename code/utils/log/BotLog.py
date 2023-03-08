@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 # 用户数量的记录文件
 from .Logging import _log
 from ..FileManage import bot, BotUserDict, FileManage
-from ..Gtime import GetTime
+from ..Gtime import getTime
 from ..KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
 
 # 记录频道/服务器信息的底图
@@ -37,7 +37,7 @@ def log_bot_guild(user_id: str, guild_id: str) -> str:
     # 先记录用户
     log_bot_user(user_id)
     # 获取当前时间
-    time = GetTime()
+    time = getTime()
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}  #不能连续创建两个键值！
@@ -158,7 +158,7 @@ async def APIRequestFailed_Handler(def_name: str,
     - send_msg: return value of msg.reply or bot.send
     """
     _log.exception(f"APIRequestFailed in {def_name} | Au:{msg.author_id}")
-    err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
+    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
     text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
     # 如果cm是None，则将cm赋值为空卡片消息
@@ -202,7 +202,7 @@ async def BaseException_Handler(def_name: str,
     - debug_send: Channel obj for sending err_str, send if not None
     - help: str for help_info, replyed in msg.reply
     """
-    err_str = f"ERR! [{GetTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
+    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
     _log.exception(f"Exception in {def_name} | Au:{msg.author_id}")
     cm0 = CardMessage()
     c = Card(color='#fb4b57')
@@ -235,7 +235,7 @@ async def get_proc_info() -> CardMessage:
     text += f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
     text += f"IO信息：\n{p.io_counters()}"
     cm = CardMessage()
-    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"记录于 {GetTime()}"), Module.Divider(),
+    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"记录于 {getTime()}"), Module.Divider(),
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     return cm

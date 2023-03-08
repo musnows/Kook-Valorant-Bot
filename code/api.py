@@ -1,7 +1,7 @@
 import json
 import traceback
 from aiohttp import web
-from utils.Gtime import GetTime
+from utils.Gtime import getTime
 from utils.api import ApiHandler
 from utils.log.Logging import _log
 

@@ -5,7 +5,7 @@ import traceback
 
 from utils.valorant.EzAuth import EzAuthExp,EzAuth
 from utils.api.ApiToken import check_token_rate
-from utils.Gtime import GetTime
+from utils.Gtime import getTime
 from utils.KookApi import kook_create_asset
 from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from utils import ShopRate,ShopImg

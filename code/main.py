@@ -21,7 +21,7 @@ from utils.KookApi import (icon_cm, status_active_game, status_active_music, sta
                            get_card)
 from utils.valorant.Val import *
 from utils.valorant.EzAuth import EzAuth, EzAuthExp
-from utils.Gtime import GetTime, GetTimeStampOf8AM
+from utils.Gtime import getTime, getTimeStampOf8AM
 
 # bot的token文件
 from utils.FileManage import config, bot, ApiAuthLog, Save_All_File, Login_Forbidden
@@ -39,7 +39,7 @@ VIP_BG_SIZE = 4  # vip用户背景图片数量限制
 RATE_LIMITED_TIME = 180  # 全局登录速率超速等待秒数
 LOGIN_LIMITED = 3 # 所有用户最多都只能登录3个riot账户
 # 记录开机时间
-start_time = GetTime()
+start_time = getTime()
 
 
 # 向botmarket通信
@@ -57,7 +57,7 @@ async def Save_File_Task():
     try:
         await Save_All_File()
     except:
-        err_cur = f"ERR! [{GetTime()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
+        err_cur = f"ERR! [{getTime()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
         _log.error(err_cur)
         await bot.client.send(debug_ch, err_cur)
 
@@ -482,7 +482,7 @@ async def check_vip_img():
                     bg_test = Image.open(io.BytesIO(await ShopImg.img_requestor(vip_bg["background"][i])))
                     i += 1
                 except UnidentifiedImageError as result:
-                    err_str = f"ERR! [{GetTime()}] checking [{vip_user}] img\n```\n{result}\n"
+                    err_str = f"ERR! [{getTime()}] checking [{vip_user}] img\n```\n{result}\n"
                     #把被ban的图片替换成默认的图片，打印url便于日后排错
                     err_str += f"[UnidentifiedImageError] url={vip_bg['background'][i]}\n```"
                     c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
@@ -493,7 +493,7 @@ async def check_vip_img():
                     vip_bg["status"] = False  #需要重新加载图片
                     _log.error(err_str)
                 except Exception as result:
-                    err_str = f"ERR! [{GetTime()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
+                    err_str = f"ERR! [{getTime()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
                     _log.error(err_str)
                     c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
                     cm0.append(c)
@@ -507,7 +507,7 @@ async def check_vip_img():
         _log.info(log_str_user)
         _log.info("[BOT.TASK] check_vip_img finished!")
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] check_vip_img\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{getTime()}] check_vip_img\n```\n{traceback.format_exc()}\n```"
         _log.exception("Exception occur")
         await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
@@ -564,7 +564,7 @@ async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
                 #打开图片(测试)
                 bg_vip = Image.open(io.BytesIO(await ShopImg.img_requestor(x3)))
             except UnidentifiedImageError as result:
-                err_str = f"ERR! [{GetTime()}] vip_shop_imgck\n```\n{result}\n```"
+                err_str = f"ERR! [{getTime()}] vip_shop_imgck\n```\n{result}\n```"
                 _log.error(err_str)
                 await msg.reply(f"图片违规！请重新上传\n{err_str}")
                 return
@@ -616,7 +616,7 @@ async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
                 bg_vip = Image.open(
                     io.BytesIO(await ShopImg.img_requestor(VipShopBgDict['bg'][msg.author_id]["background"][num])))
             except UnidentifiedImageError as result:
-                err_str = f"ERR! [{GetTime()}] vip_shop_s_imgck\n```\n{result}\n```"
+                err_str = f"ERR! [{getTime()}] vip_shop_s_imgck\n```\n{result}\n```"
                 await msg.reply(f"图片违规！请重新上传\n{err_str}")
                 await BotVip.replace_illegal_img(msg.author_id, num)  #替换图片
                 _log.exception("Exception occur")
@@ -810,7 +810,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
         await msg.reply(f"操作完成，已给所有vip用户增加 `{vday}` 天时长")
         _log.info(f"[vip_time_add] update VipUserDict")
     except:
-        err_str = f"ERR! [{GetTime()}] vip_time_add\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{getTime()}] vip_time_add\n```\n{traceback.format_exc()}\n```"
         await msg.reply(f"{err_str}")
         _log.exception("Exception occur")
 
@@ -863,7 +863,7 @@ def isClear_UserShopCache() -> bool:
     """
     # 判断清空的时间戳是否大于当日早上8点时间戳
     global UserShopCache
-    if UserShopCache["clear_time"] >= GetTimeStampOf8AM():
+    if UserShopCache["clear_time"] >= getTimeStampOf8AM():
         return True
     else: # 如果不大于，则代表定时任务没有正常执行，清空dict并返回FALSE
         UserShopCache["data"] = {}
@@ -969,7 +969,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         cm = await get_card("等待超时", "auth wait overtime", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except EzAuthExp.RatelimitError as result:
-        err_str = f"ERR! [{GetTime()}] login Au:{msg.author_id} - {result}"
+        err_str = f"ERR! [{getTime()}] login Au:{msg.author_id} - {result}"
         # 更新全局速率限制
         login_rate_limit = {'limit': True, 'time': time.time()}
         _log.error(err_str + " set login_rate_limit = True")
@@ -977,7 +977,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         cm = await get_card(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
-        err_str = f"ERR! [{GetTime()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
+        err_str = f"ERR! [{getTime()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
         if 'auth.riotgames.com' and '403' in str(result):
             Login_Forbidden = True
             err_str += f"[Login] 403 err! set Login_Forbidden = True"
@@ -1027,7 +1027,7 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         auth = await AuthCache.get_tfa_auth_object(msg.author_id)
         assert isinstance(auth, EzAuth)
         # 1.2 判断这个auth是否已经初始化完毕了，如果是，则不执行后续操作
-        if auth.is_init: # 初始化完毕
+        if auth.is_init(): # 初始化完毕
             await msg.reply(await get_card(f"玩家「{auth.Name}#{auth.Tag}」已登录，无须执行本命令","若有问题，请联系开发者",icon_cm.correct))
             return
 
@@ -1150,15 +1150,6 @@ async def login_list(msg:Message,*arg):
         await BotLog.BaseException_Handler("login-l", traceback.format_exc(), msg)
 
 
-# 计算当前时间和明天早上8点的差值
-def shop_time_remain():
-    today = datetime.today().strftime("%y-%m-%d %H:%M:%S")  #今天日期+时间
-    tomorow = (datetime.today() + timedelta(days=1)).strftime("%y-%m-%d")  #明天日期
-    times_tomorow = time.mktime(time.strptime(f"{tomorow} 08:00:00", "%y-%m-%d %H:%M:%S"))  #明天早上8点时间戳
-    times_now = time.mktime(time.strptime(f"{today}", "%y-%m-%d %H:%M:%S"))  #现在的时间戳
-    timeout = times_tomorow - times_now  #计算差值
-    timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #转换成可读时间
-    return timeout
 
 
 # 判断缓存好的图片是否可用
@@ -1169,7 +1160,7 @@ def is_CacheLatest(kook_user_id: str):
         is_Status = VipShopBgDict['bg'][kook_user_id]['status']  # 如果有切换登录用户/背景图，此为false
     # 判断图片是不是今天的（可能出现早八提醒的时候出错，导致缓存没有更新，是昨天的图）
     if kook_user_id in VipShopBgDict['cache']:
-        is_Today = (VipShopBgDict['cache'][kook_user_id]['cache_time'] - GetTimeStampOf8AM()) >= 0
+        is_Today = (VipShopBgDict['cache'][kook_user_id]['cache_time'] - getTimeStampOf8AM()) >= 0
         is_Cache = VipShopBgDict['cache'][kook_user_id]['cache_img'] != None
         return is_Today and is_Status and is_Cache  # 有一个为false，结果就是false
     else:  # 如果不在，初始化为none，时间戳为0
@@ -1327,7 +1318,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
         await BotLog.APIRequestFailed_Handler("shop", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] shop\n```\n{traceback.format_exc()}\n```\n"
+        err_str = f"ERR! [{getTime()}] shop\n```\n{traceback.format_exc()}\n```\n"
         if "SkinsPanelLayout" in str(result):
             _log.error(err_str + resp)
             btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
@@ -1809,7 +1800,7 @@ async def check_notify_err_user(msg: Message):
             return False
         except:
             err_cur = str(traceback.format_exc())
-            err_str = f"ERR![{GetTime()}] err_Au:{msg.author_id} user.send\n```\n{err_cur}\n```"
+            err_str = f"ERR![{getTime()}] err_Au:{msg.author_id} user.send\n```\n{err_cur}\n```"
             if '屏蔽' in err_cur or '无法发起' in err_cur:
                 await msg.reply(f"您之前屏蔽了阿狸，或阿狸无法向您发起私信\n您的皮肤提醒信息已经被`删除`，请在解除对阿狸的屏蔽后重新操作！\n{err_str}")
             else:
@@ -1918,7 +1909,7 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
         else:
             await msg.reply(f"您需要（重新）执行 `/notify-a` 来设置提醒皮肤")
     except requester.HTTPRequester.APIRequestFailed as result:  #消息发送失败
-        err_str = f"ERR! [{GetTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
+        err_str = f"ERR! [{getTime()}] sts\n```\n{traceback.format_exc()}\n```\n"
         await bot.client.send(debug_ch, err_str)
         await BotLog.APIRequestFailed_Handler("sts", traceback.format_exc(), msg, bot)
     except Exception as result:  # 其他错误
@@ -2125,7 +2116,7 @@ async def auto_skin_notify():
                         target_skin = [val for key, val in skin.items() if key in list_shop]
                         for name in target_skin:
                             _log.info(f"Au:{aid} | Riot:{riot_user_id} | skin_notify | {name}")
-                            await user.send(f"[{GetTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
+                            await user.send(f"[{getTime()}] 您的每日商店刷出`{name}`了，请上号查看哦！")
                     
                     # 打印这个说明这个用户正常遍历完了
                     _log.info(f"Au:{aid} | skin_notify finished")
@@ -2147,11 +2138,11 @@ async def auto_skin_notify():
             _log.info("save SkinNotifyDict")
 
         # 打印结束信息
-        finish_str = f"[NOTIFY.TASK] Finish at {GetTime()} [ERR {err_count}]"
+        finish_str = f"[NOTIFY.TASK] Finish at {getTime()} [ERR {err_count}]"
         _log.info(finish_str)  # 正常完成
         await bot.client.send(debug_ch, finish_str)  #发送消息到debug频道
     except Exception as result:
-        err_str = f"ERR! [{GetTime()}] NOTIFY.TASK\n```\n{traceback.format_exc()}\n```"
+        err_str = f"ERR! [{getTime()}] NOTIFY.TASK\n```\n{traceback.format_exc()}\n```"
         await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
         _log.exception("Exception occur")
 

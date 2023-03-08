@@ -6,7 +6,7 @@ from khl.card import Card, CardMessage, Module, Element, Types
 
 from .valorant import Val
 from .FileManage import config,SkinRateDict,_log
-from .Gtime import GetTime
+from .Gtime import getTime
 PLATFORM = config['platform'] # 平台
 
 # 初始化leancloud
