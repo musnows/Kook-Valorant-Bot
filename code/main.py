@@ -25,7 +25,7 @@ from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromS
 
 # bot的token文件
 from utils.file.FileManage import FileManage,save_all_file
-from utils.file.Files import config, bot, ApiAuthLog, LoginForbidden
+from utils.file.Files import config, bot, ApiAuthLog, LoginForbidden,NightMarketOff
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 """用来上传图片的bot"""

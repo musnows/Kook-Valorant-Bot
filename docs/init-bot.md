@@ -57,7 +57,7 @@ pip3 install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
 | 文件路径                    | 功能                                                         |
 | --------------------------- | ------------------------------------------------------------ |
 | code/config/config.json     | 存放本机器人的基本配置：[KOOK开发者页面](https://developer.kaiheila.cn/doc/intro) |
-| [code/config/color_emoji.json](https://github.com/Aewait/Kook-Valorant-Bot/blob/develop/code/config/color_emoji.json) | 存放`code/main.py`中自动给用户上角色功能相关的emoji以及`msg_id/guild_id`       |
+| [code/config/color_emoji.json](https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/develop/code/config/color_emoji.json) | 存放`code/main.py`中自动给用户上角色功能相关的emoji以及`msg_id/guild_id`       |
 | ~code/config/valorant.json~ | ~存放拳头开发者api-key：[Roit Develop](https://developer.riotgames.com/)~ 目前需要使用该api的代码都已被删除 |
 | ~code/config/caiyun.json~     | ~存放彩云小译的api-key：[彩云](https://docs.caiyunapp.com/blog/2018/09/03/lingocloud-api/#python-%E8%B0%83%E7%94%A8)~ 已使用`config.json`代替 |
 

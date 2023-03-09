@@ -13,7 +13,7 @@ from ..valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
 from ..valorant.EzAuth import EzAuthExp,EzAuth
 
 # bot的配置文件
-from ..file.Files import config,UserAuthCache,ApiAuthLog,AfdWebhook,_log
+from ..file.Files import config,UserAuthCache,AfdWebhook,_log
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
 # 默认的背景图
@@ -86,7 +86,7 @@ async def img_draw_request(request):
             'code': 400,
             'message': 'params needed: token/list_shop',
             'info': '缺少参数！示例: /shop-draw?token=api凭证&list_shop=四个皮肤uuid的list&vp=vp（可选）&rp=rp（可选）&img_src=自定义背景图（可选）',
-            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         }
     
     # params是multidict，传入的list_shop被拆分成了多个键值，需要合并
@@ -155,7 +155,7 @@ async def login_request(request,method = "GET"):
             'code': 400,
             'message': 'params needed: token/account/passwd',
             'info': '缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）',
-            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         }
 
     account = params['account']
@@ -200,7 +200,7 @@ async def tfa_code_requeset(request):
             'code': 400,
             'message': 'params needed: token/account/vcode',
             'info': '缺少参数！示例: /tfa?token=api凭证&account=Riot账户&vcode=邮箱验证码',
-            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         }
 
     account = params['account']
@@ -239,7 +239,7 @@ async def shop_cmp_request(request):
             'code': 400,
             'message': 'params needed: token/best/worse/platform',
             'info': '缺少参数！请参考api文档，正确设置您的参数',
-            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         }
     
     best = params['best']

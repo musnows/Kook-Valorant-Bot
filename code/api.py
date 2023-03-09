@@ -19,7 +19,7 @@ async def hello_world(request):  # put application's code here
             'message': 'Hello! Use path /shop or /shop-img to get valorant daily shop',
             'info':
             '在path后添加/shop-img或者/shop来获取每日商店，前者会直接跳转，后者返回一个带图片url的json。示例: /shop?account=Riot账户&passwd=Riot密码&img_src=可选参数，自定义背景图',
-            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         },
         indent=2,
         sort_keys=True,
@@ -142,7 +142,7 @@ async def post_shop(request):
                 'code': 400,
                 'message': 'params needed: token/account/passwd',
                 'info': '缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）',
-                'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+                'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
             }
             return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
