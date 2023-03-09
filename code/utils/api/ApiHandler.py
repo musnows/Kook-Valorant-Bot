@@ -184,11 +184,9 @@ async def login_request(request,method = "GET"):
     _log.info(f"Api login | user auth success")
     # 如果是GET方法，直接调用获取商店的操作
     if method == "GET": # /shop-img 接口是get的
+        _log.debug(f"Api login | enter def shop_get_request")
         return await shop_get_request(params,account)
-    # 保存cookie到本地
-    if account not in ApiAuthLog:
-        ApiAuthLog.append(account) # 记录已缓存的用户账户（方便开机加载）
-    auth.save_cookies(f"./log/cookie/{account}.cke") 
+    
     return {'code': 0, 'message': "auth success", 'info': '登录成功！'}
 
 
@@ -227,10 +225,6 @@ async def tfa_code_requeset(request):
     # 走到这里，代表是2fa用户，且登陆成功
     await AuthCache.cache_auth_object('api',account,auth)
     _log.info("Api tfa | 2fa user auth success")
-    # 保存cookie到本地
-    if auth.user_id not in ApiAuthLog:
-        ApiAuthLog.append(auth.user_id) # 记录已缓存的用户账户（方便开机加载）
-    auth.save_cookies(f"./log/cookie/{auth.user_id}.cke") 
     return  {'code': 0, 'message': "2fa auth success", 'info': '2fa用户登录成功！'}
 
 
