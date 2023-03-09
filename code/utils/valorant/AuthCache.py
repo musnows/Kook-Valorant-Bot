@@ -40,8 +40,7 @@ async def cache_auth_object(platfrom:str,key:str,auth:EzAuth) -> None:
         # 往缓存键值中插入Riot用户的uuid (api的键值是用户账户，有唯一性，不需弄list)
         UserAuthCache['api'][key] = auth.user_id
         # 记录已缓存的用户账户（方便开机加载）
-        if auth.user_id not in ApiAuthLog:
-            ApiAuthLog.append(auth.user_id) 
+        ApiAuthLog[key] = auth.user_id
         # 保存cookie到本地
         auth.save_cookies(f"./log/cookie/{auth.user_id}.cke")
         _log.info(f"save cookies | './log/cookie/{auth.user_id}.cke'")

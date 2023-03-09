@@ -2246,25 +2246,27 @@ async def loading_cache(bot: Bot):
     log_str_success = "[BOT.TASK] load cookie success  = Au:"
     log_str_failed = "[BOT.TASK] load cookie failed!  = Au:"
     log_not_exits = "[BOT.TASK] cookie path not exists = Au:"
-    # 遍历用户列表
-    for user, uinfo in VipUserDict.items():
-        cookie_path = f"./log/cookie/{user}.cke"
-        #如果路径存在，那么说明已经保存了这个vip用户的cookie
-        if os.path.exists(cookie_path):
-            auth = EzAuth()
-            auth.load_cookies(cookie_path)  #加载cookie
-            ret_bool = await auth.reauthorize(exp_print=False)  #尝试登录
-            if ret_bool:  # True登陆成功
-                UserAuthCache['kook'][user] = [auth.user_id]
-                UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
-                log_str_success += f"({user})"
+    # 遍历vip的用户dict
+    for user, uinfo in VipAuthLog.items():
+        UserAuthCache['kook'][user] = []
+        for ru in uinfo: # 遍历该用户已登录账户的uuid列表
+            cookie_path = f"./log/cookie/{ru}.cke"
+            # 如果路径存在，那么说明已经保存了这个vip用户的cookie
+            if os.path.exists(cookie_path):
+                auth = EzAuth()
+                auth.load_cookies(cookie_path)  # 加载cookie
+                ret_bool = await auth.reauthorize(exp_print=False)  # 尝试登录
+                if ret_bool:  # True登陆成功
+                    UserAuthCache['kook'][user].append(auth.user_id)
+                    UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
+                    log_str_success += f"({user},{ru})"
+                else:
+                    del auth  # 删除对象
+                    log_str_failed += f"({user},{ru})"
+                    continue
             else:
-                del auth  # 删除对象
-                log_str_failed += f"({user})"
+                log_not_exits += f"({user},{ru})"
                 continue
-        else:
-            log_not_exits += f"({user})"
-            continue
     # 结束任务
     _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
     _log.info(f"[BOT.TASK] loading user cookie finished")
@@ -2273,24 +2275,28 @@ async def loading_cache(bot: Bot):
     log_str_success = "[BOT.TASK] api load cookie success  = Au:"
     log_str_failed = "[BOT.TASK] api load cookie failed!  = Au:"
     log_not_exits = "[BOT.TASK] api cookie path not exists = Au:"
-    # 遍历api用户列表
-    for user in ApiAuthLog:
-        cookie_path = f"./log/cookie/api/{user}.cke"
-        #如果路径存在，那么说明已经保存了这个vip用户的cookie
-        if os.path.exists(cookie_path):
+    # 遍历api用户列表，对应的是account:uuid
+    for acc,ru in ApiAuthLog.items():
+        cookie_path = f"./log/cookie/{ru}.cke"
+        # 如果uuid存在，代表之前vip用户里面有这个对象，直接插入
+        if ru in UserAuthCache['data']:
+            UserAuthCache['api'][acc] = ru
+            log_str_success += f"({acc},v)"
+        # 如果路径存在，那么说明已经保存了这个vip用户的cookie
+        elif os.path.exists(cookie_path):
             auth = EzAuth()
             auth.load_cookies(cookie_path)  #加载cookie
             ret_bool = await auth.reauthorize(exp_print=False)  #尝试登录
             if ret_bool:  # True登陆成功
-                UserAuthCache['api'][user] = auth.user_id
+                UserAuthCache['api'][acc] = auth.user_id
                 UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
-                log_str_success += f"({user})"
+                log_str_success += f"({acc})"
             else:
                 del auth  # 删除对象
-                log_str_failed += f"({user})"
+                log_str_failed += f"({acc})"
                 continue
         else:
-            log_not_exits += f"({user})"
+            log_not_exits += f"({acc})"
             continue
     # 结束任务
     _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)

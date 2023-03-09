@@ -43,10 +43,10 @@ UserRiotName = UserAuthID['data']
 """riot用户游戏id和uuid"""
 UserPwdReauth = UserAuthID['ap_log']
 """riot账户密码重登记录。如果机器人有使用过账户密码进行重登，会在这里记录"""
-ApiAuthLog:list = UserAuthID['api_auth_log']
-"""api 缓存用户的riot_user_uuid记录"""
+ApiAuthLog:dict = UserAuthID['api_auth_log']
+"""api 缓存用户的riot_user_uuid记录。格式 `account:uuid`"""
 VipAuthLog:dict = UserAuthID["vip_auth_log"]
-"""vip 已登录用户的记录。格式 vip_userid:[uuid1,uuid2]"""
+"""vip 已登录用户的记录。格式 `vip_userid:[uuid1,uuid2]`"""
 
 # vip相关
 VipUuidDict = FileManage("./log/VipUuid.json")
@@ -67,11 +67,11 @@ NightMarketOff:bool = True
 """夜市是否关闭？False (on,夜市开着) | True (off,夜市关闭)"""
 UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}  
 """api/bot 公用EzAuth对象缓存:
-- api  | 用户账户:riot_user_uuid
-- kook | kook_user_id:[uuid1,uuid2]  值为list,支持多账户登录
-- data | riot_user_uuid:{"auth": EzAuth Obj, "2fa": EzAuth.is2fa}
-- acpw | riot_user_uuid:{'a':账户,'p':密码}  用于bot中的账户密码存储。只存储在全局变量中，不写入磁盘
-- tfa  | 用户id:EzAuth对象  临时使用的缓存
+- api  | `用户账户:riot_user_uuid`
+- kook | `kook_user_id:[uuid1,uuid2]`  值为list,支持多账户登录
+- data | `riot_user_uuid:{"auth": EzAuth Obj, "2fa": EzAuth.is2fa}`
+- acpw | `riot_user_uuid:{'a':账户,'p':密码}`  用于bot中的账户密码存储。只存储在全局变量中，不写入磁盘
+- tfa  | `用户id:EzAuth Obj`  临时使用的缓存
 """
 login_rate_limit = {'limit': False, 'time': time()}
 """全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
