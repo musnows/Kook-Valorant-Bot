@@ -38,13 +38,15 @@ SkinRateDict = FileManage("./log/ValSkinRate.json")
 SkinNotifyDict = FileManage("./log/UserSkinNotify.json")
 """皮肤提醒 用户记录"""
 UserAuthID = FileManage("./log/UserAuthID.json")
-"""用户游戏id/uuid，账户密码重登记录"""
+"""用户游戏id/uuid，账户密码重登记录，api/vip登录用户记录"""
 UserRiotName = UserAuthID['data']
 """riot用户游戏id和uuid"""
 UserPwdReauth = UserAuthID['ap_log']
-"""riot账户密码重登记录"""
-ApiAuthLog:list = UserAuthID['api_log']
+"""riot账户密码重登记录。如果机器人有使用过账户密码进行重登，会在这里记录"""
+ApiAuthLog:list = UserAuthID['api_auth_log']
 """api 缓存用户的riot_user_uuid记录"""
+VipAuthLog:dict = UserAuthID["vip_auth_log"]
+"""vip 已登录用户的记录。格式 vip_userid:[uuid1,uuid2]"""
 
 # vip相关
 VipUuidDict = FileManage("./log/VipUuid.json")

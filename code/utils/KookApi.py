@@ -112,6 +112,7 @@ class icon_cm:
     correct = "https://img.kookapp.cn/assets/2022-09/DknXSpwrlQ0e80e8.gif"
     duck = "https://img.kookapp.cn/assets/2022-09/qARsaxW6lp0e80e8.gif"
     that_it = "https://img.kookapp.cn/assets/2022-09/LqD0pQY2P70e80e8.png"
+    no_time = "https://img.kookapp.cn/assets/2023-03/hNrtZg68pZ03k03k.png"
     to_much_money = "https://img.kookapp.cn/assets/2022-09/y17ZhjjaVf0e80e8.png"
     shaka = "https://img.kookapp.cn/assets/2022-09/kMWT5AoEic0e80e8.png"
     say_hello_to_camera = "https://img.kookapp.cn/assets/2022-09/sHh8VJrMp20e80e8.png"
