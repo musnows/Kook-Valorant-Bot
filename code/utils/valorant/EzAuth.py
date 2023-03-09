@@ -133,7 +133,7 @@ class EzAuth:
         Return: 
          - {"status":True,"auth":self,"2fa":self.is2fa}
          - {"status":False,"auth":self,"2fa_status":self.is2fa}
-         if False, using email_verify() to send verify code
+         - if False, using email_verify() to send verify code
         """
         if username and password:
             self.session.cookies.clear()  # not reauth, clear cookie

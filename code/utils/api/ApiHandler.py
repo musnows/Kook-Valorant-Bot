@@ -4,45 +4,21 @@ import traceback
 
 from khl.card import CardMessage, Card, Module, Types, Element
 
-from utils.valorant.EzAuth import EzAuthExp,EzAuth
-from utils.api.ApiToken import check_token_rate
-from utils.Gtime import getTime
-from utils.KookApi import kook_create_asset
-from utils.valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
-from utils import ShopRate,ShopImg
+from .ApiToken import check_token_rate
+from ..Gtime import getTime
+from ..KookApi import kook_create_asset
+from .. import ShopRate,ShopImg
+from ..valorant import AuthCache
+from ..valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
+from ..valorant.EzAuth import EzAuthExp,EzAuth
 
 # bot的配置文件
-from ..file.Files import config,ApiAuthCache,ApiAuthLog,AfdWebhook,_log
+from ..file.Files import config,UserAuthCache,ApiAuthLog,AfdWebhook,_log
 # 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
 # 默认的背景图
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
-
-
-# # 上传到lsky (这个上传很麻烦，lsky只认open打开的图片)
-# gLock = asyncio.Lock() # 创建一把锁，用于保存文件
-# async def lsky_upload(bg):
-#     await gLock.acquire()# 上锁
-#     path = "./log/api_img_temp.png"
-#     bg.save(path, format='PNG')
-#     img = open(path,'rb')
-#     gLock.release()     # 释放锁
-#     # lsky的连接和token写入配置文件，方便修改
-#     url = f"{config['lsky']['url']}/api/v1/upload"
-#     header = {
-#         "Authorization": f"Bearer {config['lsky']['token']}",
-#         "Accept": "application/json"
-#     }
-#     params = {'strategy_id':3}
-#     myfiles = {'file': img}
-#     ret = requests.post(url, headers=header, params=params,files=myfiles)  # 请求api
-#     ret = ret.json()
-#     _log.debug(ret)
-#     if ret['status']: # 上传成功
-#         return {'code':0,'data':ret['data']['links'],'message':ret['message']}
-#     # 上传失败
-#     return {'code':200,'data':ret['data'],'message':ret['message']}
 
 
 # 基本画图操作
@@ -139,11 +115,13 @@ async def shop_get_request(params,account:str):
     isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
     isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
     # 2.获取缓存中的auth对象
-    if account not in ApiAuthCache['data']:
-        return { "code":200,"message":"account不在ApiAuthCache缓存中，请先调用/login接口",
-                "info":"account not in ApiAuthCache['data']" }
+    if account not in UserAuthCache["api"]:
+        return { "code":200,"message":"account不在已登录用户的缓存中，请先POST调用/login接口",
+                "info":"account not in Cache, please POST /login" }
     # 2.1 判断通过，获取auth
-    auth = ApiAuthCache['data'][account]['auth']
+    authlist = await AuthCache.get_auth_object("api",account)
+    assert isinstance(authlist,list)
+    auth = authlist[0]["auth"]
     assert isinstance(auth,EzAuth)
     # 2.2 重新登录
     ret = await auth.reauthorize()
@@ -192,7 +170,8 @@ async def login_request(request,method = "GET"):
         # 登录，获取用户的token
         auth = EzAuth()
         resw = await auth.authorize(account,passwd)
-        ApiAuthCache['data'][account] = {"auth": auth, "2fa": auth.is2fa } # 将对象插入
+        # 缓存
+        await AuthCache.cache_auth_object('api',account,auth)
         # 没有成功，是2fa用户，需要执行/tfa
         if not resw['status']:
             return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
@@ -209,7 +188,7 @@ async def login_request(request,method = "GET"):
     # 保存cookie到本地
     if account not in ApiAuthLog:
         ApiAuthLog.append(account) # 记录已缓存的用户账户（方便开机加载）
-    auth.save_cookies(f"./log/cookie/api/{account}.cke") 
+    auth.save_cookies(f"./log/cookie/{account}.cke") 
     return {'code': 0, 'message': "auth success", 'info': '登录成功！'}
 
 
@@ -230,14 +209,14 @@ async def tfa_code_requeset(request):
     vcode = params['vcode']
     token = params['token']
 
-    global ApiAuthCache
-    if account not in ApiAuthCache['data']:
-        return { 'code': 200,'message': 'Riot account not in ApiAuthCache',
-            'info': '拳头账户不在dict中，请先请求/shop-img或/login接口' }
     try:
-        auth = ApiAuthCache['data'][account]['auth']
+        auth = await AuthCache.get_tfa_auth_object(account)
         assert isinstance(auth,EzAuth)
         res = await auth.email_verfiy(vcode)
+    except AssertionError as result:
+        _log.exception("Api tfa | AssertionError")
+        return { 'code': 200,'message': 'Riot account not in tfa auth cache',
+            'info': '拳头账户不在缓存中，请先请求/shop-img或/login接口','vcode': vcode }
     except EzAuthExp.MultifactorError as result:
         _log.exception("Api tfa | MultifactorError")
         if "multifactor_attempt_failed" in str(result):
@@ -246,11 +225,12 @@ async def tfa_code_requeset(request):
         # 其他情况
         return {'code': 200,'message': '2fa auth_failure','info': '两步验证登陆错误，请重新操作','vcode': vcode}
     # 走到这里，代表是2fa用户，且登陆成功
+    await AuthCache.cache_auth_object('api',account,auth)
     _log.info("Api tfa | 2fa user auth success")
     # 保存cookie到本地
-    if account not in ApiAuthLog:
-        ApiAuthLog.append(account) # 记录已缓存的用户账户（方便开机加载）
-    auth.save_cookies(f"./log/cookie/api/{account}.cke") 
+    if auth.user_id not in ApiAuthLog:
+        ApiAuthLog.append(auth.user_id) # 记录已缓存的用户账户（方便开机加载）
+    auth.save_cookies(f"./log/cookie/{auth.user_id}.cke") 
     return  {'code': 0, 'message': "2fa auth success", 'info': '2fa用户登录成功！'}
 
 

@@ -43,8 +43,8 @@ UserRiotName = UserAuthID['data']
 """riot用户游戏id和uuid"""
 UserPwdReauth = UserAuthID['ap_log']
 """riot账户密码重登记录"""
-ApiAuthLog = UserAuthID['api_log']
-"""api 缓存用户的account记录"""
+ApiAuthLog:list = UserAuthID['api_log']
+"""api 缓存用户的riot_user_uuid记录"""
 
 # vip相关
 VipUuidDict = FileManage("./log/VipUuid.json")
@@ -59,9 +59,9 @@ VipRollDcit = VipUser['roll']
 """vip 抽奖记录"""
 
 # 缓存相关
-LoginForbidden = False
+LoginForbidden:bool = False
 """出现403错误，禁止重登"""
-NightMarket = False
+NightMarket:bool = False
 """夜市是否开启？False没开，True开"""
 UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}  
 """api/bot 公用EzAuth对象缓存:
@@ -71,8 +71,6 @@ UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}
 - acpw | riot_user_uuid:{'a':账户,'p':密码}  用于bot中的账户密码存储。只存储在全局变量中，不写入磁盘
 - tfa  | 用户id:EzAuth对象  临时使用的缓存
 """
-ApiAuthCache = {'data':{}}       
-"""api EzAuth对象缓存"""
 login_rate_limit = {'limit': False, 'time': time()}
 """全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 - {'limit': False, 'time': time()}
