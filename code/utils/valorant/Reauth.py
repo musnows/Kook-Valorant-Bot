@@ -2,7 +2,7 @@ import traceback
 from khl import Message, Channel
 from aiohttp import client_exceptions
 from .EzAuth import EzAuth, EzAuthExp
-from ..file.Files import UserAuthCache, UserRiotName, UserPwdReauth, LoginForbidden,SkinNotifyDict, bot
+from ..file.Files import UserAuthCache, UserPwdReauth, LoginForbidden,SkinNotifyDict, bot
 from .Val import fetch_valorant_point
 from ..log.Logging import _log
 from .. import KookApi, Gtime
@@ -45,7 +45,7 @@ async def login_reauth(kook_user_id: str, riot_user_id: str) -> bool:
     """
     base_print = f"Au:{kook_user_id} | Riot:{riot_user_id} | "
     _log.info(base_print + "auth_token failure,trying reauthorize()")
-    global UserAuthCache, UserRiotName
+    global UserAuthCache
     # 这个函数只负责重登录，所以直接找对应的拳头用户id
     auth = UserAuthCache['data'][riot_user_id]['auth']
     assert isinstance(auth, EzAuth)

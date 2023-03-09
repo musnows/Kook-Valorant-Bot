@@ -828,7 +828,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.file.Files import (UserRiotName, SkinNotifyDict, SkinRateDict, ValBundleList,UserAuthCache,UserPwdReauth,ValItersEmoji,
+from utils.file.Files import (SkinNotifyDict, SkinRateDict, ValBundleList,UserAuthCache,UserPwdReauth,ValItersEmoji,
                               UserStsDict,UserRtsDict,UserShopCache,login_rate_limit)
 
 def check_rate_err_user(kook_user_id: str)-> bool:
@@ -909,7 +909,7 @@ async def check_UserAuthCache_len(msg: Message):
 async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /login {apSave}")
     BotLog.log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
-    global LoginForbidden, login_rate_limit, UserRiotName, UserAuthCache
+    global LoginForbidden, login_rate_limit, UserAuthCache
     if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
         await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
         return
@@ -946,9 +946,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
             return
 
         # 4.如果没有抛出异常，那就是完成登录了，设置用户的玩家uuid+昵称
-        UserRiotName[msg.author_id] = {'auth_user_id': auth.user_id, 'GameName': auth.Name, 'TagLine': auth.Tag}
-        # 设置基础打印信息
-        text = f"登陆成功！欢迎回来，{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+        text = f"登陆成功！欢迎回来，{auth.Name}#{auth.Tag}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
 
         # 5.如果是vip用户，则执行下面的代码
@@ -969,7 +967,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
 
         # 8.全部都搞定了，打印登录信息日志
         _log.info(
-            f"Login | Au:{msg.author_id} | {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+            f"Login | Au:{msg.author_id} | {auth.Name}#{auth.Tag}"
         )
     except EzAuthExp.AuthenticationError as result:
         _log.error(f"login AuthenticationError | Au:{msg.author_id} | {result}")
@@ -1055,13 +1053,12 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         if await BotVip.vip_ck(msg.author_id):
             await cache_vip_auth(msg.author_id,auth)
         # 4.成功
-        UserRiotName[msg.author_id] = {'auth_user_id': auth.user_id, 'GameName': auth.Name, 'TagLine': auth.Tag}
-        text = f"登陆成功！欢迎回来，{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+        text = f"登陆成功！欢迎回来，{auth.Name}#{auth.Tag}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
         cm = await get_card(text, info_text, icon_cm.correct)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         _log.info(
-            f"tfa | Au:{msg.author_id} | {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
+            f"tfa | Au:{msg.author_id} | {auth.Name}#{auth.Tag}"
         )
     except EzAuthExp.MultifactorError as result:
         if "multifactor_attempt_failed" in str(result):
@@ -1079,7 +1076,7 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
 async def logout(msg: Message, *arg):
     BotLog.logMsg(msg)
     try:
-        global UserRiotName, UserAuthCache
+        global UserAuthCache
         # 1.用户如果没有登录，那也没必要logout
         if msg.author_id not in UserAuthCache['kook']: 
             cm = await get_card("您尚未登陆！无须logout", "阿巴阿巴？", icon_cm.whats_that)
@@ -1087,13 +1084,12 @@ async def logout(msg: Message, *arg):
             return
 
         log_text = f"Logout | Au:{msg.author_id}"
-        # 2.如果id存在，删除auth对象; 删除UserRiotName里面存放的用户游戏名/uuid
+        # 2.如果id存在，删除auth对象
         # 2.1 删除对象
         riot_user_id_list = UserAuthCache['kook'][msg.author_id]
         for u in riot_user_id_list:
             del UserAuthCache['data'][u]
         # 2.2 删除键值
-        del UserRiotName[msg.author_id]
         del UserAuthCache['kook'][msg.author_id]
         # 3.如果是vip用户，删除本地保存的cookie
         cookie_path = f"./log/cookie/{msg.author_id}.cke"
@@ -1198,8 +1194,6 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         # 3.执行cookie重登
         reau = await Reauth.check_reauth("每日商店",msg.author_id,riot_user_id,debug_ch,msg)
         if reau == False: return  # 如果为假说明重新登录失败，退出
-        # 3.1 重新获取token成功，从dict中获取玩家id
-        player_gamename = f"{UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']}"
         # 3.2 获取玩家id成功了，再提示正在获取商店
         cm = await get_card("正在尝试获取您的每日商店", "阿狸正在施法，很快就好啦！", icon_cm.duck)
         # 3.2.1 如果reauth函数return的是dict，说明重新登录成功且发送了消息，则更新卡片
@@ -1218,6 +1212,8 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         auth = UserAuthCache['data'][riot_user_id]['auth']
         assert isinstance(auth, EzAuth)
         riotUser = auth.get_riotuser_token()
+        # 4.2.1 从dict中获取玩家id
+        player_gamename = f"{auth.Name}#{auth.Tag}"
         # 4.3 开始判断是否需要获取商店（是否有缓存）
         a_time = time.time()
         global UserShopCache, VipShopBgDict
@@ -1393,7 +1389,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         c = Card(color='#fb4b57')
         c.append(
             Module.Header(
-                f"玩家 {UserRiotName[msg.author_id]['GameName']}#{UserRiotName[msg.author_id]['TagLine']} 的夜市！"))
+                f"玩家「{auth.Name}#{auth.Tag}」的夜市！"))
         for Bonus in resp["BonusStore"]["BonusStoreOffers"]:
             # 获取皮肤信息
             skin = fetch_skin_bylist(Bonus["Offer"]["OfferID"])
@@ -2059,7 +2055,7 @@ async def auto_skin_notify():
                         # 卡片消息发送图片或者text
                         c = Card(color='#fb4b57')
                         c.append(Module.Header(
-                                    f"早安！玩家 {UserRiotName[vip]['GameName']}#{UserRiotName[vip]['TagLine']} 的每日商店"))
+                                    f"早安！玩家 {auth.Name}#{auth.Tag} 的每日商店"))
                         c.append(Module.Context(f"失效时间剩余: {timeout}    本次查询用时: {using_time}s"))
                         # 如果字符串不为空，代表图片获取失败，需要进行文字提醒
                         if not shop_text:
