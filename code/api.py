@@ -49,7 +49,7 @@ async def get_shop_draw(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 
@@ -77,7 +77,7 @@ async def get_shop_img(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 
@@ -102,7 +102,7 @@ async def post_login(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 # 邮箱验证登录
@@ -126,7 +126,7 @@ async def post_tfa_code(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
     
 @routes.post('/shop')
@@ -137,11 +137,11 @@ async def post_shop(request):
         params = json.loads(body.decode('UTF8'))
         # 判断必须要的参数是否齐全
         if 'account' not in params or 'token' not in params: # 不全，报错
-            _log.error(f"params needed: token/account/passwd")
+            _log.error(f"params needed: token/account")
             ret = {
                 'code': 400,
-                'message': 'params needed: token/account/passwd',
-                'info': '缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）',
+                'message': 'params needed: token/account',
+                'info': '缺少参数！请参考docs文档里面的参数表',
                 'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
             }
             return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
@@ -163,7 +163,7 @@ async def post_shop(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 # 用于控制db中ShopCmp的更新
@@ -187,7 +187,7 @@ async def post_shop_cmp(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 
@@ -207,6 +207,7 @@ async def aifadian_webhook(request):
             "ec": 0,
             "em": "err ouccer"
         }, indent=2, sort_keys=True, ensure_ascii=False),
+                            status=503,
                             content_type='application/json')
 
 

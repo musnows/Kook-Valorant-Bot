@@ -14,12 +14,12 @@ from ..valorant.EzAuth import EzAuthExp,EzAuth
 
 # bot的配置文件
 from ..file.Files import config,UserAuthCache,AfdWebhook,_log
-# 用来给kook上传文件的bot token
 api_bot_token = config['token']['api_bot_token']
-# 默认的背景图
+"""用来给kook上传文件的bot token"""
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
+"""默认的16-9背景图"""
 img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
-
+"""默认的1-1背景图"""
 
 # 基本画图操作
 async def base_img_request(params, list_shop, vp1=0, rp1=0):
@@ -186,8 +186,18 @@ async def login_request(request,method = "GET"):
     if method == "GET": # /shop-img 接口是get的
         _log.debug(f"Api login | enter def shop_get_request")
         return await shop_get_request(params,account)
-    
-    return {'code': 0, 'message': "auth success", 'info': '登录成功！'}
+    # 返回用户信息
+    return {
+        'code': 0, 
+        'message': "auth success", 
+        'info': '登录成功！',
+        "user":{
+            "uuid": auth.user_id,
+            "name": auth.Name,
+            "tag": auth.Tag,
+            "region": auth.Region
+        }
+    }
 
 
 # 邮箱验证的post
@@ -225,7 +235,17 @@ async def tfa_code_requeset(request):
     # 走到这里，代表是2fa用户，且登陆成功
     await AuthCache.cache_auth_object('api',account,auth)
     _log.info("Api tfa | 2fa user auth success")
-    return  {'code': 0, 'message': "2fa auth success", 'info': '2fa用户登录成功！'}
+    return  {
+        'code': 0, 
+        'message': "2fa auth success", 
+        'info': '2fa用户登录成功！',
+        "user":{
+            "uuid": auth.user_id,
+            "name": auth.Name,
+            "tag": auth.Tag,
+            "region": auth.Region
+        }
+    }
 
 
 # 更新leancloud
