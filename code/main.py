@@ -988,16 +988,8 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
         err_str = f"ERR! [{getTime()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
-        if 'auth.riotgames.com' and '403' in str(result):
-            LoginForbidden = True
-            err_str += f"[Login] 403 err! set LoginForbidden = True"
-        elif '404' in str(result):
-            err_str += f"[Login] 404 err! network err, try again"
-        else:
-            err_str += f"[Login] Unkown aiohttp ERR!"
-        # 打印+发送消息
+        Reauth.client_exceptions_handler(str(result),err_str)
         _log.exception("Exception occur in login")
-        await bot.client.send(debug_ch, err_str)
         cm = await get_card(err_str)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except KeyError as result:

@@ -57,7 +57,7 @@ async def login_reauth(kook_user_id: str, riot_user_id: str) -> bool:
     else:  # cookie重新登录失败
         _log.info(base_print + "reauthorize() Failed! T-T")  # 失败打印
         # 有保存账户密码+不是邮箱验证用户
-        if riot_user_id in UserAuthCache['acpw'] and (not UserAuthCache[riot_user_id]['2fa']):
+        if riot_user_id in UserAuthCache['acpw'] and (not auth.is2fa):
             auth = EzAuth()  # 用账户密码重新登录
             resw = await auth.authorize(UserAuthCache['acpw'][riot_user_id]['a'],
                                         UserAuthCache['acpw'][riot_user_id]['p'])
@@ -66,7 +66,7 @@ async def login_reauth(kook_user_id: str, riot_user_id: str) -> bool:
                 return False
             # 更新auth对象
             UserAuthCache['data'][riot_user_id]['auth'] = auth
-            auth.save_cookies(f"./log/cookie/{kook_user_id}.cke")  # 保存cookie
+            auth.save_cookies(f"./log/cookie/{riot_user_id}.cke")  # 保存cookie
             # 记录使用账户密码重新登录的时间，和对应的账户
             UserPwdReauth[kook_user_id][Gtime.getTime()] = f"{auth.Name}#{auth.Tag}"
             _log.info(base_print + "authorize by account/passwd")
