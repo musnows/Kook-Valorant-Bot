@@ -173,9 +173,9 @@ async def APIRequestFailed_Handler(def_name: str,
             await bot.send(cur_ch, cm)
         _log.error(f"Au:{msg.author_id} | 引用不存在, 直接发送cm")
         return
-    elif "json没有通过验证" in excp:
+    elif "json没有通过验证" in excp or "json格式不正确" in excp:
         _log.error(f"Au:{msg.author_id} | json.dumps: {json.dumps(cm)}")
-        text_sub = f"卡片消息json没有通过验证或者不存在"
+        text_sub = f"卡片消息json没有通过验证或格式不正确"
     elif "屏蔽" in excp:
         _log.error(f"Au:{msg.author_id} | 用户屏蔽或权限不足")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
