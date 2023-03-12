@@ -132,7 +132,7 @@ async def check_reauth(def_name: str,
         await bot.client.send(debug_ch, err_str)
         return False
     # 用户在EzAuth初始化完毕之前调用了其他命令
-    except EzAuthExp.InitError as result:
+    except EzAuthExp.InitNotFinishError as result:
         _log.warning(f"Au:{kook_user_id} | EzAuth used before init")
         return False
     except Exception as result:

@@ -135,54 +135,66 @@ class EzAuth:
          - {"status":False,"auth":self,"2fa_status":self.is2fa}
          - if False, using email_verify() to send verify code
         """
-        if username and password:
-            self.session.cookies.clear()  # not reauth, clear cookie
+        try:
+            if username and password:
+                self.session.cookies.clear()  # not reauth, clear cookie
 
-        token = {"access_token": "", "id_token": "", "token_type": "Bearer", "expires_in": '0'}
-        body = {
-            "acr_values": "urn:riot:bronze",
-            "claims": "",
-            "client_id": "riot-client",
-            "nonce": "oYnVwCSrlS5IHKh7iI16oQ",
-            "redirect_uri": "http://localhost/redirect",
-            "response_type": "token id_token",
-            "scope": "openid link ban lol_region",
-        }
-        r = self.session.post(url=URLS.AUTH_URL, json=body)
-        data = r.json()
-        resp_type = data["type"]
-
-        if resp_type != "response":  # not reauth
-            body = {"language": "en_US", "password": password, "remember": "true", "type": "auth", "username": username}
-            r = self.session.put(url=URLS.AUTH_URL, json=body)
+            token = {"access_token": "", "id_token": "", "token_type": "Bearer", "expires_in": '0'}
+            body = {
+                "acr_values": "urn:riot:bronze",
+                "claims": "",
+                "client_id": "riot-client",
+                "nonce": "oYnVwCSrlS5IHKh7iI16oQ",
+                "redirect_uri": "http://localhost/redirect",
+                "response_type": "token id_token",
+                "scope": "openid link ban lol_region",
+            }
+            r = self.session.post(url=URLS.AUTH_URL, json=body)
             data = r.json()
+            resp_type = data["type"]
 
-            if data["type"] == "response":
-                pass
+            # 这种情况一般是在reauthorize里面出现的
+            # {"type":"error","error":"invalid_request","country":"chn"}
+            if resp_type == "error":
+                _log.debug(r.text)
+                raise EzAuthExp.AuthenticationError(r.text)
+            
+            elif resp_type != "response":  # not reauth
+                body = {"language": "en_US", "password": password, "remember": "true", "type": "auth", "username": username}
+                r = self.session.put(url=URLS.AUTH_URL, json=body)
+                data = r.json()
 
-            elif "auth_failure" in r.text:
-                raise EzAuthExp.AuthenticationError("auth_failure, user not exist")
+                if data["type"] == "response":
+                    pass
 
-            elif 'rate_limited' in r.text:
-                raise EzAuthExp.RatelimitError("auth_failure, rate_limited")
+                elif "auth_failure" in r.text:
+                    raise EzAuthExp.AuthenticationError("auth_failure, user not exist")
 
-            # 2fa auth
-            elif 'multifactor' in r.text:
-                self.is2fa = True  # is 2fa user
-                self.__mfa_start = time.time()
-                return {"status": False, "auth": self, "2fa_status": self.is2fa}
+                elif 'rate_limited' in r.text:
+                    raise EzAuthExp.RatelimitError("auth_failure, rate_limited")
+
+                # 2fa auth
+                elif 'multifactor' in r.text:
+                    self.is2fa = True  # is 2fa user
+                    self.__mfa_start = time.time()
+                    return {"status": False, "auth": self, "2fa_status": self.is2fa}
+                else:
+                    raise EzAuthExp.UnkownError(r.text)
+
+            # get access_token from response
+            if "access_token" in r.text:
+                token = self.__set_access_token(data)
+                # auth/reauth success
+                self.__set_info(tokens=token)
             else:
                 raise EzAuthExp.UnkownError(r.text)
 
-        # get access_token from response
-        if "access_token" in r.text:
-            token = self.__set_access_token(data)
-            # auth/reauth success
-            self.__set_info(tokens=token)
-        else:
-            raise EzAuthExp.UnkownError(r.text)
-
-        return {"status": True, "auth": self, "2fa_status": self.is2fa}
+            return {"status": True, "auth": self, "2fa_status": self.is2fa}
+        
+        except requests.exceptions.JSONDecodeError as result:
+            # 出现这个错误，一般都是连不上服务器导致返回的结果并不是json格式的，直接返回假即可
+            _log.warning(f"requests.exceptions.JSONDecodeError: {result}")
+            return {"status": False, "auth": self, "2fa_status": self.is2fa}
 
     async def email_verfiy(self, vcode: str) -> dict:
         """email_verfiy after trying authorize
@@ -322,7 +334,7 @@ class EzAuth:
                                 region=self.Region)    
             return ret
         else:
-            raise EzAuthExp.InitError("EzAuth Obj not initialized")
+            raise EzAuthExp.InitNotFinishError("EzAuth Obj not initialized")
 
     def save_cookies(self, path: str) -> None:
         """dump cookies_dict to path (w+)
