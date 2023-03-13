@@ -53,15 +53,21 @@ async def get_shop_draw(request):
                             content_type='application/json')
 
 
-# 直接跳转图片（浏览器访问，get方法不安全）
+# 直接跳转图片
 @routes.get('/shop-img')
 async def get_shop_img(request):
     _log.info(f"request | /shop-img")
     try:
+        params = request.rel_url.query
         ret = await ApiHandler.login_request(request,"GET")
         if ret['code'] == 0:
-            return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
-        else:
+            # 如果url不在，或者值不为1，则303跳转图片
+            if 'url' not in params or str(params['url']) != '0':
+                return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
+            else:
+                return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
+                        content_type='application/json',status=200)
+        else: # 出错误了
             return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                                 content_type='application/json',status=200)
     except:
