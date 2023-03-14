@@ -888,8 +888,12 @@ async def cache_vip_auth(kook_user_id:str,auth:EzAuth):
     if kook_user_id in VipShopBgDict['bg']:
         VipShopBgDict['bg'][kook_user_id]['status'] = False
     # 用于保存cookie的路径,保存vip用户登录信息
-    if kook_user_id not in VipAuthLog: VipAuthLog[kook_user_id] = []
-    VipAuthLog[kook_user_id].append(auth.user_id) # 插入键值
+    if kook_user_id not in VipAuthLog: 
+        VipAuthLog[kook_user_id] = []
+    # 如果这个uuid不在，再插入
+    if auth.user_id not in VipAuthLog[kook_user_id]:
+        VipAuthLog[kook_user_id].append(auth.user_id) # 插入键值
+    # 保存cookie到本地
     auth.save_cookies(f"./log/cookie/{auth.user_id}.cke")
     _log.info(f"save cookies | './log/cookie/{auth.user_id}.cke'")
 
@@ -1949,7 +1953,13 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
     except Exception as result:
         await BotLog.BaseException_Handler("notify-del", traceback.format_exc(), msg, debug_send=debug_ch)
 
-    
+
+def check_night_market_status(resp:dict):
+    """在notifytask中判断夜市有没有开，只会判断一次"""
+    global NightMarketOff  #true代表夜市没有开启
+    if NightMarketOff and "BonusStore" in resp: #夜市字段存在
+        NightMarketOff = False  #夜市开启！
+
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
     global SkinNotifyDict, SkinRateDict, UserShopCache, VipShopBgDict
@@ -1984,63 +1994,72 @@ async def auto_skin_notify():
                 if vip in UserAuthCache['kook']: 
                     start = time.perf_counter()  # 开始计时这个用户
                     for riot_user_id in UserAuthCache['kook'][vip]:
+                        auth = UserAuthCache['data'][riot_user_id]['auth']
+                        assert isinstance(auth, EzAuth)
                         # 重新登录,如果为假说明重新登录失败
                         if not await Reauth.check_reauth("早八Vip用户商店", vip,riot_user_id,debug_ch):
                             log_vip_failed += f"({vip})"
+                            c = get_card(f"账户「{auth.Name}#{auth.Tag}」登录失败","需要您重新登录哦！",icon_cm.powder,full_cm=False)
+                            cm.append(c)
+                            _log.debug(f"VipAu:{vip} | Riot:{riot_user_id} | reauthorize failed | {json.dumps(cm)}")
                             continue
                         
                         shop_text = "" # 空字符串认为是False
                         a_start = time.perf_counter()  # 开始计时当前拳头用户
-                        auth = UserAuthCache['data'][riot_user_id]['auth']
-                        assert isinstance(auth, EzAuth)
-                        riotUser = auth.get_riotuser_token()
-                        a_time = time.time()  # 获取token的时间
+                        # 获取账户token
+                        riotUser = auth.get_riotuser_token() 
+                        a_time = time.time()  # 开始调用api的时间
                         resp = await fetch_daily_shop(riotUser)  # 获取每日商店
-
-                        # 判断夜市有没有开，只会判断一次
-                        global NightMarketOff  #true代表夜市没有开启
-                        if NightMarketOff and "BonusStore" in resp:  #夜市字段存在
-                            NightMarketOff = False  #夜市开启！
-
+                        # 检查夜市是否开启
+                        check_night_market_status(resp)
+                        # 处理商店返回值             
                         list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间
                         timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  #将秒数转为标准时间
+                        # 商店获取成功，记录时间消耗
                         log_time = f"[Api_shop] {format(time.time()-a_time,'.4f')} "
-                        await ShopRate.check_shop_rate(vip, list_shop)  #计算用户商店得分
+                        # 计算用户商店得分
+                        await ShopRate.check_shop_rate(vip, list_shop)  
                         # vip用户会提前缓存当日商店，需要设置uuid来保证是同一个游戏用户
                         UserShopCache["data"][auth.user_id] = {
                             "kook_user_id": vip,
                             "SkinsPanelLayout":resp["SkinsPanelLayout"]
                         }
-                        #直接获取商店图片
-                        draw_time = time.time()  #开始计算画图需要的时间
-                        img_shop_path = f"./log/img_temp_vip/shop/{vip}.png"
-                        play_currency = await fetch_vp_rp_dict(riotUser)  #获取用户的vp和rp
+                        # 直接获取商店图片
+                        draw_time = time.time()  # 开始计算画图需要的时间
+                        # 获取用户的vp和rp
+                        play_currency = await fetch_vp_rp_dict(riotUser) 
                         # 设置用户背景图，如果在则用，否则返回err
                         background_img = ('err' if vip not in VipShopBgDict['bg'] else
                                             VipShopBgDict['bg'][vip]["background"][0])
+                        # 开始画图
                         img_ret = await ShopImg.get_shop_img_169(list_shop,
                                                                     vp=play_currency['vp'],
                                                                     rp=play_currency['rp'],
                                                                     bg_img_src=background_img)
                         # 画图成功
                         if img_ret['status']:
-                            bg_shop = img_ret['value']
-                            bg_shop.save(img_shop_path, format='PNG')
+                            bg_shop = img_ret['value'] # 取出pil图片对象
+                            img_shop_path = f"./log/img_temp_vip/shop/{vip}.png" # 缓存商店图片的本地路径
+                            bg_shop.save(img_shop_path, format='PNG') # 保存到本地
                             # 打印画图日志
-                            log_time += f"- [Drawing] {format(time.time() - draw_time,'.4f')}  - [Au] {vip}"
+                            log_time += f"| [Draw] {format(time.time() - draw_time,'.4f')} | [Au] {vip} | [Riot] {riot_user_id}"
                             _log.info(log_time)
-                            dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  # 上传图片
+                            # 上传图片
+                            dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  
                             # 缓存图片的url+设置图片缓存的时间
                             VipShopBgDict['cache'][auth.user_id] = { 'cache_img': dailyshop_img_src,'cache_time': time.time()} 
-                            # 更新商店图片status为True，代表用户当天执行/shop命令不需再画图 
+                            # 更新商店图片status为True，代表用户当天执行/shop命令不需再画图
                             if vip in VipShopBgDict['bg']: VipShopBgDict['bg'][vip]['status'] = True
-                        else:  # 如果图片没有正常返回，那就发送文字版本
+                            _log.info(f"VipAu:{vip} | Riot:{riot_user_id} | {dailyshop_img_src}")
+                        # 如果图片没有正常返回，那就发送文字版本
+                        else: 
                             for skinuuid in list_shop:
                                 res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
                                 res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
-                                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+                                price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] # 皮肤价格
                                 shop_text += f"{res_item['data']['displayName']}     - VP {price}\n"
+                            # 获取完毕text，记录信息
                             _log.info(f"VipAu:{vip} | Riot:{riot_user_id} | img_draw err, using text")
 
                         # 结束shop的总计时 结果为浮点数，保留两位小数
@@ -2061,7 +2080,7 @@ async def auto_skin_notify():
                     
                     # 多个拳头账户遍历完毕，发送信息
                     using_time = format(time.perf_counter() - start, '.2f')
-                    await user.send(cm)
+                    if not cm: await user.send(cm) # 卡片不为空才发送信息
                     _log.info(f"VipAu:{vip} | notify_shop success [{using_time}]")
                 else:  #不在auth里面说明没有登录
                     log_vip_not_login += f"({vip})"
@@ -2238,8 +2257,8 @@ async def loading_cache(bot: Bot):
     log_str_failed = "[BOT.TASK] load cookie failed!  = Au:"
     log_not_exits = "[BOT.TASK] cookie path not exists = Au:"
     # 遍历vip的用户dict
-    for user, uinfo in VipAuthLog.items():
-        UserAuthCache['kook'][user] = []
+    TmpVipAuthLog = copy.deepcopy(VipAuthLog)
+    for user, uinfo in TmpVipAuthLog.items():
         for ru in uinfo: # 遍历该用户已登录账户的uuid列表
             cookie_path = f"./log/cookie/{ru}.cke"
             # 如果路径存在，那么说明已经保存了这个vip用户的cookie
@@ -2247,12 +2266,19 @@ async def loading_cache(bot: Bot):
                 auth = EzAuth()
                 auth.load_cookies(cookie_path)  # 加载cookie
                 ret_bool = await auth.reauthorize(exp_print=False)  # 尝试登录
-                if ret_bool:  # True登陆成功
+                # True登陆成功
+                if ret_bool:
+                    # 只有登录成功了，再新建此键值
+                    if user not in UserAuthCache['kook']: 
+                        UserAuthCache['kook'][user] = []
+                    # 插入用户登录信息
                     UserAuthCache['kook'][user].append(auth.user_id)
                     UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
                     log_str_success += f"({user},{ru})"
+                # 重登失败
                 else:
                     del auth  # 删除对象
+                    VipAuthLog[user].remove(ru) # 还需要删除该vip用户对象中的已登录信息
                     log_str_failed += f"({user},{ru})"
                     continue
             else:
@@ -2292,6 +2318,7 @@ async def loading_cache(bot: Bot):
     # 结束任务
     _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
     _log.info(f"[BOT.TASK] loading api user cookie finished")
+    await save_all_file() # 保存一下所有文件
 
 
 # 开机 （如果是主文件就开机）
