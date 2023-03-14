@@ -2,6 +2,7 @@
 import os, io
 import random
 import time
+import json
 import traceback
 from datetime import datetime, timedelta
 import aiohttp
@@ -1979,8 +1980,8 @@ async def auto_skin_notify():
             riot_user_id = "none"
             try:
                 user = await bot.client.fetch_user(vip)
-                if vip in UserAuthCache['kook']:
-                    cm = CardMessage()
+                cm = CardMessage()
+                if vip in UserAuthCache['kook']: 
                     start = time.perf_counter()  # 开始计时这个用户
                     for riot_user_id in UserAuthCache['kook'][vip]:
                         # 重新登录,如果为假说明重新登录失败
@@ -2068,6 +2069,8 @@ async def auto_skin_notify():
                 err_count += 1
                 err_str = f"VipAu:{vip} | Riot:{riot_user_id}\n```\n{traceback.format_exc()}\n```"
                 err_str+= await Reauth.check_user_send_err(str(result),vip,True)
+                if 'HTTPRequester.APIRequestFailed' in err_str:
+                    err_str+= f"\ncm.dumps: {json.dumps(cm)}"
                 _log.error(err_str)
                 # 发送消息到debug频道
                 await bot.client.send(debug_ch, err_str)  
