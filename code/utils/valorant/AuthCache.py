@@ -17,12 +17,13 @@ async def cache_auth_object(platfrom:str,key:str,auth:EzAuth) -> None:
         return
     # 如果键值存在，认为是tfa登陆成功，删除临时键值
     elif auth.is2fa and key in Auth2faCache:
+        if not auth.is_init(): return # 前提是已经初始化完毕了
         del Auth2faCache[key]
     
     # 如果对象没有成功初始化，说明还是有问题；不进行缓存，让用户重登
     if not auth.is_init():
         _log.warning(f"key:{key} | auth obj not init!")
-        return
+        raise Exception("cache auth obj before init!")
 
     # 在data中插入对象
     UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": auth.is2fa}

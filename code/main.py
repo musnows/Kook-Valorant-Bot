@@ -2080,7 +2080,7 @@ async def auto_skin_notify():
                     
                     # 多个拳头账户遍历完毕，发送信息
                     using_time = format(time.perf_counter() - start, '.2f')
-                    if not cm: await user.send(cm) # 卡片不为空才发送信息
+                    if cm: await user.send(cm) # 卡片不为空才发送信息
                     _log.info(f"VipAu:{vip} | notify_shop success [{using_time}]")
                 else:  #不在auth里面说明没有登录
                     log_vip_not_login += f"({vip})"
