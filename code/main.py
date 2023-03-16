@@ -22,10 +22,10 @@ from utils.KookApi import (icon_cm, status_active_game, status_active_music, sta
                            get_card)
 from utils.valorant.Val import *
 from utils.valorant.EzAuth import EzAuth, EzAuthExp
-from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp
+from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
 
 # bot的token文件
-from utils.file.FileManage import FileManage,save_all_file
+from utils.file.FileManage import FileManage,save_all_file,write_file
 from utils.file.Files import config, bot, ApiAuthLog, LoginForbidden,NightMarketOff
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
@@ -1527,6 +1527,54 @@ async def get_user_card(msg: Message, *arg):
         await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:
         await BotLog.BaseException_Handler("uinfo", traceback.format_exc(), msg, send_msg=send_msg)
+
+
+@bot.command()
+async def mission(msg:Message,*arg):
+    BotLog.logMsg(msg)
+    send_msg = {'msg_id':''}
+    try:
+        # 1.如果用户不在Authdict里面，代表没有登录，直接退出
+        if msg.author_id not in UserAuthCache['kook']:
+            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
+            return
+
+        # 2.直接使用for循环来获取不同用户的信息
+        cm = CardMessage()
+        for riot_user_id in UserAuthCache['kook'][msg.author_id]:
+            try:
+                # 3.执行cookie重登
+                reau = await Reauth.check_reauth("玩家任务",msg.author_id,riot_user_id,debug_ch,msg)
+                if reau == False: return  #如果为假说明重新登录失败
+                # 3.2 获取玩家id成功了，再提示正在获取商店
+                cm = await get_card("正在尝试获取您的每日任务", "阿狸正在施法，很快就好啦！", icon_cm.duck)
+                # 3.2.1 如果reauth函数return的是dict，说明重新登录成功且发送了消息，则更新卡片
+                if isinstance(reau, dict):  
+                    await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
+                    send_msg = reau
+                # 3.2.1 不是dict，说明不需要重登，也没有发送提示信息
+                else:
+                    send_msg = await msg.reply(cm)  #记录消息id用于后续更新
+
+                auth = UserAuthCache['data'][riot_user_id]['auth']
+                assert isinstance(auth, EzAuth)
+                # 获取玩家任务
+                ret = await fetch_player_contract(auth.get_riotuser_token())
+                m = ret["Missions"]
+                write_file(f'./log/mission/{riot_user_id}_{getTime()}.json',ret)
+                _log.info(f"get {riot_user_id} mission success")
+            except KeyError as result:
+                if "Missions" in str(result):
+                    _log.exception(f"KeyErr while Au:{msg.author_id} | Ru:{riot_user_id}")
+                    cm2 = await get_card(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
+                    await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+        
+        # 多个账户都获取完毕，发送卡片并输出结果
+        cm = await get_card("任务获取成功，感谢您对开发的贡献！", f"请转到[金山表单](https://f.wps.cn/g/Fipjms3w/)填写相关信息\n```\n{riot_user_id}_{getTime()}\n```")
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+        _log.info(f"Au:{msg.author_id} | uinfo reply successful!")
+    except Exception as result:
+        await BotLog.BaseException_Handler("mission",traceback.format_exc(),msg)
 
 
 # 获取捆绑包信息(无需登录)
