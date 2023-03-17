@@ -1,28 +1,28 @@
 {
   "cmp": {
     "best": {
-      "kook_id": "",
+      "user_id": "",
       "rating": 100,
-      "skin": []
+      "list_shop": []
     },
     "worse": {
-      "kook_id": "",
+      "user_id": "",
       "rating": 0,
-      "skin": []
+      "list_shop": []
     }
   },
   "data": {},
   "err_user": {},
   "kkn": {
     "best": {
-      "kook_id": "",
+      "user_id": "",
       "rating": 100,
-      "skin": []
+      "list_shop": []
     },
     "worse": {
-      "kook_id": "",
+      "user_id": "",
       "rating": 0,
-      "skin": []
+      "list_shop": []
     }
   },
   "rate": {}
