@@ -1541,6 +1541,7 @@ async def mission(msg:Message,*arg):
 
         # 2.直接使用for循环来获取不同用户的信息
         cm = CardMessage()
+        text = ""
         for riot_user_id in UserAuthCache['kook'][msg.author_id]:
             try:
                 # 3.执行cookie重登
@@ -1561,8 +1562,10 @@ async def mission(msg:Message,*arg):
                 # 获取玩家任务
                 ret = await fetch_player_contract(auth.get_riotuser_token())
                 m = ret["Missions"]
-                write_file(f'./log/mission/{riot_user_id}_{getTime()}.json',ret)
-                _log.info(f"get {riot_user_id} mission success")
+                id_text = f"{riot_user_id}_{getTime()}"
+                text += f"{auth.Name}#{auth.Tag} = {id_text}\n"
+                write_file(f'./log/mission/{id_text}.json',ret)
+                _log.info(f"Au:{msg.author_id} | get {riot_user_id} mission success")
             except KeyError as result:
                 if "Missions" in str(result):
                     _log.exception(f"KeyErr while Au:{msg.author_id} | Ru:{riot_user_id}")
@@ -1570,9 +1573,9 @@ async def mission(msg:Message,*arg):
                     await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         
         # 多个账户都获取完毕，发送卡片并输出结果
-        cm = await get_card("任务获取成功，感谢您对开发的贡献！", f"请转到[金山表单](https://f.wps.cn/g/Fipjms3w/)填写相关信息\n```\n{riot_user_id}_{getTime()}\n```")
+        cm = await get_card("任务获取成功，感谢您对开发的贡献！", f"请转到[金山表单](https://f.wps.cn/g/Fipjms3w/)填写相关信息\n填写表单时，提供下方=右侧编号即可\n```\n{text}\n```")
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-        _log.info(f"Au:{msg.author_id} | uinfo reply successful!")
+        _log.info(f"Au:{msg.author_id} | mission reply successful!")
     except Exception as result:
         await BotLog.BaseException_Handler("mission",traceback.format_exc(),msg)
 
