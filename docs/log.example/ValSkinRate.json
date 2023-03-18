@@ -2,12 +2,12 @@
   "cmp": {
     "best": {
       "kook_id": "",
-      "pit": 100,
+      "rating": 100,
       "skin": []
     },
     "worse": {
       "kook_id": "",
-      "pit": 0,
+      "rating": 0,
       "skin": []
     }
   },
@@ -16,12 +16,12 @@
   "kkn": {
     "best": {
       "kook_id": "",
-      "pit": 100,
+      "rating": 100,
       "skin": []
     },
     "worse": {
       "kook_id": "",
-      "pit": 0,
+      "rating": 0,
       "skin": []
     }
   },

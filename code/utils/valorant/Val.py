@@ -6,7 +6,7 @@ from khl.card import Card, Element, Module, Types
 
 # 预加载文件
 from .EzAuth import X_RIOT_CLIENTVERSION,X_RIOT_CLIENTVPLATFROM,RiotUserToken
-from ..FileManage import GameIdDict, ValErrDict, ValItersList, ValPriceList, ValSkinList
+from ..file.Files import GameIdDict, ValErrDict, ValItersList, ValPriceList, ValSkinList
 SKIN_ICON_ERR = "https://img.kookapp.cn/assets/2023-02/ekwdy7PiQC0e803m.png"
 
 ####################################保存用户的游戏ID操作#######################################
@@ -69,22 +69,23 @@ async def dx123(msg: Message) -> None:
 
 
 #从list中获取价格
-def fetch_item_price_bylist(item_id) -> dict | None:
+def fetch_item_price_bylist(item_id) -> dict:
     for item in ValPriceList['Offers']:  #遍历查找指定uuid
         if item_id == item['OfferID']:
             return item
-
+    return {}
 
 #从list中获取等级(这个需要手动更新)
-def fetch_item_iters_bylist(iter_id) -> dict | None:
+def fetch_item_iters_bylist(iter_id) -> dict:
+    res = {}
     for iter in ValItersList['data']:  #遍历查找指定uuid
         if iter_id == iter['uuid']:
             res = {'data': iter}  #所以要手动创建一个带data的dict作为返回值
-            return res
+    return res
 
 
 #从list中获取皮肤
-def fetch_skin_bylist(item_id) -> dict | None: 
+def fetch_skin_bylist(item_id) -> dict: 
     res = {}  #下面我们要操作的是获取通行证的皮肤，但是因为遍历的时候已经跳过data了，返回的时候就不好返回
     for item in ValSkinList['data']:  #遍历查找指定uuid
         if item_id == item['levels'][0]['uuid']:
@@ -98,7 +99,7 @@ def fetch_skin_bylist(item_id) -> dict | None:
                 # 没找到，替换成err图片
                 res['data']['displayIcon'] = SKIN_ICON_ERR
             
-            return res
+    return res
 
 
 #从list中，通过皮肤名字获取皮肤列表
@@ -112,11 +113,12 @@ def fetch_skin_list_byname(name) ->list[dict]:
 
 
 #从list中通过皮肤lv0uuid获取皮肤等级
-def fetch_skin_iters_bylist(item_id) -> dict | None:
+def fetch_skin_iters_bylist(item_id) -> dict:
+    res_iters = {}
     for it in ValSkinList['data']:
         if it['levels'][0]['uuid'] == item_id:
             res_iters = fetch_item_iters_bylist(it['contentTierUuid'])
-            return res_iters
+    return res_iters
 
 
 # 用名字查询捆绑包包含什么枪

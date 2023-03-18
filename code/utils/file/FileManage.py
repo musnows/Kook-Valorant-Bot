@@ -1,9 +1,9 @@
 import json
 import aiofiles
-import traceback
-from .log.Logging import _log
+from ..log.Logging import _log
 
-FileList = [] # 用于保存需要写入到磁盘的文件
+FileList = []
+"""files need to write into storage"""
 
 def open_file(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -21,8 +21,9 @@ def write_file(path: str, value):
         json.dump(value, fw2, indent=2, sort_keys=True, ensure_ascii=False)
 
 
-# 保存所有文件
-async def Save_All_File(is_Aio=True):
+async def save_all_file(is_Aio=True):
+    """save all file in FileList
+    """
     for i in FileList:
         try:
             if is_Aio:
@@ -119,41 +120,3 @@ class FileManage:
     async def save_aio(self):
         async with aiofiles.open(self.path, 'w', encoding='utf-8') as f:  #这里必须用dumps
             await f.write(json.dumps(self.value, indent=2, sort_keys=True, ensure_ascii=False))
-
-
-###################################################################################################
-
-config = FileManage("./config/config.json", True)  # 机器人配置文件
-BotUserDict = FileManage("./log/BotUserLog.json")  # 机器人用户信息
-ApiTokenDict = FileManage("./log/ApiToken.json")  # API token
-ColorIdDict = FileManage("./log/color_idsave.json")  # 自动上色 信息保存
-EmojiDict = FileManage("./config/color_emoji.json", True)  # 自动上色 服务器角色配置
-SponsorDict = FileManage("./log/sponsor_roles.json")  # 感谢助力者 信息保存
-
-ValErrDict = FileManage("./log/ValErrCode.json")  # valorant错误码解决办法
-ValSkinList = FileManage("./log/ValSkin.json")  # valorant皮肤
-ValPriceList = FileManage("./log/ValPrice.json")  # valorant皮肤价格
-ValBundleList = FileManage("./log/ValBundle.json")  # valorant捆绑包
-ValItersList = FileManage("./log/ValIters.json")  # valorant皮肤等级
-
-SkinRateDict = FileManage("./log/ValSkinRate.json")  # valorant皮肤评分信息
-SkinNotifyDict = FileManage("./log/UserSkinNotify.json")  # 皮肤提醒 用户记录
-GameIdDict = FileManage("./log/game_idsave.json")  # 玩家游戏id保存
-UserAuthID = FileManage("./log/UserAuthID.json")  # 用户游戏id/uuid，账户密码重登记录
-UserRiotName = UserAuthID['data']  # riot用户游戏id和uuid
-UserPwdReauth = UserAuthID['ap_log']    # 账户密码重登记录
-ApiAuthLog = UserAuthID['api_log']  # api 缓存用户的account记录
-ApiAuthCache = {'data':{}}          # api EzAuth对象缓存
-
-VipUuidDict = FileManage("./log/VipUuid.json")  # vip uuid文件
-VipShopBgDict = FileManage("./log/VipUserShopBg.json")  # vip 背景图设置；商店图缓存
-VipUser = FileManage("./log/VipUser.json")  # vip 用户列表
-VipUserDict = VipUser['data'] # vip 用户
-VipRollDcit = VipUser['roll'] # vip 抽奖信息 
-
-AfdWebhook = FileManage("./log/AfdWebhook.json")  # 爱发电的wh请求
-
-# 实例化一个khl的bot，方便其他模组调用
-from khl import Bot
-bot = Bot(token=config['token']['bot'])
-_log.info(f"Loading all files") # 走到这里代表所有文件都打开了

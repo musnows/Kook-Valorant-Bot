@@ -1,7 +1,7 @@
 import json
 import traceback
 from aiohttp import web
-from utils.Gtime import GetTime
+from utils.Gtime import getTime
 from utils.api import ApiHandler
 from utils.log.Logging import _log
 
@@ -19,7 +19,7 @@ async def hello_world(request):  # put application's code here
             'message': 'Hello! Use path /shop or /shop-img to get valorant daily shop',
             'info':
             '在path后添加/shop-img或者/shop来获取每日商店，前者会直接跳转，后者返回一个带图片url的json。示例: /shop?account=Riot账户&passwd=Riot密码&img_src=可选参数，自定义背景图',
-            'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+            'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
         },
         indent=2,
         sort_keys=True,
@@ -49,19 +49,25 @@ async def get_shop_draw(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 
-# 直接跳转图片（浏览器访问，get方法不安全）
+# 直接跳转图片
 @routes.get('/shop-img')
 async def get_shop_img(request):
     _log.info(f"request | /shop-img")
     try:
+        params = request.rel_url.query
         ret = await ApiHandler.login_request(request,"GET")
         if ret['code'] == 0:
-            return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
-        else:
+            # 如果url不在，或者值不为1，则303跳转图片
+            if 'url' not in params or str(params['url']) != '0':
+                return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
+            else:
+                return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
+                        content_type='application/json',status=200)
+        else: # 出错误了
             return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                                 content_type='application/json',status=200)
     except:
@@ -77,7 +83,7 @@ async def get_shop_img(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 
@@ -102,7 +108,7 @@ async def post_login(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 # 邮箱验证登录
@@ -126,7 +132,7 @@ async def post_tfa_code(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
     
 @routes.post('/shop')
@@ -137,12 +143,12 @@ async def post_shop(request):
         params = json.loads(body.decode('UTF8'))
         # 判断必须要的参数是否齐全
         if 'account' not in params or 'token' not in params: # 不全，报错
-            _log.error(f"params needed: token/account/passwd")
+            _log.error(f"params needed: token/account")
             ret = {
                 'code': 400,
-                'message': 'params needed: token/account/passwd',
-                'info': '缺少参数！示例: /shop-img?token=api凭证&account=Riot账户&passwd=Riot密码&img_src=自定义背景图（可选）',
-                'docs': 'https://github.com/Aewait/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
+                'message': 'params needed: token/account',
+                'info': '缺少参数！请参考docs文档里面的参数表',
+                'docs': 'https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot/blob/main/docs/valorant-shop-img-api.md'
             }
             return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
@@ -163,7 +169,7 @@ async def post_shop(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 # 用于控制db中ShopCmp的更新
@@ -187,13 +193,13 @@ async def post_shop_cmp(request):
             indent=2,
             sort_keys=True,
             ensure_ascii=False),
-                            status=200,
+                            status=503,
                             content_type='application/json')
 
 
 
 # 爱发电的wh
-from utils.FileManage import bot
+from utils.file.Files import bot
 @routes.post('/afd')
 async def aifadian_webhook(request):
     _log.info(f"request | /afd")
@@ -207,6 +213,7 @@ async def aifadian_webhook(request):
             "ec": 0,
             "em": "err ouccer"
         }, indent=2, sort_keys=True, ensure_ascii=False),
+                            status=503,
                             content_type='application/json')
 
 

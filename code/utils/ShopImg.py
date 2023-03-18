@@ -295,7 +295,7 @@ async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
-            err_str = f"ERR! [{GetTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
+            err_str = f"ERR! [{getTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check")
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
         # 打开成功
@@ -378,7 +378,7 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
-            err_str = f"ERR! [{GetTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
+            err_str = f"ERR! [{getTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check") 
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
         # 打开成功

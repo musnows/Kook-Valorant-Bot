@@ -4,9 +4,9 @@ from khl import Bot, Message, PublicMessage, Event
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
-from .FileManage import SponsorDict, ColorIdDict, EmojiDict,_log
+from .file.Files import SponsorDict, ColorIdDict, EmojiDict,_log
 from .KookApi import kook_headers
-from .Gtime import GetTime
+from .Gtime import getTime
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid: str, emoji: str):
@@ -114,5 +114,5 @@ async def THX_Sponser(bot: Bot, kook_header=kook_headers):
         if check_sponsor(its) == 0:
             channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
-            _log.info(f"[%s] 感谢{its['nickname']}对本服务器的助力" % GetTime())
+            _log.info(f"[%s] 感谢{its['nickname']}对本服务器的助力" % getTime())
     _log.info("[BOT.TASK] thanks_sponser finished!")

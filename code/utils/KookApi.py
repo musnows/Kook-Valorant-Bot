@@ -1,10 +1,10 @@
 import json
 import aiohttp
 import io
-from khl import Bot, ChannelPrivacyTypes
+from khl import ChannelPrivacyTypes
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from .FileManage import config,bot,_log
+from .file.Files import config,bot,_log
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
 kook_headers = {f'Authorization': f"Bot {config['token']['bot']}"}
@@ -37,7 +37,6 @@ async def status_delete(d: int):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=params, headers=kook_headers) as response:
             return json.loads(await response.text())
-            #_log.debug(ret)
 
 
 # 获取服务器用户数量用于更新（现在已经移植到了另外一个bot上）
@@ -47,7 +46,7 @@ async def guild_userlist(Guild_ID: str = "3566823018281801"):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
-            #_log.debug(ret1)
+            _log.debug(ret1)
             return ret1
 
 
@@ -57,7 +56,7 @@ async def guild_list():
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
-            #_log.debug(ret1)
+            _log.debug(ret1)
             return ret1
 
 
@@ -68,7 +67,7 @@ async def guild_view(Guild_ID: str):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
-            #_log.debug(ret1)
+            _log.debug(ret1)
             return ret1
 
 
@@ -94,6 +93,7 @@ async def bot_offline():
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=kook_headers) as response:
             res = json.loads(await response.text())
+            _log.debug(res)
     return res
 
 
@@ -112,6 +112,7 @@ class icon_cm:
     correct = "https://img.kookapp.cn/assets/2022-09/DknXSpwrlQ0e80e8.gif"
     duck = "https://img.kookapp.cn/assets/2022-09/qARsaxW6lp0e80e8.gif"
     that_it = "https://img.kookapp.cn/assets/2022-09/LqD0pQY2P70e80e8.png"
+    no_time = "https://img.kookapp.cn/assets/2023-03/hNrtZg68pZ03k03k.png"
     to_much_money = "https://img.kookapp.cn/assets/2022-09/y17ZhjjaVf0e80e8.png"
     shaka = "https://img.kookapp.cn/assets/2022-09/kMWT5AoEic0e80e8.png"
     say_hello_to_camera = "https://img.kookapp.cn/assets/2022-09/sHh8VJrMp20e80e8.png"
@@ -152,8 +153,7 @@ async def upd_card(msg_id: str,
 
 
 # 获取常用的卡片消息
-async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', img_sz='sm'):
-    cm = CardMessage()
+async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', img_sz='sm',full_cm:bool=True):
     c = Card(color=card_color)
     if img_url != 'e':
         c.append(Module.Section(Element.Text(text, Types.Text.KMD), Element.Image(src=img_url, size=img_sz)))
@@ -161,5 +161,9 @@ async def get_card(text: str, sub_text='e', img_url='e', card_color='#fb4b57', i
         c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
     if sub_text != 'e':
         c.append(Module.Context(Element.Text(sub_text, Types.Text.KMD)))
-    cm.append(c)
-    return cm
+    if full_cm:
+        cm = CardMessage()
+        cm.append(c)
+        return cm
+    else:
+        return c

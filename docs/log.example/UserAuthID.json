@@ -1,4 +1,6 @@
 {
+    "ap_log": {},
+    "api_auth_log": {},
     "data": {},
-    "ap_log": {}
-}
+    "vip_auth_log": {}
+  }
