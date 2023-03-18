@@ -1,12 +1,13 @@
 import json
 import aiohttp
-from khl import Bot, Message, PublicMessage, Event
+from khl import Bot, Message, PublicMessage, Event,EventTypes
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 预加载文件
-from .file.Files import SponsorDict, ColorIdDict, EmojiDict,_log
-from .KookApi import kook_headers
-from .Gtime import getTime
+from ..utils.file.Files import SponsorDict, ColorIdDict, EmojiDict,_log
+from ..utils.KookApi import kook_headers
+from ..utils.Gtime import getTime
+from ..utils.log import BotLog
 
 # 用于记录使用表情回应获取ID颜色的用户
 def save_userid_color(userid: str, emoji: str):
@@ -78,8 +79,7 @@ async def Color_SetMsg(bot: Bot, msg: Message):
         await setMSG.add_reaction(emoji)
 
 
-#########################################感谢助力者###############################################
-
+#########################################感谢助力者#########################################
 
 # 检查文件中是否有这个助力者的id
 def check_sponsor(it: dict):
@@ -96,7 +96,7 @@ def check_sponsor(it: dict):
     return flag
 
 
-async def THX_Sponser(bot: Bot, kook_header=kook_headers):
+async def thanks_sponser(bot: Bot, kook_header=kook_headers):
     _log.info("[BOT.TASK] thanks_sponser start!")
     #在api链接重需要设置服务器id和助力者角色的id，目前这个功能只对KOOK最大valorant社区生效
     api = f"https://www.kaiheila.cn/api/v3/guild/user-list?guild_id={EmojiDict['guild_id']}&role_id={EmojiDict['sp_role_id']}"
@@ -116,3 +116,36 @@ async def THX_Sponser(bot: Bot, kook_header=kook_headers):
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
             _log.info(f"[%s] 感谢{its['nickname']}对本服务器的助力" % getTime())
     _log.info("[BOT.TASK] thanks_sponser finished!")
+
+
+#############################################################################################
+
+
+def init(bot:Bot,master_id:str):
+    """master_id: bot master user_id"""
+    # 在不修改代码的前提下设置上色功能的服务器和监听消息
+    @bot.command(name='Color_Set_GM', case_sensitive=False)
+    async def Color_Set_GM(msg: Message, Card_Msg_id: str):
+        BotLog.logMsg(msg)
+        if msg.author_id == master_id:
+            await Color_SetGm(msg, Card_Msg_id)
+
+
+    # 判断消息的emoji回应，并给予不同角色
+    @bot.on_event(EventTypes.ADDED_REACTION)
+    async def Grant_Roles(b: Bot, event: Event):
+        await Color_GrantRole(b, event)
+
+
+    # 给用户上色（在发出消息后，机器人自动添加回应）
+    @bot.command(name='Color-Set', case_sensitive=False)
+    async def Color_Set(msg: Message):
+        BotLog.logMsg(msg)
+        if msg.author_id == master_id:
+            await Color_SetMsg(bot, msg)
+
+
+    # 感谢助力者（每天19点进行检查）
+    @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
+    async def thanks_sponser_task():
+        await thanks_sponser(bot)

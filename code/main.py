@@ -14,19 +14,19 @@ from khl.card import Card, CardMessage, Element, Module, Types, Struct
 from aiohttp import client_exceptions
 from PIL import Image, UnidentifiedImageError  # 用于合成图片
 
-from utils import ShopRate, ShopImg, Help, GrantRoles, Translate, BotVip, Other
-from utils.log import BotLog
-from utils.log.Logging import _log
-from utils.valorant import ValFileUpd,Reauth,AuthCache
-from utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
+from pkg.utils import ShopRate, ShopImg, Help, BotVip
+from pkg.utils.log import BotLog
+from pkg.utils.log.Logging import _log
+from pkg.utils.valorant import ValFileUpd,Reauth,AuthCache
+from pkg.utils.KookApi import (icon_cm, status_active_game, status_active_music, status_delete, bot_offline, upd_card,
                            get_card)
-from utils.valorant.Val import *
-from utils.valorant.EzAuth import EzAuth, EzAuthExp
-from utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
+from pkg.utils.valorant.Val import *
+from pkg.utils.valorant.EzAuth import EzAuth, EzAuthExp
+from pkg.utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
 
 # bot的token文件
-from utils.file.FileManage import FileManage,save_all_file,write_file
-from utils.file.Files import config, bot, ApiAuthLog, LoginForbidden,NightMarketOff
+from pkg.utils.file.FileManage import FileManage,save_all_file,write_file
+from pkg.utils.file.Files import config, bot, ApiAuthLog, LoginForbidden,NightMarketOff
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 """用来上传图片的bot"""
@@ -135,151 +135,6 @@ async def atAhri(msg: Message):
             _log.info(f"Au:{msg.author_id} | msg.reply success!")
     except:
         await BotLog.BaseException_Handler("at_help", traceback.format_exc(), msg)
-
-
-#################################################################################################
-########################################## others ###############################################
-
-
-# 倒计时函数，单位为秒，默认60秒
-@bot.command()
-async def countdown(msg: Message, time: int = 60, *args):
-    BotLog.logMsg(msg)
-    if args != ():
-        await msg.reply(f"参数错误，countdown命令只支持1个参数\n正确用法: `/countdown 120` 生成一个120s的倒计时")
-        return
-    elif time <= 0 or time >= 90000000:
-        await msg.reply(f"倒计时时间超出范围！")
-        return
-    try:
-        cm = CardMessage()
-        c1 = Card(Module.Header('本狸帮你按下秒表喽~'), color=(198, 65, 55))  # color=(90,59,215) is another available form
-        c1.append(Module.Divider())
-        c1.append(Module.Countdown(datetime.now() + timedelta(seconds=time), mode=Types.CountdownMode.SECOND))
-        cm.append(c1)
-        await msg.reply(cm)
-    except Exception as result:
-        await BotLog.BaseException_Handler("countdown", traceback.format_exc(), msg, debug_send=debug_ch)
-
-
-# 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
-@bot.command()
-async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args):
-    BotLog.logMsg(msg)
-    if args != ():
-        await msg.reply(
-            f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 3 生成三个1到100之间的随机数\n```")
-        return
-    elif t_min >= t_max:  #范围小边界不能大于大边界
-        await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
-        return
-    elif t_max >= 90000000:  #不允许用户使用太大的数字
-        await msg.reply(f"掷骰子的数据超出范围！")
-        return
-    try:
-        result = [random.randint(t_min, t_max) for i in range(n)]
-        await msg.reply(f'掷出来啦: {result}')
-    except Exception as result:
-        await BotLog.BaseException_Handler("roll", traceback.format_exc(), msg, debug_send=debug_ch)
-
-
-# 返回天气
-@bot.command(name='we')
-async def Weather(msg: Message, city: str = "err"):
-    BotLog.logMsg(msg)
-    if city == "err":
-        await msg.reply(f"函数参数错误，城市: `{city}`\n")
-        return
-
-    try:
-        await Other.weather(msg, city)
-    except Exception as result:
-        await BotLog.BaseException_Handler("Weather", traceback.format_exc(), msg, debug_send=debug_ch)
-
-
-################################ grant roles for user ##########################################
-
-
-# 在不修改代码的前提下设置上色功能的服务器和监听消息
-@bot.command()
-async def Color_Set_GM(msg: Message, Card_Msg_id: str):
-    BotLog.logMsg(msg)
-    if msg.author_id == master_id:
-        await GrantRoles.Color_SetGm(msg, Card_Msg_id)
-
-
-# 判断消息的emoji回应，并给予不同角色
-@bot.on_event(EventTypes.ADDED_REACTION)
-async def Grant_Roles(b: Bot, event: Event):
-    await GrantRoles.Color_GrantRole(b, event)
-
-
-# 给用户上色（在发出消息后，机器人自动添加回应）
-@bot.command(name='Color_Set', aliases=['color_set'])
-async def Color_Set(msg: Message):
-    BotLog.logMsg(msg)
-    if msg.author_id == master_id:
-        await GrantRoles.Color_SetMsg(bot, msg)
-
-
-# 感谢助力者（每天19点进行检查）
-@bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
-async def thanks_sponser():
-    await GrantRoles.THX_Sponser(bot)
-
-
-######################################## Translate ################################################
-
-
-# 普通翻译指令
-@bot.command(name='TL', aliases=['tl'])
-async def translation(msg: Message, *arg):
-    BotLog.logMsg(msg)
-    await Translate.translate_main(msg, ' '.join(arg))
-
-
-#查看当前占用的实时翻译栏位
-@bot.command()
-async def TLCheck(msg: Message):
-    BotLog.logMsg(msg)
-    await msg.reply(f"目前已使用栏位:{Translate.checkTL()}/{len(Translate.ListTL)}")
-
-
-# 关闭所有栏位的实时翻译（避免有些人用完不关）
-@bot.command(name='ShutdownTL', aliases=['TLSD','tlsd'])
-async def TLShutdown(msg: Message):
-    BotLog.logMsg(msg)
-    if msg.author.id != master_id:
-        return  #这条命令只有bot的作者可以调用
-    await Translate.Shutdown_TL(bot, msg)
-
-
-# 通过频道id判断是否实时翻译本频道内容
-@bot.on_message()
-async def TLRealtime(msg: Message):
-    if msg.ctx.channel.id in Translate.ListTL:  #判断频道是否已开启实时翻译
-        word = msg.content
-        # 不翻译关闭实时翻译的指令
-        ignore_list = ["/TLOFF","/tloff","/tlon","/TLON"]
-        for i in ignore_list:
-            if i in word:
-                return
-        # 翻译
-        BotLog.logMsg(msg)
-        await Translate.translate_main(msg,word)
-
-# 开启实时翻译功能
-@bot.command(name='TLON', aliases=['tlon'])
-async def TLON(msg: Message):
-    BotLog.logMsg(msg)
-    await Translate.Open_TL(msg)
-
-
-# 关闭实时翻译功能
-@bot.command(name='TLOFF', aliases=['tloff'])
-async def TLOFF(msg: Message):
-    BotLog.logMsg(msg)
-    await Translate.Close_TL(msg)
 
 
 ###########################################################################################
@@ -400,7 +255,7 @@ async def dx(msg: Message):
 ###########################################vip######################################################
 
 #用来存放roll的频道/服务器/回应用户的dict
-from utils.file.Files import VipShopBgDict, VipRollDcit, VipUserDict, VipAuthLog
+from pkg.utils.file.Files import VipShopBgDict, VipRollDcit, VipUserDict, VipAuthLog
 
 
 # 新建vip的uuid，第一个参数是天数，第二个参数是数量
@@ -829,7 +684,7 @@ async def vip_time_add(msg: Message, vday: int = 1, *arg):
 #####################################################################################
 
 # 预加载用户的riot游戏id和玩家uuid（登录后Api获取）
-from utils.file.Files import (SkinNotifyDict, SkinRateDict, ValBundleList,UserAuthCache,UserPwdReauth,ValItersEmoji,
+from pkg.utils.file.Files import (SkinNotifyDict, SkinRateDict, ValBundleList,UserAuthCache,UserPwdReauth,ValItersEmoji,
                               UserStsDict,UserRtsDict,UserShopCache,login_rate_limit)
 
 def check_rate_err_user(kook_user_id: str)-> bool:
@@ -2277,6 +2132,9 @@ async def proc_check(msg: Message, *arg):
 
 
 #在阿狸开机的时候自动加载所有保存过的cookie
+# 注册其他命令
+from pkg.plugins import Funny,GrantRoles,Translate
+
 @bot.on_startup
 async def loading_cache(bot: Bot):
     try:
@@ -2284,8 +2142,12 @@ async def loading_cache(bot: Bot):
         cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
         debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         _log.info("[BOT.TASK] fetch_public_channel success")
+        Funny.init(bot,debug_ch)
+        GrantRoles.init(bot,master_id)
+        Translate.init(bot,master_id)
+        _log.info("[BOT.TASK] load plugins")
     except:
-        _log.fatal("[BOT.TASK] fetch_public_channel failed")
+        _log.fatal("[BOT.TASK] startup task failed!")
         _log.exception("Exception occur")
         os._exit(-1)  #出现错误直接退出程序
 
