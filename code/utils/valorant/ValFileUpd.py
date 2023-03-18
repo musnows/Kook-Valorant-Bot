@@ -3,7 +3,7 @@ import io
 from khl import Message, Bot
 from PIL import Image
 from ..ShopImg import img_requestor
-from ..file.Files import ValBundleList
+from ..file.Files import ValBundleList,UserAuthCache
 from .Val import fetch_skins_all, fetch_item_price_all, fetch_bundles_all, ValSkinList, ValPriceList
 from ..log.Logging import _log
 
@@ -76,3 +76,18 @@ async def update_price(msg: Message, userdict) -> bool:
         _log.exception("Exception occur")
         await msg.reply(f"ERR! update_price\n```\n{traceback.format_exc()}\n```")
         return False
+    
+
+async def update(msg:Message,bot_upimg:Bot):
+    """更新valorant相关资源
+    """
+    if await update_skins(msg):
+        await msg.reply(f"成功更新：商店皮肤")
+    if await update_bundle_url(msg, bot_upimg):
+        await msg.reply(f"成功更新：捆绑包")
+    # 获取物品价格需要登录
+    riot_user_id = UserAuthCache['kook'][msg.author_id][0]
+    auth = UserAuthCache['data'][riot_user_id]['auth']
+    riotUser = auth.get_riotuser_token()
+    if await update_price(msg, riotUser):
+        await msg.reply(f"成功更新：物品价格")

@@ -2050,9 +2050,7 @@ async def auto_skin_notify():
                         # 重新登录,如果为假说明重新登录失败
                         if not await Reauth.check_reauth("早八Vip用户商店", vip,riot_user_id,debug_ch):
                             log_vip_failed += f"({vip})"
-                            c = get_card(f"账户「{auth.Name}#{auth.Tag}」登录失败","需要您重新登录哦！",icon_cm.powder,full_cm=False)
-                            cm.append(c)
-                            _log.debug(f"VipAu:{vip} | Riot:{riot_user_id} | reauthorize failed | {json.dumps(cm)}")
+                            _log.debug(f"VipAu:{vip} | Riot:{riot_user_id} | reauthorize failed ")
                             continue
                         
                         shop_text = "" # 空字符串认为是False
@@ -2216,32 +2214,11 @@ async def auto_skin_notify_task():
     await auto_skin_notify()
 
 # 手动执行notify task
-@bot.command(name='notify-test')
+@bot.command(name='notify-test', aliases=['notify-t'])
 async def auto_skin_notify_cmd(msg: Message, *arg):
     BotLog.logMsg(msg)
     if msg.author_id == master_id:
         await auto_skin_notify()
-
-
-# 手动更新商店物品和价格
-@bot.command(name='update_spb', aliases=['update', 'upd'])
-async def update_skin_price_bundle(msg: Message):
-    BotLog.logMsg(msg)
-    try:
-        if msg.author_id == master_id:
-            if await ValFileUpd.update_skins(msg):
-                await msg.reply(f"成功更新：商店皮肤")
-            if await ValFileUpd.update_bundle_url(msg, bot_upimg):
-                await msg.reply(f"成功更新：捆绑包")
-            # 获取物品价格需要登录
-            riot_user_id = UserAuthCache['kook'][msg.author_id][0]
-            auth = UserAuthCache['data'][riot_user_id]['auth']
-            assert isinstance(auth, EzAuth)
-            riotUser = auth.get_riotuser_token()
-            if await ValFileUpd.update_price(msg, riotUser):
-                await msg.reply(f"成功更新：物品价格")
-    except Exception as result:
-        await BotLog.BaseException_Handler("update_spb",traceback.format_exc(),msg)
 
 
 #######################################################################################################
@@ -2277,6 +2254,16 @@ async def bot_log_list(msg: Message, *arg):
     except:
         await BotLog.BaseException_Handler("log-list",traceback.format_exc(),msg)
 
+
+# 手动更新商店物品和价格
+@bot.command(name='update_spb', aliases=['upd'])
+async def update_skin_price_bundle(msg: Message):
+    BotLog.logMsg(msg)
+    try:
+        if msg.author_id == master_id:
+            await ValFileUpd.update(msg,bot_upimg)
+    except Exception as result:
+        await BotLog.BaseException_Handler("update_spb",traceback.format_exc(),msg)
 
 @bot.command(name='mem')
 async def proc_check(msg: Message, *arg):
