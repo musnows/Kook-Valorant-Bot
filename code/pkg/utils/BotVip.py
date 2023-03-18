@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from .KookApi import icon_cm
 from .Gtime import getTime
 from .log.Logging import _log
-from .file.Files import bot,config,VipShopBgDict,VipUserDict, VipUuidDict
+from .file.Files import bot,config,VipShopBgDict,VipUserDict, VipUuidDict,VipUser
 from .ShopImg import img_requestor
 
 
@@ -194,7 +194,7 @@ async def vip_ck(msg):
 
 #获取当前vip用户列表
 async def fetch_vip_user():
-    global VipUserDict
+    global VipUserDict,VipUser
     vipuserdict_temp = copy.deepcopy(VipUserDict)
     text = ""
     for u, ifo in vipuserdict_temp.items():
@@ -206,7 +206,7 @@ async def fetch_vip_user():
 
     if vipuserdict_temp != VipUserDict:
         #将修改存放到文件中
-        VipUserDict.save()
+        VipUser.save()
         _log.info(f"[vip-r] update VipUserDict")
 
     return text
