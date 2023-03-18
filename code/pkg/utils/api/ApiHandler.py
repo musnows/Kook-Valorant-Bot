@@ -249,7 +249,7 @@ async def tfa_code_requeset(request):
 
 
 # 更新leancloud
-from utils.ShopRate import update_ShopCmp
+from ..ShopRate import update_ShopCmp
 async def shop_cmp_request(request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))

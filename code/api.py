@@ -1,9 +1,9 @@
 import json
 import traceback
 from aiohttp import web
-from utils.Gtime import getTime
-from utils.api import ApiHandler
-from utils.log.Logging import _log
+from pkg.utils.Gtime import getTime
+from pkg.utils.api import ApiHandler
+from pkg.utils.log.Logging import _log
 
 # 初始化节点
 routes = web.RouteTableDef()
@@ -199,7 +199,7 @@ async def post_shop_cmp(request):
 
 
 # 爱发电的wh
-from utils.file.Files import bot
+from pkg.utils.file.Files import bot
 @routes.post('/afd')
 async def aifadian_webhook(request):
     _log.info(f"request | /afd")
