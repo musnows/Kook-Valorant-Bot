@@ -13,7 +13,7 @@ from ..utils.file.Files import VipShopBgDict, VipRollDcit, VipUserDict, VipAuthL
 from ..utils.log import BotLog
 from ..utils.Gtime import getTime
 from ..utils import BotVip,ShopImg
-from ..utils.KookApi import icon_cm,get_card,upd_card
+from ..utils.KookApi import icon_cm,get_card,upd_card,get_card_msg
 
 VIP_BG_SIZE = 4
 """vip用户背景图片数量限制"""
@@ -108,8 +108,8 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             if icon != 'err': # 不为空且走到这里了，代表通过了对icon参数是否为http链接的检查
                 user_ind = (msg.author_id in VipShopBgDict['bg']) # 判断当前用户在不在dict中
                 if user_ind and len(VipShopBgDict['bg'][msg.author_id]["background"]) >= VIP_BG_SIZE:
-                    cm = await get_card(f"当前仅支持保存{VIP_BG_SIZE}个自定义图片", "您可用「/vip-shop-d 图片编号」删除已有图片再添加", icon_cm.that_it)
-                    await msg.reply(cm)# type:ignore
+                    cm = await get_card_msg(f"当前仅支持保存{VIP_BG_SIZE}个自定义图片", "您可用「/vip-shop-d 图片编号」删除已有图片再添加", icon_cm.that_it)
+                    await msg.reply(cm)
                     return
 
                 # 提取图片url
@@ -121,7 +121,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
                     # 检查图片链接格式是否支持
                     if ('png' not in x3) and ('jpg' not in x3) and ('jpeg' not in x3):
                         text = f"您当前上传的图片格式不支持！请上传png/jpg/jpeg格式的图片"
-                        cm = await get_card(text, "请优先尝试png格式图片，其余格式兼容性有一定问题", icon_cm.ahri_dark)
+                        cm = await get_card_msg(text, "请优先尝试png格式图片，其余格式兼容性有一定问题", icon_cm.ahri_dark)
                         await msg.reply(cm)
                         _log.info(f"Au:{msg.author_id} | img_type_not support")
                         return
@@ -166,6 +166,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
         if num == 'err':
             await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
             return
+        cm = CardMessage()
         try:
             global VipShopBgDict
             if not await BotVip.vip_ck(msg):

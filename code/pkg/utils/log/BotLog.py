@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .Logging import _log
 from ..file.Files import bot, BotUserDict,FileManage
 from ..Gtime import getTime
-from ..KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
+from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 
 # 记录频道/服务器信息的底图
 font_color = '#000000'  # 黑色字体
@@ -147,7 +147,7 @@ async def APIRequestFailed_Handler(def_name: str,
                                    excp: str,
                                    msg: Message,
                                    bot: Bot,
-                                   cm: CardMessage = None,
+                                   cm = CardMessage(),
                                    send_msg: dict[str, str] = {}) -> None:
     """Args:
     - def_name: name of def to print in log
@@ -161,8 +161,6 @@ async def APIRequestFailed_Handler(def_name: str,
     err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
     text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
-    # 如果cm是None，则将cm赋值为空卡片消息
-    cm = cm if cm else CardMessage() 
     # 引用不存在的时候，直接向频道或者用户私聊重新发送消息
     if "引用不存在" in excp:  
         if isinstance(msg, PrivateMessage):
@@ -180,11 +178,11 @@ async def APIRequestFailed_Handler(def_name: str,
         _log.error(f"Au:{msg.author_id} | 用户屏蔽或权限不足")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
-    cm0 = await get_card(text, text_sub)
+    cm = await get_card_msg(text, text_sub)
     if send_msg:  # 非none则执行更新消息，而不是直接发送
-        await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     else:
-        await msg.reply(cm0)
+        await msg.reply(cm)
 
 
 # 基础错误的处理，带login提示(部分命令不需要这个提示)

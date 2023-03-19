@@ -15,7 +15,7 @@ from pkg.utils import ShopRate, ShopImg, Help, BotVip
 from pkg.utils.log import BotLog
 from pkg.utils.log.Logging import _log
 from pkg.utils.valorant import ValFileUpd,Reauth,AuthCache
-from pkg.utils.KookApi import (icon_cm, bot_offline, upd_card, get_card)
+from pkg.utils.KookApi import icon_cm, bot_offline, upd_card, get_card,get_card_msg
 from pkg.utils.valorant.Val import *
 from pkg.utils.valorant.EzAuth import EzAuth, EzAuthExp
 from pkg.utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
@@ -61,7 +61,7 @@ async def Save_File_Task():
     except:
         err_cur = f"ERR! [{getTime()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
         _log.exception("ERR in Save_File_Task")
-        await bot.client.send(debug_ch, err_cur)
+        await bot.client.send(debug_ch, err_cur) # type: ignore
 
 
 @bot.command(name='kill')
@@ -309,16 +309,17 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         return
     # 提前定义，避免报错
     send_msg = {'msg_id':''}
+    cm = CardMessage()
     try:
         # 1.检查全局登录速率
         await check_GloginRate()  # 无须接收此函数返回值，直接raise
         # 1.1 检查当前已经登录的用户数量，超过限制直接提示并返回
         if msg.author_id in UserAuthCache["kook"] and len(UserAuthCache["kook"][msg.author_id]) >= LOGIN_LIMITED:
-            await msg.reply(get_card("您当前已经登录了3个拳头账户！",
+            await msg.reply(get_card_msg("您当前已经登录了3个拳头账户！",
                                      "为避免后台缓存压力过大，您最多只能登录3个Riot账户",icon_cm.im_good_phoniex))# type:ignore
             return
         # 2.发送开始登录的提示消息
-        cm = await get_card("正在尝试获取您的riot账户token", "小憩一下，很快就好啦！", icon_cm.val_logo_gif)
+        cm = await get_card_msg("正在尝试获取您的riot账户token", "小憩一下，很快就好啦！", icon_cm.val_logo_gif)
         send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
         # 3.登录，获取用户的token
@@ -328,7 +329,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         await AuthCache.cache_auth_object('kook',msg.author_id,auth)
         # 3.2 没有成功，是2fa用户，需要执行/tfa命令
         if not resw['status']:
-            cm = await get_card("请使用「/tfa 验证码」提供邮箱验证码","登录中断，需要提供邮箱验证码",icon_cm.whats_that)
+            cm = await get_card_msg("请使用「/tfa 验证码」提供邮箱验证码","登录中断，需要提供邮箱验证码",icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             _log.info(f"login | 2fa user | Au:{msg.author_id}")  # 打印信息
             return
@@ -350,7 +351,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
             info_text += "\n您选择了保存账户密码，cookie失效后将使用账户密码重登"
 
         # 7.发送登录成功的信息
-        cm = await get_card(text, info_text, icon_cm.correct)
+        cm = await get_card_msg(text, info_text, icon_cm.correct)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
 
         # 8.全部都搞定了，打印登录信息日志
@@ -360,11 +361,11 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
     except EzAuthExp.AuthenticationError as result:
         _log.error(f"login AuthenticationError | Au:{msg.author_id} | {result}")
         text_sub = f"Make sure accont/password/verify-code correct\n`{result}`"
-        cm = await get_card("登录错误，请检查账户/密码/邮箱验证码", text_sub, icon_cm.dont_do_that)
+        cm = await get_card_msg("登录错误，请检查账户/密码/邮箱验证码", text_sub, icon_cm.dont_do_that)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except EzAuthExp.WaitOvertimeError as result:
         _log.error(f"login WaitOvertimeError | Au:{msg.author_id} | {result}")
-        cm = await get_card("等待超时", "auth wait overtime", icon_cm.lagging)
+        cm = await get_card_msg("等待超时", "auth wait overtime", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except EzAuthExp.RatelimitError as result:
         err_str = f"ERR! [{getTime()}] login Au:{msg.author_id} - {result}"
@@ -372,13 +373,13 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         login_rate_limit = {'limit': True, 'time': time.time()}
         _log.error(err_str + " set login_rate_limit = True")
         # 这里是第一个出现速率限制err的用户,更新消息提示
-        cm = await get_card(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
+        cm = await get_card_msg(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
         err_str = f"ERR! [{getTime()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
         Reauth.client_exceptions_handler(str(result),err_str)
         _log.exception("Exception occur in login")
-        cm = await get_card(err_str)
+        cm = await get_card_msg(err_str)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except KeyError as result:
         _log.error(f"login | Au:{msg.author_id} | KeyError: {result}")
@@ -388,7 +389,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
             text = f"遇到不常见的KeyError，可能👊Api服务器炸了"
             text_sub = f"KeyError, maybe Roit API Offline"
         # 发送卡片消息
-        cm = await get_card(text, text_sub, icon_cm.that_it)
+        cm = await get_card_msg(text, text_sub, icon_cm.that_it)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except requester.HTTPRequester.APIRequestFailed as result:  #卡片消息发送失败
         await BotLog.APIRequestFailed_Handler("login", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
@@ -418,12 +419,12 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         assert isinstance(auth, EzAuth)
         # 1.2 判断这个auth是否已经初始化完毕了，如果是，则不执行后续操作
         if auth.is_init(): # 初始化完毕
-            await msg.reply(await get_card(f"玩家「{auth.Name}#{auth.Tag}」已登录，无须执行本命令","若有问题，请联系开发者",icon_cm.correct))# type:ignore
-            return
+            return await msg.reply(await get_card_msg(f"玩家「{auth.Name}#{auth.Tag}」已登录，无须执行本命令","若有问题，请联系开发者",icon_cm.correct))
+            
 
         # 2.发送提示信息
-        cm0 = await get_card(f"两步验证码「{tfa}」获取成功", "小憩一下，很快就好啦！", icon_cm.no_time)
-        send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
+        cm = await get_card_msg(f"两步验证码「{tfa}」获取成功", "小憩一下，很快就好啦！", icon_cm.no_time)
+        send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
         # 3.进行邮箱验证
         await auth.email_verfiy(tfa)
@@ -435,16 +436,16 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
         # 4.成功
         text = f"登陆成功！欢迎回来，{auth.Name}#{auth.Tag}"
         info_text = "当前cookie有效期为2~3天，有任何问题请[点我](https://kook.top/gpbTwZ)"
-        cm = await get_card(text, info_text, icon_cm.correct)
+        cm = await get_card_msg(text, info_text, icon_cm.correct)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         _log.info(
             f"tfa | Au:{msg.author_id} | {auth.Name}#{auth.Tag}"
         )
     except EzAuthExp.MultifactorError as result:
         if "multifactor_attempt_failed" in str(result):
-            cm = await get_card("两步验证码错误，请重试", str(result), icon_cm.lagging)
+            cm = await get_card_msg("两步验证码错误，请重试", str(result), icon_cm.lagging)
         else:
-            cm = await get_card("邮箱验证错误，请重新login", str(result), icon_cm.lagging)
+            cm = await get_card_msg("邮箱验证错误，请重新login", str(result), icon_cm.lagging)
         # 更新消息
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except Exception as result:  # 其他错误
@@ -459,7 +460,7 @@ async def logout(msg: Message, *arg):
         global UserAuthCache
         # 1.用户如果没有登录，那也没必要logout
         if msg.author_id not in UserAuthCache['kook']: 
-            cm = await get_card("您尚未登陆！无须logout", "阿巴阿巴？", icon_cm.whats_that)
+            cm = await get_card_msg("您尚未登陆！无须logout", "阿巴阿巴？", icon_cm.whats_that)
             await msg.reply(cm)
             return
 
@@ -479,7 +480,7 @@ async def logout(msg: Message, *arg):
             log_text += " | rm cookie file"
         # 4.成功，发提示信息
         text = f"已退出所有账户的登录！下次再见~"
-        cm = await get_card(text, "你会回来的，对吗？", icon_cm.crying_crab)
+        cm = await get_card_msg(text, "你会回来的，对吗？", icon_cm.crying_crab)
         await msg.reply(cm) # type:ignore
         _log.info(log_text)
 
@@ -557,17 +558,18 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
     # 提前初始化变量
     send_msg = {'msg_id':''}
     resp = ""
+    cm = CardMessage()
     try:
         # 1.如果用户不在Authdict里面，代表没有登录，直接退出
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
+            await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
             return
 
         # 2.判断下标是否合法，默认下标为0
         _index = int(index)
         # 2.2 下标非法（越界），发送报错信息
         if _index >= len(UserAuthCache['kook'][msg.author_id]):
-            await msg.reply(await get_card("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that)) # type:ignore
+            await msg.reply(await get_card_msg("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that))
             return 
         # 2.2 下标合法，获取需要进行操作的Riot用户id
         riot_user_id = UserAuthCache['kook'][msg.author_id][_index]
@@ -575,7 +577,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         reau = await Reauth.check_reauth("每日商店",msg.author_id,riot_user_id,debug_ch,msg)
         if reau == False: return  # 如果为假说明重新登录失败，退出
         # 3.2 获取玩家id成功了，再提示正在获取商店
-        cm = await get_card("正在尝试获取您的每日商店", "阿狸正在施法，很快就好啦！", icon_cm.duck)
+        cm = await get_card_msg("正在尝试获取您的每日商店", "阿狸正在施法，很快就好啦！", icon_cm.duck)
         # 3.2.1 如果reauth函数return的是dict，说明重新登录成功且发送了消息，则更新卡片
         if isinstance(reau, dict):  
             await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
@@ -699,7 +701,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         if "SkinsPanelLayout" in str(result):
             _log.error(err_str + str(resp))
             btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
-            cm = await get_card(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
+            cm = await get_card_msg(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         else:
             await BotLog.BaseException_Handler("shop", traceback.format_exc(), msg, send_msg=send_msg)
@@ -721,18 +723,19 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         return
 
     send_msg = {'msg_id':''}
+    cm = CardMessage()
     try:
         # 1.判断是否已经登录
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))# type:ignore
-            return
+            return await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
+            
         
         # 2.判断下标是否合法，默认下标为0
         _index = int(index)
         # 2.2 下标非法（越界），发送报错信息
         if _index >= len(UserAuthCache['kook'][msg.author_id]):
-            await msg.reply(await get_card("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that))# type:ignore
-            return
+            return await msg.reply(await get_card_msg("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that))
+            
         # 2.2 下标合法，获取需要进行操作的Riot用户id
         riot_user_id = UserAuthCache['kook'][msg.author_id][_index]
         # 3.执行cookie重登
@@ -740,12 +743,12 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         if reau == False: return  #如果为假说明重新登录失败
 
         # 重新获取token成功了再提示正在获取夜市
-        cm0 = await get_card("正在尝试获取您的夜市", "阿狸正在施法，很快就好啦！", icon_cm.duck)
+        cm = await get_card_msg("正在尝试获取您的夜市", "阿狸正在施法，很快就好啦！", icon_cm.duck)
         if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
-            await upd_card(reau['msg_id'], cm0, channel_type=msg.channel_type) # type: ignore
+            await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type) # type: ignore
             send_msg = reau
         else:
-            send_msg = await msg.reply(cm0)  #记录消息id用于后续更新
+            send_msg = await msg.reply(cm)  #记录消息id用于后续更新
 
         # 计算获取时间
         start = time.perf_counter()  #开始计时
@@ -756,7 +759,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         resp = await fetch_daily_shop(riotUser)
         if "BonusStore" not in resp:  # 如果没有这个字段，说明夜市取消了
             NightMarketOff = False
-            cm1 = await get_card("嗷~ 夜市已关闭 或 Api没能正确返回结果", "night_market closed! 'BonusStore' not in resp",
+            cm1 = await get_card_msg("嗷~ 夜市已关闭 或 Api没能正确返回结果", "night_market closed! 'BonusStore' not in resp",
                                     icon_cm.duck)
             await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)  # 更新消息
             _log.error("night_market closed! | 'BonusStore' not in resp")
@@ -829,13 +832,14 @@ async def get_user_card(msg: Message, *arg):
         return
     # 初始化变量
     send_msg = {'msg_id':''}
+    cm = CardMessage()
     try:
         # 1.判断用户是否登录
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))# type:ignore
+            await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
             return
         # 1.1 发送开始的提示信息
-        cm = await get_card("获取您所有账户的 玩家卡面/VP/R点", "阿狸正在施法！很快就好啦~", icon_cm.rgx_card,card_color="#BBFFFF")
+        cm = await get_card_msg("获取您所有账户的 玩家卡面/VP/R点", "阿狸正在施法！很快就好啦~", icon_cm.rgx_card,card_color="#BBFFFF")
         send_msg = await msg.reply(cm)
         # 2.uinfo直接使用for循环来获取不同用户的信息
         cm = CardMessage()
@@ -867,9 +871,9 @@ async def get_user_card(msg: Message, *arg):
                     _log.warning(f"player_title | Au:{msg.author_id} | uuid:{resp['Identity']['PlayerTitleID']}")
                 # 可能遇到全新账户（没打过游戏）的情况
                 if resp['Guns'] == None or resp['Sprays'] == None:
-                    c = await get_card(f"玩家「{auth.Name}#{auth.Tag}」状态错误！", 
+                    c = await get_card_msg(f"玩家「{auth.Name}#{auth.Tag}」状态错误！", 
                                         f"您可能登录了一个全新账户（没打过瓦）\ncard:\n```\n{player_card}\n```\ntitle:\n```\n{player_title}\n```",
-                                        icon_cm.whats_that,full_cm=False)
+                                        icon_cm.whats_that)
                     cm.append(c)
                     continue
 
@@ -899,7 +903,7 @@ async def get_user_card(msg: Message, *arg):
             except KeyError as result:
                 if "Identity" in str(result) or "Balances" in str(result):
                     _log.exception(f"KeyErr while Ru:{riot_user_id}")
-                    cm2 = await get_card(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
+                    cm2 = await get_card_msg(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
                     await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         
         # 多个账户都获取完毕，发送卡片并输出结果
@@ -919,7 +923,7 @@ async def mission(msg:Message,*arg):
     try:
         # 1.如果用户不在Authdict里面，代表没有登录，直接退出
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
+            await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
             return
 
         # 2.直接使用for循环来获取不同用户的信息
@@ -931,7 +935,7 @@ async def mission(msg:Message,*arg):
                 reau = await Reauth.check_reauth("玩家任务",msg.author_id,riot_user_id,debug_ch,msg)
                 if reau == False: return  #如果为假说明重新登录失败
                 # 3.2 获取玩家id成功了，再提示正在获取商店
-                cm = await get_card("正在尝试获取您的每日任务", "阿狸正在施法，很快就好啦！", icon_cm.duck)
+                cm = await get_card_msg("正在尝试获取您的每日任务", "阿狸正在施法，很快就好啦！", icon_cm.duck)
                 # 3.2.1 如果reauth函数return的是dict，说明重新登录成功且发送了消息，则更新卡片
                 if isinstance(reau, dict):  
                     await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
@@ -952,11 +956,11 @@ async def mission(msg:Message,*arg):
             except KeyError as result:
                 if "Missions" in str(result):
                     _log.exception(f"KeyErr while Au:{msg.author_id} | Ru:{riot_user_id}")
-                    cm2 = await get_card(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
+                    cm2 = await get_card_msg(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
                     await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
         
         # 多个账户都获取完毕，发送卡片并输出结果
-        cm = await get_card("任务获取成功，感谢您对开发的贡献！", f"请转到[金山表单](https://f.wps.cn/g/Fipjms3w/)填写相关信息\n填写表单时，提供下方=右侧编号即可\n```\n{text}\n```")
+        cm = await get_card_msg("任务获取成功，感谢您对开发的贡献！", f"请转到[金山表单](https://f.wps.cn/g/Fipjms3w/)填写相关信息\n填写表单时，提供下方=右侧编号即可\n```\n{text}\n```")
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         _log.info(f"Au:{msg.author_id} | mission reply successful!")
     except Exception as result:
@@ -974,18 +978,18 @@ async def match(msg:Message,index:str="0",*arg):
         return
     # 提前初始化变量
     send_msg = {'msg_id':''}
-    resp = ""
+    cm = CardMessage()
     try:
         # 1.如果用户不在Authdict里面，代表没有登录，直接退出
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
+            await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
             return
 
         # 2.判断下标是否合法，默认下标为0
         _index = int(index)
         # 2.2 下标非法（越界），发送报错信息
         if _index >= len(UserAuthCache['kook'][msg.author_id]):
-            await msg.reply(await get_card("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that)) # type:ignore
+            await msg.reply(await get_card_msg("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that)) # type:ignore
             return 
         # 2.2 下标合法，获取需要进行操作的Riot用户id
         riot_user_id = UserAuthCache['kook'][msg.author_id][_index]
@@ -995,7 +999,7 @@ async def match(msg:Message,index:str="0",*arg):
         reau = await Reauth.check_reauth("战绩",msg.author_id,riot_user_id,debug_ch,msg)
         if reau == False: return  # 如果为假说明重新登录失败，退出
         # 3.1 重新获取token成功了再提示正在获取夜市
-        cm = await get_card("正在尝试获取您近五场战绩", "战绩查询需要较久时间，耐心等待一下哦！", icon_cm.duck)
+        cm = await get_card_msg("正在尝试获取您近五场战绩", "战绩查询需要较久时间，耐心等待一下哦！", icon_cm.duck)
         if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
             await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type) # type: ignore
             send_msg = reau
@@ -1117,6 +1121,7 @@ async def rate_skin_add(msg: Message, *arg):
     elif arg == ():
         await msg.reply(f"你没有提供皮肤参数！skin: `{arg}`\n正确用法：`/rate 您想评价的皮肤名`")
         return
+    cm = CardMessage()
     try:
         name = " ".join(arg)
         retlist = await ShopRate.get_available_skinlist(name)
@@ -1320,14 +1325,14 @@ async def add_skin_notify(msg: Message, *arg):
         vip_status = await BotVip.vip_ck(msg.author_id)
         if msg.author_id in SkinNotifyDict['data'] and not vip_status:
             if len(SkinNotifyDict['data'][msg.author_id]) > NOTIFY_NUM:
-                cm = await get_card(f"您的皮肤提醒栏位已满", f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
+                cm = await get_card_msg(f"您的皮肤提醒栏位已满", f"想解锁更多栏位，可以来[支持一下](https://afdian.net/a/128ahri?tab=shop)阿狸呢！",
                                     icon_cm.rgx_broken)
                 await msg.reply(cm)
                 return
 
         #用户没有登录
         if msg.author_id not in UserAuthCache['kook']:
-            cm = await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)
+            cm = await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)
             await msg.reply(cm)
             return
 
@@ -1487,9 +1492,9 @@ async def auto_skin_notify():
         # 先遍历vip用户列表，获取vip用户的商店
         for vip, uinfo in VipUserD.items():
             riot_user_id = "none"
+            cm = CardMessage()
             try:
                 user = await bot.client.fetch_user(vip)
-                cm = CardMessage()
                 if vip in UserAuthCache['kook']: 
                     start = time.perf_counter()  # 开始计时这个用户
                     for riot_user_id in UserAuthCache['kook'][vip]:

@@ -108,7 +108,7 @@ async def check_reauth(def_name: str,
         # 3.2 如果传入params有消息对象msg，则提示用户
         if msg:
             text = f"获取「{def_name}」失败！正在尝试重新获取token，您无需操作"
-            cm = await KookApi.get_card(text, f"{resp['message']}", KookApi.icon_cm.im_good_phoniex)
+            cm = await KookApi.get_card_msg(text, f"{resp['message']}", KookApi.icon_cm.im_good_phoniex)
             send_msg = await msg.reply(cm)
 
         # 4.传入kook id和拳头账户id，进行重登
@@ -119,7 +119,7 @@ async def check_reauth(def_name: str,
         # ret为False，重登失败，发送提示信息
         elif not ret and msg:
             text = f"重新获取token失败，请私聊「/login」重新登录\n"
-            cm = await KookApi.get_card(text, "Reauthorize Failed!", KookApi.icon_cm.crying_crab)
+            cm = await KookApi.get_card_msg(text, "Reauthorize Failed!", KookApi.icon_cm.crying_crab)
             await KookApi.upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             return False
 
