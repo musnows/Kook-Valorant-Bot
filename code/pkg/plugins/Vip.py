@@ -101,6 +101,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             return
 
         x3 = "[None]"
+        cm = CardMessage()
         try:
             if not await BotVip.vip_ck(msg):
                 return
@@ -217,6 +218,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
         if num == 'err':
             await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
             return
+        cm = CardMessage()
         try:
             if not await BotVip.vip_ck(msg):
                 return
