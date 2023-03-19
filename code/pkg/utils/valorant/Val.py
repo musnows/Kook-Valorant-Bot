@@ -485,3 +485,68 @@ async def get_reward(reward):
         return await fetch_title_uuid(reward['reward']['uuid'])
 
     return None
+
+
+async def get_match_detail_text(ru:RiotUserToken,match:dict) ->dict:
+    """解析一个战绩历史，获取到其文字形式的结果
+    Args:{
+        "MatchID":"uuid",
+        "GameStartTime": int,
+        "QueueID": "unrated/ggteam/spikerush/..."
+    }
+
+    Return: {"match_agent":match_agent,"match_team":match_team,
+    "damage_agv":damage_agv,"map_info":map_info,"match_player":match_player}
+    """
+    match_detail = await fetch_match_details(ru,match["MatchID"]) # 获取比赛信息
+    map_url = match_detail["matchInfo"]["mapId"]
+    map_info = await fetch_maps_url(map_url) # 获取地图信息
+    # 获取玩家在比赛中的表现
+    match_player = {}
+    for p in match_detail["players"]:
+        if p["subject"] == ru.user_id:
+            match_player = p
+            break
+    # 获取玩家的队伍
+    match_team = {"enermy":{},"team":{}}
+    for t in match_detail["teams"]:
+        if t["teamId"] == match_player["teamId"]:
+            match_team["team"] = t
+        else:
+            match_team["enermy"] = t
+    # 计算玩家的场均伤害
+    damage_sum = 0
+    for r in match_player["roundDamage"]:
+        damage_sum += r["damage"]
+    damage_agv =  damage_sum // match_team["team"]["roundsPlayed"] # type: ignore
+    # 获取玩家用的英雄
+    match_agent = await fetch_agents_uuid(match_player["characterId"])
+    return {"match_agent":match_agent,"match_team":match_team,"damage_agv":damage_agv,"map_info":map_info,"match_player":match_player}
+
+async def get_match_detail_card(ru:RiotUserToken,match:dict) -> Card:
+    """解析一个战绩历史，获取到其卡片
+    {
+        "MatchID":"uuid",
+        "GameStartTime": int,
+        "QueueID": "unrated/ggteam/spikerush/..."
+    }
+    """
+    ret = await get_match_detail_text(ru,match)
+    match_team = ret["match_team"] # 比赛的两个队伍
+    match_player = ret["match_player"] # 玩家在比赛中表现
+    match_agent = ret["match_agent"] # 比赛所用英雄
+    map_name = ret["map_info"]["displayName"] # 地图名字
+    damage_agv = ret["damage_agv"] # 比赛场均伤害
+    # 文字
+    kd = match_player['stats']['kills']/match_player['stats']['deaths']
+    kd = format(kd,'.2f')
+    text = f"{map_name} |  {match_team['team']['roundsWon']}-{match_team['enermy']['roundsWon']}  |  "
+    text+= f"{match_player['stats']['kills']}/{match_player['stats']['deaths']}/{match_player['stats']['assists']}\n"
+    sub_text = f"模式 {match['QueueID']} | 得分 {match_player['stats']['score']} | 场均伤害 {damage_agv} | KD {kd}"
+    # 赢了绿色 输了红色
+    card_color = "#98FB98" if match_team["team"]["won"] else "#FF6A6A" 
+    c = Card(color=card_color)
+    c.append(Module.Section(Element.Text(text, Types.Text.KMD),
+                            Element.Image(src=match_agent["data"]["displayIconSmall"], size="sm")))
+    c.append(Module.Context(Element.Text(sub_text, Types.Text.KMD)))
+    return c

@@ -912,7 +912,7 @@ async def get_user_card(msg: Message, *arg):
         await BotLog.BaseException_Handler("uinfo", traceback.format_exc(), msg, send_msg=send_msg)
 
 
-@bot.command()
+@bot.command(name='mission',case_sensitive=False)
 async def mission(msg:Message,*arg):
     BotLog.logMsg(msg)
     send_msg = {'msg_id':''}
@@ -961,6 +961,71 @@ async def mission(msg:Message,*arg):
         _log.info(f"Au:{msg.author_id} | mission reply successful!")
     except Exception as result:
         await BotLog.BaseException_Handler("mission",traceback.format_exc(),msg)
+
+@bot.command(name='match',case_sensitive=False)
+async def match(msg:Message,index:str="0",*arg):
+    BotLog.logMsg(msg)
+    if LoginForbidden:
+        await LoginForbidden_send(msg)
+        return
+    # index参数是下标，应该为一个正整数
+    elif "-" in index or "." in index:
+        await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
+        return
+    # 提前初始化变量
+    send_msg = {'msg_id':''}
+    resp = ""
+    try:
+        # 1.如果用户不在Authdict里面，代表没有登录，直接退出
+        if msg.author_id not in UserAuthCache['kook']:
+            await msg.reply(await get_card("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that)) # type:ignore
+            return
+
+        # 2.判断下标是否合法，默认下标为0
+        _index = int(index)
+        # 2.2 下标非法（越界），发送报错信息
+        if _index >= len(UserAuthCache['kook'][msg.author_id]):
+            await msg.reply(await get_card("您提供的下标超出范围！请检查您的输入，或不提供本参数","使用「/login-l」查看您当前登录的账户",icon_cm.dont_do_that)) # type:ignore
+            return 
+        # 2.2 下标合法，获取需要进行操作的Riot用户id
+        riot_user_id = UserAuthCache['kook'][msg.author_id][_index]
+
+        # 3.执行cookie重登
+        start = time.perf_counter()
+        reau = await Reauth.check_reauth("战绩",msg.author_id,riot_user_id,debug_ch,msg)
+        if reau == False: return  # 如果为假说明重新登录失败，退出
+        # 3.1 重新获取token成功了再提示正在获取夜市
+        cm = await get_card("正在尝试获取您近五场战绩", "战绩查询需要较久时间，耐心等待一下哦！", icon_cm.duck)
+        if isinstance(reau, dict):  #如果传过来的是一个dict，说明重新登录成功且发送了消息
+            await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type) # type: ignore
+            send_msg = reau
+        else:
+            send_msg = await msg.reply(cm)  # 记录消息id用于后续更新
+
+        # 4.获取auth对象
+        auth = UserAuthCache['data'][riot_user_id]['auth']
+        assert isinstance(auth, EzAuth)
+        
+        # 5.获取比赛历史
+        riot_user_token = auth.get_riotuser_token()
+        match_histroy = await fetch_match_histroy(riot_user_token)
+        # 6.遍历前5个，获取每一个的卡片消息(卡片最多5个)
+        i=5
+        cm = CardMessage()
+        for match in match_histroy["History"]:
+            c = await get_match_detail_card(riot_user_token,match)
+            cm.append(c)
+            if i<=1: break
+            else: i-=1
+
+        # 结束计时，发送给用户
+        using_time = format(time.perf_counter() - start, '.2f')
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+        _log.info(f"Au:{msg.author_id} | match reply success! | {using_time}s")
+    except requester.HTTPRequester.APIRequestFailed as result:  # 卡片消息发送失败
+        await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
+    except Exception as result:
+        await BotLog.BaseException_Handler("match",traceback.format_exc(),msg)
 
 
 # 获取捆绑包信息(无需登录)
