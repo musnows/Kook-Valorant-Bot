@@ -13,20 +13,22 @@
 [English](./README_EN.md) | 简体中文
 
 
-![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot) ![release](https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot)
+![python](https://img.shields.io/badge/Python-3.10%2B-green) ![commit](https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot) ![release](https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot)
 [![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social)
 
 <img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
 
 ## 功能
-当前机器人基本完善，目前支持回复Valorant游戏错误码、查询Valorant每日商店/夜市/vp/r点，和一些简单功能。邮箱验证用户登录也已添加。
+当前机器人基本完善，目前支持回复Valorant游戏错误码、查询Valorant每日商店/夜市/vp/r点，和一些简单功能。
+
+支持邮箱验证用户登录，支持多账户登录（每位用户最多可登录3个Riot账户）
 
 下面是目前支持的功能列表：
 
 | 帮助命令      | 功能                                       |
 | ------------- | ------------------------------------------ |
-| `/Ahri`           | 回复使用帮助（因`/help`和其他机器人冲突，故用阿狸的英文名`Ahri`替代） |
+| `/ahri`           | 回复使用帮助（因`/help`和其他机器人冲突，故用阿狸的英文名`ahri`替代） |
 | `/vhelp` | Valorant相关查询功能的帮助命令                     |
 
 
@@ -37,11 +39,6 @@
 | `/saveid`     | 保存（修改）用户的游戏id                   |
 | `/myid`       | 显示用户的游戏id                           |
 | `/bundle 皮肤名`  | 搜索已有皮肤系列包含什么枪械               |
-| `/login 账户 密码` | 私聊bot进行登录riot账户的操作(获取token) |
-| `/logout` | 退出riot账户登录 |
-| `/shop` | 获取每日商店的4个皮肤 |
-| `/night` | 获取夜市的6个皮肤 |
-| `/uinfo` 或 `/point` | 获取玩家卡面和称号，剩余vp和r点 |
 | `/notify-a 皮肤名` | 搜索皮肤名，并提供选项将指定皮肤加入商店提醒 |
 | `/notify-l` | 查看当前已经设置了提醒的皮肤 |
 | `/notify-d 皮肤uuid` | 使用uuid删除不需要提醒的皮肤 |
@@ -50,6 +47,23 @@
 |`/kkn`|查看昨日评分最高/最低的用户|
 
 `/rate` 参与的打分，其会显示在 `/shop` 商店查询结果的尾部，同时统计当日商店最高分和最低分，可以在第二天用 `/kkn` 来查看。
+
+| 登陆和查询      | 功能                                       |
+| ------------- | ------------------------------------------ |
+| `/login 账户 密码` | 私聊bot进行登录riot账户的操作 (支持多账户登录) |
+| `/login-l` | 查看已登录的账户 |
+| `/tfa 验证码` | 开启了邮箱验证的账户提供邮箱验证码 |
+| `/logout` | 退出riot账户登录 |
+| `/shop` | 获取每日商店的4个皮肤 |
+| `/night` | 获取夜市的6个皮肤 |
+| `/uinfo` 或 `/point` | 获取玩家卡面和称号，剩余vp和r点 |
+| `/mission` | 获取玩家的每日/每周任务（开发中） |
+| `/match` | 获取玩家的历史5场战绩 |
+
+
+每日商店刷枪提醒功能 `/notify-a` 需要用户**保持登录状态**，bot会在每天的`08:00AM`遍历列表，查看您的商店是否刷出了您想要的皮肤；如果是vip用户，则会直接发送当日商店的图片。
+
+cookie 登录信息将在2-3天后失效，所以皮肤提醒功能会出现用户没有登录而无法获取的情况。目前取消了notify未登录提醒，添加了在**全局变量**中保存账户密码的功能。
 
 | Vip相关     | 功能               |
 | ------------- | ---------------- |
@@ -60,20 +74,16 @@
 | `/vip-shop-s 图片编号` | 切换商店查询的背景图 |
 | `/vip-shop-d 图片编号` | 删除商店查询的背景图 |
 
-
-每日商店刷枪提醒功能 `/notify-a` 需要用户**保持登录状态**，bot会在每天的`08:00AM`遍历列表，查看您的商店是否刷出了您想要的皮肤；如果是vip用户，则会直接发送当日商店的图片。
-
-cookie 登录信息将在2-3天后失效，所以皮肤提醒功能会出现用户没有登录而无法获取的情况。目前取消了notify未登录提醒，添加了在**全局变量**中保存账户密码的功能。
-
+机器人的所有vip命令斗需要vip用户才能执行。vip功能是阿狸的主要发电来源，感谢大家的支持。
 
 | 其他命令    | 功能                                                         |
 | ----------------- | ------------------------------------------------------------ |
 | `/hello`          | 打个招呼 (一般用来测试bot在不在线)                                                 |
 | `/roll 1 100`     | 掷色子1-100，范围可自行调节                                  |
 | `/countdown 秒数` | 倒计时，默认60秒                                             |
-| `/TL 内容` | 翻译内容。其他语言翻译为中文，中文默认翻译成en |
-| `/TLON` | 在本文字频道`打开`实时翻译功能 |
-| `/TLOFF` | 在本文字频道`关闭`实时翻译功能 |
+| `/tl 内容` | 翻译内容。其他语言翻译为中文，中文默认翻译成en |
+| `/tlon` | 在本文字频道`打开`实时翻译功能 |
+| `/tloff` | 在本文字频道`关闭`实时翻译功能 |
 | `/we 城市` | 查询`城市`未来3天的天气情况 |
 | `/hs` | 历史上的今天（因为kook审核原因被删除） |
 |         `无`         | 自动给新用户上对应角色（可自主修改）                           |
@@ -117,7 +127,7 @@ Api请求返回示例图：
 
 ## 如何使用？
 
-保证你的Windows/Linux中`Python`版本高于`3.8`，执行下面的安装库命令
+保证你的 Windows/Linux 中 `Python` 版本高于 `3.10`，执行下面的安装库命令
 
 ~~~
 pip install -r requirements.txt
@@ -125,7 +135,9 @@ pip install -r requirements.txt
 
 建议根据 [khl.py/example](https://github.com/TWT233/khl.py/tree/main/example) 的教程，学习KOOK机器人的基本搭建（很简单的，相信我）
 
-如果你想直接使用本机器人，可以转到本仓库 [WIKI](https://github.com/musnows/Kook-Valorant-Bot/wiki) 查看更多引导内容
+如果你想直接使用本机器人，可以转到本仓库 [WIKI](https://github.com/musnows/Kook-Valorant-Bot/wiki) 查看更多引导内容。
+
+本仓库代码文件较多，提供了带注释的Tree，详见 [docs/file-tree](./docs/file-tree.md)
 
 ----
 
@@ -134,19 +146,22 @@ pip install -r requirements.txt
 下面是一些未来的计划
 
 - [x] 增加保存用户游戏id的功能
-- [x] 添加自动给新用户上色功能（目前只有kook的valorant服务器能用）
-- [ ] 实现查询游戏战绩（需要roit授权）
+- [x] 添加自动给新用户上色功能（只有 kook [valorant社区](https://kook.top/oqz7Xg) 可用）
+- [x] 实现查询游戏战绩
 - [x] 实现玩家商店刷枪的查询
 - [x] 实现当商店刷新某一把枪的时候提醒玩家
 - [x] 查看玩家的夜市
 - [x] 邮箱验证2fa登录
-- [ ] 通行证、每日任务的查询
+- [ ] 通行证、每日任务的查询（开发中）
 - [ ] 以类似抽卡的方式，用按钮、图片等等方式显示用户的夜市
-- [ ] Api增加使用Riot Token调用的接口，方便本地管理登录信息，调用api画图
+- [x] Api增加画图接口，方便本地管理登录信息，只调用api画图
 
-咳咳，虽然初步的商店查询功能已经上线，但是其是否`封号`依旧有争论！目前功能已经上线半年有余，未出现异常现象；且询问过外网开发者，其表示没有听说过有人因为使用api查询而被封号。
 
-**如果您担心风险，请不要使用相关功能**！bot的`/vhelp`命令`/login`命令中有相关警告提示，使用即代表您同意了承担风险！
+### 免责声明
+
+虽然初步的商店查询功能已经上线，但是其是否`封号`依旧有争论！目前功能已经上线一年有余，未出现异常现象；且询问过外网开发者，其表示没有听说过有人因为使用api查询而被封号。
+
+**如果您担心风险，请不要使用相关功能**！bot的 `/vhelp` 命令 `/login` 命令中有相关警告提示，使用即代表您同意了承担风险！
 
 <img src="./screenshot/issue_banned.png" height="250px" alt="issue screenshots">
 
@@ -155,10 +170,10 @@ pip install -r requirements.txt
 ## 依赖
 
 由于本人压根没有系统的学过Python，所以本仓库的很多代码都是根据他人教程修改后使用的
-* 基本框架参考[khl.py](https://github.com/TWT233/khl.py)提供的  `kook sdk` 以及使用教程
+* 基本框架参考 [khl.py](https://github.com/TWT233/khl.py) 提供的  `kook sdk` 以及使用教程
 * Valorant游戏皮肤/捆绑包/玩家卡面等素材源自 [valorant-api.com](https://valorant-api.com/)
 * Valorant游戏主要商店查询代码基于 [ValorantClientAPI](https://github.com/HeyM1ke/ValorantClientAPI) 项目提供的 `api文档`
-* 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) & [Prodzify/Riot-auth](https://github.com/Prodzify/Riot-auth)
+* 通过账户密码获取 `riot_auth_token` 基于 [floxay/python-riot-auth](https://github.com/floxay/python-riot-auth) & [Prodzify/Riot-auth](https://github.com/Prodzify/Riot-auth)。目前已和 `floxay/python-riot-auth` 解耦
 
 
 ### 特别鸣谢🎁
