@@ -124,7 +124,7 @@ async def fetch_player_contract(ru: RiotUserToken) -> dict:
 async def fetch_player_level(ru: RiotUserToken) -> dict:
     """获取玩家的等级信息
     """
-    url = "https://pd.ap.a.pvp.net/account-xp/v1/players/"
+    url = "https://pd.ap.a.pvp.net/account-xp/v1/players/" + ru.user_id
     headers = {
         "Content-Type": "application/json",
         "X-Riot-Entitlements-JWT": ru.entitlements_token,

@@ -835,7 +835,6 @@ async def get_user_card(msg: Message, *arg):
                 text += f"上次首胜：{last_fwin}\n"
                 text += f"首胜重置：{next_fwin}"
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
-
                 #获取玩家的vp和r点剩余的text
                 resp = await Riot.fetch_vp_rp_dict(riotUser)
                 text = f"(emj)r点(emj)[{ValItersEmoji['rp']}] RP  {resp['rp']}    "
@@ -843,15 +842,20 @@ async def get_user_card(msg: Message, *arg):
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
                 cm.append(c)
             except KeyError as result:
-                if "Identity" in str(result) or "Balances" in str(result):
-                    _log.exception(f"KeyErr while Ru:{riot_user_id}")
-                    cm2 = await get_card_msg(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
-                    await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+                for i in ["Progress","Identity","Balances"]:
+                    if i in str(result):
+                        _log.exception(f"KeyErr '{i}' | Ru:{riot_user_id}")
+                        cm2 = await get_card_msg(f"键值错误，需要重新登录", f"KeyError:{result}, please re-login", icon_cm.lagging)
+                        await upd_card(send_msg['msg_id'], cm2, channel_type=msg.channel_type)
+                        continue
+                else: 
+                    raise result
         
         # 多个账户都获取完毕，发送卡片并输出结果
-        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
-        _log.info(f"Au:{msg.author_id} | uinfo reply successful!")
-
+        if cm:
+            await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
+            _log.info(f"Au:{msg.author_id} | uinfo reply successful!")
+        else: raise Exception("卡片消息cm为空，消息初始化失败")
     except requester.HTTPRequester.APIRequestFailed as result:  # 卡片消息发送失败
         await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
     except Exception as result:
