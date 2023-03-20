@@ -1,5 +1,6 @@
 import time
 import traceback
+import requests
 
 from khl import (Bot, Message, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
@@ -8,6 +9,41 @@ from ..utils.valorant.EzAuth import EzAuth,EzAuthExp,RiotUserToken
 from ..utils.KookApi import get_card_msg,icon_cm,upd_card
 from ..utils.log import BotLog
 from ..utils.file.Files import LoginForbidden,UserAuthCache,_log
+
+
+async def fetch_match_histroy(ru:RiotUserToken,startIndex=0,endIndex=20) -> dict:
+    """获取玩家的战绩历史
+
+    Docs: https://valapidocs.techchrism.me/endpoint/match-history
+    
+    Args:
+    - startIndex (Optional)
+        The index of the first match to return. Defaults to 0
+    - endIndex (Optional)
+        The index of the last match to return. Defaults to 20
+    """
+    url = f"https://pd.ap.a.pvp.net/match-history/v1/history/{ru.user_id}?startIndex={startIndex}&endIndex={endIndex}"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": ru.entitlements_token,
+        "Authorization": "Bearer " + ru.access_token,
+    }
+    res = requests.get(url, headers=headers)
+    res = res.json()
+    return res
+
+async def fetch_match_details(ru:RiotUserToken,match_id:str) -> dict:
+    """获取某一场比赛的详细信息"""
+    url = f"https://pd.ap.a.pvp.net/match-details/v1/matches/{match_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Riot-Entitlements-JWT": ru.entitlements_token,
+        "Authorization": "Bearer " + ru.access_token,
+    }
+    res = requests.get(url, headers=headers)
+    res = res.json()
+    return res
+
 
 
 async def get_match_detail_text(ru:RiotUserToken,match:dict) ->dict:
