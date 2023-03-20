@@ -9,7 +9,7 @@ from ..Gtime import getTime
 from ..KookApi import kook_create_asset
 from .. import ShopRate,ShopImg
 from ..valorant import AuthCache
-from ..valorant.Val import fetch_daily_shop, fetch_vp_rp_dict
+from ..valorant.api.Riot import fetch_daily_shop, fetch_vp_rp_dict
 from ..valorant.EzAuth import EzAuthExp,EzAuth
 
 # bot的配置文件

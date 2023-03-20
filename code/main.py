@@ -14,9 +14,9 @@ from aiohttp import client_exceptions
 from pkg.utils import ShopRate, ShopImg, Help, BotVip
 from pkg.utils.log import BotLog
 from pkg.utils.log.Logging import _log
-from pkg.utils.valorant import ValFileUpd,Reauth,AuthCache
+from pkg.utils.valorant import Reauth,AuthCache
 from pkg.utils.KookApi import icon_cm, bot_offline, upd_card, get_card,get_card_msg
-from pkg.utils.valorant.Val import *
+from pkg.utils.valorant.api import Assets,Riot,Local
 from pkg.utils.valorant.EzAuth import EzAuth, EzAuthExp
 from pkg.utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
 
@@ -131,11 +131,6 @@ async def atAhri(msg: Message):
         await BotLog.BaseException_Handler("at_help", traceback.format_exc(), msg)
 
 
-###########################################################################################
-####################################以下是游戏相关代码区#####################################
-###########################################################################################
-
-
 # 手动设置禁止登录的全局变量状态
 @bot.command(name='lf')
 async def LoginForbidden_Change(msg: Message):
@@ -149,57 +144,12 @@ async def LoginForbidden_Change(msg: Message):
 
         await msg.reply(f"Update LoginForbidden status: {LoginForbidden}")
 
-
-# 存储用户游戏id
-@bot.command(name="saveid", case_sensitive=False)
-async def saveid(msg: Message, *args):
-    BotLog.logMsg(msg)
-    if args == ():
-        await msg.reply(f"您没有提供您的游戏id：`{args}`")
-        return
-    try:
-        game_id = " ".join(args)  #避免用户需要输入双引号
-        await saveid_main(msg, game_id)
-    except Exception as result:
-        await BotLog.BaseException_Handler("saveid", traceback.format_exc(), msg)
-
-
-# 已保存id总数
-@bot.command(name='saveid-a')
-async def saveid_all(msg: Message):
-    BotLog.logMsg(msg)
-    try:
-        await saveid_count(msg)
-    except Exception as result:
-        await BotLog.BaseException_Handler("saveid-a", traceback.format_exc(), msg)
-
-
-# 实现读取用户游戏ID并返回
-@bot.command(name="myid", case_sensitive=False) 
-async def myid(msg: Message, *args):
-    BotLog.logMsg(msg)
-    try:
-        await myid_main(msg)
-    except Exception as result:
-        await BotLog.BaseException_Handler("myid", traceback.format_exc(), msg)
-
-
-# 查询游戏错误码
-@bot.command(name='val', aliases=['van', 'VAN', 'VAL'])
-async def val_err(msg: Message, numS: str = "-1", *arg):
-    BotLog.logMsg(msg)
-    try:
-        await val_errcode(msg, numS)
-    except Exception as result:
-        await BotLog.BaseException_Handler("val", traceback.format_exc(), msg,help=f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
-
-
-#关于dx报错的解决方法
-@bot.command(name='DX', aliases=['dx'])  # 新增别名dx
-async def dx(msg: Message):
-    BotLog.logMsg(msg)
-    await dx123(msg)
-
+async def LoginForbidden_send(msg: Message):
+    """拳头api调用被禁止的时候，发送提示信息"""
+    _log.info(f"Au:{msg.author_id} Command Failed | LF")
+    await msg.reply(
+        f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
+    )
 
 #####################################################################################
 
@@ -598,7 +548,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
             log_time += f"[Dict_shop] {format(time.time()-a_time,'.4f')} "
         # 4.3.2 本地没有，api获取每日商店
         else:
-            resp = await fetch_daily_shop(riotUser)  
+            resp = await Riot.fetch_daily_shop(riotUser)  
             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
             timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  # 剩余时间
             timeout = time.strftime("%H:%M:%S", time.gmtime(timeout))  # 将秒数转为标准时间
@@ -622,7 +572,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
             dailyshop_img_src = VipShopBgDict['cache'][auth.user_id]['cache_img']
         # 5.1.2 本地缓存路径不存在，或者缓存过期
         elif is_vip:
-            play_currency = await fetch_vp_rp_dict(riotUser)  # 获取用户的vp和rp
+            play_currency = await Riot.fetch_vp_rp_dict(riotUser)  # 获取用户的vp和rp
             # 如果没有设置背景图，那就设置为err
             background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
                               VipShopBgDict['bg'][msg.author_id]["background"][0])
@@ -748,7 +698,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         assert isinstance(auth, EzAuth)
         riotUser = auth.get_riotuser_token()
         # 获取商店（夜市是相同接口）
-        resp = await fetch_daily_shop(riotUser)
+        resp = await Riot.fetch_daily_shop(riotUser)
         if "BonusStore" not in resp:  # 如果没有这个字段，说明夜市取消了
             NightMarketOff = False
             cm1 = await get_card_msg("嗷~ 夜市已关闭 或 Api没能正确返回结果", "night_market closed! 'BonusStore' not in resp",
@@ -767,11 +717,11 @@ async def get_night_market(msg: Message,index:str="0", *arg):
                 f"玩家「{auth.Name}#{auth.Tag}」的夜市！"))
         for Bonus in resp["BonusStore"]["BonusStoreOffers"]:
             # 获取皮肤信息
-            skin = fetch_skin_bylist(Bonus["Offer"]["OfferID"])
+            skin = Local.fetch_skin_bylist(Bonus["Offer"]["OfferID"])
             skin_icon = skin["data"]['levels'][0]["displayIcon"]
             skin_name = skin["data"]["displayName"]
             # 获取皮肤的等级
-            res_iters = fetch_skin_iters_bylist(Bonus["Offer"]["OfferID"])
+            res_iters = Local.fetch_skin_iters_bylist(Bonus["Offer"]["OfferID"])
             # 从预先上传的自定义emoji里面，选择一个和皮肤等级对应的emoji
             iter_emoji = ValItersEmoji[res_iters['data']['devName']] 
             basePrice = Bonus["Offer"]["Cost"]["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"]  #原价
@@ -848,9 +798,9 @@ async def get_user_card(msg: Message, *arg):
                 auth = UserAuthCache['data'][riot_user_id]['auth']
                 assert isinstance(auth, EzAuth)
                 riotUser = auth.get_riotuser_token()
-                resp = await fetch_player_loadout(riotUser)  #获取玩家装备栏
-                player_card = await fetch_playercard_uuid(resp['Identity']['PlayerCardID'])  #玩家卡面id
-                player_title = await fetch_title_uuid(resp['Identity']['PlayerTitleID'])  #玩家称号id
+                resp = await Riot.fetch_player_loadout(riotUser)  #获取玩家装备栏
+                player_card = await Assets.fetch_playercard(resp['Identity']['PlayerCardID'])  #玩家卡面id
+                player_title = await Assets.fetch_title(resp['Identity']['PlayerTitleID'])  #玩家称号id
                 if 'data' not in player_card or player_card['status'] != 200:
                     player_card = {'data': {'wideArt': 'https://img.kookapp.cn/assets/2022-09/PDlf7DcoUH0ck03k.png'}}
                     _log.warning(f"player_card | Au:{msg.author_id} | uuid:{resp['Identity']['PlayerCardID']}")
@@ -870,7 +820,7 @@ async def get_user_card(msg: Message, *arg):
                     continue
 
                 # 获取玩家等级
-                resp = await fetch_player_level(riotUser)
+                resp = await Riot.fetch_player_level(riotUser)
                 player_level = resp["Progress"]["Level"]  # 玩家等级
                 player_level_xp = resp["Progress"]["XP"]  # 玩家等级经验值
                 last_fwin = resp["LastTimeGrantedFirstWin"]  # 上次首胜时间
@@ -887,7 +837,7 @@ async def get_user_card(msg: Message, *arg):
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
 
                 #获取玩家的vp和r点剩余的text
-                resp = await fetch_vp_rp_dict(riotUser)
+                resp = await Riot.fetch_vp_rp_dict(riotUser)
                 text = f"(emj)r点(emj)[{ValItersEmoji['rp']}] RP  {resp['rp']}    "
                 text += f"(emj)vp(emj)[{ValItersEmoji['vp']}] VP  {resp['vp']}\n"
                 c.append(Module.Section(Element.Text(text, Types.Text.KMD)))
@@ -939,7 +889,7 @@ async def mission(msg:Message,*arg):
                 auth = UserAuthCache['data'][riot_user_id]['auth']
                 assert isinstance(auth, EzAuth)
                 # 获取玩家任务
-                ret = await fetch_player_contract(auth.get_riotuser_token())
+                ret = await Riot.fetch_player_contract(auth.get_riotuser_token())
                 m = ret["Missions"]
                 id_text = f"{riot_user_id}_{getTime()}"
                 text += f"{auth.Name}#{auth.Tag} = {id_text}\n"
@@ -973,7 +923,7 @@ async def get_bundle(msg: Message, *arg):
         for b in ValBundleList:  #在本地查找
             if name in b['displayName']:
                 # 确认在捆绑包里面有这个名字之后，在查找武器（这里不能使用displayName，因为有些捆绑包两个版本的名字不一样）
-                weapenlist = await fetch_bundle_weapen_byname(name)
+                weapenlist = await Local.fetch_bundle_weapen_byname(name)
                 cm = CardMessage()
                 c = Card(Module.Section(Element.Text(f"已为您查询到 `{name}` 相关捆绑包", Types.Text.KMD)))
                 for b in ValBundleList:
@@ -982,7 +932,7 @@ async def get_bundle(msg: Message, *arg):
                 if weapenlist != []:  # 遇到“再来一局”这种旧皮肤捆绑包，找不到武器名字
                     text = "```\n"
                     for w in weapenlist:
-                        res_price = fetch_item_price_bylist(w['lv_uuid'])
+                        res_price = Local.fetch_item_price_bylist(w['lv_uuid'])
                         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                             text += '%-28s\t- vp%5s\n' % (w['displayName'], price)
@@ -1265,14 +1215,14 @@ async def add_skin_notify(msg: Message, *arg):
 
         name = " ".join(arg)
         name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-        sklist = fetch_skin_list_byname(name)
+        sklist = Local.fetch_skin_list_byname(name)
         if sklist == []:  #空list代表这个皮肤不在里面
             await msg.reply(f"该皮肤不在列表中，请重新查询！")
             return
 
         retlist = list()  #用于返回的list，因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
         for s in sklist:
-            res_price = fetch_item_price_bylist(s['lv_uuid'])
+            res_price = Local.fetch_item_price_bylist(s['lv_uuid'])
             if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
                 price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
                 data = {'skin': s, 'price': price}
@@ -1438,7 +1388,7 @@ async def auto_skin_notify():
                         # 获取账户token
                         riotUser = auth.get_riotuser_token() 
                         a_time = time.time()  # 开始调用api的时间
-                        resp = await fetch_daily_shop(riotUser)  # 获取每日商店
+                        resp = await Riot.fetch_daily_shop(riotUser)  # 获取每日商店
                         # 检查夜市是否开启
                         check_night_market_status(resp)
                         # 处理商店返回值             
@@ -1457,7 +1407,7 @@ async def auto_skin_notify():
                         # 直接获取商店图片
                         draw_time = time.time()  # 开始计算画图需要的时间
                         # 获取用户的vp和rp
-                        play_currency = await fetch_vp_rp_dict(riotUser) 
+                        play_currency = await Riot.fetch_vp_rp_dict(riotUser) 
                         # 设置用户背景图，如果在则用，否则返回err
                         background_img = ('err' if vip not in VipShopBgDict['bg'] else
                                             VipShopBgDict['bg'][vip]["background"][0])
@@ -1484,8 +1434,8 @@ async def auto_skin_notify():
                         # 如果图片没有正常返回，那就发送文字版本
                         else: 
                             for skinuuid in list_shop:
-                                res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找
-                                res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
+                                res_item = Local.fetch_skin_bylist(skinuuid)  # 从本地文件中查找
+                                res_price = Local.fetch_item_price_bylist(skinuuid)  # 在本地文件中查找
                                 price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] # 皮肤价格
                                 shop_text += f"{res_item['data']['displayName']}     - VP {price}\n"
                             # 获取完毕text，记录信息
@@ -1549,7 +1499,7 @@ async def auto_skin_notify():
                         if await BotVip.vip_ck(aid) and auth.user_id in UserShopCache["data"]:
                             list_shop = UserShopCache["data"][auth.user_id]["SkinsPanelLayout"]["SingleItemOffers"]
                         else: # 非vip用户，调用api获取每日商店
-                            resp = await fetch_daily_shop(riotUser)  # 获取每日商店
+                            resp = await Riot.fetch_daily_shop(riotUser)  # 获取每日商店
                             list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                             await ShopRate.check_shop_rate(aid, list_shop)  #计算非vip用户商店得分
 
@@ -1635,16 +1585,6 @@ async def bot_log_list(msg: Message, *arg):
         await BotLog.BaseException_Handler("log-list",traceback.format_exc(),msg)
 
 
-# 手动更新商店物品和价格
-@bot.command(name='update_spb', aliases=['upd'])
-async def update_skin_price_bundle(msg: Message):
-    BotLog.logMsg(msg)
-    try:
-        if msg.author_id == master_id:
-            await ValFileUpd.update(msg,bot_upimg)
-    except Exception as result:
-        await BotLog.BaseException_Handler("update_spb",traceback.format_exc(),msg)
-
 @bot.command(name='mem')
 async def proc_check(msg: Message, *arg):
     BotLog.logMsg(msg)
@@ -1658,7 +1598,7 @@ async def proc_check(msg: Message, *arg):
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 # 注册其他命令
-from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match
+from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match,GameHelper,ValFileUpd
 
 @bot.on_startup
 async def loading_cache(bot: Bot):
@@ -1672,6 +1612,8 @@ async def loading_cache(bot: Bot):
         Translate.init(bot,master_id)
         BotStatus.init(bot)
         Match.init(bot,debug_ch)
+        GameHelper.init(bot)
+        ValFileUpd.init(bot,bot_upimg,master_id)
         Vip.init(bot,bot_upimg,master_id,debug_ch,cm_send_test)
         _log.info("[BOT.TASK] load plugins")
     except:

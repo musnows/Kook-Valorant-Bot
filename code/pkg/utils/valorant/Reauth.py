@@ -3,7 +3,7 @@ from khl import Message, Channel
 from aiohttp import client_exceptions
 from .EzAuth import EzAuth, EzAuthExp
 from ..file.Files import UserAuthCache, UserPwdReauth, LoginForbidden,SkinNotifyDict, bot
-from .Val import fetch_valorant_point
+from .api.Riot import fetch_valorant_point
 from ..log.Logging import _log
 from .. import KookApi, Gtime
 

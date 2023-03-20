@@ -4,7 +4,7 @@ import leancloud
 import traceback
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from .valorant import Val
+from .valorant.api import Local
 from .file.Files import config,SkinRateDict,_log
 PLATFORM = config['platform'] # 平台
 
@@ -135,7 +135,7 @@ async def get_available_skinlist(name:str):
     Return: [{'skin': [{'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}], 'price': price}]
     """
     name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-    sklist = Val.fetch_skin_list_byname(name)
+    sklist = Local.fetch_skin_list_byname(name)
     if sklist == []:  #空list代表这个皮肤不在里面
         return []
 
@@ -143,7 +143,7 @@ async def get_available_skinlist(name:str):
     for s in sklist:
         # 查找皮肤价格
         # 因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
-        res_price = Val.fetch_item_price_bylist(s['lv_uuid'])
+        res_price = Local.fetch_item_price_bylist(s['lv_uuid'])
         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
             data = {'skin': s, 'price': price}
