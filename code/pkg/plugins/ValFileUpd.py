@@ -4,7 +4,7 @@ from khl import Message, Bot
 from PIL import Image
 from ..utils.ShopImg import img_requestor
 from ..utils.file.Files import ValBundleList,UserAuthCache, ValSkinList, ValPriceList
-from ..utils.valorant import Val
+from ..utils.valorant.api import Assets
 from ..utils.log.Logging import _log
 from ..utils.log import BotLog
 
@@ -13,7 +13,7 @@ async def update_skins(msg: Message) -> bool:
     """更新本地保存的皮肤"""
     try:
         global ValSkinList
-        skins = await Val.fetch_skins_all()
+        skins = await Assets.fetch_skins()
         ValSkinList.value = skins
         # 写入文件
         ValSkinList.save()
@@ -29,7 +29,7 @@ async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
     """更新捆绑包，并将捆绑包的图片上传到kook"""
     try:
         global ValBundleList
-        resp = await Val.fetch_bundles_all()  #从官方获取最新list
+        resp = await Assets.fetch_bundles_all()  #从官方获取最新list
         if len(resp['data']) == len(ValBundleList):  #长度相同代表没有更新
             _log.info(f"len is the same, not need update")
             await msg.reply("BundleList_len相同，无需更新")
@@ -70,7 +70,7 @@ async def update_price(msg: Message, riot_user_token) -> bool:
     try:
         global ValPriceList
         # 调用api获取价格列表
-        prices = await Val.fetch_item_price_all(riot_user_token)
+        prices = await Assets.fetch_item_price_all(riot_user_token)
         test = prices["Offers"] # 暴力判断是否有这个键值，没有则keyerr
         ValPriceList.value = prices  # 所有价格的列表
         # 写入文件

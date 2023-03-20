@@ -4,7 +4,8 @@ import requests
 
 from khl import (Bot, Message, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
-from ..utils.valorant import Val,Reauth
+from ..utils.valorant import Reauth
+from ..utils.valorant.api import Riot,Assets
 from ..utils.valorant.EzAuth import EzAuth,EzAuthExp,RiotUserToken
 from ..utils.KookApi import get_card_msg,icon_cm,upd_card
 from ..utils.log import BotLog
@@ -57,9 +58,9 @@ async def get_match_detail_text(ru:RiotUserToken,match:dict) ->dict:
     Return: {"match_agent":match_agent,"match_team":match_team,
     "damage_agv":damage_agv,"map_info":map_info,"match_player":match_player}
     """
-    match_detail = await Val.fetch_match_details(ru,match["MatchID"]) # 获取比赛信息
+    match_detail = await Riot.fetch_match_details(ru,match["MatchID"]) # 获取比赛信息
     map_url = match_detail["matchInfo"]["mapId"]
-    map_info = await Val.fetch_maps_url(map_url) # 获取地图信息
+    map_info = await Assets.fetch_maps_url(map_url) # 获取地图信息
     # 获取玩家在比赛中的表现
     match_player = {}
     for p in match_detail["players"]:
@@ -83,7 +84,7 @@ async def get_match_detail_text(ru:RiotUserToken,match:dict) ->dict:
             damage_sum += r["damage"]
         damage_agv =  damage_sum // match_team["team"]["roundsPlayed"] # type: ignore
     # 获取玩家用的英雄
-    match_agent = await Val.fetch_agents_uuid(match_player["characterId"])
+    match_agent = await Assets.fetch_agents(match_player["characterId"])
     return {"match_agent":match_agent,"match_team":match_team,"damage_agv":damage_agv,"map_info":map_info,"match_player":match_player}
 
 async def get_match_detail_card(ru:RiotUserToken,match:dict) -> Card:
@@ -120,8 +121,10 @@ def init(bot:Bot,debug_ch:Channel):
     async def match(msg:Message,index:str="0",*arg):
         BotLog.logMsg(msg)
         if LoginForbidden:
-            await Val.LoginForbidden_send(msg)
-            return
+            _log.info(f"Au:{msg.author_id} Command Failed | LF")
+            return await msg.reply(
+                f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
+            )
         # index参数是下标，应该为一个正整数
         elif "-" in index or "." in index:
             await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
@@ -162,7 +165,7 @@ def init(bot:Bot,debug_ch:Channel):
             
             # 5.获取比赛历史
             riot_user_token = auth.get_riotuser_token()
-            match_histroy = await Val.fetch_match_histroy(riot_user_token)
+            match_histroy = await Riot.fetch_match_histroy(riot_user_token)
             # 6.遍历前5个，获取每一个的卡片消息(卡片最多5个)
             i=5
             cm = CardMessage()
