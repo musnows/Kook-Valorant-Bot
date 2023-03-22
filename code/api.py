@@ -221,7 +221,8 @@ app = web.Application()
 app.add_routes(routes)
 if __name__ == '__main__':
     try: # host需要设置成0.0.0.0，否则只有本地才能访问
-        _log.info(f"API Service Start")
-        web.run_app(app, host='0.0.0.0', port=14726)
+        HOST,PORT = '0.0.0.0',14726
+        _log.info(f"API Service Start at {HOST}:{PORT}")
+        web.run_app(app, host=HOST, port=PORT)
     except:
         _log.exception("Exception occur")

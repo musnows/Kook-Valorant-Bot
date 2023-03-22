@@ -9,6 +9,7 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 if __name__ == '__main__':
-    _log.info(f"[START] service start")
+    HOST,PORT = '0.0.0.0',14725
+    _log.info(f"[START] service start at {HOST}:{PORT}")
     asyncio.get_event_loop().run_until_complete(
-        asyncio.gather(web._run_app(app, host='0.0.0.0', port=14725), bot.start()))
+        asyncio.gather(web._run_app(app, host=HOST, port=PORT), bot.start()))
