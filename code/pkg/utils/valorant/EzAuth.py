@@ -70,6 +70,10 @@ class EzAuth:
         self.init_time = 0.0
         """when auth init? default to 0"""
 
+    def __del__(self) -> None:
+        """close session"""
+        self.session.close() 
+        
     def __set_userinfo(self) -> None:
         """get and set user_info to self.value"""
         userinfo = self.get_userinfo()
