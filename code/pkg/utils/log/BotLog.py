@@ -225,7 +225,8 @@ import psutil, os
 
 
 # 获取进程信息
-async def get_proc_info() -> CardMessage:
+async def get_proc_info(start_time=getTime()) -> CardMessage:
+    """start_time: bot start time as 23-01-01 00:00:00"""
     p = psutil.Process(os.getpid())
     text = f"霸占的CPU百分比：{p.cpu_percent()} %\n"
     text += f"占用的MEM百分比：{format(p.memory_percent(), '.3f')} %\n"
@@ -233,7 +234,7 @@ async def get_proc_info() -> CardMessage:
     text += f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
     text += f"IO信息：\n{p.io_counters()}"
     cm = CardMessage()
-    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"记录于 {getTime()}"), Module.Divider(),
+    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"开机于 {start_time} | 记录于 {getTime()}"), Module.Divider(),
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     return cm

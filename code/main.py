@@ -1594,7 +1594,7 @@ async def proc_check(msg: Message, *arg):
     BotLog.logMsg(msg)
     try:
         if msg.author_id == master_id:
-            cm = await BotLog.get_proc_info()
+            cm = await BotLog.get_proc_info(start_time)
             await msg.reply(cm)
     except:
         await BotLog.BaseException_Handler("mem",traceback.format_exc(),msg)
