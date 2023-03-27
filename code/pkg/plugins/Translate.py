@@ -1,5 +1,6 @@
 import json
 import aiohttp
+import traceback
 import urllib.request
 import urllib.parse
 from khl import Bot, Message
@@ -8,8 +9,9 @@ from khl.card import Card, CardMessage, Element, Module, Types
 # 读取彩云的key
 from ..utils.file.Files import config,_log
 from ..utils.log import BotLog
-# 彩云key
+
 CyKey = config['caiyun']
+"""彩云小译 key"""
 
 
 # youdao code is from https://github.com/Chinese-boy/Many-Translaters
@@ -96,30 +98,36 @@ async def translate_main(msg: Message, *arg):
         ret = deleteByStartAndEnd(word, '(met)', '(met)')
     elif '(rol)' in word:
         ret = deleteByStartAndEnd(word, '(rol)', '(rol)')
-    #重新赋值
+    # 重新赋值
     word = ret
     try:
-        cm = CardMessage()
-        c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}", Types.Text.KMD)),
-                  Module.Context('来自: 有道翻译'))
-        cm.append(c1)
-        #await msg.ctx.channel.send(cm)
-        await msg.reply(cm)
-    except:
-        cm = CardMessage()
-        if is_CN(word):
-            c1 = Card(
-                Module.Section(
-                    Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
-                Module.Context('来自: 彩云小译，中译英'))
-        else:
-            c1 = Card(
-                Module.Section(
-                    Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
-                Module.Context('来自: 彩云小译，英译中'))
+        try:
+            cm = CardMessage()
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}", Types.Text.KMD)),
+                    Module.Context('来自: 有道翻译'))
+            cm.append(c1)
+            await msg.reply(cm)
+        except Exception as result:
+            # 如果为空，rasie到外层except
+            if CyKey=="":raise result
+            # 彩云的key不为空，才调用它
+            cm = CardMessage()
+            if is_CN(word):
+                c1 = Card(
+                    Module.Section(
+                        Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
+                    Module.Context('来自: 彩云小译，中译英'))
+            else:
+                c1 = Card(
+                    Module.Section(
+                        Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
+                    Module.Context('来自: 彩云小译，英译中'))
 
-        cm.append(c1)
-        await msg.reply(cm)
+            cm.append(c1)
+            await msg.reply(cm)
+    except:
+        _log.exception(f"translate error")
+        await msg.reply(f"翻译出错了！\n```\n{traceback.format_exc()}\n```")
 
 
 # 实时翻译栏位

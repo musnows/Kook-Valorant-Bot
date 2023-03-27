@@ -5,7 +5,7 @@
     "img_upload_token": "用来进行vip商店图片测试的机器人websocket token（发图片让kook的内容识别来判断有么有问题）"
   },
   "master_id": "机器人开发者userid",
-  "caiyun": "彩云小译的token",
+  "caiyun": "彩云小译的token，可为空，但不能删除本键值",
   "channel":{
     "debug_ch": "发送错误日志的频道",
     "img_upload_ch": "用来测试vip商店图片的频道"
@@ -17,7 +17,7 @@
   "leancloud":{
     "appid":"leancloud数据库的appid（可联系作者，共用皮肤评价数据库）",
     "appkey":"leancloud数据库的appkey",
-    "master_key":"leancloud数据库的masterkey",
+    "master_key":"leancloud数据库的masterkey（可为空，目前没有使用）",
     "user_name":"数据库内置用户id",
     "user_pwd":"数据库内置用户密码"
   },
