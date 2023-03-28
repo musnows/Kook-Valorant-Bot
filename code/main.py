@@ -259,7 +259,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         await check_GloginRate()  # 无须接收此函数返回值，直接raise
         # 1.1 检查当前已经登录的用户数量，超过限制直接提示并返回
         if msg.author_id in UserAuthCache["kook"] and len(UserAuthCache["kook"][msg.author_id]) >= LOGIN_LIMITED:
-            await msg.reply(get_card_msg("您当前已经登录了3个拳头账户！",
+            await msg.reply(await get_card_msg("您当前已经登录了3个拳头账户！",
                                      "为避免后台缓存压力过大，您最多只能登录3个Riot账户",icon_cm.im_good_phoniex))# type:ignore
             return
         # 2.发送开始登录的提示消息
