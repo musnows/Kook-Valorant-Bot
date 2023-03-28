@@ -118,8 +118,10 @@ async def Vhelp(msg: Message, *arg):
 @bot.on_message()
 async def atAhri(msg: Message):
     try:
-        me = await bot.client.fetch_me()
-        if f"(met){me.id}(met)" in msg.content:
+        # kook系统通知
+        if msg.author_id == "3900775823":
+            return
+        if f"(met){bot.client.me.id}(met)" in msg.content:
             BotLog.logMsg(msg)
             if msg.author_id == master_id:
                 text = Help.help_develop()
