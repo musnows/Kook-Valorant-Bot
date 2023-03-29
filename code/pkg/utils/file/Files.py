@@ -31,6 +31,8 @@ ValItersList = FileManage("./log/ValIters.json")
 """valorant皮肤等级"""
 ValMissionDict = FileManage("./log/ValMission.json")
 """valorant任务id和名字对照表（收集自用户）"""
+ValAgentDict = FileManage("./log/ValAgent.json")
+"""valorant英雄相关信息"""
 
 # valorant功能相关
 GameIdDict = FileManage("./log/game_idsave.json") 
