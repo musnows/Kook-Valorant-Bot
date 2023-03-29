@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 # 用户数量的记录文件
 from .Logging import _log
 from ..file.Files import bot, BotUserDict,FileManage
-from ..Gtime import getTime
+from ..Gtime import getTime,getDate,time
 from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 
 # 记录频道/服务器信息的底图
@@ -25,6 +25,14 @@ def log_bot_user(user_id: str) -> None:
     else:
         BotUserDict['user']['data'][user_id] = 1
 
+# 记录命令的使用情况
+def log_bot_cmd():
+    global BotUserDict
+    date = getDate()
+    if date not in BotUserDict:
+        BotUserDict['cmd'][date] = 0
+    # 命令使用次数+1
+    BotUserDict['cmd'][date]+=1
 
 # 记录服务器中的用户信息
 def log_bot_guild(user_id: str, guild_id: str) -> str:
@@ -37,26 +45,28 @@ def log_bot_guild(user_id: str, guild_id: str) -> str:
     # 先记录用户
     log_bot_user(user_id)
     # 获取当前时间
-    time = getTime()
+    cur_time = getTime()
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}  #不能连续创建两个键值！
+        BotUserDict['guild']['data'][guild_id]['time'] = time.time()
         BotUserDict['guild']['data'][guild_id]['user'] = {}
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "GNAu"
     # 服务器存在，新用户
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "NAu"
     # 旧用户，更新执行命令的时间
     else:
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "Au"
 
 
 # 在控制台打印msg内容，用作日志
 def logMsg(msg: Message) -> None:
     try:
+        log_bot_cmd()# 记录命令使用次数
         # 私聊用户没有频道和服务器id
         if isinstance(msg, PrivateMessage):
             log_bot_user(msg.author_id)  # 记录用户
