@@ -1,5 +1,5 @@
 import time
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,timezone
 from zoneinfo import ZoneInfo
 
 def getTime():
@@ -28,6 +28,22 @@ def getTimeFromStamp(timestamp:float|int):
     # localtime_str = time.strftime("%y-%m-%d %H:%M:%S", localtime)
     a = datetime.fromtimestamp(timestamp,tz=ZoneInfo('Asia/Shanghai'))
     return a.strftime("%y-%m-%d %H:%M:%S")
+
+
+def getTimeStampFromStr(time_str):
+    """从可读时间转为时间戳, 格式 23-01-01 00:00:00"""    
+    dt = datetime.strptime(time_str, '%y-%m-%d %H:%M:%S')
+    tz = timezone(timedelta(hours=8))
+    dt = dt.astimezone(tz)
+    return dt.timestamp()
+
+def getDateFromStamp(time_stamp):
+    """从时间戳转为可读日期，格式%y-%m-%d"""
+    dt = datetime.fromtimestamp(time_stamp)
+    tz = timezone(timedelta(hours=8))
+    dt = dt.astimezone(tz)
+    return dt.strftime("%y-%m-%d") #转换成可读时间
+
 
 def shop_time_remain():
     """计算当前时间和明天早上8点的差值，返回值为可读时间 08:00:00"""

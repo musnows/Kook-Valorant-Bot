@@ -1553,7 +1553,7 @@ async def proc_check(msg: Message, *arg):
 
 #在阿狸开机的时候自动加载所有保存过的cookie
 # 注册其他命令
-from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match,GameHelper,ValFileUpd,Mission
+from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match,GameHelper,ValFileUpd,Mission,StatusWeb
 
 @bot.on_startup
 async def loading_cache(bot: Bot):
@@ -1571,6 +1571,7 @@ async def loading_cache(bot: Bot):
         ValFileUpd.init(bot,bot_upimg,master_id)
         Vip.init(bot,bot_upimg,master_id,debug_ch,cm_send_test)
         Mission.init(bot,debug_ch)
+        StatusWeb.init(bot,master_id)
         _log.info("[BOT.TASK] load plugins")
     except:
         _log.fatal("[BOT.TASK] startup task failed!")
