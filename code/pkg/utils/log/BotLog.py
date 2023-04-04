@@ -27,7 +27,7 @@ def log_bot_user(user_id: str,cur_time:str) -> None:
         BotUserDict['user']['data'][user_id]['cmd'] += 1
         BotUserDict['user']['data'][user_id]['used_time'] = cur_time
     else: # 不在，进行初始化
-        BotUserDict['user']['data'][user_id]['cmd'] = {
+        BotUserDict['user']['data'][user_id] = {
             'cmd':1,
             'init_time':cur_time,
             'used_time':cur_time
@@ -53,28 +53,31 @@ def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
     global BotUserDict
     # 获取当前时间的str
     cur_time = getTime()
+    cur_time_stamp = time.time()
     # 先记录用户
     log_bot_user(user_id,cur_time)
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
-        BotUserDict['guild']['data'][guild_id] = {}  # 不能连续创建两个键值！
-        BotUserDict['guild']['data'][guild_id]['init_time'] = time.time() # 服务器的初始化时间
+        BotUserDict['guild']['data'][guild_id] = {}
+        BotUserDict['guild']['data'][guild_id]['init_time'] = cur_time_stamp # 服务器的初始化时间
+        BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp # 服务器上次用命令的时间
         BotUserDict['guild']['data'][guild_id]['name'] = guild_name  # 服务器的名字
         BotUserDict['guild']['data'][guild_id]['cmd'] = 1      # 服务器的命令使用次数
-        BotUserDict['guild']['data'][guild_id]['user'] = {}
+        BotUserDict['guild']['data'][guild_id]['user'] = {} 
         # 用户在该服务器内的初始化时间（第一次使用命令的时间）
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time 
         return "GNAu"
     # 服务器存在，新用户
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
+        BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         BotUserDict['guild']['data'][guild_id]['cmd'] += 1
         return "NAu"
-    # 旧用户
+    # 旧服务器，旧用户
     else:
+        # 更新服务器的上次使用命令的时间
+        BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp
         BotUserDict['guild']['data'][guild_id]['cmd'] += 1
-        # 为了日志的统一性，不再更新guild中用户使用命令的时间
-        # BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "Au"
 
 
