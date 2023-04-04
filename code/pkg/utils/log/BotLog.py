@@ -18,7 +18,6 @@ log_base_img = Image.open("../screenshot/log_base.png")  # 文件路径
 # 记录私聊的用户信息
 def log_bot_user(user_id: str) -> None:
     global BotUserDict
-    BotUserDict['cmd_total'] += 1
     # 判断用户是否存在于总用户列表中
     if user_id in BotUserDict['user']['data']:
         BotUserDict['user']['data'][user_id] += 1
@@ -28,14 +27,15 @@ def log_bot_user(user_id: str) -> None:
 # 记录命令的使用情况
 def log_bot_cmd():
     global BotUserDict
-    date = getDate()
-    if date not in BotUserDict:
+    date = getDate() # 获取当日日期的str
+    BotUserDict['cmd_total'] += 1 # 命令执行总数+1
+    if date not in BotUserDict['cmd']:
         BotUserDict['cmd'][date] = 0
-    # 命令使用次数+1
-    BotUserDict['cmd'][date]+=1
+    # 当天命令使用次数+1
+    BotUserDict['cmd'][date] += 1
 
 # 记录服务器中的用户信息
-def log_bot_guild(user_id: str, guild_id: str) -> str:
+def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
     """Return:
     - GNAu: new user in new guild
     - NAu:  new user in old guild
@@ -44,22 +44,23 @@ def log_bot_guild(user_id: str, guild_id: str) -> str:
     global BotUserDict
     # 先记录用户
     log_bot_user(user_id)
-    # 获取当前时间
+    # 获取当前时间的str
     cur_time = getTime()
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}  #不能连续创建两个键值！
-        BotUserDict['guild']['data'][guild_id]['time'] = time.time()
+        BotUserDict['guild']['data'][guild_id]['init'] = time.time() # 服务器的初始化时间
         BotUserDict['guild']['data'][guild_id]['user'] = {}
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
+        # 用户在该服务器内的初始化时间（第一次使用命令的时间）
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time 
         return "GNAu"
     # 服务器存在，新用户
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "NAu"
-    # 旧用户，更新执行命令的时间
-    else:
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
+    # 旧用户
+    else:# 为了日志的统一性，不再更新guild中用户使用命令的时间
+        # BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "Au"
 
 
@@ -73,7 +74,7 @@ def logMsg(msg: Message) -> None:
             _log.info(
                 f"PrivateMsg | Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | {msg.content}")
         else:
-            Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id)  # 记录服务器和用户
+            Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id,msg.ctx.guild.name)  # 记录服务器和用户
             _log.info(
                 f"G:{msg.ctx.guild.id} | C:{msg.ctx.channel.id} | {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
