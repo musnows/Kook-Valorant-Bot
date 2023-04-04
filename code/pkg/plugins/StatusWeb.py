@@ -104,6 +104,7 @@ def init(bot:Bot,master_id:str):
             if msg.author_id !=master_id:
                 return
             await render_gu_web(True)
+            await msg.reply(f"网页更新成功")
         except:
             await msg.reply(f"网页渲染出现错误\n```\n{traceback.format_exc()}```\n")
     
