@@ -9,7 +9,7 @@ import aiohttp
 import requests
 import zhconv
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
-from .valorant.Val import *
+from .valorant.api import Local
 from .Gtime import *
 from .log.Logging import _log
 
@@ -262,10 +262,10 @@ def sm_comp_11(skin_img_url, skin_name, price, skin_level_icon, skinuuid):
 
 # 在本地文件中查找皮肤的图片，没有图片就执行画图，并插入到temp中
 def skin_uuid_to_comp(skinuuid, ran, is_169=False):
-    res_item = fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
-    res_price = fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
+    res_item = Local.fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
+    res_price = Local.fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
     price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']  # 取出价格
-    res_iters = fetch_skin_iters_bylist(skinuuid)  # 在本地文件中查找皮肤等级
+    res_iters = Local.fetch_skin_iters_bylist(skinuuid)  # 在本地文件中查找皮肤等级
     # 画单个皮肤的图片
     if is_169:
         img = sm_comp_169(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,

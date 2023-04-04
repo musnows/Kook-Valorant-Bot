@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from .KookApi import icon_cm
 from .Gtime import getTime
 from .log.Logging import _log
-from .file.Files import bot,config,VipShopBgDict,VipUserDict, VipUuidDict
+from .file.Files import bot,config,VipShopBgDict,VipUserDict, VipUuidDict,VipUser
 from .ShopImg import img_requestor
 
 
@@ -194,7 +194,7 @@ async def vip_ck(msg):
 
 #获取当前vip用户列表
 async def fetch_vip_user():
-    global VipUserDict
+    global VipUserDict,VipUser
     vipuserdict_temp = copy.deepcopy(VipUserDict)
     text = ""
     for u, ifo in vipuserdict_temp.items():
@@ -206,7 +206,7 @@ async def fetch_vip_user():
 
     if vipuserdict_temp != VipUserDict:
         #将修改存放到文件中
-        VipUserDict.save()
+        VipUser.save()
         _log.info(f"[vip-r] update VipUserDict")
 
     return text
@@ -265,14 +265,13 @@ def len_VusBg(user_id: str):
         return 0
 
 # 获取自定义背景图的展示卡片
-async def get_vip_shop_bg_cm(msg: Message) -> CardMessage | str:
+async def get_vip_shop_bg_cm(msg: Message) -> CardMessage:
     global VipShopBgDict
-    if msg.author_id not in VipShopBgDict['bg']:
-        return "您尚未自定义商店背景图！"
-    elif len_VusBg(msg.author_id) == 0:
-        return "您尚未自定义商店背景图！"
-
     cm = CardMessage()
+    if (msg.author_id not in VipShopBgDict['bg']) or len_VusBg(msg.author_id) == 0:
+        cm.append(Card(Module.Section("您尚未自定义商店背景图！")))
+        return cm
+
     c1 = Card(color='#e17f89')
     c1.append(Module.Header('您当前设置的商店背景图如下'))
     c1.append(Module.Container(Element.Image(src=VipShopBgDict['bg'][msg.author_id]["background"][0])))
@@ -303,7 +302,8 @@ async def get_vip_shop_bg_cm(msg: Message) -> CardMessage | str:
                 debug_ch = await bot.fetch_public_channel(config['channel']['debug_ch']) 
                 await bot.client.send(debug_ch, err_str)
                 _log.exception("UnidentifiedImageError")
-                return f"您上传的图片违规！请慎重选择图片。多次上传违规图片会导致阿狸被封！下方有违规图片的url\n{err_str}"
+                cm = CardMessage(Card(Module.Section(f"您上传的图片违规！多次上传违规图片会导致阿狸被封！下方为违规图片的url\n{err_str}")))
+                return cm
 
     cm.append(c1)
     return cm

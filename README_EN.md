@@ -9,15 +9,15 @@ Kook-Valorant-Bot</h1>
 
 English | [简体中文](./README.md)
 
-![python](https://img.shields.io/badge/Python-3.8%2B-green) ![commit](https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot) ![release](https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot)
+![python](https://img.shields.io/badge/Python-3.10%2B-green) ![commit](https://img.shields.io/github/last-commit/musnows/Kook-Valorant-Bot) ![release](https://img.shields.io/github/v/release/musnows/Kook-Valorant-Bot)
 [![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=3986996654014459&style=0)](https://kook.top/gpbTwZ) ![githubstars](https://img.shields.io/github/stars/musnows/Kook-Valorant-Bot?style=social)
 
 <img src="./screenshot/log.png" height="55px" alt="Bot Log Image">
 </div>
 
-KOOK(once called kaiheila) is a Chinese voice communication software.
+KOOK (once called kaiheila) is a Chinese voice communication platform.
 
->Because this bot are only used in Chinese platform,so I didn't write a more detail Readme in English.Sorry for that
+> This bot is only used in Chinese platform, so I didn't write a more detail README in English. Sorry for that 
 
 
 ## Command
@@ -26,27 +26,36 @@ Here is the Command List for bot:
 
 | Help        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
-| `/Ahri`         | help command（Because `/help`conflicts with other bots, `/Ahri`is used instead,who is an hero in League of Legends） |
-| `/vhelp`         | help command for Valorant serch fuction |
+| `/ahri`         | help command (Because `/help`conflicts with other bots, `/ahri` is used instead, which is an hero-name in League of Legends) |
+| `/vhelp`         | help command for Valorant search fuction |
 
-Recommended to use after the Valorant_Function is stable.
+
 
 | Valorant        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
 | `/val err_code` | help with the err_code of valorant                           |
 | `/saveid`       | save or change user's game ID                                |
 | `/myid`         | show user's game ID                                          |
-| `/bundle name`    | search for skin bundles                                            |
+| `/bundle name`    | search for skin bundles (only support zh-TW )                         |
 | `/login account passwd` | login your `riot_account` to fetch `auth_token` |
-| `/logout` | logout your riot_account |
+| `/login-l` | show riot accout you have logined |
+| `/tfa vcode` | login with verify code of MFA user |
+| `/logout` | logout your `riot_account` |
 | `/shop` | fetch skin at daily shop |
-| `/night` | fetch night market at daily shop |
-| `/uinfo` or `/point` | fetch player `card` & `title`,remaining `Vp` and `Rp` |
+| `/night` | fetch night market  |
+| `/uinfo` or `/point` | fetch player `card` & `title`,remaining `Vp` & `Rp` |
+| `/mission` | fetch player's mission (Under developmen) |
+| `/match` | fetch player's match history |
 | `/notify-a skin_name` |search for skin name,providing NO for add it into notification |
 | `/notify-l` | show current notify skin |
 |`/rate skin_name`|search skin by name for /rts|
 |`/rts NO. point comment`|select skin_no. to rate a point(0~100) and leave a comment to it|
 |`/kkn`|checkout yesterday's heighest/lowest rate_point of daily shop |
+
+
+notify function require user to stay `login`, bot wil fetch your daily shop at `08:00AM GMT+8` .If the skin is in daily shop, bot will send a private message to user.
+
+The bot is only using in Chinese platform, the skin `name` only support `zh-TW`
 
 
 | Vip    | Function                |
@@ -59,11 +68,8 @@ Recommended to use after the Valorant_Function is stable.
 | `/vip-shop-d NO.` | delete vip-shop background img using `NO.` |
 
 
-notify function require user to stay `login`, bot wil fetch your daily shop at `08:00AM GMT+8` .If the skin is in daily shop, bot will send a private message to user.
-
 If the user is a vip, the bot will also send the full picture of the daily-shop on that day through private message.
 
-> The bot is only using in Chinese platform, the skin `name` only support `zh-TW`
 
 | Other        | Function                                                     |
 | --------------- | ------------------------------------------------------------ |
@@ -103,7 +109,7 @@ You can find image examples for the functions in [screenshot](./screenshot) flod
 ## How to used?
 
 
-make sure your Windows/Linux `Python` version `3.8+`
+make sure your Windows/Linux `Python` version `3.10+`
 
 ~~~
 pip install -r requirements.txt

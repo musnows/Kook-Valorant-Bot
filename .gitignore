@@ -1,8 +1,15 @@
+# config file
 config.json
 valorant.json
 caiyun.json
-
-__pycache__/
+# log file
 */log/
 *.log
 btest.py
+
+# python file
+__pycache__/
+
+# idea
+.idea/
+

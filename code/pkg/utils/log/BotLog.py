@@ -8,8 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 # 用户数量的记录文件
 from .Logging import _log
 from ..file.Files import bot, BotUserDict,FileManage
-from ..Gtime import getTime
-from ..KookApi import guild_list, guild_view, upd_card, get_card, icon_cm
+from ..Gtime import getTime,getDate,time
+from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 
 # 记录频道/服务器信息的底图
 font_color = '#000000'  # 黑色字体
@@ -25,6 +25,14 @@ def log_bot_user(user_id: str) -> None:
     else:
         BotUserDict['user']['data'][user_id] = 1
 
+# 记录命令的使用情况
+def log_bot_cmd():
+    global BotUserDict
+    date = getDate()
+    if date not in BotUserDict:
+        BotUserDict['cmd'][date] = 0
+    # 命令使用次数+1
+    BotUserDict['cmd'][date]+=1
 
 # 记录服务器中的用户信息
 def log_bot_guild(user_id: str, guild_id: str) -> str:
@@ -37,26 +45,28 @@ def log_bot_guild(user_id: str, guild_id: str) -> str:
     # 先记录用户
     log_bot_user(user_id)
     # 获取当前时间
-    time = getTime()
+    cur_time = getTime()
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}  #不能连续创建两个键值！
+        BotUserDict['guild']['data'][guild_id]['time'] = time.time()
         BotUserDict['guild']['data'][guild_id]['user'] = {}
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "GNAu"
     # 服务器存在，新用户
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "NAu"
     # 旧用户，更新执行命令的时间
     else:
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = time
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
         return "Au"
 
 
 # 在控制台打印msg内容，用作日志
 def logMsg(msg: Message) -> None:
     try:
+        log_bot_cmd()# 记录命令使用次数
         # 私聊用户没有频道和服务器id
         if isinstance(msg, PrivateMessage):
             log_bot_user(msg.author_id)  # 记录用户
@@ -147,7 +157,7 @@ async def APIRequestFailed_Handler(def_name: str,
                                    excp: str,
                                    msg: Message,
                                    bot: Bot,
-                                   cm: CardMessage = None,
+                                   cm = CardMessage(),
                                    send_msg: dict[str, str] = {}) -> None:
     """Args:
     - def_name: name of def to print in log
@@ -161,8 +171,6 @@ async def APIRequestFailed_Handler(def_name: str,
     err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
     text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
-    # 如果cm是None，则将cm赋值为空卡片消息
-    cm = cm if cm else CardMessage() 
     # 引用不存在的时候，直接向频道或者用户私聊重新发送消息
     if "引用不存在" in excp:  
         if isinstance(msg, PrivateMessage):
@@ -180,11 +188,11 @@ async def APIRequestFailed_Handler(def_name: str,
         _log.error(f"Au:{msg.author_id} | 用户屏蔽或权限不足")
         text_sub = f"阿狸无法向您发出私信，请检查你的隐私设置"
 
-    cm0 = await get_card(text, text_sub)
+    cm = await get_card_msg(text, text_sub)
     if send_msg:  # 非none则执行更新消息，而不是直接发送
-        await upd_card(send_msg['msg_id'], cm0, channel_type=msg.channel_type)
+        await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     else:
-        await msg.reply(cm0)
+        await msg.reply(cm)
 
 
 # 基础错误的处理，带login提示(部分命令不需要这个提示)
@@ -227,7 +235,8 @@ import psutil, os
 
 
 # 获取进程信息
-async def get_proc_info() -> CardMessage:
+async def get_proc_info(start_time=getTime()) -> CardMessage:
+    """start_time: bot start time as 23-01-01 00:00:00"""
     p = psutil.Process(os.getpid())
     text = f"霸占的CPU百分比：{p.cpu_percent()} %\n"
     text += f"占用的MEM百分比：{format(p.memory_percent(), '.3f')} %\n"
@@ -235,7 +244,7 @@ async def get_proc_info() -> CardMessage:
     text += f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
     text += f"IO信息：\n{p.io_counters()}"
     cm = CardMessage()
-    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"记录于 {getTime()}"), Module.Divider(),
+    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"开机于 {start_time} | 记录于 {getTime()}"), Module.Divider(),
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     return cm

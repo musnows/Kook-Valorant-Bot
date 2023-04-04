@@ -1,14 +1,17 @@
 import json
 import aiohttp
+import traceback
 import urllib.request
 import urllib.parse
 from khl import Bot, Message
 from khl.card import Card, CardMessage, Element, Module, Types
 
 # 读取彩云的key
-from .file.Files import config,_log
-# 彩云key
+from ..utils.file.Files import config,_log
+from ..utils.log import BotLog
+
 CyKey = config['caiyun']
+"""彩云小译 key"""
 
 
 # youdao code is from https://github.com/Chinese-boy/Many-Translaters
@@ -95,30 +98,36 @@ async def translate_main(msg: Message, *arg):
         ret = deleteByStartAndEnd(word, '(met)', '(met)')
     elif '(rol)' in word:
         ret = deleteByStartAndEnd(word, '(rol)', '(rol)')
-    #重新赋值
+    # 重新赋值
     word = ret
     try:
-        cm = CardMessage()
-        c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}", Types.Text.KMD)),
-                  Module.Context('来自: 有道翻译'))
-        cm.append(c1)
-        #await msg.ctx.channel.send(cm)
-        await msg.reply(cm)
-    except:
-        cm = CardMessage()
-        if is_CN(word):
-            c1 = Card(
-                Module.Section(
-                    Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
-                Module.Context('来自: 彩云小译，中译英'))
-        else:
-            c1 = Card(
-                Module.Section(
-                    Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
-                Module.Context('来自: 彩云小译，英译中'))
+        try:
+            cm = CardMessage()
+            c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}", Types.Text.KMD)),
+                    Module.Context('来自: 有道翻译'))
+            cm.append(c1)
+            await msg.reply(cm)
+        except Exception as result:
+            # 如果为空，rasie到外层except
+            if CyKey=="":raise result
+            # 彩云的key不为空，才调用它
+            cm = CardMessage()
+            if is_CN(word):
+                c1 = Card(
+                    Module.Section(
+                        Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
+                    Module.Context('来自: 彩云小译，中译英'))
+            else:
+                c1 = Card(
+                    Module.Section(
+                        Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
+                    Module.Context('来自: 彩云小译，英译中'))
 
-        cm.append(c1)
-        await msg.reply(cm)
+            cm.append(c1)
+            await msg.reply(cm)
+    except:
+        _log.exception(f"translate error")
+        await msg.reply(f"翻译出错了！\n```\n{traceback.format_exc()}\n```")
 
 
 # 实时翻译栏位
@@ -180,3 +189,59 @@ async def Close_TL(msg: Message):
             return
         i += 1
     await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位: {checkTL()}/{len(ListTL)}")
+
+
+################################################################################################
+
+
+def init(bot:Bot,master_id:str):
+    """master_id: bot master user_id"""
+    # 普通翻译指令
+    @bot.command(name='TL', case_sensitive=False)
+    async def translation(msg: Message, *arg):
+        BotLog.logMsg(msg)
+        await translate_main(msg, ' '.join(arg))
+
+
+    #查看当前占用的实时翻译栏位
+    @bot.command(name='tlck',case_sensitive=False)
+    async def TLCheck(msg: Message):
+        BotLog.logMsg(msg)
+        await msg.reply(f"目前已使用栏位:{checkTL()}/{len(ListTL)}")
+
+
+    # 关闭所有栏位的实时翻译（避免有些人用完不关）
+    @bot.command(name='ShutdownTL', aliases=['TLSD','tlsd'])
+    async def TLShutdown(msg: Message):
+        BotLog.logMsg(msg)
+        if msg.author.id != master_id:
+            return  #这条命令只有bot的作者可以调用
+        await Shutdown_TL(bot, msg)
+
+
+    # 通过频道id判断是否实时翻译本频道内容
+    @bot.on_message()
+    async def TLRealtime(msg: Message):
+        if msg.ctx.channel.id in ListTL:  #判断频道是否已开启实时翻译
+            word = msg.content
+            # 不翻译关闭实时翻译的指令
+            ignore_list = ["/TLOFF","/tloff","/tlon","/TLON"]
+            for i in ignore_list:
+                if i in word:
+                    return
+            # 翻译
+            BotLog.logMsg(msg)
+            await translate_main(msg,word)
+
+    # 开启实时翻译功能
+    @bot.command(name='TLON',case_sensitive=False)
+    async def TLON(msg: Message):
+        BotLog.logMsg(msg)
+        await Open_TL(msg)
+
+
+    # 关闭实时翻译功能
+    @bot.command(name='TLOFF',case_sensitive=False)
+    async def TLOFF(msg: Message):
+        BotLog.logMsg(msg)
+        await Close_TL(msg)
