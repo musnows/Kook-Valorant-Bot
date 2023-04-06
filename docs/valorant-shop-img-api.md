@@ -22,7 +22,7 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 | /tfa  | 邮箱验证接口，需和`/shop-url`接口配合使用 | 正常   |
 
 
-## 1.使用示例
+## 1.shop-img
 
 查询每日商店的链接如下，调用 `/shop-img` 接口，浏览器会直接跳转图片，适合普通用户快捷查看当日每日商店
 
@@ -62,6 +62,18 @@ https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=
 结果示例图（1-1）
 
 <img src="../screenshot/val_api_img1.png" weight="300px" hight ="300px" alt="1-1-img-result">
+
+在参数中添加url参数，当其为1的时候，不会直接进行303跳转，而是返回包含图片url的json字符串。
+
+~~~json
+{
+    "code": 0, 
+    "message": "https://img.kaiheila.cn/attachments/2022-10/12/1GaII87UTd0zk0k0.png", 
+    "info": "商店图片获取成功"
+}
+~~~
+
+shop-img接口和其他接口的最大区别在于，它是一个`一次性`接口，后台不会进行登录信息的缓存，也不支持2fa用户
 
 ## 2.注意事项
 
