@@ -68,6 +68,8 @@ async def Save_File_Task():
 async def KillBot(msg: Message, num: str = '124124', *arg):
     BotLog.logMsg(msg)
     try:
+        if '-' in num or '.' in num:
+            return await msg.reply(f"参数num错误：{num}\n该参数应为bot的编号：{config['no']}")
         if msg.author_id == master_id and int(num) == config['no']:
             # 保存所有文件
             await save_all_file(False)
