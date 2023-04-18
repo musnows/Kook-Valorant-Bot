@@ -6,10 +6,11 @@ def help_main(start_time: str):
     c3 = Card(
         Module.Header('你可以用下面这些指令呼叫本狸哦！'),
         Module.Context(
-            Element.Text(f"开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，开机于 [{start_time}]",
+            Element.Text(f"开源代码见[Github](https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot)，开机于 [{start_time}]",
                          Types.Text.KMD)))
-    c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
-    c3.append(Module.Divider())
+    c3.append(Module.Section('图文版帮助命令', Element.Button('点我', 'https://blog.musnow.top/posts/847195815/?utm_source=kook', Types.Click.LINK,theme=Types.Theme.PRIMARY)))
+    # c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
+    # c3.append(Module.Divider())
     c3.append(Module.Header('上号，瓦一把！'))
     text = "「/val 错误码」 游戏错误码的解决方法，0为已包含的val报错码信息\n"
     text += "「/dx」 关于DirectX Runtime报错的解决方案\n"
@@ -26,7 +27,7 @@ def help_main(start_time: str):
     text += "「/TLON」 在本频道打开实时翻译\n"
     text += "「/TLOFF」在本频道关闭实时翻译\n"
     text += "「/we 城市」查询城市未来3天的天气情况\n"
-    text += "「更多…」还有一些隐藏指令哦~\n"
+    # text += "「更多…」还有一些隐藏指令哦~\n"
     c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
     c3.append(Module.Divider())
     c3.append(Module.Section(' 游戏打累了？想来本狸的家坐坐吗~', Element.Button('让我康康', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
@@ -39,7 +40,8 @@ def help_val():
     c3 = Card(
         Module.Header('目前阿狸支持查询的valorant信息如下'),
         Module.Context(
-            Element.Text("开源代码见[Github](https://github.com/Aewait/Valorant-Kook-Bot)，更多查询功能上线中...", Types.Text.KMD)))
+            Element.Text("开源代码见[Github](https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot)，更多查询功能上线中...", Types.Text.KMD)))
+    c3.append(Module.Section('图文版帮助命令', Element.Button('点我', 'https://blog.musnow.top/posts/847195815/?utm_source=kook', Types.Click.LINK,theme=Types.Theme.PRIMARY)))
     text = "使用前，请确认您知晓相关功能可能有风险：\n"
     text += "1.阿狸的后台不会做任何`打印`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n"
     text += "2.如果您发现登陆后阿狸还提醒您没有登录，那是因为阿狸的作者正在调试阿狸，重启后登录信息会消失。感谢谅解;\n"
