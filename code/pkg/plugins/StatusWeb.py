@@ -19,36 +19,44 @@ def init(bot:Bot,master_id:str):
         - used_time: 获取服务器/用户/命令日使用量的数据
         """
         data_list = []
-        for g,ginfo in BotUserDict["guild"]["data"].items():
-            date = Gtime.getDateFromStamp(ginfo[key]) # 获取可读日期
-            # 插入服务器
-            flag = True
-            for i in data_list:
-                if date == i['date'] and i['category']=="guild":
-                    i['num']+=1 # 有相同日期的，计数器+1
-                    flag = False
-                    break
-            # 没有相同日期的，才新建键值
-            if flag:
-                data_list.append({"date":date,"category":'guild','num':1,'time':ginfo[key]})
-        # 插入用户
-        for u,uinfo in BotUserDict['user']['data'].items():
-            # 用户记录的时间是可读时间，直接取出前几位就是日期22-10-02
-            date = uinfo[key][:8]
-            flag = True
-            for i in data_list:
-                if date == i['date'] and i['category']=="user":
-                    i['num']+=1
-                    flag = False
-                    break
-            # 没有相同日期的，才新建键值
-            if flag:
-                data_list.append({"date":date,"category":'user','num':1,'time':Gtime.getTimeStampFromStr(uinfo[key])})
+        # 获取的是初始化时间
+        if key == 'init_time':
+            for g,ginfo in BotUserDict["guild"]["data"].items():
+                date = Gtime.getDateFromStamp(ginfo[key]) # 获取可读日期
+                # 插入服务器
+                flag = True
+                for i in data_list:
+                    if date == i['date'] and i['category']=="guild":
+                        i['num']+=1 # 有相同日期的，计数器+1
+                        flag = False
+                        break
+                # 没有相同日期的，才新建键值
+                if flag:
+                    data_list.append({"date":date,"category":'guild','num':1,'time':ginfo[key]})
+            # 插入用户
+            for u,uinfo in BotUserDict['user']['data'].items():
+                # 用户记录的时间是可读时间，直接取出前几位就是日期22-10-02
+                date = uinfo[key][:8]
+                flag = True
+                for i in data_list:
+                    if date == i['date'] and i['category']=="user":
+                        i['num']+=1
+                        flag = False
+                        break
+                # 没有相同日期的，才新建键值
+                if flag:
+                    data_list.append({"date":date,"category":'user','num':1,'time':Gtime.getTimeStampFromStr(uinfo[key])})
         # 如果是used_time，则还需要处理命令
-        if key == 'used_time':
-            for d in BotUserDict['cmd']:
-                num = BotUserDict['cmd'][d]
+        elif key == 'used_time':
+            for d in BotUserDict['cmd']['data']:
+                num = BotUserDict['cmd']['data'][d]
                 data_list.append({"date":d,"category":'command','num':num,'time':Gtime.getTimeStampFromStr(d)})
+            for d in BotUserDict['cmd']['user']:
+                num = BotUserDict['cmd']['user'][d]
+                data_list.append({"date":d,"category":'user','num':num,'time':Gtime.getTimeStampFromStr(d)})
+            for d in BotUserDict['cmd']['guild']:
+                num = BotUserDict['cmd']['guild'][d]
+                data_list.append({"date":d,"category":'guild','num':num,'time':Gtime.getTimeStampFromStr(d)})
         # 依照日期排序
         data_list = sorted(data_list,key=lambda kv: kv['date'])
         return data_list
