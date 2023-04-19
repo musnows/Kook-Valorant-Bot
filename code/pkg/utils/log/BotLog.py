@@ -15,6 +15,23 @@ from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 font_color = '#000000'  # 黑色字体
 log_base_img = Image.open("../screenshot/log_base.png")  # 文件路径
 
+def log_bot_cmd(key='cmd'):
+    """记录命令的使用情况，，命令总数多少
+    - key: 可以为cmd/user/guild
+    - user/guild: 每日有多少服务器/用户使用了命令
+    - cmd: 每日命令总数
+    """
+    global BotUserDict
+    date = getDate() # 获取当日日期的str
+    if key == 'cmd':
+        BotUserDict['cmd_total'] += 1 # 命令执行总数+1
+        key = 'data' # 需要更新为data
+    # 判断
+    if date not in BotUserDict['cmd'][key]:
+        BotUserDict['cmd'][key][date] = 0
+    # 当天命令使用次数+1
+    BotUserDict['cmd'][key][date] += 1
+
 
 def log_bot_user(user_id: str,cur_time:str) -> None:
     """记录使用命令的用户，更新用户使用命令的次数和最新使用的时间
@@ -32,16 +49,9 @@ def log_bot_user(user_id: str,cur_time:str) -> None:
             'init_time':cur_time,
             'used_time':cur_time
         }
+    # 再记录当日的用户使用命令
+    log_bot_cmd('user')
 
-def log_bot_cmd():
-    """记录命令的使用情况"""
-    global BotUserDict
-    date = getDate() # 获取当日日期的str
-    BotUserDict['cmd_total'] += 1 # 命令执行总数+1
-    if date not in BotUserDict['cmd']:
-        BotUserDict['cmd'][date] = 0
-    # 当天命令使用次数+1
-    BotUserDict['cmd'][date] += 1
 
 # 记录服务器中的用户信息
 def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
@@ -56,6 +66,8 @@ def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
     cur_time_stamp = time.time()
     # 先记录用户
     log_bot_user(user_id,cur_time)
+    # 再记录当日的服务器使用命令
+    log_bot_cmd('guild')
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}
@@ -79,7 +91,6 @@ def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
         BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp
         BotUserDict['guild']['data'][guild_id]['cmd'] += 1
         return "Au"
-
 
 # 在控制台打印msg内容，用作日志
 def logMsg(msg: Message) -> None:
