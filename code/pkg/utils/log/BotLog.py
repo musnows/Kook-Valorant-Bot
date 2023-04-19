@@ -189,11 +189,11 @@ async def APIRequestFailed_Handler(def_name: str,
     - send_msg: return value of msg.reply or bot.send
     """
     _log.exception(f"APIRequestFailed in {def_name} | Au:{msg.author_id}")
-    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
+    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n```\n{excp}\n```"
     text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
     # 引用不存在的时候，直接向频道或者用户私聊重新发送消息
-    if "引用不存在" in excp:  
+    if "引用不存在" in excp:
         if isinstance(msg, PrivateMessage):
             cur_user = await bot.client.fetch_user(msg.author_id)
             await cur_user.send(cm)

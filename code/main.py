@@ -789,7 +789,6 @@ async def get_user_card(msg: Message, *arg):
         cm = await get_card_msg("获取您所有账户的 玩家卡面/VP/R点", "阿狸正在施法！很快就好啦~", icon_cm.rgx_card,card_color="#BBFFFF")
         send_msg = await msg.reply(cm)
         # 2.uinfo直接使用for循环来获取不同用户的信息
-        cm = CardMessage()
         for riot_user_id in UserAuthCache['kook'][msg.author_id]:
             try:
                 # 执行cookie重登
@@ -800,6 +799,7 @@ async def get_user_card(msg: Message, *arg):
                     await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                     send_msg = reau  # 再次覆盖更新消息
 
+                cm = CardMessage()
                 auth = UserAuthCache['data'][riot_user_id]['auth']
                 assert isinstance(auth, EzAuth)
                 riotUser = auth.get_riotuser_token()
