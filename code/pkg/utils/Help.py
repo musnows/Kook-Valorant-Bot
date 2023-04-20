@@ -23,9 +23,9 @@ def help_main(start_time: str):
     c3.append(Module.Header('和阿狸玩小游戏吧~ '))
     text = "「/roll 1 100」掷骰子1-100，范围可自主调节。可在末尾添加第三个参数实现同时掷多个骰子\n"
     text += "「/countdown 秒数」倒计时，默认60秒\n"
-    text += "「/TL 内容」翻译内容，支持多语译中和中译英\n"
-    text += "「/TLON」 在本频道打开实时翻译\n"
-    text += "「/TLOFF」在本频道关闭实时翻译\n"
+    text += "「/tl 内容」翻译内容，支持多语译中和中译英\n"
+    text += "「/tlon」 在本频道打开实时翻译\n"
+    text += "「/tloff」在本频道关闭实时翻译\n"
     text += "「/we 城市」查询城市未来3天的天气情况\n"
     # text += "「更多…」还有一些隐藏指令哦~\n"
     c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
@@ -91,9 +91,9 @@ def help_val():
 
 def help_develop():
     text = f"主人有何吩咐呀~\n```\n"
-    text += f"[/Color_Set] 发送一个用于设置用户颜色的消息，只能在valorant社区使用\n"
-    text += f"[/Color_Set_GM 消息id] 在不修改代码的前提下设置上色功能的服务器和监听消息\n"
-    text += f"[/ShutdownTL] 关闭所有实时翻译的栏位\n"
+    text += f"[/color-set] 发送一个用于设置用户颜色的消息，只能在valorant社区使用\n"
+    text += f"[/color-set-gm 消息id] 在不修改代码的前提下设置上色功能的服务器和监听消息\n"
+    text += f"[/tlsd] 关闭所有实时翻译的栏位\n"
     text += f"[/vip-a 天数 数量] 生成新的vip激活码\n"
     text += f"[/vip-l] 查看当前vip用户列表\n"
     text += f"[/vip-img] 检查vip用户的自定义背景图（防止违规图片）\n"
@@ -101,10 +101,12 @@ def help_develop():
     text += f"[/vip-ta 天数] 给所有vip用户添加时长\n"
     text += f"[/ckau] 查看已登录的用户个数\n"
     text += f"[/upd] 手动更新商店物品和价格\n"
+    text += f"[/upd-web] 手动更新阿狸使用日志网页\n"
     text += f"[/open-nm] 打开/关闭夜市\n"
     text += f"[/ban-r 用户id] 禁止用户使用rate相关功能\n"
     text += f"[/notify-test] 执行遍历用户皮肤notify列表\n"
     text += f"[/lf] 实际上是LoginForbidden的缩写，在login函数403时屏蔽所有需要login的命令\n"
     text += f"[/log] 显示当前阿狸加入的服务器以及用户数量\n"
     text += f"[/mem] 显示当前阿狸进程的内存占用和cpu占用\n```"
+    text += f"[/kill @bot] 下线机器人\n```"
     return text

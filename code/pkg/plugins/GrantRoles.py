@@ -124,7 +124,7 @@ async def thanks_sponser(bot: Bot, kook_header=kook_headers):
 def init(bot:Bot,master_id:str):
     """master_id: bot master user_id"""
     # 在不修改代码的前提下设置上色功能的服务器和监听消息
-    @bot.command(name='Color_Set_GM', case_sensitive=False)
+    @bot.command(name='Color-Set-GM', case_sensitive=False)
     async def Color_Set_GM(msg: Message, Card_Msg_id: str):
         BotLog.logMsg(msg)
         if msg.author_id == master_id:
