@@ -71,7 +71,8 @@ async def KillBot(msg: Message, at_text = '', *arg):
         # 如果不是管理员直接退出，不要提示
         if msg.author_id != master_id:
             return
-        if f"(met){bot.me.id}(met)" in at_text:
+        # 必须要at机器人，或者私聊机器人
+        if f"(met){bot.me.id}(met)" in at_text or isinstance(msg,PrivateMessage):
             # 保存所有文件
             await save_all_file(False)
             await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
