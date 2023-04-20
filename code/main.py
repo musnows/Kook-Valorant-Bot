@@ -55,7 +55,7 @@ async def botmarket():
 
 # 每5分钟保存一次文件
 @bot.task.add_interval(minutes=5)
-async def Save_File_Task():
+async def save_file_task():
     try:
         await save_all_file()
     except:
@@ -63,22 +63,21 @@ async def Save_File_Task():
         _log.exception("ERR in Save_File_Task")
         await bot.client.send(debug_ch, err_cur) # type: ignore
 
-
+# `/kill @机器人` 下线bot
 @bot.command(name='kill')
-async def KillBot(msg: Message, num: str = '124124', *arg):
+async def KillBot(msg: Message, at_text = '', *arg):
     BotLog.logMsg(msg)
     try:
-        if '-' in num or '.' in num:
-            return await msg.reply(f"参数num错误：{num}\n该参数应为bot的编号：{config['no']}")
-        if msg.author_id == master_id and int(num) == config['no']:
+        # 如果不是管理员直接退出，不要提示
+        if msg.author_id != master_id:
+            return
+        if f"(met){bot.me.id}(met)" in at_text:
             # 保存所有文件
             await save_all_file(False)
             await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
             res = await bot_offline()  # 调用接口下线bot
             _log.info(f"KILL | bot-off: {res}\n")
             os._exit(0)  # 退出程序
-        else:
-            await msg.reply(f"您没有权限或参数错误！\n本Bot编号为：{config['no']}")
     except:
         await BotLog.BaseException_Handler("kill",traceback.format_exc(),msg)
 
