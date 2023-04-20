@@ -1,5 +1,10 @@
 {
   "cmd_total": 0,
+  "cmd":{
+    "data":{},
+    "guild":{},
+    "user":{}
+  },
   "guild": {
     "data": {},
     "guild_active": 0,

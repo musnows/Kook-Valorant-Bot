@@ -87,15 +87,14 @@ def init(bot:Bot,debug_ch:Channel):
     async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args):
         BotLog.logMsg(msg)
         if args != ():
-            await msg.reply(
+            return await msg.reply(
                 f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 3 生成三个1到100之间的随机数\n```")
-            return
         elif t_min >= t_max:  #范围小边界不能大于大边界
-            await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
-            return
-        elif t_max >= 90000000:  #不允许用户使用太大的数字
-            await msg.reply(f"掷骰子的数据超出范围！")
-            return
+            return await msg.reply(f'范围错误，必须提供两个参数，由小到大！\nmin:`{t_min}` max:`{t_max}`')
+        elif t_max >= 10000000:  #不允许用户使用太大的数字
+            return await msg.reply(f"掷骰子的数据超出范围！")
+        elif n > 32:
+            return await msg.reply(f"当前仅支持同时投掷32个骰子")
         try:
             result = [random.randint(t_min, t_max) for i in range(n)]
             await msg.reply(f'掷出来啦: {result}')

@@ -15,65 +15,96 @@ from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 font_color = '#000000'  # 黑色字体
 log_base_img = Image.open("../screenshot/log_base.png")  # 文件路径
 
-# 记录私聊的用户信息
-def log_bot_user(user_id: str) -> None:
+def log_bot_cmd(key='cmd'):
+    """记录命令的使用情况，，命令总数多少
+    - key: 可以为cmd/user/guild
+    - user/guild: 每日有多少服务器/用户使用了命令
+    - cmd: 每日命令总数
+    """
     global BotUserDict
-    BotUserDict['cmd_total'] += 1
+    date = getDate() # 获取当日日期的str
+    if key == 'cmd':
+        BotUserDict['cmd_total'] += 1 # 命令执行总数+1
+        key = 'data' # 需要更新为data
+    # 判断
+    if date not in BotUserDict['cmd'][key]:
+        BotUserDict['cmd'][key][date] = 0
+    # 当天命令使用次数+1
+    BotUserDict['cmd'][key][date] += 1
+
+
+def log_bot_user(user_id: str,cur_time:str) -> None:
+    """记录使用命令的用户，更新用户使用命令的次数和最新使用的时间
+    - user_id: kook user id
+    - cur_time: time str as 23-03-01 23:04:58
+    """
+    global BotUserDict
     # 判断用户是否存在于总用户列表中
     if user_id in BotUserDict['user']['data']:
-        BotUserDict['user']['data'][user_id] += 1
-    else:
-        BotUserDict['user']['data'][user_id] = 1
+        BotUserDict['user']['data'][user_id]['cmd'] += 1
+        BotUserDict['user']['data'][user_id]['used_time'] = cur_time
+    else: # 不在，进行初始化
+        BotUserDict['user']['data'][user_id] = {
+            'cmd':1,
+            'init_time':cur_time,
+            'used_time':cur_time
+        }
+    # 再记录当日的用户使用命令
+    log_bot_cmd('user')
 
-# 记录命令的使用情况
-def log_bot_cmd():
-    global BotUserDict
-    date = getDate()
-    if date not in BotUserDict:
-        BotUserDict['cmd'][date] = 0
-    # 命令使用次数+1
-    BotUserDict['cmd'][date]+=1
 
 # 记录服务器中的用户信息
-def log_bot_guild(user_id: str, guild_id: str) -> str:
+def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
     """Return:
     - GNAu: new user in new guild
     - NAu:  new user in old guild
     - Au:   old user
     """
     global BotUserDict
-    # 先记录用户
-    log_bot_user(user_id)
-    # 获取当前时间
+    # 获取当前时间的str
     cur_time = getTime()
+    cur_time_stamp = time.time()
+    # 先记录用户
+    log_bot_user(user_id,cur_time)
+    # 再记录当日的服务器使用命令
+    log_bot_cmd('guild')
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
-        BotUserDict['guild']['data'][guild_id] = {}  #不能连续创建两个键值！
-        BotUserDict['guild']['data'][guild_id]['time'] = time.time()
-        BotUserDict['guild']['data'][guild_id]['user'] = {}
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
+        BotUserDict['guild']['data'][guild_id] = {}
+        BotUserDict['guild']['data'][guild_id]['init_time'] = cur_time_stamp # 服务器的初始化时间
+        BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp # 服务器上次用命令的时间
+        BotUserDict['guild']['data'][guild_id]['name'] = guild_name  # 服务器的名字
+        BotUserDict['guild']['data'][guild_id]['cmd'] = 1      # 服务器的命令使用次数
+        BotUserDict['guild']['data'][guild_id]['user'] = {} 
+        # 用户在该服务器内的初始化时间（第一次使用命令的时间）
+        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time 
         return "GNAu"
     # 服务器存在，新用户
     elif user_id not in BotUserDict['guild']['data'][guild_id]['user']:
+        BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp
         BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
+        BotUserDict['guild']['data'][guild_id]['cmd'] += 1
         return "NAu"
-    # 旧用户，更新执行命令的时间
+    # 旧服务器，旧用户
     else:
-        BotUserDict['guild']['data'][guild_id]['user'][user_id] = cur_time
+        # 更新服务器的上次使用命令的时间
+        BotUserDict['guild']['data'][guild_id]['used_time'] = cur_time_stamp
+        BotUserDict['guild']['data'][guild_id]['cmd'] += 1
         return "Au"
-
 
 # 在控制台打印msg内容，用作日志
 def logMsg(msg: Message) -> None:
     try:
         log_bot_cmd()# 记录命令使用次数
+        # 系统消息id，直接退出，不记录
+        if msg.author_id == "3900775823":return
         # 私聊用户没有频道和服务器id
         if isinstance(msg, PrivateMessage):
-            log_bot_user(msg.author_id)  # 记录用户
+            log_bot_user(msg.author_id,getTime())  # 记录用户
             _log.info(
                 f"PrivateMsg | Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | {msg.content}")
         else:
-            Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id)  # 记录服务器和用户
+            Ustr = log_bot_guild(msg.author_id, msg.ctx.guild.id,msg.ctx.guild.name)  # 记录服务器和用户
             _log.info(
                 f"G:{msg.ctx.guild.id} | C:{msg.ctx.channel.id} | {Ustr}:{msg.author_id} {msg.author.username}#{msg.author.identify_num} = {msg.content}"
             )
@@ -117,9 +148,10 @@ async def log_bot_list(msg: Message) -> FileManage:
     # 遍历列表，获取服务器名称
     tempDict = deepcopy(BotUserDict)
     for gu in tempDict['guild']['data']:
+        # 服务器名称的键值不在，才进行赋值
         if 'name' not in tempDict['guild']['data'][gu]:
             Gret = await guild_view(gu)
-            if Gret['code'] != 0:  # 没有正常返回，可能是服务器被删除
+            if Gret['code'] != 0:  # 没有正常返回，可能是服务器被删除，或者机器人不在服务器内
                 del BotUserDict['guild']['data'][gu]  # 删除键值
                 _log.info(f"G:{gu} | guild-view: {Gret}")
                 continue
@@ -168,11 +200,11 @@ async def APIRequestFailed_Handler(def_name: str,
     - send_msg: return value of msg.reply or bot.send
     """
     _log.exception(f"APIRequestFailed in {def_name} | Au:{msg.author_id}")
-    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n{excp}"
+    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n```\n{excp}\n```"
     text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
     # 引用不存在的时候，直接向频道或者用户私聊重新发送消息
-    if "引用不存在" in excp:  
+    if "引用不存在" in excp:
         if isinstance(msg, PrivateMessage):
             cur_user = await bot.client.fetch_user(msg.author_id)
             await cur_user.send(cm)

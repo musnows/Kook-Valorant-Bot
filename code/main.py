@@ -68,6 +68,8 @@ async def Save_File_Task():
 async def KillBot(msg: Message, num: str = '124124', *arg):
     BotLog.logMsg(msg)
     try:
+        if '-' in num or '.' in num:
+            return await msg.reply(f"参数num错误：{num}\n该参数应为bot的编号：{config['no']}")
         if msg.author_id == master_id and int(num) == config['no']:
             # 保存所有文件
             await save_all_file(False)
@@ -240,21 +242,21 @@ async def check_UserAuthCache_len(msg: Message):
 @bot.command(name='login')
 async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /login {apSave}")
-    BotLog.log_bot_user(msg.author_id)  #这个操作只是用来记录用户和cmd总数的
-    global LoginForbidden, login_rate_limit, UserAuthCache
-    if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
-        await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
-        return
-    elif passwd == 'err' or user == 'err':
-        await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
-        return
-    elif LoginForbidden:
-        await LoginForbidden_send(msg)
-        return
     # 提前定义，避免报错
+    global LoginForbidden, login_rate_limit, UserAuthCache
     send_msg = {'msg_id':''}
     cm = CardMessage()
     try:
+        # 0.进行命令合法性判断
+        BotLog.log_bot_cmd() # 记录命令使用情况
+        BotLog.log_bot_user(msg.author_id,getTime())  # 记录用户和cmd总数
+        if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
+            return await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
+        elif passwd == 'err' or user == 'err':
+            return await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
+        elif LoginForbidden:
+            return await LoginForbidden_send(msg)
+            
         # 1.检查全局登录速率
         await check_GloginRate()  # 无须接收此函数返回值，直接raise
         # 1.1 检查当前已经登录的用户数量，超过限制直接提示并返回
@@ -348,12 +350,13 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
 @bot.command(name='tfa')
 async def tfa_verify(msg: Message, tfa: str, *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /tfa")
-    if len(tfa) != 6:
-        await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：`{tfa}`")
-        return
-
     send_msg = {'msg_id': ''}
     try:
+        # 0.命令合法性判断
+        BotLog.log_bot_cmd() # 记录命令使用情况
+        BotLog.log_bot_user(msg.author_id,getTime())  # 记录用户和cmd总数
+        if len(tfa) != 6:
+            return await msg.reply(f"邮箱验证码长度错误，请确认您输入了正确的6位验证码\n当前参数：`{tfa}`")
         # 1. 先判断用户是否在dict里面
         if msg.author_id not in UserAuthCache['tfa']:
             await msg.reply("您不在UserAuthCache中，请先执行login！")
@@ -786,7 +789,6 @@ async def get_user_card(msg: Message, *arg):
         cm = await get_card_msg("获取您所有账户的 玩家卡面/VP/R点", "阿狸正在施法！很快就好啦~", icon_cm.rgx_card,card_color="#BBFFFF")
         send_msg = await msg.reply(cm)
         # 2.uinfo直接使用for循环来获取不同用户的信息
-        cm = CardMessage()
         for riot_user_id in UserAuthCache['kook'][msg.author_id]:
             try:
                 # 执行cookie重登
@@ -797,6 +799,7 @@ async def get_user_card(msg: Message, *arg):
                     await upd_card(reau['msg_id'], cm, channel_type=msg.channel_type)
                     send_msg = reau  # 再次覆盖更新消息
 
+                cm = CardMessage()
                 auth = UserAuthCache['data'][riot_user_id]['auth']
                 assert isinstance(auth, EzAuth)
                 riotUser = auth.get_riotuser_token()
