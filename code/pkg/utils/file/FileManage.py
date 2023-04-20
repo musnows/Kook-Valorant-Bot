@@ -1,9 +1,12 @@
 import json
 import aiofiles
+import asyncio
 from ..log.Logging import _log
 
 FileList = []
 """files need to write into storage"""
+FlieSaveLock = asyncio.Lock()
+"""files save lock, using in save_all_file"""
 
 def open_file(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -24,16 +27,18 @@ def write_file(path: str, value):
 async def save_all_file(is_Aio=True):
     """save all file in FileList
     """
-    for i in FileList:
-        try:
-            if is_Aio:
-                await i.save_aio()
-            else:
-                i.save()
-        except:
-            _log.exception(f"Save.All.File | {i.path}")
+    # 加锁，避免数据写入错误
+    async with FlieSaveLock:
+        for i in FileList:
+            try:
+                if is_Aio:
+                    await i.save_aio()
+                else:
+                    i.save()
+            except:
+                _log.exception(f"save.all.file | {i.path}")
 
-    _log.info(f"Save.All.File | save finished")
+    _log.info(f"save.all.file | save finished")
 
 
 # 文件管理类
