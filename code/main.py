@@ -72,7 +72,8 @@ async def KillBot(msg: Message, at_text = '', *arg):
         if msg.author_id != master_id:
             return
         # 必须要at机器人，或者私聊机器人
-        if f"(met){bot.me.id}(met)" in at_text or isinstance(msg,PrivateMessage):
+        cur_bot = await bot.client.fetch_me()
+        if f"(met){cur_bot.id}(met)" in at_text or isinstance(msg,PrivateMessage):
             # 保存所有文件
             await save_all_file(False)
             await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
@@ -123,7 +124,11 @@ async def atAhri(msg: Message):
         # kook系统通知
         if msg.author_id == "3900775823":
             return
-        if f"(met){bot.client.me.id}(met)" in msg.content:
+        if len(msg.content) >= 22:
+            return
+        # 要求只是存粹at机器人的时候才恢复
+        cur_bot = await bot.client.fetch_me()
+        if f"(met){cur_bot.id}(met)" in msg.content:
             BotLog.logMsg(msg)
             if msg.author_id == master_id:
                 text = Help.help_develop()

@@ -107,6 +107,6 @@ def help_develop():
     text += f"[/notify-test] 执行遍历用户皮肤notify列表\n"
     text += f"[/lf] 实际上是LoginForbidden的缩写，在login函数403时屏蔽所有需要login的命令\n"
     text += f"[/log] 显示当前阿狸加入的服务器以及用户数量\n"
-    text += f"[/mem] 显示当前阿狸进程的内存占用和cpu占用\n```"
+    text += f"[/mem] 显示当前阿狸进程的内存占用和cpu占用\n"
     text += f"[/kill @bot] 下线机器人\n```"
     return text

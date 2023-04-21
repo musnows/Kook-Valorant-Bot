@@ -3,7 +3,7 @@ import aiofiles
 import asyncio
 from ..log.Logging import _log
 
-FileList = []
+FileList:list['FileManage'] = []
 """files need to write into storage"""
 FlieSaveLock = asyncio.Lock()
 """files save lock, using in save_all_file"""
@@ -28,6 +28,7 @@ async def save_all_file(is_Aio=True):
     """save all file in FileList
     """
     # 加锁，避免数据写入错误
+    global FlieSaveLock
     async with FlieSaveLock:
         for i in FileList:
             try:
