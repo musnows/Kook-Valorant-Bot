@@ -145,7 +145,7 @@ def init(bot:Bot,master_id:str):
             await Color_SetMsg(bot, msg)
 
 
-    # 感谢助力者（每天19点进行检查）
-    @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
-    async def thanks_sponser_task():
-        await thanks_sponser(bot)
+    # # 感谢助力者（每天19点进行检查）
+    # @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
+    # async def thanks_sponser_task():
+    #     await thanks_sponser(bot)
