@@ -21,8 +21,9 @@ def create_web_path():
         os.makedirs(WEB_ROOT_PATH)  # 文件夹不存在，创建
         _log.info(f"[plugins] create web path {WEB_ROOT_PATH}")
     for path in WEB_PAGE_PATH:
-        if (not os.path.exists(path)):
-            os.makedirs(path)  # 文件夹不存在，创建
+        cur = f"{WEB_ROOT_PATH}/{path}"
+        if (not os.path.exists(cur)):
+            os.makedirs(cur)  # 文件夹不存在，创建
             _log.info(f"[plugins] create web path {path}")
 
 def init(bot:Bot,master_id:str):
