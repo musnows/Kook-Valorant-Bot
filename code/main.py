@@ -499,23 +499,20 @@ async def login_list(msg:Message,*arg):
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message,index:str = "0",*arg):
-    BotLog.logMsg(msg)
-    if LoginForbidden:
-        await LoginForbidden_send(msg)
-        return
-    # index参数是下标，应该为一个正整数
-    elif "-" in index or "." in index:
-        await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
-        return
-    # 提前初始化变量
-    send_msg = {'msg_id':''}
+    send_msg = {'msg_id':''}# 提前初始化变量
     resp = ""
     cm = CardMessage()
     try:
+        # 0.进行命令有效性判断
+        BotLog.logMsg(msg)
+        if LoginForbidden:
+            return await LoginForbidden_send(msg)
+        elif "-" in index or "." in index: # index参数是下标，应该为一个正整数
+            await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
+            return
         # 1.如果用户不在Authdict里面，代表没有登录，直接退出
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
-            return
+            return await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
 
         # 2.判断下标是否合法，默认下标为0
         _index = int(index)
@@ -590,7 +587,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
                                                      vp=play_currency['vp'],
                                                      rp=play_currency['rp'],
                                                      bg_img_src=background_img)
-        else: # 5.1.3 普通用户
+        else:# 5.1.3 普通用户
             # 判断是否有缓存命中
             cache_ret = await ShopRate.query_ShopCache(skinlist=list_shop)
             if not cache_ret['status']:  # 缓存没有命中
