@@ -13,6 +13,11 @@ from .valorant.api import Local
 from .Gtime import getTime
 from .log.Logging import _log
 
+DRAW_SLEEP_TIME = 0.3
+"""每次画图遍历的休眠时间"""
+DRAW_WAIT_TIME = 0.2
+"""skinuuid交付后，等待画图完成的休眠时间"""
+
 font_color = '#ffffff' 
 """文字颜色：白色"""
 #用于临时存放图片的dict
@@ -180,10 +185,10 @@ def sm_comp_169(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:
         # 判断该皮肤图片的本地路径是否存在，如果不存在，则保存到本地
         if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
             bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
-        global weapon_icon_temp_169  #皮肤图片的抽屉
+        global weapon_icon_temp_169  #皮肤图片的抽屉，如果uuid不存在，就插入
         if skinuuid not in weapon_icon_temp_169:
             weapon_icon_temp_169[skinuuid] = bg
-        return bg
+        return bg # 返回图片
     except:
         _log.exception(f"err in 16-9 img draw | sk_uuid:{skinuuid} sk_img:{skin_img_url} sk_name:{skin_name} price:{price} | sk_lv:{skin_level_icon}")
         return skin_err_169
@@ -277,6 +282,20 @@ def sm_comp_11(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:s
 
 ####################################################################################################
 
+def skin_comp_err_handler(ran:int|str,is_169:bool):
+    """如果出现了错误，依照16-9或者1-1，插入4个错误的图片"""
+    try:
+        if is_169:
+            global shop_img_temp_169
+            shop_img_temp_169[ran].clear() # 清空
+            shop_img_temp_169[ran].extend([skin_err_169]*4)
+        else:
+            global shop_img_temp_11
+            shop_img_temp_11[ran].clear()
+            shop_img_temp_11[ran].extend([skin_err_11]*4)
+        _log.info(f"[skin.comp] add err img | ran:{ran} 169:{is_169}")
+    except:
+        _log.exception(f"err | ran:{ran} 169:{is_169}")
 
 def skin_uuid_to_comp(skinuuid, ran, is_169=False):
     """在本地文件中查找皮肤的图片，没有图片就执行画图，并插入到temp中
@@ -286,9 +305,14 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
     """
     try:
         res_item = Local.fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
-        res_price = Local.fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
-        price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']  # 取出价格
-        res_iters = Local.fetch_skin_iters_bylist(skinuuid)  # 在本地文件中查找皮肤等级
+        price = -1 # 价格初始化为-1，代表有错误
+        try:
+            res_price = Local.fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
+            price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']  # 取出价格
+        except:
+            _log.exception(f"Err fetch_price | skin:{skinuuid} ran:{ran} 169:{is_169}")
+        # 在本地文件中查找皮肤等级
+        res_iters = Local.fetch_skin_iters_bylist(skinuuid)  
         # 画单个皮肤的图片
         if is_169:
             img = sm_comp_169(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
@@ -302,6 +326,7 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
             shop_img_temp_11[ran].append(img)
     except:
         _log.exception(f"err while drawing | skin:{skinuuid} | ran:{ran}")
+        skin_comp_err_handler(ran,is_169)
 
 
 async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
@@ -335,24 +360,26 @@ async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
     x = 50
     y = 100
     ran = 0  # 设立ran的基准值为0
-    global shop_img_temp_169
+    global shop_img_temp_169,weapon_icon_temp_169
     #循环判断创建的随机值在不在其中，如果在，那就还需要继续生成，直到产生一个不在其中的
     while (ran in shop_img_temp_169):
         ran = random.randint(1, 9999)  # 创建一个1-9999的随机值
-
     # 创建键值，用于保存多线程的返回值
     shop_img_temp_169[ran] = []
+
     # 开始遍历4个皮肤uuid
     for skinuuid in list_shop:
         img_path = f'./log/img_temp_vip/comp/{skinuuid}.png'
         if skinuuid in weapon_icon_temp_169:  # 16-9需要用的全局变量
             shop_img_temp_169[ran].append(weapon_icon_temp_169[skinuuid])
         elif os.path.exists(img_path):  # 全局变量里面没有，要去本地路径里面找
-            shop_img_temp_169[ran].append(Image.open(img_path))
+            img_cur = Image.open(img_path)
+            shop_img_temp_169[ran].append(img_cur)
+            weapon_icon_temp_169[skinuuid] = img_cur # 插入到全局变量中
         else:  # 都没有，画图
-            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, 1))
+            th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, True))
             th.start()
-        await asyncio.sleep(0.7)  # 睡一会，尝试错开网络请求
+        await asyncio.sleep(DRAW_SLEEP_TIME) # 睡眠一会，尝试错开网络请求
 
     # 开始粘贴获取到的4个皮肤图片
     img_num = 0
@@ -370,7 +397,7 @@ async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
             img_num += 1
         if img_num >= 4:  # 为4代表处理完毕了
             break  # 退出循环
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(DRAW_WAIT_TIME) 
     # 写入vp和r点
     draw = ImageDraw.Draw(bg)
     # vp
@@ -420,7 +447,7 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
     y = 0
     ran = 0  # 随机数基准值
     # 开始后续画图操作
-    global shop_img_temp_11
+    global shop_img_temp_11, weapon_icon_temp_11
     #循环判断创建的随机值在不在其中，如果在，那就还需要继续生成，直到产生一个不在其中的
     while (ran in shop_img_temp_11):
         ran = random.randint(1, 9999)  # 创建一个1-9999的随机值
@@ -432,11 +459,13 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
         if skinuuid in weapon_icon_temp_11:  # 1-1需要用的抽屉
             shop_img_temp_11[ran].append(weapon_icon_temp_11[skinuuid])
         elif os.path.exists(img_path):
-            shop_img_temp_11[ran].append(Image.open(img_path))
+            img_cur = Image.open(img_path)
+            shop_img_temp_11[ran].append(img_cur)
+            weapon_icon_temp_11[skinuuid] = img_cur # 插入到全局变量中
         else:
             th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
             th.start()
-        await asyncio.sleep(0.8)  #尝试错开网络请求
+        await asyncio.sleep(DRAW_SLEEP_TIME)  #尝试错开网络请求
     # 粘贴到主图上
     img_num = 0
     while True:
@@ -452,7 +481,7 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
             img_num += 1
         if img_num >= 4:
             break
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(DRAW_WAIT_TIME)
     #循环结束后删除
     if ran in shop_img_temp_11:
         del shop_img_temp_11[ran]
