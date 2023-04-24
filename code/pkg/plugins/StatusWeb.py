@@ -67,16 +67,16 @@ def init(bot:Bot,master_id:str):
                 # 没有相同日期的，才新建键值
                 if flag:
                     data_list.append({"date":date,"category":'user','num':1,'time':Gtime.getTimeStampFromStr(uinfo[key])})
-        # 如果是used_time，则还需要处理命令
+        # 如果是used_time，需要处理每日的命令/服务器/用户数量
         elif key == 'used_time':
-            for d in BotUserDict['cmd']['data']:
+            for d in BotUserDict['cmd']['data']:# 命令
                 num = BotUserDict['cmd']['data'][d]
                 data_list.append({"date":d,"category":'command','num':num,'time':Gtime.getTimeStampFromStr(d)})
-            for d in BotUserDict['cmd']['user']:
-                num = BotUserDict['cmd']['user'][d]
+            for d in BotUserDict['cmd']['user']:# 用户
+                num = len(BotUserDict['cmd']['user'][d]) # 长度就是用户数量
                 data_list.append({"date":d,"category":'user','num':num,'time':Gtime.getTimeStampFromStr(d)})
-            for d in BotUserDict['cmd']['guild']:
-                num = BotUserDict['cmd']['guild'][d]
+            for d in BotUserDict['cmd']['guild']:# 服务器
+                num = len(BotUserDict['cmd']['guild'][d])
                 data_list.append({"date":d,"category":'guild','num':num,'time':Gtime.getTimeStampFromStr(d)})
         # 依照日期排序
         data_list = sorted(data_list,key=lambda kv: kv['date'])

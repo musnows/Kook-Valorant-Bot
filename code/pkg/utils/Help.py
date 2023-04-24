@@ -8,7 +8,8 @@ def help_main(start_time: str):
         Module.Context(
             Element.Text(f"开源代码见[Github](https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot)，开机于 [{start_time}]",
                          Types.Text.KMD)))
-    c3.append(Module.Section('图文版帮助命令', Element.Button('点我', 'https://blog.musnow.top/posts/847195815/?utm_source=kook', Types.Click.LINK,theme=Types.Theme.PRIMARY)))
+    c3.append(Module.Section('图文版帮助命令和机器人使用文档', Element.Button('点我', 'https://blog.musnow.top/posts/847195815/?utm_source=kook', Types.Click.LINK,theme=Types.Theme.PRIMARY)))
+    c3.append(Module.Divider())
     # c3.append(Module.Section('「/hello」来和本狸打个招呼吧！\n「/Ahri」 帮助指令\n'))
     # c3.append(Module.Divider())
     c3.append(Module.Header('上号，瓦一把！'))
@@ -41,13 +42,14 @@ def help_val():
         Module.Header('目前阿狸支持查询的valorant信息如下'),
         Module.Context(
             Element.Text("开源代码见[Github](https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot)，更多查询功能上线中...", Types.Text.KMD)))
-    c3.append(Module.Section('图文版帮助命令', Element.Button('点我', 'https://blog.musnow.top/posts/847195815/?utm_source=kook', Types.Click.LINK,theme=Types.Theme.PRIMARY)))
-    text = "使用前，请确认您知晓相关功能可能有风险：\n"
-    text += "1.阿狸的后台不会做任何`打印`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n"
-    text += "2.如果您发现登陆后阿狸还提醒您没有登录，那是因为阿狸的作者正在调试阿狸，重启后登录信息会消失。感谢谅解;\n"
-    text += "3.目前查询功能稳定性尚可，但无法排除`封号`风险;\n"
-    text += "4.指定save后，账户密码是存在全局变量(内存)中的，并不会存到硬盘里面。只要bot下线(进程退出)就会被清除;\n"
-    text += "若担心相关风险，请不要使用如下功能\n"
+    c3.append(Module.Section('图文版帮助命令和机器人使用文档', Element.Button('点我', 'https://blog.musnow.top/posts/847195815/?utm_source=kook', Types.Click.LINK,theme=Types.Theme.PRIMARY)))
+    c3.append(Module.Divider())
+    text = "使用前，请确认您知晓相关功能可能有风险，详见图文版帮助命令-免责声明\n"
+    # text += "1.阿狸的后台不会做任何`打印`您的游戏账户密码的操作，若在使用相关功能后被盗号，阿狸可不承担任何责任;\n"
+    # text += "2.如果您发现登陆后阿狸还提醒您没有登录，那是因为阿狸的作者正在调试阿狸，重启后登录信息会消失。感谢谅解;\n"
+    # text += "3.目前查询功能稳定性尚可，但无法排除`封号`风险;\n"
+    # text += "4.指定save后，账户密码是存在全局变量(内存)中的，并不会存到硬盘里面。只要bot下线(进程退出)就会被清除;\n"
+    # text += "若担心相关风险，请不要使用如下功能\n"
     c3.append(Module.Section(Element.Text(text, Types.Text.KMD)))
     c3.append(Module.Divider())
     help_1 = "「/bundle 皮肤名」 查询皮肤系列包含什么枪械\n"
@@ -71,11 +73,11 @@ def help_val():
     c3.append(Module.Header("以下进阶功能，发电支持阿狸即可解锁哦~"))
     help_2 =  "「/vip-u 激活码」兑换阿狸的vip\n"
     help_2 += "「/vip-c」 查看vip的剩余时间\n"
-    help_2 += "「全新商店展示图」vip用户将获取到16-9的超帅商店返回值\n"
     help_2 += "「/vip-shop」查看已保存的商店查询diy背景图\n"
     help_2 += "「/vip-shop 图片url」添加商店查询diy背景图\n"
     help_2 += "「/vip-shop-s 图片编号」切换商店查询的背景图\n"
-    help_2 += "「保存登录信息」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n"
+    help_2 += "「全新商店展示图」vip用户将获取到16-9的超帅商店返回值\n"
+    help_2 += "「登录信息缓存」vip用户登陆后，阿狸会自动保存您的cookie。在阿狸维护重启的时候，您的登录信息不会丢失\n"
     help_2 += "「早八商店提醒」阿狸将在早8点获取vip用户的每日商店并私聊发图给用户。同时会对这张图片进行缓存，当天使用`/shop`命令的时候，只需2s获取结果，三倍于普通用户的响应速度！\n\n"
     help_2 += "1.目前商店查询diy背景图支持16-9(横屏)的图片，图片url获取：PC端将图片上传到kook→点击图片→底部`...`处复制图片链接→使用`/vip-shop`命令设置背景 [教程图](https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png)\n"
     help_2 += "2.请不要设置违规图片(擦边也不行)！若因为您上传违禁图片后导致阿狸被封，您将被剥夺vip并永久禁止兑换vip\n"
@@ -90,6 +92,7 @@ def help_val():
 
 
 def help_develop():
+    c = Card(Module.Header("主人有何吩咐呀~"),Module.Divider())
     text = f"主人有何吩咐呀~\n```\n"
     text += f"[/color-set] 发送一个用于设置用户颜色的消息，只能在valorant社区使用\n"
     text += f"[/color-set-gm 消息id] 在不修改代码的前提下设置上色功能的服务器和监听消息\n"
@@ -109,4 +112,5 @@ def help_develop():
     text += f"[/log] 显示当前阿狸加入的服务器以及用户数量\n"
     text += f"[/mem] 显示当前阿狸进程的内存占用和cpu占用\n"
     text += f"[/kill @bot] 下线机器人\n```"
-    return text
+    c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+    return CardMessage(c)

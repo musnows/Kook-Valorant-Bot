@@ -80,6 +80,8 @@ async def KillBot(msg: Message, at_text = '', *arg):
             res = await bot_offline()  # 调用接口下线bot
             _log.info(f"KILL | bot-off: {res}\n")
             os._exit(0)  # 退出程序
+        else:
+            _log.info(f"[kill] invalid kill = {msg.content}")
     except:
         await BotLog.BaseException_Handler("kill",traceback.format_exc(),msg)
 
