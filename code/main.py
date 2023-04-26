@@ -651,8 +651,9 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         err_str = f"ERR! [{getTime()}] shop\n```\n{traceback.format_exc()}\n```\n"
         if "SkinsPanelLayout" in str(result):
             _log.error(err_str + str(resp))
-            btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
-            cm = await get_card_msg(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
+            b_text = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)\n"
+            b_text+= f"```\n{str(resp)}\n```"  # 把api的返回值也发出去
+            cm = await get_card_msg(f"键值错误，需要重新登录", b_text, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         else:
             await BotLog.BaseException_Handler("shop", traceback.format_exc(), msg, send_msg=send_msg)
