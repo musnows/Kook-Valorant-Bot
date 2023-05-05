@@ -101,4 +101,6 @@ ValItersEmoji = EmojiDict['val_iters_emoji']
 from khl import Bot
 bot = Bot(token=config['token']['bot'])
 """main bot"""
+bot_upd_img = Bot(token=config['token']['img_upload_token'])
+"""用来上传图片的bot"""
 _log.info(f"Loading all files") # 走到这里代表所有文件都打开了

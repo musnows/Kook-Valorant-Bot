@@ -25,11 +25,9 @@ from pkg import Admin # 管理员命令
 
 # 文件管理
 from pkg.utils.file.FileManage import FileManage,save_all_file,write_file
-from pkg.utils.file.Files import config, bot, ApiAuthLog, LoginForbidden,NightMarketOff
+from pkg.utils.file.Files import config, bot,bot_upd_img, ApiAuthLog, LoginForbidden,NightMarketOff
 
 # 只用来上传图片的bot
-bot_upimg = Bot(token=config['token']['img_upload_token'])
-"""用来上传图片的bot"""
 master_id = config['master_id']
 """机器人开发者用户id"""
 
@@ -619,7 +617,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
             imgByteArr = io.BytesIO()
             bg.save(imgByteArr, format='PNG')
             imgByte = imgByteArr.getvalue()
-            dailyshop_img_src = await bot_upimg.client.create_asset(imgByte)  # type: ignore
+            dailyshop_img_src = await bot_upd_img.client.create_asset(imgByte)  # type: ignore
             # 5.3.3 如果在bg里面代表有自定义背景图，需更新status
             if is_vip:
                 if msg.author_id in VipShopBgDict['bg']:
@@ -1392,7 +1390,7 @@ async def auto_skin_notify():
                             log_time += f"| [Draw] {format(time.time() - draw_time,'.4f')} | [Au] {vip} | [Riot] {riot_user_id}"
                             _log.info(log_time)
                             # 上传图片
-                            dailyshop_img_src = await bot_upimg.client.create_asset(img_shop_path)  
+                            dailyshop_img_src = await bot_upd_img.client.create_asset(img_shop_path)  
                             # 缓存图片的url+设置图片缓存的时间
                             VipShopBgDict['cache'][auth.user_id] = { 'cache_img': dailyshop_img_src,'cache_time': time.time()} 
                             # 更新商店图片status为True，代表用户当天执行/shop命令不需再画图
@@ -1522,36 +1520,6 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
 #######################################################################################################
 
 
-# 显示当前阿狸加入了多少个服务器，以及用户数量
-@bot.command(name='log-list', aliases=['log-l', 'log'])
-async def bot_log_list(msg: Message, *arg):
-    BotLog.logMsg(msg)
-    try:
-        if msg.author_id != master_id:
-            await msg.reply(f"您没有权限执行此命令！")
-            return
-        
-        retDict = await BotLog.log_bot_list(msg)  # 获取用户/服务器列表
-        res_text = await BotLog.log_bot_list_text(retDict)  # 获取text
-
-        cm = CardMessage()
-        c = Card(
-            Module.Header(f"来看看阿狸当前的用户记录吧！"),
-            Module.Context(
-                f"服务器总数: {retDict['guild']['guild_total']}  活跃服务器: {retDict['guild']['guild_active']}  用户数: {retDict['user']['user_total']}  cmd: {retDict['cmd_total']}"
-            ), Module.Divider())
-        log_img_src = await bot_upimg.client.create_asset("../screenshot/log.png")
-        c.append(Module.Container(Element.Image(src=log_img_src)))
-        c.append(
-            Module.Section(
-                Struct.Paragraph(2, Element.Text(f"{res_text['name'][:5000]}", Types.Text.KMD),
-                                    Element.Text(f"{res_text['user'][:5000]}", Types.Text.KMD))))  #限制字数才能发出来
-        cm.append(c)
-        await msg.reply(cm)           
-    except:
-        await BotLog.BaseException_Handler("log-list",traceback.format_exc(),msg)
-
-
 @bot.on_startup
 async def loading_cache(bot: Bot):
     """
@@ -1560,10 +1528,10 @@ async def loading_cache(bot: Bot):
     """
     try:
         global debug_ch, cm_send_test
-        cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
+        cm_send_test = await bot_upd_img.client.fetch_public_channel(config['channel']["img_upload_ch"])
         debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         _log.info("[BOT.TASK] fetch_public_channel success")
-        Admin.init(bot,debug_ch) # 管理员命令
+        Admin.init(bot,bot_upd_img,debug_ch) # 管理员命令
         # 注册其他命令
         Funny.init(bot,debug_ch)
         GrantRoles.init(bot,master_id)
@@ -1571,8 +1539,8 @@ async def loading_cache(bot: Bot):
         BotStatus.init(bot)
         Match.init(bot,debug_ch)
         GameHelper.init(bot)
-        ValFileUpd.init(bot,bot_upimg,master_id)
-        Vip.init(bot,bot_upimg,master_id,debug_ch,cm_send_test)
+        ValFileUpd.init(bot,bot_upd_img,master_id)
+        Vip.init(bot,bot_upd_img,master_id,debug_ch,cm_send_test)
         Mission.init(bot,debug_ch)
         StatusWeb.init(bot,master_id)
         _log.info("[BOT.TASK] load plugins")

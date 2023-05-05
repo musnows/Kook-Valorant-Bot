@@ -18,9 +18,9 @@ from ..utils.KookApi import icon_cm,get_card,upd_card,get_card_msg
 VIP_BG_SIZE = 4
 """vip用户背景图片数量限制"""
 
-def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Channel):
+def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Channel):
     """- bot 主机器人
-    - bot_upimg 用来上传图片的机器人
+    - bot_upd_img 用来上传图片的机器人
     - master_id 机器人主人用户id
     - debug_ch 用于发送debug信息的文字频道
     - cm_send_test 用于发送图片测试的文字频道
@@ -145,7 +145,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upimg.client.send(cm_send_test, cm)
+            await bot_upd_img.client.send(cm_send_test, cm)
             _log.info(f"Au:{msg.author_id} | cm_send_test success")
             #然后阿狸在进行回应
             await msg.reply(cm)
@@ -200,7 +200,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upimg.client.send(cm_send_test, cm)
+            await bot_upd_img.client.send(cm_send_test, cm)
             _log.info(f"Au:{msg.author_id} | cm_send_test success")
             #然后阿狸在进行回应
             await msg.reply(cm)
@@ -241,7 +241,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upimg.client.send(cm_send_test, cm)
+            await bot_upd_img.client.send(cm_send_test, cm)
             _log.info(f"Au:{msg.author_id} | cm_send_test success")
             #然后阿狸在进行回应
             await msg.reply(cm)
