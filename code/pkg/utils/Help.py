@@ -109,9 +109,9 @@ def help_develop():
     text += f"[/ckau] 查看已登录的用户个数\n"
     text += f"[/ban-r 用户id] 禁止用户使用rate相关功能\n"
     text += f"[/notify-test] 执行皮肤提醒notify.task\n"
-    text += f"[/open-nm] 打开/关闭夜市\n"
-    text += f"[/lf] LoginForbidden的缩写，在拳头API调用403时，屏蔽所有需要登录查询的命令\n"
-    text += f"[/upd] 手动更新本地缓存的商店物品和价格\n"
+    text += f"[/vstatus -nm] 打开/关闭夜市\n"
+    text += f"[/vstatus -lf] 屏蔽所有需要登录查询的命令\n"
+    text += f"[/upd] 手动更新本地缓存的皮肤/价格/英雄/捆绑包\n"
 
     text += f"\n **机器人管理相关**\n"
     text += f"[/upd-web] 手动更新机器人使用日志网页\n"

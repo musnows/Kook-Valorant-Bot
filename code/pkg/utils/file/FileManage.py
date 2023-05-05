@@ -149,15 +149,21 @@ class Boolean:
             return self.value.__ne__(i.value)
         else:
             return self.value.__ne__(i)
+    # 打印
+    def __str__(self) -> str:
+        return str(self.value)
     
-    def reverse(self):
-        """将bool反转"""
+    def reverse(self) -> bool:
+        """将bool反转，返回设置后的值"""
         if self.value:
             self.value = False
         else:
             self.value = True
 
-    def set(self,value:bool):
-        """设置value的bool值"""
+        return self.value
+
+    def set(self,value:bool) ->bool:
+        """设置value的bool值，返回设置后的值"""
         assert(isinstance(value,bool))
         self.value = value
+        return self.value

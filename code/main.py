@@ -15,7 +15,7 @@ from pkg.utils import ShopRate, ShopImg, Help, BotVip
 from pkg.utils.log import BotLog
 from pkg.utils.log.Logging import _log
 from pkg.utils.valorant import Reauth,AuthCache
-from pkg.utils.KookApi import icon_cm, bot_offline, upd_card, get_card,get_card_msg
+from pkg.utils.KookApi import icon_cm, upd_card, get_card,get_card_msg
 from pkg.utils.valorant.api import Assets,Riot,Local
 from pkg.utils.valorant.EzAuth import EzAuth, EzAuthExp
 from pkg.utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
@@ -24,8 +24,8 @@ from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match,GameHelpe
 from pkg import Admin # 管理员命令
 
 # 文件管理
-from pkg.utils.file.FileManage import FileManage,save_all_file,write_file
-from pkg.utils.file.Files import config, bot,bot_upd_img, ApiAuthLog, LoginForbidden,NightMarketOff
+from pkg.utils.file.FileManage import save_all_file
+from pkg.utils.file.Files import config, bot,bot_upd_img, ApiAuthLog
 
 # 只用来上传图片的bot
 master_id = config['master_id']
@@ -209,7 +209,7 @@ async def check_UserAuthCache_len(msg: Message):
 async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /login {apSave}")
     # 提前定义，避免报错
-    global LoginForbidden, login_rate_limit, UserAuthCache
+    global login_rate_limit, UserAuthCache
     send_msg = {'msg_id':''}
     cm = CardMessage()
     try:
@@ -217,10 +217,12 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         BotLog.log_bot_cmd() # 记录命令使用情况
         BotLog.log_bot_user(msg.author_id,getTime())  # 记录用户和cmd总数
         if not isinstance(msg, PrivateMessage):  # 不是私聊的话，禁止调用本命令
-            return await msg.reply(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
+            cm = await get_card_msg(f"为了避免您的账户信息泄漏，请「私聊」使用本命令！\n用法：`/login 账户 密码`")
+            return await msg.reply(cm)
         elif passwd == 'err' or user == 'err':
-            return await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
-        elif LoginForbidden:
+            cm = await get_card_msg(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
+            return await msg.reply(cm)
+        elif Reauth.LoginForbidden:
             return await Reauth.login_forbidden_send(msg)
             
         # 1.检查全局登录速率
@@ -466,7 +468,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
     try:
         # 0.进行命令有效性判断
         BotLog.logMsg(msg)
-        if LoginForbidden:
+        if Reauth.LoginForbidden:
             return await Reauth.login_forbidden_send(msg)
         elif "-" in index or "." in index: # index参数是下标，应该为一个正整数
             await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
@@ -622,14 +624,13 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
 @bot.command(name='night', aliases=['NIGHT'])
 async def get_night_market(msg: Message,index:str="0", *arg):
     BotLog.logMsg(msg)
-    global NightMarketOff
     if "-" in index or "." in index:
         await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的账户，并指定正确的编号（默认为0，即第一个账户）")
         return
-    elif LoginForbidden:
+    elif Reauth.LoginForbidden:
         await Reauth.login_forbidden_send(msg)
         return
-    elif NightMarketOff:
+    elif Reauth.NightMarketOff:
         await msg.reply(f"夜市暂未开放！请等开放了之后再使用本命令哦~")
         return
 
@@ -669,7 +670,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         # 获取商店（夜市是相同接口）
         resp = await Riot.fetch_daily_shop(riotUser)
         if "BonusStore" not in resp:  # 如果没有这个字段，说明夜市取消了
-            NightMarketOff = False
+            Reauth.NightMarketOff.set(False)
             cm1 = await get_card_msg("嗷~ 夜市已关闭 或 Api没能正确返回结果", "night_market closed! 'BonusStore' not in resp",
                                     icon_cm.duck)
             await upd_card(send_msg['msg_id'], cm1, channel_type=msg.channel_type)  # 更新消息
@@ -719,7 +720,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
 @bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
 async def get_user_card(msg: Message, *arg):
     BotLog.logMsg(msg)
-    if LoginForbidden:
+    if Reauth.LoginForbidden:
         await Reauth.login_forbidden_send(msg)
         return
     # 初始化变量
@@ -1203,11 +1204,6 @@ async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
         await BotLog.BaseException_Handler("notify-del", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
-def check_night_market_status(resp:dict):
-    """在notifytask中判断夜市有没有开，只会判断一次"""
-    global NightMarketOff  #true代表夜市没有开启
-    if NightMarketOff and "BonusStore" in resp: #夜市字段存在
-        NightMarketOff = False  #夜市开启！
 
 #独立函数，为了封装成命令+定时
 async def auto_skin_notify():
@@ -1258,7 +1254,7 @@ async def auto_skin_notify():
                         a_time = time.time()  # 开始调用api的时间
                         resp = await Riot.fetch_daily_shop(riotUser)  # 获取每日商店
                         # 检查夜市是否开启
-                        check_night_market_status(resp)
+                        Reauth.check_night_market_status(resp)
                         # 处理商店返回值             
                         list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
                         timeout = resp["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]  #剩余时间

@@ -2,11 +2,15 @@ import traceback
 from khl import Message, Channel
 from aiohttp import client_exceptions
 from .EzAuth import EzAuth, EzAuthExp
-from ..file.Files import UserAuthCache, UserPwdReauth, LoginForbidden,SkinNotifyDict, bot
+from ..file.Files import UserAuthCache, UserPwdReauth,SkinNotifyDict,bot,Boolean
 from .api.Riot import fetch_valorant_point
 from ..log.Logging import _log
 from .. import KookApi, Gtime
 
+LoginForbidden  = Boolean(False)
+"""出现403错误，禁止重登; 初始值为false"""
+NightMarketOff  = Boolean(True)
+"""夜市是否关闭？False (on,夜市开着) | True (off,夜市关闭)"""
 
 async def login_forbidden_send(msg: Message):
     """拳头api调用被403禁止的时候，发送提示信息"""
@@ -16,11 +20,21 @@ async def login_forbidden_send(msg: Message):
     _log.info(f"Au:{msg.author_id} command failed | LoginForbidden: {LoginForbidden}")
     return None
 
+def check_night_market_status(resp:dict) ->bool:
+    """在notify.task中判断夜市有没有开，只会判断一次
+    - True: 夜市已开启
+    - False: 夜市关闭
+    """
+    if NightMarketOff and "BonusStore" in resp: #夜市字段存在
+        NightMarketOff.set(False)  # 夜市开启！
+        return True
+    return False 
+
 def client_exceptions_handler(result:str,err_str:str) -> str:
     """检查aiohttp错误的类型"""
     if 'auth.riotgames.com' and '403' in result:
         global LoginForbidden
-        LoginForbidden = True
+        LoginForbidden.set(True)
         err_str += f"[check_reauth] 403 err! set LoginForbidden = True"
     elif '404' in result:
         err_str += f"[check_reauth] 404 err! network err, try again"

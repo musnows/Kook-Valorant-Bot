@@ -9,7 +9,7 @@ from ..utils.valorant.api import Riot,Assets
 from ..utils.valorant.EzAuth import EzAuth,EzAuthExp,RiotUserToken
 from ..utils.KookApi import get_card_msg,icon_cm,upd_card
 from ..utils.log import BotLog
-from ..utils.file.Files import LoginForbidden,UserAuthCache,_log
+from ..utils.file.Files import UserAuthCache,_log
 
 
 async def fetch_match_histroy(ru:RiotUserToken,startIndex=0,endIndex=20) -> dict:
@@ -120,11 +120,8 @@ def init(bot:Bot,debug_ch:Channel):
     @bot.command(name='match',case_sensitive=False)
     async def match(msg:Message,index:str="0",*arg):
         BotLog.logMsg(msg)
-        if LoginForbidden:
-            _log.info(f"Au:{msg.author_id} Command Failed | LF")
-            return await msg.reply(
-                f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
-            )
+        if Reauth.LoginForbidden:
+            return Reauth.login_forbidden_send(msg)
         # index参数是下标，应该为一个正整数
         elif "-" in index or "." in index:
             await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")

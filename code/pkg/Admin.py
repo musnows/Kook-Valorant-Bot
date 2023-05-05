@@ -4,9 +4,10 @@ import os
 from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 
-from .utils.file.Files import config,_log,StartTime,LoginForbidden,NightMarketOff,SkinRateDict
+from .utils.file.Files import config,_log,StartTime,SkinRateDict
 from .utils.file.FileManage import save_all_file
 from .utils.log import BotLog
+from .utils.valorant.Reauth import LoginForbidden,NightMarketOff
 from .utils import Gtime,KookApi,ShopRate
 
 master_id = config['master_id']
@@ -21,6 +22,8 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
     - bot: main bot
     - bot_upd_img: bot for img upload
     - debug_ch: channel obj
+    - LoginForbidden: global value from .utils.file.Files
+    - NightMarketOff: global value from .utils.file.Files
     """
 
     @bot.command(name='kill',case_sensitive=False)
@@ -85,41 +88,35 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
         except:
             await BotLog.BaseException_Handler("log-list",traceback.format_exc(),msg)
 
-    @bot.command(name='lf')
-    async def login_forbidden_status_cmd(msg: Message):
-        """手动设置禁止登录的全局变量状态"""
+    @bot.command(name='vstatus')
+    async def valorant_global_status_cmd(msg: Message,option="",*arg):
+        """手动设置全局变量状态
+        - -lf login_forbidden
+        - -nm 打开/关闭夜市
+        """
         try:
             BotLog.logMsg(msg)
             if not is_admin(msg.author_id):return
 
-            global LoginForbidden
-            LoginForbidden = False if LoginForbidden else True
-            # 回复消息
-            cm = await KookApi.get_card_msg(f"登录状态修改 | LoginForbidden: `{LoginForbidden}`","该字段为True时，禁止登录命令")
-            await msg.reply(cm)
-            _log.info(f"Au:{msg.author_id} | LoginForbidden status change to {LoginForbidden}")
-        except:
-            await BotLog.BaseException_Handler("lf",traceback.format_exc(),msg)
-
-    @bot.command(name='open-nm',case_sensitive=False)
-    async def night_market_status_cmd(msg: Message, *arg):
-        """设置全局变量，打开/关闭夜市"""
-        BotLog.logMsg(msg)
-        try:
-            if not is_admin(msg.author_id):return
-
-            global NightMarketOff
-            if NightMarketOff:
-                NightMarketOff = False
+            if "-lf" in option.lower():
+                lf = LoginForbidden.reverse()
+                # 回复消息
+                cm = await KookApi.get_card_msg(f"登录状态修改 | LoginForbidden: `{lf}`","该字段为True时，禁止登录命令")
+                await msg.reply(cm)
+                _log.info(f"Au:{msg.author_id} | LoginForbidden status change to {lf}")
+            elif '-nm' in option.lower():
+                nm = NightMarketOff.reverse()
+                text = f"夜市状态修改 | NightMarketOff: `{nm}`"
+                sub_text= "该字段表示夜市是否关闭\nFalse (on,夜市开着) | True (off,夜市关闭)"
+                cm = await KookApi.get_card_msg(text,sub_text=sub_text)
+                await msg.reply(cm)
+                _log.info(f"Au:{msg.author_id} | NightMarketOff status change to {nm}")
+            
             else:
-                NightMarketOff = True
-            text = f"夜市状态修改 | NightMarketOff: `{NightMarketOff}`"
-            sub_text= "该字段表示夜市是否关闭\nFalse (on,夜市开着) | True (off,夜市关闭)"
-            cm = await KookApi.get_card_msg(text,sub_text=sub_text)
-            await msg.reply(cm)
-            _log.info(f"Au:{msg.author_id} | NightMarketOff status change to {LoginForbidden}")
+                await msg.reply(await KookApi.get_card_msg("选项无效\n* `-lf` LoginForbidden\n* `-nm` NightMarketOff"))
+                _log.info(f"Au:{msg.author_id} | invalid option")
         except:
-            await BotLog.BaseException_Handler("open-nm", traceback.format_exc(), msg)
+            await BotLog.BaseException_Handler("valorant_global_status_cmd",traceback.format_exc(),msg)
 
     @bot.command(name='ban-r')
     async def ban_rate_user_cmd(msg: Message, user = "",*arg):
