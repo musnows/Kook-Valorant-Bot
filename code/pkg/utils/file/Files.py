@@ -1,5 +1,5 @@
 from time import time
-from .FileManage import FileManage
+from .FileManage import FileManage,Boolean
 from ..log.Logging import _log
 from ..Gtime import getTime
 
@@ -67,10 +67,6 @@ VipRollDcit = VipUser['roll']
 """vip 抽奖记录"""
 
 # 缓存相关
-LoginForbidden:bool = False
-"""出现403错误，禁止重登; 初始值为false"""
-NightMarketOff:bool = True
-"""夜市是否关闭？False (on,夜市开着) | True (off,夜市关闭)"""
 UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}  
 """api/bot 公用EzAuth对象缓存:
 - api  | `用户账户:riot_user_uuid`

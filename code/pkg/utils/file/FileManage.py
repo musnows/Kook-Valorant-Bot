@@ -126,3 +126,38 @@ class FileManage:
     async def save_aio(self):
         async with aiofiles.open(self.path, 'w', encoding='utf-8') as f:  #这里必须用dumps
             await f.write(json.dumps(self.value, indent=2, sort_keys=True, ensure_ascii=False))
+
+class Boolean:
+    """一个用来管理bool的类，可以方便的进行reverse"""
+    def __init__(self,bool_value:bool) -> None:
+        assert(isinstance(bool_value,bool))
+        self.value:bool = bool_value
+
+    def __bool__(self):
+        return self.value
+
+    # 比较==
+    def __eq__(self, i):
+        if isinstance(i, Boolean):
+            return self.value.__eq__(i.value)
+        else:
+            return self.value.__eq__(i)
+
+    # 比较!=
+    def __ne__(self, i):
+        if isinstance(i, Boolean):
+            return self.value.__ne__(i.value)
+        else:
+            return self.value.__ne__(i)
+    
+    def reverse(self):
+        """将bool反转"""
+        if self.value:
+            self.value = False
+        else:
+            self.value = True
+
+    def set(self,value:bool):
+        """设置value的bool值"""
+        assert(isinstance(value,bool))
+        self.value = value
