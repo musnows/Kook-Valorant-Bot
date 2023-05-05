@@ -1,6 +1,10 @@
 from time import time
 from .FileManage import FileManage
 from ..log.Logging import _log
+from ..Gtime import getTime
+
+start_time = getTime()
+"""机器人启动时间 str"""
 
 # 配置相关
 config = FileManage("./config/config.json", True) 

@@ -19,10 +19,14 @@ from pkg.utils.KookApi import icon_cm, bot_offline, upd_card, get_card,get_card_
 from pkg.utils.valorant.api import Assets,Riot,Local
 from pkg.utils.valorant.EzAuth import EzAuth, EzAuthExp
 from pkg.utils.Gtime import getTime, getTimeStampOf8AM,shop_time_remain,getTimeFromStamp,getDate
+# 作为插件的命令
+from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match,GameHelper,ValFileUpd,Mission,StatusWeb
+from pkg import Admin # 管理员命令
 
-# bot的token文件
+# 文件管理
 from pkg.utils.file.FileManage import FileManage,save_all_file,write_file
 from pkg.utils.file.Files import config, bot, ApiAuthLog, LoginForbidden,NightMarketOff
+
 # 只用来上传图片的bot
 bot_upimg = Bot(token=config['token']['img_upload_token'])
 """用来上传图片的bot"""
@@ -1548,28 +1552,19 @@ async def bot_log_list(msg: Message, *arg):
         await BotLog.BaseException_Handler("log-list",traceback.format_exc(),msg)
 
 
-@bot.command(name='mem')
-async def proc_check(msg: Message, *arg):
-    BotLog.logMsg(msg)
-    try:
-        if msg.author_id == master_id:
-            cm = await BotLog.get_proc_info(start_time)
-            await msg.reply(cm)
-    except:
-        await BotLog.BaseException_Handler("mem",traceback.format_exc(),msg)
-
-
-#在阿狸开机的时候自动加载所有保存过的cookie
-# 注册其他命令
-from pkg.plugins import Funny,GrantRoles,Translate,BotStatus,Vip,Match,GameHelper,ValFileUpd,Mission,StatusWeb
-
 @bot.on_startup
 async def loading_cache(bot: Bot):
+    """
+    - 在阿狸开机的时候自动加载所有保存过的cookie
+    - 注册其他命令
+    """
     try:
         global debug_ch, cm_send_test
         cm_send_test = await bot_upimg.client.fetch_public_channel(config['channel']["img_upload_ch"])
         debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         _log.info("[BOT.TASK] fetch_public_channel success")
+        Admin.init(bot,debug_ch) # 管理员命令
+        # 注册其他命令
         Funny.init(bot,debug_ch)
         GrantRoles.init(bot,master_id)
         Translate.init(bot,master_id)
