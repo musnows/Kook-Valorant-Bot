@@ -1439,7 +1439,7 @@ async def loading_cache(bot: Bot):
         Match.init(bot,debug_ch)
         GameHelper.init(bot)
         ValFileUpd.init(bot,bot_upd_img,master_id)
-        Vip.init(bot,bot_upd_img,master_id,debug_ch,cm_send_test)
+        Vip.init(bot,bot_upd_img,debug_ch,cm_send_test)
         Mission.init(bot,debug_ch)
         StatusWeb.init(bot,master_id)
         _log.info("[BOT.TASK] load plugins")

@@ -14,14 +14,15 @@ from ..utils.log import BotLog
 from ..utils.Gtime import getTime
 from ..utils import BotVip,ShopImg
 from ..utils.KookApi import icon_cm,get_card,upd_card,get_card_msg
+from ..Admin import is_admin
 
 VIP_BG_SIZE = 4
 """vip用户背景图片数量限制"""
 
-def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Channel):
-    """- bot 主机器人
+def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
+    """
+    - bot 主机器人
     - bot_upd_img 用来上传图片的机器人
-    - master_id 机器人主人用户id
     - debug_ch 用于发送debug信息的文字频道
     - cm_send_test 用于发送图片测试的文字频道
     """
@@ -30,7 +31,7 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Cha
     async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
         BotLog.logMsg(msg)
         try:
-            if msg.author_id == master_id:
+            if is_admin(msg.author_id):
                 text = await BotVip.create_vip_uuid(num, day)
                 cm = CardMessage()
                 c = Card(Module.Header(f"已生成新的uuid   数量:{num}  天数:{day}"),
@@ -40,8 +41,6 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Cha
                 cm.append(c)
                 await msg.reply(cm)
                 _log.info("vip-a | create_vip_uuid reply successful!")
-            else:
-                await msg.reply("您没有权限操作此命令！")
         except Exception as result:
             await BotLog.BaseException_Handler("vip-a", traceback.format_exc(), msg)
 
@@ -80,15 +79,14 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Cha
     async def list_vip_user(msg: Message, *arg):
         BotLog.logMsg(msg)
         try:
-            if msg.author_id == master_id:
+            if is_admin(msg.author_id):
                 text = await BotVip.fetch_vip_user()
                 cm2 = CardMessage()
                 c = Card(Module.Header(f"当前vip用户列表如下"), color='#e17f89')
                 c.append(Module.Section(Element.Text(f"```\n{text}```", Types.Text.KMD)))
                 cm2.append(c)
                 await msg.reply(cm2)
-            else:
-                await msg.reply("您没有权限操作此命令！")
+
         except Exception as result:
             await BotLog.BaseException_Handler("vip-l", traceback.format_exc(), msg)
 
@@ -277,9 +275,7 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Cha
     async def vip_roll(msg: Message, vday: int = 7, vnum: int = 5, rday: float = 1.0):
         BotLog.logMsg(msg)
         try:
-            if msg.author_id != master_id:
-                await msg.reply(f"您没有权限执行本命令")
-                return
+            if not is_admin(msg.author_id): return
             # 设置开始抽奖
             global VipRollDcit
             cm = BotVip.roll_vip_start(vnum, vday, rday)
@@ -365,10 +361,8 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Cha
     @bot.command(name='vip-ta')
     async def vip_time_add(msg: Message, vday: int = 1, *arg):
         BotLog.logMsg(msg)
-        if msg.author_id != master_id:
-            await msg.reply(f"您没有权限执行此命令！")
-            return
         try:
+            if not is_admin(msg.author_id): return
             global VipUserDict
             # 给所有vip用户上天数
             for vip, vinfo in VipUserDict.items():
@@ -435,17 +429,15 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str,debug_ch:Channel,cm_send_test:Cha
             await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
 
-    #因为这个功能很重要，所以设置成可以用命令调用+定时任务
+    # 因为这个功能很重要，所以设置成可以用命令调用+定时任务
     @bot.task.add_cron(hour=3, minute=0, timezone="Asia/Shanghai")
     async def check_vip_img_task():
+        """检查vip自定义背景图的task"""
         await check_vip_img()
-
-
     @bot.command(name="vip-img")
     async def check_vip_img_cmd(msg: Message, *arg):
+        """检查vip自定义背景图的命令"""
         BotLog.logMsg(msg)
-        if msg.author_id == master_id:
-            await check_vip_img()
-            await msg.reply("背景图片diy检查完成！")
-        else:
-            return await msg.reply("您没有权限执行此命令！")
+        if not is_admin(msg.author_id): return
+        await check_vip_img()
+        await msg.reply("背景图片diy检查完成！")
