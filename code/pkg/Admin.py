@@ -1,13 +1,13 @@
-import json
+import copy
 import traceback
 import os
 from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 
-from .utils.file.Files import config,_log,start_time,LoginForbidden
+from .utils.file.Files import config,_log,StartTime,LoginForbidden,NightMarketOff,SkinRateDict
 from .utils.file.FileManage import save_all_file
-from .utils import Gtime,KookApi
 from .utils.log import BotLog
+from .utils import Gtime,KookApi,ShopRate
 
 master_id = config['master_id']
 """机器人开发者用户id"""
@@ -22,7 +22,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
     - bot_upd_img: bot for img upload
     - debug_ch: channel obj
     """
-    
+
     @bot.command(name='kill',case_sensitive=False)
     async def kill_bot_cmd(msg: Message, at_text = '', *arg):
         """`/kill @机器人` 下线bot"""
@@ -53,7 +53,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
         try:
             BotLog.logMsg(msg)
             if is_admin(msg.author_id):
-                cm = await BotLog.get_proc_info(start_time)
+                cm = await BotLog.get_proc_info(StartTime)
                 await msg.reply(cm)
         except:
             await BotLog.BaseException_Handler("mem",traceback.format_exc(),msg)
@@ -95,10 +95,83 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             global LoginForbidden
             LoginForbidden = False if LoginForbidden else True
             # 回复消息
-            cm = await KookApi.get_card_msg(f"Update LoginForbidden status: {LoginForbidden}")
+            cm = await KookApi.get_card_msg(f"登录状态修改 | LoginForbidden: `{LoginForbidden}`","该字段为True时，禁止登录命令")
             await msg.reply(cm)
             _log.info(f"Au:{msg.author_id} | LoginForbidden status change to {LoginForbidden}")
         except:
             await BotLog.BaseException_Handler("lf",traceback.format_exc(),msg)
+
+    @bot.command(name='open-nm',case_sensitive=False)
+    async def night_market_status_cmd(msg: Message, *arg):
+        """设置全局变量，打开/关闭夜市"""
+        BotLog.logMsg(msg)
+        try:
+            if not is_admin(msg.author_id):return
+
+            global NightMarketOff
+            if NightMarketOff:
+                NightMarketOff = False
+            else:
+                NightMarketOff = True
+            text = f"夜市状态修改 | NightMarketOff: `{NightMarketOff}`"
+            sub_text= "该字段表示夜市是否关闭\nFalse (on,夜市开着) | True (off,夜市关闭)"
+            cm = await KookApi.get_card_msg(text,sub_text=sub_text)
+            await msg.reply(cm)
+            _log.info(f"Au:{msg.author_id} | NightMarketOff status change to {LoginForbidden}")
+        except:
+            await BotLog.BaseException_Handler("open-nm", traceback.format_exc(), msg)
+
+    @bot.command(name='ban-r')
+    async def ban_rate_user_cmd(msg: Message, user = "",*arg):
+        """设置皮肤评价的违规用户"""
+        try:
+            BotLog.logMsg(msg)            
+            if not is_admin(msg.author_id):return
+            if not user: return
+            
+            text = ""
+            # 除了可以直接添加用户id，还可以通过@用户的方式添加
+            user_id = user if "(met)" not in user else user.replace("(met)","")
+            global SkinRateDict
+            # 1.判断用户id是否在错误用户中
+            if user_id in SkinRateDict['err_user']:
+                cm = await KookApi.get_card_msg(f"该用户已在 `SkinRateDict['err_user'] `列表中")
+                return await msg.reply(cm)
+            # 2.判断用户id是否在评论日志中
+            elif user_id in SkinRateDict['data']:
+                # 遍历所有皮肤的评论列表，删除违规用户的所有评论
+                for skin, info in SkinRateDict['data'][user_id].items():
+                    # 找到这条评论，将其删除
+                    if not await ShopRate.remove_UserRate(skin, user_id):
+                        text += f"删除评论 {skin} [{info['name']}] 错误\n"
+                        continue
+
+                # 删除完该用户的所有评论之后，将其放入err_user
+                temp_user_dict = copy.deepcopy(SkinRateDict['data'][user_id])
+                del SkinRateDict['data'][user_id] # 删除键值
+                SkinRateDict['err_user'][user_id] = temp_user_dict
+                # 发送信息
+                cm = await KookApi.get_card_msg(f"用户 {user_id} 已被加入 `SkinRateDict['err_user']` 列表\n{text}")
+                await msg.reply(cm)
+                _log.info(f"rate_err_user | ban Au:{user_id}")
+            else:
+                # 这个用户之前没有评论过，跳过
+                cm = await KookApi.get_card_msg(f"用户 {user_id} 没有发表过皮肤评论，请检查id是否正确")
+                await msg.reply(cm)
+                _log.info(f"rate_err_user | invalid Au:{user_id}")
+
+        except Exception as result:
+            await BotLog.BaseException_Handler("ban-r", traceback.format_exc(), msg)
+
+    @bot.task.add_cron(day=1, timezone="Asia/Shanghai")
+    async def clear_rate_err_user():
+        """每月1日删除皮肤评价的违规用户"""
+        try:
+            global SkinRateDict
+            SkinRateDict['err_user'] = {}
+            SkinRateDict.save()# 写入文件
+            _log.info(f"[BOT.TASK] clear_rate_err_user")
+        except:
+            _log.exception(f"ERR in clear_rate_err_user")
 
     _log.info("[Admin] load Admin.py")

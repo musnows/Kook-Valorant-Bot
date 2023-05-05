@@ -715,25 +715,6 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         await BotLog.BaseException_Handler("night", traceback.format_exc(), msg, send_msg=send_msg)
 
 
-# 设置全局变量，打开/关闭夜市
-@bot.command(name='open-nm')
-async def open_night_market(msg: Message, *arg):
-    BotLog.logMsg(msg)
-    try:
-        if msg.author_id == master_id:
-            global NightMarketOff
-            if NightMarketOff:
-                NightMarketOff = False
-            else:
-                NightMarketOff = True
-
-            await msg.reply(f"夜市状态修改！NightMarketOff: {NightMarketOff}")
-        else:
-            await msg.reply("您没有权限执行本命令！")
-    except:
-        await BotLog.BaseException_Handler("open-nm", traceback.format_exc(), msg)
-
-
 # 获取玩家卡面(添加point的别名)
 @bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
 async def get_user_card(msg: Message, *arg):
@@ -873,41 +854,6 @@ async def get_bundle(msg: Message, *arg):
     except Exception as result:
         await BotLog.BaseException_Handler("bundle", traceback.format_exc(), msg)
 
-
-# 设置rate的错误用户
-@bot.command(name='ban-r')
-async def set_rate_err_user(msg: Message, user_id: str):
-    BotLog.logMsg(msg)
-    try:
-        global SkinRateDict
-        if msg.author_id != master_id:
-            await msg.reply(f"您没有权限执行此命令！")
-            return
-        
-        if user_id in SkinRateDict['err_user']:
-            await msg.reply(f"该用户已在SkinRateDict['err_user']列表中")
-        elif user_id in SkinRateDict['data']:
-            for skin, info in SkinRateDict['data'][user_id].items():
-                # 找到这条评论，将其删除
-                if not await ShopRate.remove_UserRate(skin, user_id):
-                    await msg.reply(f"Au:{user_id} 删除 {skin} [{info['name']}] 错误")
-
-            # 删除完该用户的所有评论之后，将其放入err_user
-            temp_user = copy.deepcopy(SkinRateDict['data'][user_id])
-            del SkinRateDict['data'][user_id]
-            SkinRateDict['err_user'][user_id] = temp_user
-            await msg.reply(f"用户 {user_id} 已被加入SkinRateDict['err_user']列表")
-            _log.info(f"rate_err_user | add Au:{user_id} | file saved")
-    except Exception as result:
-        await BotLog.BaseException_Handler("bundle", traceback.format_exc(), msg)
-
-# 每月1日删除违规用户
-@bot.task.add_cron(day=1, timezone="Asia/Shanghai")
-async def clear_rate_err_user():
-    global SkinRateDict
-    SkinRateDict['err_user'] = {}
-    SkinRateDict.save()# 写入文件
-    _log.info(f"[BOT.TASK] clear_rate_err_user")
 
 
 # 给一个皮肤评分（灵感来自微信小程序”瓦的小卖铺“）
