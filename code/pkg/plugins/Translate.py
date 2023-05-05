@@ -211,7 +211,7 @@ def init(bot:Bot,master_id:str):
 
 
     # 关闭所有栏位的实时翻译（避免有些人用完不关）
-    @bot.command(name='ShutdownTL', aliases=['TLSD','tlsd'])
+    @bot.command(name='ShutdownTL', aliases=['tlsd'],case_sensitive=False)
     async def TLShutdown(msg: Message):
         BotLog.logMsg(msg)
         if msg.author.id != master_id:

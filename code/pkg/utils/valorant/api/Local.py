@@ -2,9 +2,13 @@ import json
 from ...file.Files import  ValItersList, ValPriceList, ValSkinList, _log
 
 SKIN_ICON_ERR = "https://img.kookapp.cn/assets/2023-02/ekwdy7PiQC0e803m.png"
+"""用于替换错误的皮肤图片"""
 
-#从list中获取价格
+
 def fetch_item_price_bylist(item_id) -> dict:
+    """从本地list中获取价格,字段如下
+    - ['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] 
+    """
     for item in ValPriceList['Offers']:  #遍历查找指定uuid
         if item_id == item['OfferID']:
             return item

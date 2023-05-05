@@ -55,7 +55,7 @@ async def botmarket():
 
 # 每5分钟保存一次文件
 @bot.task.add_interval(minutes=5)
-async def Save_File_Task():
+async def save_file_task():
     try:
         await save_all_file()
     except:
@@ -63,14 +63,17 @@ async def Save_File_Task():
         _log.exception("ERR in Save_File_Task")
         await bot.client.send(debug_ch, err_cur) # type: ignore
 
-
+# `/kill @机器人` 下线bot
 @bot.command(name='kill')
-async def KillBot(msg: Message, num: str = '124124', *arg):
+async def KillBot(msg: Message, at_text = '', *arg):
     BotLog.logMsg(msg)
     try:
-        if '-' in num or '.' in num:
-            return await msg.reply(f"参数num错误：{num}\n该参数应为bot的编号：{config['no']}")
-        if msg.author_id == master_id and int(num) == config['no']:
+        # 如果不是管理员直接退出，不要提示
+        if msg.author_id != master_id:
+            return
+        # 必须要at机器人，或者私聊机器人
+        cur_bot = await bot.client.fetch_me()
+        if f"(met){cur_bot.id}(met)" in at_text or isinstance(msg,PrivateMessage):
             # 保存所有文件
             await save_all_file(False)
             await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
@@ -78,7 +81,7 @@ async def KillBot(msg: Message, num: str = '124124', *arg):
             _log.info(f"KILL | bot-off: {res}\n")
             os._exit(0)  # 退出程序
         else:
-            await msg.reply(f"您没有权限或参数错误！\n本Bot编号为：{config['no']}")
+            _log.info(f"[kill] invalid kill = {msg.content}")
     except:
         await BotLog.BaseException_Handler("kill",traceback.format_exc(),msg)
 
@@ -123,7 +126,11 @@ async def atAhri(msg: Message):
         # kook系统通知
         if msg.author_id == "3900775823":
             return
-        if f"(met){bot.client.me.id}(met)" in msg.content:
+        if len(msg.content) >= 22:
+            return
+        # 要求只是存粹at机器人的时候才恢复
+        cur_bot = await bot.client.fetch_me()
+        if f"(met){cur_bot.id}(met)" in msg.content:
             BotLog.logMsg(msg)
             if msg.author_id == master_id:
                 text = Help.help_develop()
@@ -494,23 +501,20 @@ async def login_list(msg:Message,*arg):
 # 获取每日商店的命令
 @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message,index:str = "0",*arg):
-    BotLog.logMsg(msg)
-    if LoginForbidden:
-        await LoginForbidden_send(msg)
-        return
-    # index参数是下标，应该为一个正整数
-    elif "-" in index or "." in index:
-        await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
-        return
-    # 提前初始化变量
-    send_msg = {'msg_id':''}
+    send_msg = {'msg_id':''}# 提前初始化变量
     resp = ""
     cm = CardMessage()
     try:
+        # 0.进行命令有效性判断
+        BotLog.logMsg(msg)
+        if LoginForbidden:
+            return await LoginForbidden_send(msg)
+        elif "-" in index or "." in index: # index参数是下标，应该为一个正整数
+            await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
+            return
         # 1.如果用户不在Authdict里面，代表没有登录，直接退出
         if msg.author_id not in UserAuthCache['kook']:
-            await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
-            return
+            return await msg.reply(await get_card_msg("您尚未登陆！请「私聊」使用login命令进行登录操作", f"「/login 账户 密码」请确认您知晓这是一个风险操作", icon_cm.whats_that))
 
         # 2.判断下标是否合法，默认下标为0
         _index = int(index)
@@ -585,7 +589,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
                                                      vp=play_currency['vp'],
                                                      rp=play_currency['rp'],
                                                      bg_img_src=background_img)
-        else: # 5.1.3 普通用户
+        else:# 5.1.3 普通用户
             # 判断是否有缓存命中
             cache_ret = await ShopRate.query_ShopCache(skinlist=list_shop)
             if not cache_ret['status']:  # 缓存没有命中
@@ -647,8 +651,9 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         err_str = f"ERR! [{getTime()}] shop\n```\n{traceback.format_exc()}\n```\n"
         if "SkinsPanelLayout" in str(result):
             _log.error(err_str + str(resp))
-            btext = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)"
-            cm = await get_card_msg(f"键值错误，需要重新登录", btext, icon_cm.whats_that)
+            b_text = f"KeyError:{result}, please re-login\n如果此问题重复出现，请[联系开发者](https://kook.top/gpbTwZ)\n"
+            b_text+= f"```\n{str(resp)}\n```"  # 把api的返回值也发出去
+            cm = await get_card_msg(f"键值错误，需要重新登录", b_text, icon_cm.whats_that)
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
         else:
             await BotLog.BaseException_Handler("shop", traceback.format_exc(), msg, send_msg=send_msg)

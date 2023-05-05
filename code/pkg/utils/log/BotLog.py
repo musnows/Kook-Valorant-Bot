@@ -15,22 +15,34 @@ from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 font_color = '#000000'  # 黑色字体
 log_base_img = Image.open("../screenshot/log_base.png")  # 文件路径
 
-def log_bot_cmd(key='cmd'):
+def log_bot_cmd(key='cmd',value:str=""):
     """记录命令的使用情况，，命令总数多少
     - key: 可以为cmd/user/guild
-    - user/guild: 每日有多少服务器/用户使用了命令
-    - cmd: 每日命令总数
+        - user/guild: 每日有多少服务器/用户使用了命令
+        - cmd: 每日命令总数
+    - value: 如果传入的是user/guild，value为服务器/用户id
     """
     global BotUserDict
     date = getDate() # 获取当日日期的str
     if key == 'cmd':
         BotUserDict['cmd_total'] += 1 # 命令执行总数+1
         key = 'data' # 需要更新为data
-    # 判断
-    if date not in BotUserDict['cmd'][key]:
-        BotUserDict['cmd'][key][date] = 0
-    # 当天命令使用次数+1
-    BotUserDict['cmd'][key][date] += 1
+        # 判断（新建键值）
+        if date not in BotUserDict['cmd'][key]:
+            BotUserDict['cmd'][key][date] = 0
+        # 当天命令使用次数+1
+        BotUserDict['cmd'][key][date] += 1
+    # 用户或者服务器
+    else:
+        assert(value) # value不能为空
+        # 判断日期（新建键值）
+        if date not in BotUserDict['cmd'][key]:
+            BotUserDict['cmd'][key][date] = {}
+        # 初始化为dict，插入的是kv键值对
+        elif value not in BotUserDict['cmd'][key][date]:
+            BotUserDict['cmd'][key][date][value] = 1
+        else:
+            BotUserDict['cmd'][key][date][value]+=1 # 使用命令数+1
 
 
 def log_bot_user(user_id: str,cur_time:str) -> None:
@@ -50,7 +62,7 @@ def log_bot_user(user_id: str,cur_time:str) -> None:
             'used_time':cur_time
         }
     # 再记录当日的用户使用命令
-    log_bot_cmd('user')
+    log_bot_cmd('user',user_id)
 
 
 # 记录服务器中的用户信息
@@ -67,7 +79,7 @@ def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
     # 先记录用户
     log_bot_user(user_id,cur_time)
     # 再记录当日的服务器使用命令
-    log_bot_cmd('guild')
+    log_bot_cmd('guild',guild_id)
     # 服务器不存在，新的用户/服务器
     if guild_id not in BotUserDict['guild']['data']:
         BotUserDict['guild']['data'][guild_id] = {}

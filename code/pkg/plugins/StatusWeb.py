@@ -1,3 +1,4 @@
+import os
 import copy
 import time
 import traceback
@@ -9,9 +10,29 @@ from ..utils.log import BotLog
 
 SHOW_DAYS = 31
 """显示最近多少天的数据"""
+WEB_ROOT_PATH  = "./web/ahri"
+"""html文件的根路径，末尾不能带/"""
+WEB_PAGE_PATH = ["gu","ngu"]
+"""html页面文件的路径，末尾不能带/，不存在会创建"""
 
+def create_web_path():
+    """新建web路径"""
+    if (not os.path.exists(WEB_ROOT_PATH)):
+        os.makedirs(WEB_ROOT_PATH)  # 文件夹不存在，创建
+        _log.info(f"[plugins] create web path {WEB_ROOT_PATH}")
+    for path in WEB_PAGE_PATH:
+        cur = f"{WEB_ROOT_PATH}/{path}"
+        if (not os.path.exists(cur)):
+            os.makedirs(cur)  # 文件夹不存在，创建
+            _log.info(f"[plugins] create web path {path}")
 
 def init(bot:Bot,master_id:str):
+    """初始化之前，机器人会判断根路径是否存在，不在则创建文件夹
+    - bot:Bot
+    - master_id: admin user id
+    """
+    create_web_path()
+    
     async def data_manamge(key:str)->list:
         """处理日志文件中，服务器/用户/命令的数据
         Args(key):
@@ -46,16 +67,16 @@ def init(bot:Bot,master_id:str):
                 # 没有相同日期的，才新建键值
                 if flag:
                     data_list.append({"date":date,"category":'user','num':1,'time':Gtime.getTimeStampFromStr(uinfo[key])})
-        # 如果是used_time，则还需要处理命令
+        # 如果是used_time，需要处理每日的命令/服务器/用户数量
         elif key == 'used_time':
-            for d in BotUserDict['cmd']['data']:
+            for d in BotUserDict['cmd']['data']:# 命令
                 num = BotUserDict['cmd']['data'][d]
                 data_list.append({"date":d,"category":'command','num':num,'time':Gtime.getTimeStampFromStr(d)})
-            for d in BotUserDict['cmd']['user']:
-                num = BotUserDict['cmd']['user'][d]
+            for d in BotUserDict['cmd']['user']:# 用户
+                num = len(BotUserDict['cmd']['user'][d]) # 长度就是用户数量
                 data_list.append({"date":d,"category":'user','num':num,'time':Gtime.getTimeStampFromStr(d)})
-            for d in BotUserDict['cmd']['guild']:
-                num = BotUserDict['cmd']['guild'][d]
+            for d in BotUserDict['cmd']['guild']:# 服务器
+                num = len(BotUserDict['cmd']['guild'][d])
                 data_list.append({"date":d,"category":'guild','num':num,'time':Gtime.getTimeStampFromStr(d)})
         # 依照日期排序
         data_list = sorted(data_list,key=lambda kv: kv['date'])
@@ -91,7 +112,7 @@ def init(bot:Bot,master_id:str):
                 }
             })
             # 生成html文件
-            line.render("./web/ahri/ngu/index.html")
+            line.render(f"{WEB_ROOT_PATH}/ngu/index.html")
             _log.info(f"render new guild/user status web")
         except Exception as result:
             _log.exception("Error occur")
@@ -126,7 +147,7 @@ def init(bot:Bot,master_id:str):
                 }
             })
             # 生成html文件
-            line.render("./web/ahri/gu/index.html")
+            line.render(f"{WEB_ROOT_PATH}/gu/index.html")
             _log.info(f"render guild/user/cmd status web")
         except Exception as result:
             _log.exception("Error occur")
@@ -154,3 +175,4 @@ def init(bot:Bot,master_id:str):
         except:
             await msg.reply(f"网页渲染出现错误\n```\n{traceback.format_exc()}```\n")
     
+    _log.info("[plugins] load StatusWeb.py")
