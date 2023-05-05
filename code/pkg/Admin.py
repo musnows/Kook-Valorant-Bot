@@ -34,7 +34,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
         BotLog.log_msg(msg)
         try:
             # 如果不是管理员直接退出，不要提示
-            if is_admin(msg.author_id):return
+            if not is_admin(msg.author_id):return
             # 必须要at机器人，或者私聊机器人
             cur_bot = await bot.client.fetch_me()
             if isinstance(msg,PrivateMessage) or f"(met){cur_bot.id}(met)" in at_text:
@@ -91,7 +91,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
         try:
             if not is_admin(msg.author_id):return
             
-            ret_dict = await BotLog.log_bot_list(msg)  # 获取用户/服务器列表
+            ret_dict = await BotLog.log_bot_list()  # 获取用户/服务器列表
             res_text = await BotLog.log_bot_list_text(ret_dict,bot)  # 获取text
 
             cm = CardMessage()

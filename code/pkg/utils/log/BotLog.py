@@ -146,7 +146,7 @@ async def log_bot_img() -> None:
 
 
 # bot用户记录dict处理
-async def log_bot_list(msg: Message) -> FileManage:
+async def log_bot_list() -> FileManage:
     global BotUserDict
     # 加入的服务器数量，api获取
     Glist = await guild_list()
