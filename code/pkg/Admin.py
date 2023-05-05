@@ -4,11 +4,13 @@ import os
 from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 
-from .utils.file.Files import config,_log,StartTime,SkinRateDict
+from .utils.file.Files import config,_log,StartTime,SkinRateDict,UserAuthCache
 from .utils.file.FileManage import save_all_file
 from .utils.log import BotLog
 from .utils.valorant.Reauth import LoginForbidden,NightMarketOff
 from .utils import Gtime,KookApi,ShopRate
+# 画图缓存
+from .utils.ShopImg import weapon_icon_temp_11,weapon_icon_temp_169,skin_level_icon_temp
 
 master_id = config['master_id']
 """机器人开发者用户id"""
@@ -48,6 +50,28 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 _log.info(f"[kill] invalid kill = {msg.content}")
         except:
             await BotLog.base_exception_handler("kill",traceback.format_exc(),msg)
+
+    @bot.command(name="ckc",aliases=['ckau'],case_sensitive=False)
+    async def check_user_auth_len_cmd(msg: Message,*arg):
+        """查询当前有多少用户登录了，以及画图的缓存"""
+        BotLog.log_msg(msg)
+        try:
+            if not is_admin(msg.author_id):return
+
+            c = Card(Module.Header("当前机器人缓存情况"),Module.Context(f"记录于：{Gtime.get_time()}"),Module.Divider())
+            text = "EzAuth登录缓存\n```\n"
+            text+= f"bot: {len(UserAuthCache['kook'])}\napi: {len(UserAuthCache['api'])}\n```\n"
+            text+= "商店画图缓存\n```\n"
+            text+= f"皮肤单图  1-1：{len(weapon_icon_temp_11)}\n"
+            text+= f"皮肤单图 16-9：{len(weapon_icon_temp_169)}\n"
+            text+= f"皮肤等级图：   {len(skin_level_icon_temp)}\n"
+            text+= "```"
+            c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
+            cm = CardMessage(c)
+            await msg.reply(cm)
+            _log.info(f"Au:{msg.author_id} | ckc reply")
+        except:
+            await BotLog.base_exception_handler("ckc",traceback.format_exc(),msg)
     
     @bot.command(name='mem',case_sensitive=False)
     async def proc_memory_cmd(msg: Message, *arg):

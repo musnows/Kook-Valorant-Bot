@@ -186,17 +186,6 @@ async def cache_vip_auth(kook_user_id:str,auth:EzAuth):
     auth.save_cookies(f"./log/cookie/{auth.user_id}.cke")
     _log.info(f"save cookies | './log/cookie/{auth.user_id}.cke'")
 
-#查询当前有多少用户登录了
-@bot.command(name="ckau")
-async def check_user_auth_len_cmd(msg: Message):
-    BotLog.log_msg(msg)
-    try:
-        text = f"bot: `{len(UserAuthCache['kook'])}` | api: {len(UserAuthCache['api'])}"
-        _log.info(text)
-        await msg.reply(text)
-    except:
-        await BotLog.base_exception_handler("ckau",traceback.format_exc(),msg)
-
 
 # 登录，保存用户的token
 @bot.command(name='login')
