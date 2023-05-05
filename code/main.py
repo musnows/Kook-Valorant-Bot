@@ -45,78 +45,76 @@ LOGIN_LIMITED = 3
 start_time = getTime()
 """记录开机时间"""
 
-
-# 向botmarket通信
-@bot.task.add_interval(minutes=30)
-async def botmarket():
+@bot.task.add_interval(minutes=26)
+async def botmarket_ping_task():
+    """向botmarket通信，告知机器人在线"""
     api = "http://bot.gekj.net/api/v1/online.bot"
     headers = {'uuid': 'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
+    _log.info(f"[botmarket] ping at {getTime()}")
 
-
-# 每5分钟保存一次文件
 @bot.task.add_interval(minutes=5)
 async def save_file_task():
+    """每5分钟保存一次文件"""
     try:
         await save_all_file()
     except:
         err_cur = f"ERR! [{getTime()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
-        _log.exception("ERR in Save_File_Task")
+        _log.exception("ERR in [Save.File.Task]")
         await bot.client.send(debug_ch, err_cur) # type: ignore
 
 
-##########################################################################################
 ########################################  help  ##########################################
 
-
-# hello命令，一般用于测试阿狸在不在线
-@bot.command(name='hello', aliases=['HELLO'])
-async def world(msg: Message):
-    BotLog.logMsg(msg)
-    await msg.reply('你好呀~')
-
-
-# help命令,触发指令为 `/Ahri`,因为help指令和其他机器人冲突
-@bot.command(name='Ahri', aliases=['ahri', '阿狸'])
-async def Ahri(msg: Message, *arg):
-    BotLog.logMsg(msg)
+@bot.command(name='hello',case_sensitive=False)
+async def hello_world_cmd(msg: Message):
+    """hello命令，一般用于测试阿狸在不在线"""
     try:
+        BotLog.logMsg(msg)
+        await msg.reply('你好呀~')
+    except Exception as result:
+        await BotLog.BaseException_Handler("hello", traceback.format_exc(), msg, debug_send=debug_ch)
+
+@bot.command(name='ahri', aliases=['阿狸'],case_sensitive=False)
+async def help_cmd(msg: Message, *arg):
+    """基础帮助命令"""
+    try:
+        BotLog.logMsg(msg)
         cm = Help.help_main(start_time)
         await msg.reply(cm)
     except Exception as result:
         await BotLog.BaseException_Handler("ahri", traceback.format_exc(), msg, debug_send=debug_ch)
 
-
-# help命令(瓦洛兰特相关)
-@bot.command(name='Vhelp', aliases=['vhelp'])
-async def Vhelp(msg: Message, *arg):
-    BotLog.logMsg(msg)
+@bot.command(name='vhelp',case_sensitive=False)
+async def valorant_help_cmd(msg: Message, *arg):
+    """vhelp命令(瓦洛兰特相关)"""
     try:
+        BotLog.logMsg(msg)
         cm = Help.help_val()
         await msg.reply(cm)
     except Exception as result:
         await BotLog.BaseException_Handler("vhelp", traceback.format_exc(), msg, debug_send=debug_ch)
 
-
-# 当有人@机器人的时候进行回复，可识别出是否为机器人作者
 @bot.on_message()
-async def atAhri(msg: Message):
+async def at_bot_reply(msg: Message):
+    """当有人`@机器人`的时候进行回复，master用户将回复管理员命令"""
     try:
-        # kook系统通知
-        if msg.author_id == "3900775823":
-            return
-        if len(msg.content) >= 22:
-            return
-        # 要求只是存粹at机器人的时候才恢复
+        # kook系统通知，忽略
+        if msg.author_id == "3900775823": return
+        # 要求只是存粹at机器人的时候才回复，字数大概为20字
+        elif len(msg.content) >= 22: return
+        # 获取机器人的用户对象
         cur_bot = await bot.client.fetch_me()
         if f"(met){cur_bot.id}(met)" in msg.content:
-            BotLog.logMsg(msg)
-            if msg.author_id == master_id:
+            BotLog.logMsg(msg) # at有效才打印
+            if Admin.is_admin(msg.author_id):
                 text = Help.help_develop()
                 await msg.reply(text)
             else:
-                await msg.reply(f"呀，听说有人想我了，是吗？\n输入`/ahri` 或 `/vhelp` 打开帮助面板，和阿狸一起玩吧！")
+                cm = CardMessage(Card(Module.Section(
+                    Element.Text(f"呀，听说有人想我了，是吗？\n输入`/ahri` 或 `/vhelp` 激活帮助命令，和阿狸一起玩吧！", Types.Text.KMD))))
+                await msg.reply(cm)
             _log.info(f"Au:{msg.author_id} | msg.reply success!")
     except:
         await BotLog.BaseException_Handler("at_help", traceback.format_exc(), msg)
