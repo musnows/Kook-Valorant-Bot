@@ -68,7 +68,7 @@ VipRollDcit = VipUser['roll']
 
 # 缓存相关
 LoginForbidden:bool = False
-"""出现403错误，禁止重登"""
+"""出现403错误，禁止重登; 初始值为false"""
 NightMarketOff:bool = True
 """夜市是否关闭？False (on,夜市开着) | True (off,夜市关闭)"""
 UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}  

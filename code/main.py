@@ -120,25 +120,12 @@ async def at_bot_reply(msg: Message):
         await BotLog.BaseException_Handler("at_help", traceback.format_exc(), msg)
 
 
-# 手动设置禁止登录的全局变量状态
-@bot.command(name='lf')
-async def LoginForbidden_Change(msg: Message):
-    BotLog.logMsg(msg)
-    if msg.author_id == master_id:
-        global LoginForbidden
-        if LoginForbidden:
-            LoginForbidden = False
-        else:
-            LoginForbidden = True
-
-        await msg.reply(f"Update LoginForbidden status: {LoginForbidden}")
-
 async def LoginForbidden_send(msg: Message):
     """拳头api调用被禁止的时候，发送提示信息"""
-    _log.info(f"Au:{msg.author_id} Command Failed | LF")
-    await msg.reply(
-        f"拳头api登录接口出现了一些错误，开发者已禁止所有相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
-    )
+    cm = await get_card_msg(f"拳头api登录接口出现403错误，已禁止登录相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)")
+    await msg.reply(cm)
+    _log.info(f"Au:{msg.author_id} command failed | LoginForbidden: {LoginForbidden}")
+    return None
 
 #####################################################################################
 
