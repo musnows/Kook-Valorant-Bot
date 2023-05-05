@@ -64,7 +64,7 @@ def init(bot:Bot,debug_ch:Channel):
     # 倒计时函数，单位为秒，默认60秒
     @bot.command(name="countdown")
     async def countdown(msg: Message, time: int = 60, *args):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if args != ():
             await msg.reply(f"参数错误，countdown命令只支持1个参数\n正确用法: `/countdown 120` 生成一个120s的倒计时")
             return
@@ -79,13 +79,13 @@ def init(bot:Bot,debug_ch:Channel):
             cm.append(c1)
             await msg.reply(cm)
         except Exception as result:
-            await BotLog.BaseException_Handler("countdown", traceback.format_exc(), msg, debug_send=debug_ch)
+            await BotLog.base_exception_handler("countdown", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
     # 掷骰子 saying `!roll 1 100` in channel,or `/roll 1 100 5` to dice 5 times once
     @bot.command(name="roll")
     async def roll(msg: Message, t_min: int = 1, t_max: int = 100, n: int = 1, *args):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if args != ():
             return await msg.reply(
                 f"参数错误，roll命令只支持3个参数\n正确用法:\n```\n/roll 1 100 生成一个1到100之间的随机数\n/roll 1 100 3 生成三个1到100之间的随机数\n```")
@@ -99,12 +99,12 @@ def init(bot:Bot,debug_ch:Channel):
             result = [random.randint(t_min, t_max) for i in range(n)]
             await msg.reply(f'掷出来啦: {result}')
         except Exception as result:
-            await BotLog.BaseException_Handler("roll", traceback.format_exc(), msg, debug_send=debug_ch)
+            await BotLog.base_exception_handler("roll", traceback.format_exc(), msg, debug_send=debug_ch)
 
     # 返回天气
     @bot.command(name='we')
     async def Weather(msg: Message, city: str = "err"):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if city == "err":
             await msg.reply(f"函数参数错误，城市: `{city}`\n")
             return
@@ -112,4 +112,4 @@ def init(bot:Bot,debug_ch:Channel):
         try:
             await weather(msg, city)
         except Exception as result:
-            await BotLog.BaseException_Handler("Weather", traceback.format_exc(), msg, debug_send=debug_ch)
+            await BotLog.base_exception_handler("Weather", traceback.format_exc(), msg, debug_send=debug_ch)

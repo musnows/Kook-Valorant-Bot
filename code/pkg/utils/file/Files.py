@@ -1,9 +1,9 @@
 from time import time
 from .FileManage import FileManage,Boolean
 from ..log.Logging import _log
-from ..Gtime import getTime
+from ..Gtime import get_time
 
-StartTime = getTime()
+StartTime = get_time()
 """机器人启动时间 str"""
 
 # 配置相关
@@ -75,7 +75,7 @@ UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}
 - acpw | `riot_user_uuid:{'a':账户,'p':密码}`  用于bot中的账户密码存储。只存储在全局变量中，不写入磁盘
 - tfa  | `用户id:EzAuth Obj`  临时使用的缓存
 """
-login_rate_limit = {'limit': False, 'time': time()}
+LoginRateLimit = {'limit': False, 'time': time()}
 """全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 - {'limit': False, 'time': time()}
 """

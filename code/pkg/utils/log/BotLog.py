@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 # 用户数量的记录文件
 from .Logging import _log
 from ..file.Files import bot, BotUserDict,FileManage
-from ..Gtime import getTime,getDate,time
+from ..Gtime import get_time,get_date,time
 from ..KookApi import guild_list, guild_view, upd_card, get_card_msg, icon_cm
 
 # 记录频道/服务器信息的底图
@@ -23,7 +23,7 @@ def log_bot_cmd(key='cmd',value:str=""):
     - value: 如果传入的是user/guild，value为服务器/用户id
     """
     global BotUserDict
-    date = getDate() # 获取当日日期的str
+    date = get_date() # 获取当日日期的str
     if key == 'cmd':
         BotUserDict['cmd_total'] += 1 # 命令执行总数+1
         key = 'data' # 需要更新为data
@@ -74,7 +74,7 @@ def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
     """
     global BotUserDict
     # 获取当前时间的str
-    cur_time = getTime()
+    cur_time = get_time()
     cur_time_stamp = time.time()
     # 先记录用户
     log_bot_user(user_id,cur_time)
@@ -105,14 +105,14 @@ def log_bot_guild(user_id: str, guild_id: str,guild_name:str) -> str:
         return "Au"
 
 # 在控制台打印msg内容，用作日志
-def logMsg(msg: Message) -> None:
+def log_msg(msg: Message) -> None:
     try:
         log_bot_cmd()# 记录命令使用次数
         # 系统消息id，直接退出，不记录
         if msg.author_id == "3900775823":return
         # 私聊用户没有频道和服务器id
         if isinstance(msg, PrivateMessage):
-            log_bot_user(msg.author_id,getTime())  # 记录用户
+            log_bot_user(msg.author_id,get_time())  # 记录用户
             _log.info(
                 f"PrivateMsg | Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | {msg.content}")
         else:
@@ -204,7 +204,7 @@ async def log_bot_list_text(LogDict: dict|FileManage,bot:Bot) -> str:
 
 
 # 出现kook api异常的通用处理
-async def APIRequestFailed_Handler(def_name: str,
+async def api_request_failed_handler(def_name: str,
                                    excp: str,
                                    msg: Message,
                                    bot: Bot,
@@ -219,7 +219,7 @@ async def APIRequestFailed_Handler(def_name: str,
     - send_msg: return value of msg.reply or bot.send
     """
     _log.exception(f"APIRequestFailed in {def_name} | Au:{msg.author_id}")
-    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id} APIRequestFailed\n```\n{excp}\n```"
+    err_str = f"ERR! [{get_time()}] {def_name} Au:{msg.author_id} APIRequestFailed\n```\n{excp}\n```"
     text = f"啊哦，出现了一些问题\n" + err_str
     text_sub = 'e'
     # 引用不存在的时候，直接向频道或者用户私聊重新发送消息
@@ -247,7 +247,7 @@ async def APIRequestFailed_Handler(def_name: str,
 
 
 # 基础错误的处理，带login提示(部分命令不需要这个提示)
-async def BaseException_Handler(def_name: str,
+async def base_exception_handler(def_name: str,
                                 excp: str,
                                 msg: Message,
                                 send_msg: dict[str, str] = {},
@@ -261,7 +261,7 @@ async def BaseException_Handler(def_name: str,
     - debug_send: Channel obj for sending err_str, send if not None
     - help: str for help_info, replyed in msg.reply
     """
-    err_str = f"ERR! [{getTime()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
+    err_str = f"ERR! [{get_time()}] {def_name} Au:{msg.author_id}\n```\n{excp}\n```"
     _log.exception(f"Exception in {def_name} | Au:{msg.author_id}")
     cm0 = CardMessage()
     c = Card(color='#fb4b57')
@@ -286,7 +286,7 @@ import psutil, os
 
 
 # 获取进程信息
-async def get_proc_info(start_time=getTime()) -> CardMessage:
+async def get_proc_info(start_time=get_time()) -> CardMessage:
     """start_time: bot start time as 23-01-01 00:00:00"""
     p = psutil.Process(os.getpid())
     text = f"霸占的CPU百分比：{p.cpu_percent()} %\n"
@@ -295,7 +295,7 @@ async def get_proc_info(start_time=getTime()) -> CardMessage:
     text += f"开辟的虚拟内存：{format((p.memory_info().vms / 1024 / 1024), '.4f')} MB\n"
     text += f"IO信息：\n{p.io_counters()}"
     cm = CardMessage()
-    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"开机于 {start_time} | 记录于 {getTime()}"), Module.Divider(),
+    c = Card(Module.Header(f"来看看阿狸当前的负载吧！"), Module.Context(f"开机于 {start_time} | 记录于 {get_time()}"), Module.Divider(),
              Module.Section(Element.Text(text, Types.Text.KMD)))
     cm.append(c)
     return cm

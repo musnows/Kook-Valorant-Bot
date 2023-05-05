@@ -23,7 +23,7 @@ def get_sub_text(text:str):
 def init(bot:Bot,debug_ch:Channel):
     @bot.command(name='mission',case_sensitive=False)
     async def mission(msg:Message,*arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         send_msg = {'msg_id':''}
         cm = CardMessage()
         try:
@@ -97,8 +97,8 @@ def init(bot:Bot,debug_ch:Channel):
             await KookApi.upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             _log.info(f"Au:{msg.author_id} | mission reply successful!")
         except requester.HTTPRequester.APIRequestFailed as result:
-            await BotLog.APIRequestFailed_Handler("mission",traceback.format_exc(),msg,bot,cm)
+            await BotLog.api_request_failed_handler("mission",traceback.format_exc(),msg,bot,cm)
         except Exception as result:
-            await BotLog.BaseException_Handler("mission",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("mission",traceback.format_exc(),msg)
 
     _log.info("[plugins] load mission")

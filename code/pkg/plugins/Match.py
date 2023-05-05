@@ -119,7 +119,7 @@ async def get_match_detail_card(ru:RiotUserToken,match:dict) -> Card:
 def init(bot:Bot,debug_ch:Channel):
     @bot.command(name='match',case_sensitive=False)
     async def match(msg:Message,index:str="0",*arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if Reauth.LoginForbidden:
             return Reauth.login_forbidden_send(msg)
         # index参数是下标，应该为一个正整数
@@ -177,8 +177,8 @@ def init(bot:Bot,debug_ch:Channel):
             await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
             _log.info(f"Au:{msg.author_id} | match reply success! | {using_time}s")
         except requester.HTTPRequester.APIRequestFailed as result:  # 卡片消息发送失败
-            await BotLog.APIRequestFailed_Handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
+            await BotLog.api_request_failed_handler("uinfo", traceback.format_exc(), msg, bot, cm, send_msg=send_msg)
         except Exception as result:
-            await BotLog.BaseException_Handler("match",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("match",traceback.format_exc(),msg)
 
     _log.info("[plugins] load match.py")

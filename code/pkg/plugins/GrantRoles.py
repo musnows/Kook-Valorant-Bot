@@ -7,7 +7,7 @@ from khl.card import Card, CardMessage, Element, Module, Types
 # 预加载文件
 from ..utils.file.Files import SponsorDict, ColorIdDict, EmojiDict,_log
 from ..utils.KookApi import kook_headers
-from ..utils.Gtime import getTime
+from ..utils.Gtime import get_time
 from ..utils.log import BotLog
 from ..Admin import is_admin
 
@@ -118,7 +118,7 @@ async def thanks_sponser(bot: Bot, kook_header=kook_headers):
         if check_sponsor(its) == 0:
             channel = await bot.client.fetch_public_channel("8342620158040885")  #发送感谢信息的文字频道
             await bot.client.send(channel, f"感谢 (met){its['id']}(met) 对本服务器的助力")
-            _log.info(f"[%s] 感谢{its['nickname']}对本服务器的助力" % getTime())
+            _log.info(f"[%s] 感谢{its['nickname']}对本服务器的助力" % get_time())
     _log.info("[BOT.TASK] thanks_sponser finished!")
 
 
@@ -131,11 +131,11 @@ def init(bot:Bot):
     @bot.command(name='Color-Set-GM', case_sensitive=False)
     async def color_set_gm_cmd(msg: Message, card_msg_id: str):
         try:
-            BotLog.logMsg(msg)
+            BotLog.log_msg(msg)
             if is_admin(msg.author_id):
                 await color_guild_msg_send(msg, card_msg_id)
         except:
-            await BotLog.BaseException_Handler("Color-Set-GM",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("Color-Set-GM",traceback.format_exc(),msg)
 
     # 判断消息的emoji回应，并给予不同角色
     @bot.on_event(EventTypes.ADDED_REACTION)
@@ -149,11 +149,11 @@ def init(bot:Bot):
     async def color_set_msg_cmd(msg: Message):
         """给用户上色功能的消息（在发出消息后，机器人自动添加回应）"""
         try:
-            BotLog.logMsg(msg)
+            BotLog.log_msg(msg)
             if is_admin(msg.author_id):
                 await color_set_msg(bot, msg)
         except:
-            await BotLog.BaseException_Handler("Color-Set",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("Color-Set",traceback.format_exc(),msg)
 
     # # 感谢助力者（每天19点进行检查）
     # @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")

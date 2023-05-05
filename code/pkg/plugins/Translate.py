@@ -206,14 +206,14 @@ def init(bot:Bot):
     # 普通翻译指令
     @bot.command(name='TL', case_sensitive=False)
     async def translation_cmd(msg: Message, *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         await translate_main(msg, ' '.join(arg))
 
 
     #查看当前占用的实时翻译栏位
     @bot.command(name='tlck',case_sensitive=False)
     async def translation_check_cmd(msg: Message):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         await msg.reply(f"目前已使用栏位:{tl_check()}/{len(ListTL)}")
 
 
@@ -221,12 +221,12 @@ def init(bot:Bot):
     @bot.command(name='ShutdownTL', aliases=['tlsd'],case_sensitive=False)
     async def translation_shutdown_cmd(msg: Message):
         try:
-            BotLog.logMsg(msg)
+            BotLog.log_msg(msg)
             if not is_admin(msg.author_id):
                 return  #这条命令只有bot的作者可以调用
             await tl_shutdown(bot, msg)
         except:
-            await BotLog.BaseException_Handler("tlsd",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("tlsd",traceback.format_exc(),msg)
 
     # 通过频道id判断是否实时翻译本频道内容
     @bot.on_message()
@@ -239,18 +239,18 @@ def init(bot:Bot):
                 if i in word:
                     return
             # 翻译
-            BotLog.logMsg(msg)
+            BotLog.log_msg(msg)
             await translate_main(msg,word)
 
     # 开启实时翻译功能
     @bot.command(name='TLON',case_sensitive=False)
     async def translation_on(msg: Message):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         await tl_open(msg)
 
 
     # 关闭实时翻译功能
     @bot.command(name='TLOFF',case_sensitive=False)
     async def translation_off(msg: Message):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         await tl_close(msg)

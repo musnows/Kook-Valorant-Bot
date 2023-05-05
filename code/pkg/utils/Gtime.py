@@ -2,27 +2,27 @@ import time
 from datetime import datetime,timedelta,timezone
 from zoneinfo import ZoneInfo
 
-def getTime():
+def get_time(format_str='%y-%m-%d %H:%M:%S'):
     """获取当前时间，格式为 `23-01-01 00:00:00`"""
     a = datetime.now(ZoneInfo('Asia/Shanghai')) # 返回北京时间
-    return a.strftime('%y-%m-%d %H:%M:%S')
+    return a.strftime(format_str)
     # use time.loacltime if you aren't using BeiJing Time
     # return time.strftime("%y-%m-%d %H:%M:%S", time.localtime())
 
 
-def getDate():
+def get_date(format_str='%y-%m-%d'):
     """获取当前日期，格式为 `23-01-01`"""
     a = datetime.now(ZoneInfo('Asia/Shanghai')) # 返回北京时间
-    return a.strftime('%y-%m-%d')
+    return a.strftime(format_str)
     # use time.loacltime if you aren't using BeiJing Time
     # return time.strftime("%y-%m-%d", time.localtime())
 
 
-def getTimeStampOf8AM():
+def get_8am_time_stamp():
     """获取UTC+8（北京时间）当日早上8点的时间戳（用于计算用户的商店图片是否过期）"""
-    return time.mktime(time.strptime(f"{getDate()} 08:00:00", "%y-%m-%d %H:%M:%S"))
+    return time.mktime(time.strptime(f"{get_date()} 08:00:00", "%y-%m-%d %H:%M:%S"))
 
-def getTimeFromStamp(timestamp:float|int):
+def get_time_str_from_stamp(timestamp:float|int):
     """通过时间戳获取当前的本地时间，格式 23-01-01 00:00:00"""
     # localtime = time.localtime(timestamp)
     # localtime_str = time.strftime("%y-%m-%d %H:%M:%S", localtime)
@@ -30,7 +30,7 @@ def getTimeFromStamp(timestamp:float|int):
     return a.strftime("%y-%m-%d %H:%M:%S")
 
 
-def getTimeStampFromStr(time_str):
+def get_time_stamp_from_str(time_str):
     """从可读时间转为时间戳,格式 23-01-01 00:00:00
     - 如果传入的只有日期，如23-01-01，则会自动获取当日0点的时间戳
     """
@@ -41,7 +41,7 @@ def getTimeStampFromStr(time_str):
     dt = dt.astimezone(tz)
     return dt.timestamp()
 
-def getDateFromStamp(time_stamp):
+def get_date_from_stamp(time_stamp):
     """从时间戳转为可读日期，格式%y-%m-%d"""
     dt = datetime.fromtimestamp(time_stamp)
     tz = timezone(timedelta(hours=8))

@@ -5,7 +5,7 @@ import traceback
 from khl.card import CardMessage, Card, Module, Types, Element
 
 from .ApiToken import check_token_rate
-from ..Gtime import getTime
+from ..Gtime import get_time
 from ..KookApi import kook_create_asset
 from .. import ShopRate,ShopImg
 from ..valorant import AuthCache
@@ -39,7 +39,7 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
         # 是1-1的图片，检测有没有使用自定义背景图
         if img_src == img_bak_11: # 没有自定义背景图
             # 检测是否有缓存命中
-            cacheRet = await ShopRate.query_ShopCache(list_shop)
+            cacheRet = await ShopRate.query_shop_cache(list_shop)
         # 缓存命中失败(需要画图)
         if not cacheRet['status']:
             ret = await ShopImg.get_shop_img_11(list_shop, bg_img_src=img_src)
@@ -65,7 +65,7 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
             dailyshop_img_src = img_src_ret['data']['url']
             # 初始值是err，调用了query_ShopCache失败，返回值更新为空
             if cacheRet['img_url'] != 'err':
-                await ShopRate.update_ShopCache(skinlist=list_shop,img_url=dailyshop_img_src)
+                await ShopRate.update_shop_cache(skinlist=list_shop,img_url=dailyshop_img_src)
             _log.info(f"Api imgUrl | {dailyshop_img_src}")
             return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功'}
         else: # 上传图片失败
@@ -249,7 +249,7 @@ async def tfa_code_requeset(request):
 
 
 # 更新leancloud
-from ..ShopRate import update_ShopCmp
+from ..ShopRate import update_shop_cmp
 async def shop_cmp_request(request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
@@ -266,7 +266,7 @@ async def shop_cmp_request(request):
     worse = params['worse']
     platform = params['platform']
     # 调用已有函数更新，保证线程安全
-    upd_ret = await update_ShopCmp(best=best,worse=worse,platform=platform)
+    upd_ret = await update_shop_cmp(best=best,worse=worse,platform=platform)
     ret = {'code':0,'message':upd_ret['status'],'info':'ShopCmp更新成功'}
     # 如果正常，那就是0，否则是200
     if not upd_ret['status']:

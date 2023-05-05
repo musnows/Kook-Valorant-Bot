@@ -40,6 +40,7 @@ code
         - KookApi.py      # kook api
         - ShopImg.py      # 商店画图处理
         - ShopRate.py     # 皮肤评论系统
+    - Admin.py  # 管理员命令
 
   - api.py         # valorant-shop-api main-file
   - main.py        # bot main-file

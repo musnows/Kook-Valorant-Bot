@@ -37,8 +37,8 @@ async def update_bundle_url(msg: Message, bot_upd_img: Bot) -> bool:
 
         for b in resp['data']:
             flag = 0
-            for local_B in ValBundleList:  #不在
-                if b['uuid'] == local_B['uuid']:  #相同代表存在无需更新
+            for lc_fetch_B in ValBundleList:  #不在
+                if b['uuid'] == lc_fetch_B['uuid']:  #相同代表存在无需更新
                     flag = 1  #找到了，无需更新
                     break
 
@@ -128,12 +128,12 @@ def init(bot:Bot,bot_upd_img:Bot,):
     @bot.command(name='update_spb', aliases=['upd'])
     async def update_valorant_data_cmd(msg: Message):
         """手动更新商店物品和价格的命令"""
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             if is_admin(msg.author_id):
                 await msg.reply("已收到「upd」命令，开始更新本地资源")
                 await update_data(msg,bot_upd_img)
         except Exception as result:
-            await BotLog.BaseException_Handler("update_spb",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("update_spb",traceback.format_exc(),msg)
 
     _log.info("[plugins] load ValFileUpd.py")

@@ -59,7 +59,7 @@ def init(bot:Bot):
     # 存储用户游戏id
     @bot.command(name="saveid", case_sensitive=False)
     async def saveid(msg: Message, *args):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if args == ():
             await msg.reply(f"您没有提供您的游戏id：`{args}`")
             return
@@ -67,43 +67,43 @@ def init(bot:Bot):
             game_id = " ".join(args)  #避免用户需要输入双引号
             await saveid_main(msg, game_id)
         except Exception as result:
-            await BotLog.BaseException_Handler("saveid", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("saveid", traceback.format_exc(), msg)
 
 
     # 已保存id总数
     @bot.command(name='saveid-a',case_sensitive=False)
     async def saveid_all(msg: Message):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             await saveid_count(msg)
         except Exception as result:
-            await BotLog.BaseException_Handler("saveid-a", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("saveid-a", traceback.format_exc(), msg)
 
 
     # 实现读取用户游戏ID并返回
     @bot.command(name="myid", case_sensitive=False) 
     async def myid(msg: Message, *args):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             await myid_main(msg)
         except Exception as result:
-            await BotLog.BaseException_Handler("myid", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("myid", traceback.format_exc(), msg)
 
 
     # 查询游戏错误码
     @bot.command(name='val', aliases=['van', 'VAN', 'VAL'],case_sensitive=False)
     async def val_err(msg: Message, numS: str = "-1", *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             await val_errcode(msg, numS)
         except Exception as result:
-            await BotLog.BaseException_Handler("val", traceback.format_exc(), msg,help=f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
+            await BotLog.base_exception_handler("val", traceback.format_exc(), msg,help=f"您输入的错误码格式不正确！\n请提供正确范围的`数字`,而非`{numS}`")
 
 
     #关于dx报错的解决方法
     @bot.command(name='DX', case_sensitive=False)
     async def dx(msg: Message):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         await dx123(msg)
 
 

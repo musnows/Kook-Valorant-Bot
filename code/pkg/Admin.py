@@ -29,7 +29,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
     @bot.command(name='kill',case_sensitive=False)
     async def kill_bot_cmd(msg: Message, at_text = '', *arg):
         """`/kill @机器人` 下线bot"""
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             # 如果不是管理员直接退出，不要提示
             if is_admin(msg.author_id):return
@@ -39,7 +39,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 # 保存所有文件
                 await save_all_file(False)
                 cm = CardMessage(Card(Module.Section(
-                    Element.Text(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.getTime()}", Types.Text.KMD))))
+                    Element.Text(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}", Types.Text.KMD))))
                 await msg.reply(cm)
                 res = await KookApi.bot_offline()  # 调用接口下线bot
                 _log.info(f"KILL | bot-off: {res}\n")
@@ -47,23 +47,23 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             else:
                 _log.info(f"[kill] invalid kill = {msg.content}")
         except:
-            await BotLog.BaseException_Handler("kill",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("kill",traceback.format_exc(),msg)
     
     @bot.command(name='mem',case_sensitive=False)
     async def proc_memory_cmd(msg: Message, *arg):
         """机器人负载（cpu/内存占用）查询命令"""
         try:
-            BotLog.logMsg(msg)
+            BotLog.log_msg(msg)
             if is_admin(msg.author_id):
                 cm = await BotLog.get_proc_info(StartTime)
                 await msg.reply(cm)
         except:
-            await BotLog.BaseException_Handler("mem",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("mem",traceback.format_exc(),msg)
 
     @bot.command(name='log-list', aliases=['log'],case_sensitive=False)
     async def bot_log_list_cmd(msg: Message, *arg):
         """显示当前阿狸加入了多少个服务器，以及用户数量"""
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             if not is_admin(msg.author_id):return
             
@@ -85,7 +85,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             cm.append(c)
             await msg.reply(cm)           
         except:
-            await BotLog.BaseException_Handler("log-list",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("log-list",traceback.format_exc(),msg)
 
     @bot.command(name='vstatus')
     async def valorant_global_status_cmd(msg: Message,option="",*arg):
@@ -94,7 +94,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
         - -nm 打开/关闭夜市
         """
         try:
-            BotLog.logMsg(msg)
+            BotLog.log_msg(msg)
             if not is_admin(msg.author_id):return
 
             if "-lf" in option.lower():
@@ -115,13 +115,13 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 await msg.reply(await KookApi.get_card_msg("选项无效\n* `-lf` LoginForbidden\n* `-nm` NightMarketOff"))
                 _log.info(f"Au:{msg.author_id} | invalid option")
         except:
-            await BotLog.BaseException_Handler("valorant_global_status_cmd",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("valorant_global_status_cmd",traceback.format_exc(),msg)
 
     @bot.command(name='ban-r')
     async def ban_rate_user_cmd(msg: Message, user = "",*arg):
         """设置皮肤评价的违规用户"""
         try:
-            BotLog.logMsg(msg)            
+            BotLog.log_msg(msg)            
             if not is_admin(msg.author_id):return
             if not user: return
             
@@ -138,7 +138,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 # 遍历所有皮肤的评论列表，删除违规用户的所有评论
                 for skin, info in SkinRateDict['data'][user_id].items():
                     # 找到这条评论，将其删除
-                    if not await ShopRate.remove_UserRate(skin, user_id):
+                    if not await ShopRate.remove_user_rate(skin, user_id):
                         text += f"删除评论 {skin} [{info['name']}] 错误\n"
                         continue
 
@@ -157,7 +157,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 _log.info(f"rate_err_user | invalid Au:{user_id}")
 
         except Exception as result:
-            await BotLog.BaseException_Handler("ban-r", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("ban-r", traceback.format_exc(), msg)
 
     @bot.task.add_cron(day=1, timezone="Asia/Shanghai")
     async def clear_rate_err_user():
