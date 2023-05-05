@@ -176,24 +176,31 @@ async def log_bot_list(msg: Message) -> FileManage:
     _log.info("file handling finish, return BotUserDict")
     return BotUserDict
 
-
-# 通过log_bot_list分选出两列服务器名和服务器用户数
-async def log_bot_list_text(logDict: dict|FileManage) -> dict[str, str]:
-    i = 1
-    text_name = "No  服务器名\n"
-    text_user = "用户数\n"
-    for gu, ginfo in logDict['guild']['data'].items():
-        #Gret = await guild_view(gu)
-        Gname = ginfo['name']
-        if len(Gname) > 12:
-            text = Gname[0:11]
-            text += "…"
-            Gname = text
-        # 追加text
-        text_name += f"[{i}]  {Gname}\n"
-        text_user += f"{len(ginfo['user'])}\n"
-        i += 1
-    return {'name': text_name, 'user': text_user}
+async def log_bot_list_text(LogDict: dict|FileManage,bot:Bot) -> str:
+    """从LogDict中分选出两列服务器名和服务器用户数
+    - 如果服务器没有名字，则用bot获取
+    - 只会返回字数限制为5k之前的服务器
+    """
+    i = 0
+    text = ""
+    for gu, ginfo in LogDict['guild']['data'].items():
+        i+=1
+        try:
+            guild_name = ginfo['name'] if ginfo['name'] else (await bot.client.fetch_guild(gu)).name
+            # 截取一部分名字
+            if (len(guild_name) > 12):
+                guild_name = guild_name[:11]
+                guild_name+='…'
+            # 追加text
+            text+=f"[{i}] {guild_name}   = {len(ginfo['user'])}\n"
+            # 字数限制为5k字，超过就跳出
+            if len(text) >= 4900:
+                text+= f"字数限制，省略后续 {len(LogDict['guild']['data']) - i} 个服务器"
+                break
+        except:
+            _log.exception(f"err ouccur | g:{gu}")
+            continue
+    return text
 
 
 # 出现kook api异常的通用处理

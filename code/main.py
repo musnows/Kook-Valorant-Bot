@@ -65,28 +65,6 @@ async def save_file_task():
         _log.exception("ERR in Save_File_Task")
         await bot.client.send(debug_ch, err_cur) # type: ignore
 
-# `/kill @机器人` 下线bot
-@bot.command(name='kill')
-async def KillBot(msg: Message, at_text = '', *arg):
-    BotLog.logMsg(msg)
-    try:
-        # 如果不是管理员直接退出，不要提示
-        if msg.author_id != master_id:
-            return
-        # 必须要at机器人，或者私聊机器人
-        cur_bot = await bot.client.fetch_me()
-        if f"(met){cur_bot.id}(met)" in at_text or isinstance(msg,PrivateMessage):
-            # 保存所有文件
-            await save_all_file(False)
-            await msg.reply(f"[KILL] 保存全局变量成功，bot下线")
-            res = await bot_offline()  # 调用接口下线bot
-            _log.info(f"KILL | bot-off: {res}\n")
-            os._exit(0)  # 退出程序
-        else:
-            _log.info(f"[kill] invalid kill = {msg.content}")
-    except:
-        await BotLog.BaseException_Handler("kill",traceback.format_exc(),msg)
-
 
 ##########################################################################################
 ########################################  help  ##########################################
