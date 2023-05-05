@@ -8,8 +8,16 @@ from ..log.Logging import _log
 from .. import KookApi, Gtime
 
 
-# 检查aiohttp错误的类型
+async def login_forbidden_send(msg: Message):
+    """拳头api调用被403禁止的时候，发送提示信息"""
+    text = f"拳头api登录接口出现403错误，已禁止登录相关功能的使用\n"
+    text+= f"[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
+    await msg.reply(await KookApi.get_card_msg(text))
+    _log.info(f"Au:{msg.author_id} command failed | LoginForbidden: {LoginForbidden}")
+    return None
+
 def client_exceptions_handler(result:str,err_str:str) -> str:
+    """检查aiohttp错误的类型"""
     if 'auth.riotgames.com' and '403' in result:
         global LoginForbidden
         LoginForbidden = True

@@ -120,12 +120,6 @@ async def at_bot_reply(msg: Message):
         await BotLog.BaseException_Handler("at_help", traceback.format_exc(), msg)
 
 
-async def LoginForbidden_send(msg: Message):
-    """拳头api调用被禁止的时候，发送提示信息"""
-    cm = await get_card_msg(f"拳头api登录接口出现403错误，已禁止登录相关功能的使用\n[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)")
-    await msg.reply(cm)
-    _log.info(f"Au:{msg.author_id} command failed | LoginForbidden: {LoginForbidden}")
-    return None
 
 #####################################################################################
 
@@ -227,7 +221,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         elif passwd == 'err' or user == 'err':
             return await msg.reply(f"参数不完整，请提供您的账户密码！\naccount: `{user}` passwd: `{passwd}`\n正确用法：`/login 账户 密码`")
         elif LoginForbidden:
-            return await LoginForbidden_send(msg)
+            return await Reauth.login_forbidden_send(msg)
             
         # 1.检查全局登录速率
         await check_GloginRate()  # 无须接收此函数返回值，直接raise
@@ -473,7 +467,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         # 0.进行命令有效性判断
         BotLog.logMsg(msg)
         if LoginForbidden:
-            return await LoginForbidden_send(msg)
+            return await Reauth.login_forbidden_send(msg)
         elif "-" in index or "." in index: # index参数是下标，应该为一个正整数
             await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的商店账户，并指定正确的编号（默认为0，即第一个账户）")
             return
@@ -633,7 +627,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
         await msg.reply(f"index 参数错误，请使用「/login-l」查看您需要查询的账户，并指定正确的编号（默认为0，即第一个账户）")
         return
     elif LoginForbidden:
-        await LoginForbidden_send(msg)
+        await Reauth.login_forbidden_send(msg)
         return
     elif NightMarketOff:
         await msg.reply(f"夜市暂未开放！请等开放了之后再使用本命令哦~")
@@ -745,7 +739,7 @@ async def open_night_market(msg: Message, *arg):
 async def get_user_card(msg: Message, *arg):
     BotLog.logMsg(msg)
     if LoginForbidden:
-        await LoginForbidden_send(msg)
+        await Reauth.login_forbidden_send(msg)
         return
     # 初始化变量
     send_msg = {'msg_id':''}
