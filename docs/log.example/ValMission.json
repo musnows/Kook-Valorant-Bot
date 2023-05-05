@@ -1,0 +1,121 @@
+{
+  "082c296d-4bce-0368-3171-7c99eb2eaf76": {
+    "DisplayName": "進行回合",
+    "Experience": 20930,
+    "MissionType": "Weekly",
+    "ObjectivesID": "2a35e500-4f64-f61c-341b-87b6e10f5c2f",
+    "Total": 150
+  },
+  "12197b90-42de-0587-dfdb-e28664ebe04b": {
+    "DisplayName": "撿拾大絕靈球",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "2ae3fca1-4695-2464-7aba-76ab739f573a",
+    "Total": 1
+  },
+  "2ec38f99-46c2-b1ba-69aa-74b86c1289a9": {
+    "DisplayName": "購買武器",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "38fd944b-4d80-33c8-0054-6db0f656dc5c",
+    "Total": 20
+  },
+  "49ba2b60-4b93-5dd9-9bee-10abe144b088": {
+    "DisplayName": "從軍火庫購買物品",
+    "Experience": 20930,
+    "MissionType": "Weekly",
+    "ObjectivesID": "2de44730-437a-bbe5-74c6-57b581b72bd2",
+    "Total": 100
+  },
+  "60a885b6-4aaa-d17f-c497-6abda704d45a": {
+    "DisplayName": "購買護盾",
+    "Experience": 5000,
+    "MissionType": "Novice",
+    "ObjectivesID": "7f9c2b4b-4c91-c73a-9a45-b98b1a4ef1c9",
+    "Total": 35
+  },
+  "8944e8b4-4fc5-b05c-08df-58bf76b56b9f": {
+    "DisplayName": "爆頭",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "04ff6167-4976-eeb3-3e66-a78c57164351",
+    "Total": 5
+  },
+  "8f183032-4ba1-b6a2-0574-e0ab6098a08f": {
+    "DisplayName": "在一回合中達成首殺",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "c807ef27-420a-69f2-3c0f-31bf8922ba6f",
+    "Total": 1
+  },
+  "908397e4-4a78-3272-d3b2-9988c2efa200": {
+    "DisplayName": "讓我方任一隊員成功安裝或拆除輻能核心",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "a617b28c-4ad2-04f6-736e-2eb01a903417",
+    "Total": 5
+  },
+  "985bb8ba-412e-2c5a-9583-7d83550c951d": {
+    "DisplayName": "使用技能",
+    "Experience": 20930,
+    "MissionType": "Weekly",
+    "ObjectivesID": "91952692-4345-8bc1-6f1c-2dad7e14109f",
+    "Total": 200
+  },
+  "a07a10a9-434f-33df-66b7-d4b1514f759d": {
+    "DisplayName": "造成傷害",
+    "Experience": 20930,
+    "MissionType": "Weekly",
+    "ObjectivesID": "974cb6ff-4aef-0217-1813-73a28ddfcdc6",
+    "Total": 18000
+  },
+  "bbff3898-4cd3-dd04-1509-179cf9003e9e": {
+    "DisplayName": "從軍火庫購買物品",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "2de44730-437a-bbe5-74c6-57b581b72bd2",
+    "Total": 30
+  },
+  "c3603d86-4ac3-2999-d500-e19ec8bc0998": {
+    "DisplayName": "使用你的大絕",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "5c22a5ad-4d44-3451-5a09-589c35ff77cd",
+    "Total": 5
+  },
+  "c67961ab-4a2e-08a2-a318-3384a51a84ea": {
+    "DisplayName": "進行一場遊戲",
+    "Experience": 20930,
+    "MissionType": "Weekly",
+    "ObjectivesID": "16af3bdf-c353-4c8c-a47c-b4eeac154eaf",
+    "Total": 10
+  },
+  "d4852e17-4e6b-e11f-a752-6ea97c9a6529": {
+    "DisplayName": "使用技能",
+    "Experience": 5000,
+    "MissionType": "Novice",
+    "ObjectivesID": "91952692-4345-8bc1-6f1c-2dad7e14109f",
+    "Total": 30
+  },
+  "dfcd29c1-46e2-b929-c2bb-a389da7607cc": {
+    "DisplayName": "讓我方任一隊員成功安裝或拆除輻能核心",
+    "Experience": 20930,
+    "MissionType": "Weekly",
+    "ObjectivesID": "a617b28c-4ad2-04f6-736e-2eb01a903417",
+    "Total": 20
+  },
+  "f30bd3b0-45d3-d72a-8d1d-bab6deac61d6": {
+    "DisplayName": "使用技能",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "91952692-4345-8bc1-6f1c-2dad7e14109f",
+    "Total": 20
+  },
+  "f81129ee-4bb9-27dc-8011-0e8c1e7f6d26": {
+    "DisplayName": "購買技能",
+    "Experience": 2000,
+    "MissionType": "Daily",
+    "ObjectivesID": "c0afc6aa-4a89-a97b-e580-d29d213996f0",
+    "Total": 25
+  }
+}
