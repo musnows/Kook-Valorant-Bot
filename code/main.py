@@ -7,8 +7,8 @@ import aiohttp
 import copy
 import zhconv
 import asyncio
-from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester, Channel)
-from khl.card import Card, CardMessage, Element, Module, Types, Struct
+from khl import (Bot, Message, PrivateMessage, requester, Channel)
+from khl.card import Card, CardMessage, Element, Module, Types
 from aiohttp import client_exceptions
 
 from pkg.utils import ShopRate, ShopImg, Help, BotVip
@@ -25,11 +25,7 @@ from pkg import Admin # 管理员命令
 
 # 文件管理
 from pkg.utils.file.FileManage import save_all_file
-from pkg.utils.file.Files import config, bot,bot_upd_img, ApiAuthLog
-
-# 只用来上传图片的bot
-master_id = config['master_id']
-"""机器人开发者用户id"""
+from pkg.utils.file.Files import config,bot,bot_upd_img, ApiAuthLog,StartTime
 
 # 在bot一开机的时候就获取log频道作为全局变量
 debug_ch: Channel
@@ -42,8 +38,6 @@ RATE_LIMITED_TIME = 180
 """全局登录速率超速等待秒数"""
 LOGIN_LIMITED = 3
 """所有用户最多都只能登录3个riot账户"""
-start_time = getTime()
-"""记录开机时间"""
 
 @bot.task.add_interval(minutes=26)
 async def botmarket_ping_task():
@@ -81,7 +75,7 @@ async def help_cmd(msg: Message, *arg):
     """基础帮助命令"""
     try:
         BotLog.logMsg(msg)
-        cm = Help.help_main(start_time)
+        cm = Help.help_main(StartTime)
         await msg.reply(cm)
     except Exception as result:
         await BotLog.BaseException_Handler("ahri", traceback.format_exc(), msg, debug_send=debug_ch)
@@ -1411,7 +1405,7 @@ async def auto_skin_notify_task():
 @bot.command(name='notify-test', aliases=['notify-t'])
 async def auto_skin_notify_cmd(msg: Message, *arg):
     BotLog.logMsg(msg)
-    if msg.author_id == master_id:
+    if Admin.is_admin(msg.author_id):
         await auto_skin_notify()
 
 
@@ -1433,15 +1427,15 @@ async def loading_cache(bot: Bot):
         Admin.init(bot,bot_upd_img,debug_ch) # 管理员命令
         # 注册其他命令
         Funny.init(bot,debug_ch)
-        GrantRoles.init(bot,master_id)
-        Translate.init(bot,master_id)
+        GrantRoles.init(bot)
+        Translate.init(bot)
         BotStatus.init(bot)
         Match.init(bot,debug_ch)
         GameHelper.init(bot)
-        ValFileUpd.init(bot,bot_upd_img,master_id)
+        ValFileUpd.init(bot,bot_upd_img)
         Vip.init(bot,bot_upd_img,debug_ch,cm_send_test)
         Mission.init(bot,debug_ch)
-        StatusWeb.init(bot,master_id)
+        StatusWeb.init(bot)
         _log.info("[BOT.TASK] load plugins")
     except:
         _log.fatal("[BOT.TASK] startup task failed!")
@@ -1521,5 +1515,5 @@ async def loading_cache(bot: Bot):
 # 开机 （如果是主文件就开机）
 if __name__ == '__main__':
     # 开机的时候打印一次时间，记录开启时间
-    _log.info(f"[BOT] Start at: [%s]" % start_time)
+    _log.info(f"[BOT] Start at: [{StartTime}]")
     bot.run()

@@ -32,8 +32,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
         BotLog.logMsg(msg)
         try:
             # 如果不是管理员直接退出，不要提示
-            if msg.author_id != master_id:
-                return
+            if is_admin(msg.author_id):return
             # 必须要at机器人，或者私聊机器人
             cur_bot = await bot.client.fetch_me()
             if isinstance(msg,PrivateMessage) or f"(met){cur_bot.id}(met)" in at_text:

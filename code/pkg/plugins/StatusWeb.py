@@ -7,6 +7,7 @@ from khl import Bot,Message
 from ..utils.file.Files import BotUserDict,_log
 from ..utils import Gtime
 from ..utils.log import BotLog
+from ..Admin import is_admin
 
 SHOW_DAYS = 31
 """显示最近多少天的数据"""
@@ -26,10 +27,9 @@ def create_web_path():
             os.makedirs(cur)  # 文件夹不存在，创建
             _log.info(f"[plugins] create web path {path}")
 
-def init(bot:Bot,master_id:str):
+def init(bot:Bot):
     """初始化之前，机器人会判断根路径是否存在，不在则创建文件夹
     - bot:Bot
-    - master_id: admin user id
     """
     create_web_path()
     
@@ -167,7 +167,7 @@ def init(bot:Bot,master_id:str):
     async def update_web_cmd(msg:Message):
         BotLog.logMsg(msg)
         try:
-            if msg.author_id !=master_id:
+            if not is_admin(msg.author_id):
                 return
             await render_ngu_web(True)
             await render_guc_web(True)

@@ -9,13 +9,14 @@ from khl.card import Card, CardMessage, Element, Module, Types
 # 读取彩云的key
 from ..utils.file.Files import config,_log
 from ..utils.log import BotLog
+from ..Admin import is_admin
 
 CyKey = config['caiyun']
 """彩云小译 key"""
 
 
-# youdao code is from https://github.com/Chinese-boy/Many-Translaters
 def youdao_translate(txt: str):
+    """youdao code from https://github.com/Chinese-boy/Many-Translaters"""
     _log.debug(txt)
     url = 'http://fanyi.youdao.com/translate?smartresult=dict&smartresult=rule&sessionFrom=https://www.baidu.com/link'
     data = {
@@ -40,9 +41,11 @@ def youdao_translate(txt: str):
     _log.debug(ta['translateResult'][0][0]['tgt'])
     return ta['translateResult'][0][0]['tgt']
 
-
-# caiyun translte
 async def caiyun_translate(source, direction):
+    """caiyun translte
+    - source: word text
+    - direction: see caiyun-api docs
+    """
     url = "http://api.interpreter.caiyunai.com/v1/translator"
     # WARNING, this token is a test token for new developers,
     # and it should be replaced by your token
@@ -66,28 +69,32 @@ async def caiyun_translate(source, direction):
 
 # 由于彩云不支持输入中文自动翻译成英文（目前只支持其他语种自动转中文）
 # 所以需要判断来源是否是中文，如果是中文自动翻译成English
-def is_CN(word):
+def is_chinese(word:str):
+    """判断str是否为中文"""
     for ch in word:
         if '\u4e00' <= ch <= '\u9fff':
             return True
     return False
 
 
-# 单独处理met和rol消息，不翻译这部分内容
-def deleteByStartAndEnd(s, start, end):
+def delete_by_start_end(word:str, start:str, end:str):
+    """给出start和end字符串，删除中间内容
+    - 用于单独处理met和rol消息，不翻译这部分内容
+    """
     # 找出两个字符串在原始字符串中的位置
     # 开始位置是：开始始字符串的最左边第一个位置；
     # 结束位置是：结束字符串的最右边的第一个位置
-    while s.find(start) != -1:
-        x1 = s.find(start)
-        x2 = s.find(end, x1 + 5) + len(end)  # s.index()函数算出来的是字符串的最左边的第一个位置，所以需要加上长度找到末尾
+    while word.find(start) != -1:
+        x1 = word.find(start)
+        # index()函数算出来的是字符串的最左边的第一个位置，所以需要加上长度找到末尾
+        x2 = word.find(end, x1 + len(start)) + len(end) 
         # 找出两个字符串之间的内容
-        x3 = s[x1:x2]
+        x3 = word[x1:x2]
         # 将内容替换为空字符串s
-        s = s.replace(x3, "")
+        word = word.replace(x3, "")
 
-    _log.info(f'Handel {start} | {s}')
-    return s
+    _log.info(f'Handel {start} | {word}')
+    return word
 
 
 # 调用翻译,有道和彩云两种引擎（有道寄了就用彩云）
@@ -95,15 +102,16 @@ async def translate_main(msg: Message, *arg):
     word = " ".join(arg)
     ret = word
     if '(met)' in word:
-        ret = deleteByStartAndEnd(word, '(met)', '(met)')
+        ret = delete_by_start_end(word, '(met)', '(met)')
     elif '(rol)' in word:
-        ret = deleteByStartAndEnd(word, '(rol)', '(rol)')
+        ret = delete_by_start_end(word, '(rol)', '(rol)')
     # 重新赋值
     word = ret
     try:
+        text = "**翻译结果(Result):**\n"
+        cm = CardMessage()
         try:
-            cm = CardMessage()
-            c1 = Card(Module.Section(Element.Text(f"**翻译结果(Result):** {youdao_translate(word)}", Types.Text.KMD)),
+            c1 = Card(Module.Section(Element.Text(f"{text}{youdao_translate(word)}", Types.Text.KMD)),
                     Module.Context('来自: 有道翻译'))
             cm.append(c1)
             await msg.reply(cm)
@@ -111,16 +119,15 @@ async def translate_main(msg: Message, *arg):
             # 如果为空，rasie到外层except
             if CyKey=="":raise result
             # 彩云的key不为空，才调用它
-            cm = CardMessage()
-            if is_CN(word):
+            if is_chinese(word):
                 c1 = Card(
                     Module.Section(
-                        Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
+                        Element.Text(f"{text}{await caiyun_translate(word,'auto2en')}", Types.Text.KMD)),
                     Module.Context('来自: 彩云小译，中译英'))
             else:
                 c1 = Card(
                     Module.Section(
-                        Element.Text(f"**翻译结果(Result):** {await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
+                        Element.Text(f"{text}{await caiyun_translate(word,'auto2zh')}", Types.Text.KMD)),
                     Module.Context('来自: 彩云小译，英译中'))
 
             cm.append(c1)
@@ -135,7 +142,7 @@ ListTL = ['0', '0', '0', '0', '0', '0']
 
 
 # 查看目前已经占用的容量
-def checkTL():
+def tl_check():
     sum = 0
     for i in ListTL:
         if i != '0':
@@ -143,10 +150,10 @@ def checkTL():
     return sum
 
 
-async def Shutdown_TL(bot: Bot, msg: Message):
+async def tl_shutdown(bot: Bot, msg: Message):
     global ListTL
-    if checkTL() == 0:
-        await msg.reply(f"实时翻译栏位为空: {checkTL()}/{len(ListTL)}")
+    if tl_check() == 0:
+        await msg.reply(f"实时翻译栏位为空: {tl_check()}/{len(ListTL)}")
         return
     i = 0
     while i < len(ListTL):
@@ -155,14 +162,14 @@ async def Shutdown_TL(bot: Bot, msg: Message):
             await bot.client.send(channel, "不好意思，阿狸的主人已经清空了实时翻译的栏位！")
             ListTL[i] = '0'
         i += 1
-    await msg.reply(f"实时翻译栏位已清空！目前为: {checkTL()}/{len(ListTL)}")
+    await msg.reply(f"实时翻译栏位已清空！目前为: {tl_check()}/{len(ListTL)}")
 
 
 # 开启频道实时翻译
-async def Open_TL(msg: Message):
+async def tl_open(msg: Message):
     global ListTL
-    if checkTL() == len(ListTL):
-        await msg.reply(f"目前栏位: {checkTL()}/{len(ListTL)}，已满！")
+    if tl_check() == len(ListTL):
+        await msg.reply(f"目前栏位: {tl_check()}/{len(ListTL)}，已满！")
         return
     #发现bug，同一个频道可以开启两次实时翻译，需要加一个判断
     if msg.ctx.channel.id in ListTL:
@@ -174,54 +181,56 @@ async def Open_TL(msg: Message):
             ListTL[i] = msg.ctx.channel.id
             break
         i += 1
-    ret = checkTL()
+    ret = tl_check()
     await msg.reply(f"Real-Time Translation ON\n阿狸现在会实时翻译本频道的对话啦！\n目前栏位: {ret}/{len(ListTL)}，使用`/TLOFF`可关闭实时翻译哦~")
 
 
 #关闭频道实时翻译
-async def Close_TL(msg: Message):
+async def tl_close(msg: Message):
     global ListTL
     i = 0
     while i < len(ListTL):
         if ListTL[i] == msg.ctx.channel.id:
             ListTL[i] = '0'
-            await msg.reply(f"Real-Time Translation OFF！目前栏位: {checkTL()}/{len(ListTL)}")
+            await msg.reply(f"Real-Time Translation OFF！目前栏位: {tl_check()}/{len(ListTL)}")
             return
         i += 1
-    await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位: {checkTL()}/{len(ListTL)}")
+    await msg.reply(f"本频道并没有开启实时翻译功能！目前栏位: {tl_check()}/{len(ListTL)}")
 
 
 ################################################################################################
 
 
-def init(bot:Bot,master_id:str):
-    """master_id: bot master user_id"""
+def init(bot:Bot):
+    """bot: main bot"""
     # 普通翻译指令
     @bot.command(name='TL', case_sensitive=False)
-    async def translation(msg: Message, *arg):
+    async def translation_cmd(msg: Message, *arg):
         BotLog.logMsg(msg)
         await translate_main(msg, ' '.join(arg))
 
 
     #查看当前占用的实时翻译栏位
     @bot.command(name='tlck',case_sensitive=False)
-    async def TLCheck(msg: Message):
+    async def translation_check_cmd(msg: Message):
         BotLog.logMsg(msg)
-        await msg.reply(f"目前已使用栏位:{checkTL()}/{len(ListTL)}")
+        await msg.reply(f"目前已使用栏位:{tl_check()}/{len(ListTL)}")
 
 
     # 关闭所有栏位的实时翻译（避免有些人用完不关）
     @bot.command(name='ShutdownTL', aliases=['tlsd'],case_sensitive=False)
-    async def TLShutdown(msg: Message):
-        BotLog.logMsg(msg)
-        if msg.author.id != master_id:
-            return  #这条命令只有bot的作者可以调用
-        await Shutdown_TL(bot, msg)
-
+    async def translation_shutdown_cmd(msg: Message):
+        try:
+            BotLog.logMsg(msg)
+            if not is_admin(msg.author_id):
+                return  #这条命令只有bot的作者可以调用
+            await tl_shutdown(bot, msg)
+        except:
+            await BotLog.BaseException_Handler("tlsd",traceback.format_exc(),msg)
 
     # 通过频道id判断是否实时翻译本频道内容
     @bot.on_message()
-    async def TLRealtime(msg: Message):
+    async def translation_realtime_on_msg(msg: Message):
         if msg.ctx.channel.id in ListTL:  #判断频道是否已开启实时翻译
             word = msg.content
             # 不翻译关闭实时翻译的指令
@@ -235,13 +244,13 @@ def init(bot:Bot,master_id:str):
 
     # 开启实时翻译功能
     @bot.command(name='TLON',case_sensitive=False)
-    async def TLON(msg: Message):
+    async def translation_on(msg: Message):
         BotLog.logMsg(msg)
-        await Open_TL(msg)
+        await tl_open(msg)
 
 
     # 关闭实时翻译功能
     @bot.command(name='TLOFF',case_sensitive=False)
-    async def TLOFF(msg: Message):
+    async def translation_off(msg: Message):
         BotLog.logMsg(msg)
-        await Close_TL(msg)
+        await tl_close(msg)

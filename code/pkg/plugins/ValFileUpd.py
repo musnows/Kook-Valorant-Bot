@@ -7,7 +7,7 @@ from ..utils.file.Files import ValBundleList,UserAuthCache, ValSkinList, ValPric
 from ..utils.valorant.api import Assets,Riot
 from ..utils.log.Logging import _log
 from ..utils.log import BotLog
-
+from ..Admin import is_admin
 
 async def update_skins(msg: Message) -> bool:
     """更新本地保存的皮肤"""
@@ -102,13 +102,12 @@ async def update_agents(msg:Message) -> bool:
 
 ################################################################################################
 
-def init(bot:Bot,bot_upd_img:Bot,master_id:str):
+def init(bot:Bot,bot_upd_img:Bot,):
     """
     - bot: main bot
     - bot_upming: bot for upload img
-    - master_id: bot master user_id
     """
-    async def update(msg:Message,bot_upd_img:Bot):
+    async def update_data(msg:Message,bot_upd_img:Bot):
         """更新valorant相关资源"""
         if await update_skins(msg):
             await msg.reply(f"成功更新：商店皮肤")
@@ -127,13 +126,13 @@ def init(bot:Bot,bot_upd_img:Bot,master_id:str):
 
     
     @bot.command(name='update_spb', aliases=['upd'])
-    async def update_skin_price_bundle(msg: Message):
+    async def update_valorant_data_cmd(msg: Message):
         """手动更新商店物品和价格的命令"""
         BotLog.logMsg(msg)
         try:
-            if msg.author_id == master_id:
+            if is_admin(msg.author_id):
                 await msg.reply("已收到「upd」命令，开始更新本地资源")
-                await update(msg,bot_upd_img)
+                await update_data(msg,bot_upd_img)
         except Exception as result:
             await BotLog.BaseException_Handler("update_spb",traceback.format_exc(),msg)
 
