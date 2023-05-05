@@ -16,5 +16,5 @@ __pycache__/
 .vscode/
 
 # webfile
-
+!code/web/ahri/index.html
 code/web/
