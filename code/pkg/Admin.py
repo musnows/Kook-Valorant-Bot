@@ -1,10 +1,12 @@
 import copy
 import traceback
 import os
+import time
+import asyncio
 from khl import (Bot, Event, EventTypes, Message, PrivateMessage, requester, Channel)
 from khl.card import Card, CardMessage, Element, Module, Types, Struct
 
-from .utils.file.Files import config,_log,StartTime,SkinRateDict,UserAuthCache
+from .utils.file.Files import config,_log,StartTime,SkinRateDict,UserAuthCache,BotUserDict
 from .utils.file.FileManage import save_all_file
 from .utils.log import BotLog
 from .utils.valorant.Reauth import LoginForbidden,NightMarketOff
@@ -14,6 +16,8 @@ from .utils.ShopImg import weapon_icon_temp_11,weapon_icon_temp_169,skin_level_i
 
 master_id = config['master_id']
 """机器人开发者用户id"""
+IN_ACTIVATE_GUILD = 2
+"""将命令数小于此数的服务器视作不活跃服务器，退出"""
 
 def is_admin(user_id:str):
     """是管理员返回True"""
@@ -193,5 +197,60 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             _log.info(f"[BOT.TASK] clear_rate_err_user")
         except:
             _log.exception(f"ERR in clear_rate_err_user")
+
+
+    @bot.command(name='exit-g',aliases=['退出服务器'])
+    async def exit_guild_cmd(msg:Message,guild="",*arg):
+        """让机器人退出日志中没有记录过的服务器"""
+        send_msg = {'msg_id':''}
+        try:
+            BotLog.log_msg(msg)
+            if not is_admin(msg.author_id):return
+            # 指定了服务器
+            if guild:
+                ret = await KookApi.guild_leave(guild)
+                cm = await KookApi.get_card_msg(f"退出服务器 {guild}",f"{ret}")
+                await msg.reply(cm)
+                _log.info(f"Au:{msg.author_id} | guild_leave {guild} | {ret}")
+            # 没有指定，退出不活跃的服务器
+            else:
+                cm = await KookApi.get_card_msg("收到命令，开始退出不活跃服务器",img_url=KookApi.icon_cm.rgx_card)
+                send_msg = await msg.reply(cm)
+                start_time = time.perf_counter()
+                i,good,err =0,0,0
+                guild_text = ""
+                for g,ginfo in BotUserDict['guild']['data'].items():
+                    try:
+                        if ginfo['cmd'] > IN_ACTIVATE_GUILD:
+                            continue
+                        # 走到这里是不活跃服务器
+                        ret = await KookApi.guild_leave(g)
+                        if ret['code'] !=0: # 有错误
+                            raise Exception(f"guild_leave Err | {ret}")
+                        i += 1
+                        good+=1
+                        guild_text+= f"({g})"
+                        await asyncio.sleep(0.4)
+                        if i>=100:# 超过100个多睡一会
+                            cm = await KookApi.get_card_msg(f"已处理 [g{good}/e{err}]",guild_text[0:4800])
+                            await KookApi.upd_card(send_msg['msg_id'],cm) # 更新消息
+                            await asyncio.sleep(20)
+                            i = 0
+                    except:
+                        err+=1
+                        _log.exception(f"Err while G:{g}")
+                        await asyncio.sleep(5) # 有错误也多睡一会
+                        continue
+                
+                # 处理完毕
+                time_diff = format(time.perf_counter()-start_time,".2f")
+                text = "退出不活跃服务器处理完毕\n"
+                text+= f"用时 {time_diff}s [g{good}/e{err}]\n"
+                text+= f"命令使用<{IN_ACTIVATE_GUILD} 的服务器视作不活跃"
+                cm = await KookApi.get_card_msg(text,sub_text=guild_text[0:4800])
+                await KookApi.upd_card(send_msg['msg_id'],cm) # 更新卡片
+                _log.info(f"Au:{msg.author_id} | guild_leave {time_diff}s [g{good}/e{err}] | {guild_text}")
+        except:
+            await BotLog.base_exception_handler("exit-g",traceback.format_exc(),msg,send_msg=send_msg)
 
     _log.info("[Admin] load Admin.py")
