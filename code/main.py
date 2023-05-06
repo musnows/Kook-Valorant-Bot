@@ -30,7 +30,7 @@ from pkg.utils.file.Files import config,bot,bot_upd_img, ApiAuthLog,StartTime
 # 在bot一开机的时候就获取log频道作为全局变量
 debug_ch: Channel
 """发送错误信息的日志频道"""
-cm_send_test: Channel
+cm_test_ch: Channel
 """进行卡片消息发送测试的频道"""
 NOTIFY_NUM = 3 
 """非vip用户皮肤提醒栏位"""
@@ -1409,8 +1409,8 @@ async def loading_cache(bot: Bot):
     - 注册其他命令
     """
     try:
-        global debug_ch, cm_send_test
-        cm_send_test = await bot_upd_img.client.fetch_public_channel(config['channel']["img_upload_ch"])
+        global debug_ch, cm_test_ch
+        cm_test_ch = await bot_upd_img.client.fetch_public_channel(config['channel']["img_upload_ch"])
         debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
         _log.info("[BOT.TASK] fetch_public_channel success")
         # 管理员命令
@@ -1423,7 +1423,7 @@ async def loading_cache(bot: Bot):
         Match.init(bot,debug_ch)
         GameHelper.init(bot)
         ValFileUpd.init(bot,bot_upd_img)
-        Vip.init(bot,bot_upd_img,debug_ch,cm_send_test)
+        Vip.init(bot,bot_upd_img,debug_ch,cm_test_ch)
         Mission.init(bot,debug_ch)
         StatusWeb.init(bot)
         _log.info("[BOT.TASK] load plugins")

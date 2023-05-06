@@ -19,12 +19,12 @@ from ..Admin import is_admin
 VIP_BG_SIZE = 4
 """vip用户背景图片数量限制"""
 
-def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
+def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_test_ch:Channel):
     """
     - bot 主机器人
     - bot_upd_img 用来上传图片的机器人
     - debug_ch 用于发送debug信息的文字频道
-    - cm_send_test 用于发送图片测试的文字频道
+    - cm_test_ch 用于发送图片测试的文字频道
     """
     # 新建vip的uuid，第一个参数是天数，第二个参数是数量
     @bot.command(name="vip-a")
@@ -143,8 +143,8 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upd_img.client.send(cm_send_test, cm)
-            _log.info(f"Au:{msg.author_id} | cm_send_test success")
+            await bot_upd_img.client.send(cm_test_ch, cm)
+            _log.info(f"Au:{msg.author_id} | cm_test_ch success")
             #然后阿狸在进行回应
             await msg.reply(cm)
 
@@ -198,8 +198,8 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upd_img.client.send(cm_send_test, cm)
-            _log.info(f"Au:{msg.author_id} | cm_send_test success")
+            await bot_upd_img.client.send(cm_test_ch, cm)
+            _log.info(f"Au:{msg.author_id} | cm_test_ch success")
             #然后阿狸在进行回应
             await msg.reply(cm)
 
@@ -239,8 +239,8 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upd_img.client.send(cm_send_test, cm)
-            _log.info(f"Au:{msg.author_id} | cm_send_test success")
+            await bot_upd_img.client.send(cm_test_ch, cm)
+            _log.info(f"Au:{msg.author_id} | cm_test_ch success")
             #然后阿狸在进行回应
             await msg.reply(cm)
 
@@ -302,55 +302,57 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
         for msg_id, minfo in viprolldict_temp.items():
             if time.time() < minfo['time']:
                 continue
-            else:
-                _log.info(f"[BOT.TASK] vip_roll_task msg:{msg_id}")
-                vday = VipRollDcit[msg_id]['days']  # vip天数
-                vnum = VipRollDcit[msg_id]['nums']  # 奖品数量
-                # 结束抽奖
-                log_str = f"```\n[MsgID] {msg_id}\n"
-                send_str = "恭喜 "
-                # 人数大于奖品数量
-                if len(VipRollDcit[msg_id]['user']) > vnum:
-                    ran = random.sample(range(0, len(VipRollDcit[msg_id]['user'])), vnum)  # 生成n个随机数
-                else:  # 生成一个从0到len-1的列表 如果只有一个用户，生成的是[0]
-                    ran = list(range(len(VipRollDcit[msg_id]['user'])))
-                # 开始遍历
-                for j in ran:
-                    user_id = VipRollDcit[msg_id]['user'][j]
-                    user = await bot.client.fetch_user(user_id)
-                    # 设置用户的时间和个人信息
-                    time_vip = BotVip.vip_time_stamp(user_id, vday)
-                    VipUserDict[user_id] = {'time': time_vip, 'name_tag': f"{user.username}#{user.identify_num}"}
-                    # 创建卡片消息
-                    cm = CardMessage()
-                    c = Card(
-                        Module.Section(Element.Text("恭喜您中奖阿狸vip了！", Types.Text.KMD),
-                                    Element.Image(src=icon_cm.ahri_kda2, size='sm')))
-                    c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip，可用/vhelp查看vip权益", Types.Text.KMD)))
-                    c.append(
-                        Module.Countdown(datetime.now() + timedelta(seconds=BotVip.vip_time_remain(user_id)),
-                                        mode=Types.CountdownMode.DAY))
-                    c.append(Module.Divider())
-                    c.append(
-                        Module.Section('加入官方服务器，即可获得「阿狸赞助者」身份组',
-                                    Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
-                    cm.append(c)
-                    await user.send(cm)
-                    log_str += f"[vip-roll] Au:{user_id} get [{vday}]day-vip\n"
-                    send_str += f"(met){user_id}(met) "
+            # 抽奖结束
+            _log.info(f"[BOT.TASK] vip_roll_task msg:{msg_id}")
+            vday = VipRollDcit[msg_id]['days']  # vip天数
+            vnum = VipRollDcit[msg_id]['nums']  # 奖品数量
+            # 结束抽奖
+            log_str = f"[msg_id] {msg_id} | "
+            log_send_str = f"```\n[MsgID] {msg_id}\n"
+            send_str = "恭喜 "
+            # 人数大于奖品数量
+            if len(VipRollDcit[msg_id]['user']) > vnum:
+                ran = random.sample(range(0, len(VipRollDcit[msg_id]['user'])), vnum)  # 生成n个随机数
+            else:  # 生成一个从0到len-1的列表 如果只有一个用户，生成的是[0]
+                ran = list(range(len(VipRollDcit[msg_id]['user'])))
+            # 开始遍历
+            for j in ran:
+                user_id = VipRollDcit[msg_id]['user'][j]
+                user = await bot.client.fetch_user(user_id)
+                # 设置用户的时间和个人信息
+                time_vip = BotVip.vip_time_stamp(user_id, vday)
+                VipUserDict[user_id] = {'time': time_vip, 'name_tag': f"{user.username}#{user.identify_num}"}
+                # 创建卡片消息
+                cm = CardMessage()
+                c = Card(
+                    Module.Section(Element.Text("恭喜您中奖阿狸vip了！", Types.Text.KMD),
+                                Element.Image(src=icon_cm.ahri_kda2, size='sm')))
+                c.append(Module.Context(Element.Text(f"您抽中了{vday}天vip，可用/vhelp查看vip权益", Types.Text.KMD)))
+                c.append(
+                    Module.Countdown(datetime.now() + timedelta(seconds=BotVip.vip_time_remain(user_id)),
+                                    mode=Types.CountdownMode.DAY))
+                c.append(Module.Divider())
+                c.append(
+                    Module.Section('加入官方服务器，即可获得「阿狸赞助者」身份组',
+                                Element.Button('来狸', 'https://kook.top/gpbTwZ', Types.Click.LINK)))
+                cm.append(c)
+                await user.send(cm)
+                log_str = f"({user_id})"
+                log_send_str += f"[vip-roll] Au:{user_id} get [{vday}]day-vip\n"
+                send_str += f"(met){user_id}(met) "
 
-                log_str += "```"
-                send_str += "获得了本次奖品！"
-                await bot.client.send(debug_ch, log_str)  #发送此条抽奖信息的结果到debug
-                #发送结果到抽奖频道
-                roll_ch = await bot.client.fetch_public_channel(VipRollDcit[msg_id]['channel_id'])
-                cm1 = CardMessage()
-                c = Card(Module.Header(f"🎊 阿狸vip {VipRollDcit[msg_id]['days']}天体验卡 🎊"),
-                        Module.Section(Element.Text(send_str, Types.Text.KMD)),
-                        Module.Context(Element.Text(f"本次抽奖结束，奖励已私信发送", Types.Text.KMD)))
-                cm1.append(c)
-                await bot.client.send(roll_ch, cm1)
-                del VipRollDcit[msg_id]  #删除此条抽奖信息
+            log_send_str += "```"
+            send_str += "获得了本次奖品！"
+            await bot.client.send(debug_ch, log_send_str)  #发送此条抽奖信息的结果到debug
+            #发送结果到抽奖频道
+            roll_ch = await bot.client.fetch_public_channel(VipRollDcit[msg_id]['channel_id'])
+            cm1 = CardMessage()
+            c = Card(Module.Header(f"🎊 阿狸vip {VipRollDcit[msg_id]['days']}天体验卡 🎊"),
+                    Module.Section(Element.Text(send_str, Types.Text.KMD)),
+                    Module.Context(Element.Text(f"本次抽奖结束，奖励已私信发送", Types.Text.KMD)))
+            cm1.append(c)
+            await bot.client.send(roll_ch, cm1)
+            del VipRollDcit[msg_id]  # 删除此条抽奖信息
 
         # 更新抽奖列表(如果有变化)
         if viprolldict_temp != VipRollDcit:
