@@ -5,9 +5,10 @@ import random
 import traceback
 from datetime import datetime,timedelta
 
-from khl import Bot,Message,PrivateMessage,Channel
-from khl.card import Card, CardMessage, Element, Module, Types, Struct
+from khl import Bot,Message,Channel
+from khl.card import Card, CardMessage, Element, Module, Types
 from ..utils.log import BotLog
+from ..utils.log.Logging import _log
 
 
 # 历史上的今天，来自https://www.free-api.com/doc/317
@@ -102,7 +103,7 @@ def init(bot:Bot,debug_ch:Channel):
             await BotLog.base_exception_handler("roll", traceback.format_exc(), msg, debug_send=debug_ch)
 
     # 返回天气
-    @bot.command(name='we')
+    @bot.command(name='we',aliases=['weather'],case_sensitive=False)
     async def Weather(msg: Message, city: str = "err"):
         BotLog.log_msg(msg)
         if city == "err":
@@ -113,3 +114,5 @@ def init(bot:Bot,debug_ch:Channel):
             await weather(msg, city)
         except Exception as result:
             await BotLog.base_exception_handler("Weather", traceback.format_exc(), msg, debug_send=debug_ch)
+
+    _log.info("[plugins] load Funny.py")

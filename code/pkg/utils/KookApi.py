@@ -31,7 +31,7 @@ async def status_active_music(name: str, singer: str):
 
 
 async def status_delete(d: int):
-    """删除机器人的当前动态"""
+    """删除机器人的当前动态 停止打游戏1/听歌2"""
     url = kook_base_url + "/api/v3/game/delete-activity"
     params = {"data_type": d}
     async with aiohttp.ClientSession() as session:

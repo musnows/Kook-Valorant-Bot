@@ -443,3 +443,5 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_test_ch:Channel):
         if not is_admin(msg.author_id): return
         await check_vip_img()
         await msg.reply("背景图片diy检查完成！")
+
+    _log.info("[plugins] load Vip.py")

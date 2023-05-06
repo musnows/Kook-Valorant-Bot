@@ -159,3 +159,5 @@ def init(bot:Bot):
     # @bot.task.add_cron(hour=19, minute=0, timezone="Asia/Shanghai")
     # async def thanks_sponser_task():
     #     await thanks_sponser(bot)
+
+    _log.info("[plugins] load GrantRoles.py")

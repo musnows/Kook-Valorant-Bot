@@ -50,13 +50,13 @@ async def botmarket_ping_task():
 
 @bot.task.add_interval(minutes=5)
 async def save_file_task():
-    """每5分钟保存一次文件"""
+    """每5分钟保存一次所有数据文件"""
     try:
         await save_all_file()
     except:
-        err_cur = f"ERR! [{get_time()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
-        _log.exception("ERR in [Save.File.Task]")
-        await bot.client.send(debug_ch, err_cur) # type: ignore
+        _log.exception("ERR in save.file.task")
+        cm = await get_card_msg(f"ERR! [{get_time()}] save.file.task\n```\n{traceback.format_exc()}\n```")
+        await bot.client.send(debug_ch, cm)
 
 
 ########################################  help  ##########################################
@@ -1403,7 +1403,7 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
 
 
 @bot.on_startup
-async def loading_cache(bot: Bot):
+async def bot_start_task(bot: Bot):
     """
     - 在阿狸开机的时候自动加载所有保存过的cookie
     - 注册其他命令
@@ -1463,7 +1463,7 @@ async def loading_cache(bot: Bot):
                     continue
         # 结束任务
         _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
-        _log.info(f"[BOT.TASK] loading user cookie finished")
+        _log.info(f"[BOT.TASK] loading user cookie finish | begin loading api auth")
 
         # api缓存的用户列表
         log_str_success = "[BOT.TASK] api load cookie success  = Au:"
