@@ -94,9 +94,16 @@ ValItersEmoji = EmojiDict['val_iters_emoji']
 """
 
 # 实例化一个khl的bot，方便其他模组调用
-from khl import Bot
-bot = Bot(token=config['token']['bot'])
+from khl import Bot,Cert
+bot = Bot(token=config['token']['bot']['token'])  # websocket
 """main bot"""
+if not config['token']['bot']['ws']: # webhook
+    _log.info(f"[BOT] using webhook at port {config['token']['bot']['webhook_port']}")
+    bot = Bot(cert=Cert(token=config['token']['bot']['token'],
+                        verify_token=config['token']['bot']['verify_token'],
+                        encrypt_key=config['token']['bot']['encrypt']),
+              port=config['token']['bot']['webhook_port'])
+# 上传图片测试的机器人
 bot_upd_img = Bot(token=config['token']['img_upload_token'])
 """用来上传图片的bot"""
 _log.info(f"Loading all files") # 走到这里代表所有文件都打开了

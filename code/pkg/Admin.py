@@ -47,7 +47,10 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 cm = CardMessage(Card(Module.Section(
                     Element.Text(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}", Types.Text.KMD))))
                 await msg.reply(cm)
-                res = await KookApi.bot_offline()  # 调用接口下线bot
+                res = "webhook"
+                if config['token']['bot']['ws']: # 用的是ws才需要调用
+                    res = await KookApi.bot_offline()  # 调用接口下线bot
+                # 打印日志
                 _log.info(f"KILL | bot-off: {res}\n")
                 os._exit(0)  # 退出程序
             else:

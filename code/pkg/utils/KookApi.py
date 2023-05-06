@@ -7,7 +7,7 @@ from khl.card import Card, CardMessage, Module, Element, Types
 from .file.Files import config,bot,_log
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
-kook_headers = {f'Authorization': f"Bot {config['token']['bot']}"}
+kook_headers = {f'Authorization': f"Bot {config['token']['bot']['token']}"}
 
 
 #################################机器人在玩状态####################################
