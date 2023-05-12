@@ -12,7 +12,10 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from .valorant.api import Local
 from .Gtime import get_time
 from .log.Logging import _log
+from .file.Files import config
 
+IMG_MEMORY_CACHE = config['cache']['shop_img']['memory']
+"""是否在内存中缓存商店图片"""
 DRAW_SLEEP_TIME = 0.3
 """每次画图遍历的休眠时间"""
 DRAW_WAIT_TIME = 0.2
@@ -186,7 +189,7 @@ def sm_comp_169(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:
         if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
             bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
         global weapon_icon_temp_169  #皮肤图片的抽屉，如果uuid不存在，就插入
-        if skinuuid not in weapon_icon_temp_169:
+        if IMG_MEMORY_CACHE and (skinuuid not in weapon_icon_temp_169):
             weapon_icon_temp_169[skinuuid] = bg
         return bg # 返回图片
     except:
@@ -272,7 +275,7 @@ def sm_comp_11(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:s
         if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
             bg.save(f'./log/img_temp/comp/{skinuuid}.png')
         global weapon_icon_temp_11  # 1-1图片的抽屉
-        if skinuuid not in weapon_icon_temp_11:
+        if IMG_MEMORY_CACHE and (skinuuid not in weapon_icon_temp_11):
             weapon_icon_temp_11[skinuuid] = bg
         return bg
     except:
@@ -375,7 +378,8 @@ async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
         elif os.path.exists(img_path):  # 全局变量里面没有，要去本地路径里面找
             img_cur = Image.open(img_path)
             shop_img_temp_169[ran].append(img_cur)
-            weapon_icon_temp_169[skinuuid] = img_cur # 插入到全局变量中
+            if IMG_MEMORY_CACHE:
+                weapon_icon_temp_169[skinuuid] = img_cur # 插入到全局变量中
         else:  # 都没有，画图
             th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, True))
             th.start()
@@ -461,7 +465,8 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
         elif os.path.exists(img_path):
             img_cur = Image.open(img_path)
             shop_img_temp_11[ran].append(img_cur)
-            weapon_icon_temp_11[skinuuid] = img_cur # 插入到全局变量中
+            if IMG_MEMORY_CACHE:
+                weapon_icon_temp_11[skinuuid] = img_cur # 插入到全局变量中
         else:
             th = threading.Thread(target=skin_uuid_to_comp, args=(skinuuid, ran, False))
             th.start()
