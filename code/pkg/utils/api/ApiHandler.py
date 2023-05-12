@@ -1,7 +1,9 @@
 import json
 import time
 import traceback
+from aiohttp import web_request
 
+from khl import Bot
 from khl.card import CardMessage, Card, Module, Types, Element
 
 from .ApiToken import check_token_rate
@@ -78,7 +80,7 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
 
 
 # 画图接口(仅画图)
-async def img_draw_request(request):
+async def img_draw_request(request:web_request.Request):
     params = request.rel_url.query
     if "list_shop" not in params or 'token' not in params:
         _log.error(f"params needed: token/list_shop")
@@ -143,7 +145,7 @@ async def shop_get_request(params,account:str):
         return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
 
 # 登录+画图
-async def login_request(request,method = "GET"):
+async def login_request(request:web_request.Request,method = "GET"):
     params = request.rel_url.query
     if method=="POST":
         body = await request.content.read()
@@ -201,7 +203,7 @@ async def login_request(request,method = "GET"):
 
 
 # 邮箱验证的post
-async def tfa_code_requeset(request):
+async def tfa_code_requeset(request:web_request.Request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     if 'account' not in params or 'vcode' not in params or 'token' not in params:
@@ -250,7 +252,7 @@ async def tfa_code_requeset(request):
 
 # 更新leancloud
 from ..ShopRate import update_shop_cmp
-async def shop_cmp_request(request):
+async def shop_cmp_request(request:web_request.Request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     if 'best' not in params or 'worse' not in params or 'token' not in params or 'platform' not in params:
@@ -279,7 +281,7 @@ async def shop_cmp_request(request):
 
 
 # 爱发电webhook
-async def afd_request(request, bot):
+async def afd_request(request:web_request.Request, bot:Bot):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     global AfdWebhook
