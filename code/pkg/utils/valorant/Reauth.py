@@ -2,17 +2,39 @@ import traceback
 from khl import Message, Channel
 from aiohttp import client_exceptions
 from .EzAuth import EzAuth, EzAuthExp
-from ..file.Files import UserAuthCache, UserPwdReauth, LoginForbidden,SkinNotifyDict, bot
+from ..file.Files import UserAuthCache, UserPwdReauth,SkinNotifyDict,bot,Boolean
 from .api.Riot import fetch_valorant_point
 from ..log.Logging import _log
 from .. import KookApi, Gtime
 
+LoginForbidden  = Boolean(False)
+"""出现403错误，禁止重登; 初始值为false"""
+NightMarketOff  = Boolean(True)
+"""夜市是否关闭？False (on,夜市开着) | True (off,夜市关闭)"""
 
-# 检查aiohttp错误的类型
+async def login_forbidden_send(msg: Message):
+    """拳头api调用被403禁止的时候，发送提示信息"""
+    text = f"拳头api登录接口出现403错误，已禁止登录相关功能的使用\n"
+    text+= f"[https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png](https://img.kookapp.cn/assets/2022-09/oj33pNtVpi1ee0eh.png)"
+    await msg.reply(await KookApi.get_card_msg(text))
+    _log.info(f"Au:{msg.author_id} command failed | LoginForbidden: {LoginForbidden}")
+    return None
+
+def check_night_market_status(resp:dict) ->bool:
+    """在notify.task中判断夜市有没有开，只会判断一次
+    - True: 夜市已开启
+    - False: 夜市关闭
+    """
+    if NightMarketOff and "BonusStore" in resp: #夜市字段存在
+        NightMarketOff.set(False)  # 夜市开启！
+        return True
+    return False 
+
 def client_exceptions_handler(result:str,err_str:str) -> str:
+    """检查aiohttp错误的类型"""
     if 'auth.riotgames.com' and '403' in result:
         global LoginForbidden
-        LoginForbidden = True
+        LoginForbidden.set(True)
         err_str += f"[check_reauth] 403 err! set LoginForbidden = True"
     elif '404' in result:
         err_str += f"[check_reauth] 404 err! network err, try again"
@@ -31,7 +53,7 @@ async def check_user_send_err(result:str,kook_user_id:str,is_vip:bool) ->str:
             del SkinNotifyDict['data'][kook_user_id] 
             text+=f"del SkinNotifyDict['data'][{kook_user_id}], "
         # 添加到err_user中
-        SkinNotifyDict['err_user'][kook_user_id] = Gtime.getTime()
+        SkinNotifyDict['err_user'][kook_user_id] = Gtime.get_time()
         text+= "add to ['err_user']"
         return text
     
@@ -68,7 +90,7 @@ async def login_reauth(kook_user_id: str, riot_user_id: str) -> bool:
             UserAuthCache['data'][riot_user_id]['auth'] = auth
             auth.save_cookies(f"./log/cookie/{riot_user_id}.cke")  # 保存cookie
             # 记录使用账户密码重新登录的时间，和对应的账户
-            UserPwdReauth[kook_user_id][Gtime.getTime()] = f"{auth.Name}#{auth.Tag}"
+            UserPwdReauth[kook_user_id][Gtime.get_time()] = f"{auth.Name}#{auth.Tag}"
             _log.info(base_print + "authorize by account/passwd")
             ret = True
     # 正好返回auth.reauthorize()的bool

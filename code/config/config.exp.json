@@ -1,26 +1,33 @@
 {
-  "token":{
-    "bot": "机器人websocket token",
+  "token": {
+    "bot": {
+      "token": "bot webhook/websocket token",
+      "verify_token": "webhook verify token",
+      "encrypt": "webhook encrypt token",
+      "webhook_port": 50000,
+      "ws": true,
+      "info":"如果要使用webhook，将ws字段修改为false"
+    },
     "api_bot_token": "api用来上传图片的机器人websocket token",
     "img_upload_token": "用来进行vip商店图片测试的机器人websocket token（发图片让kook的内容识别来判断有么有问题）"
   },
   "master_id": "机器人开发者userid",
   "caiyun": "彩云小译的token，可为空，但不能删除本键值",
-  "channel":{
+  "channel": {
     "debug_ch": "发送错误日志的频道",
     "img_upload_ch": "用来测试vip商店图片的频道"
   },
-  "lsky":{
-    "url":"lsky图床的url（该功能未启用）",
-    "token":"lsky图床的token（该功能未启用）"
+  "lsky": {
+    "url": "lsky图床的url（该功能未启用，可留空）",
+    "token": "lsky图床的token（该功能未启用，可留空）"
   },
-  "leancloud":{
-    "appid":"leancloud数据库的appid（可联系作者，共用皮肤评价数据库）",
-    "appkey":"leancloud数据库的appkey",
-    "master_key":"leancloud数据库的masterkey（可为空，目前没有使用）",
-    "user_name":"数据库内置用户id",
-    "user_pwd":"数据库内置用户密码"
+  "leancloud": {
+    "appid": "leancloud数据库的appid（可联系作者，共用皮肤评价数据库）",
+    "appkey": "leancloud数据库的appkey",
+    "master_key": "leancloud数据库的masterkey（可为空，目前没有使用）",
+    "user_name": "数据库内置用户id",
+    "user_pwd": "数据库内置用户密码"
   },
-  "no":1000,
-  "platform":"kook"
+  "no": 1000,
+  "platform": "kook"
 }

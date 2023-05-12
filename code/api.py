@@ -1,7 +1,7 @@
 import json
 import traceback
 from aiohttp import web
-from pkg.utils.Gtime import getTime
+from pkg.utils.Gtime import get_time
 from pkg.utils.api import ApiHandler
 from pkg.utils.log.Logging import _log
 
@@ -215,6 +215,26 @@ async def aifadian_webhook(request):
         }, indent=2, sort_keys=True, ensure_ascii=False),
                             status=503,
                             content_type='application/json')
+
+
+# 机器人加入的服务器/命令总数等等信息
+from pkg.utils.log.BotLog import log_bot_list
+@routes.get('/bot-log')
+async def bot_log_get(request):
+    _log.info(f"request | /bot-log")
+    try:
+        ret_dict = await log_bot_list()
+        ret = {
+            "guild_total":ret_dict["guild"]["guild_total"],
+            "guild_active":ret_dict["guild"]["guild_active"],
+            "user_total":ret_dict["user"]["user_total"],
+            "cmd_total":ret_dict["cmd_total"]
+        }
+        return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
+                    content_type='application/json')
+    except:
+        _log.exception("Exception in /afd")
+        return web.Response(status=503)
 
 
 app = web.Application()

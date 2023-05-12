@@ -801,8 +801,44 @@ input {
 
 
 </style><title>状态图表-引导页 | Kook-Valorant-Bot</title>
+<!-- vue & ajax -->
+<script src="https://code.jquery.com/jquery-1.12.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body class='typora-export os-windows'><div class='typora-export-content'>
-<div id='write'  class=''><h2 id='欢迎来到Kook-Valorant-Bot状态页'><span>欢迎来到 Kook-Valorant-Bot 状态页</span></h2><p><span>项目地址 </span><a href='https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot'><span>Github Valorant-Shop-CN/Kook-Valorant-Bot</span></a></p><p><span>本页统计图均由机器人自行根据命令日志生成，每日0点更新，使用了</span><code>pyg2plot</code><span>库。</span></p><ul><li><p><a href='./ngu/'><span>新服务器/新用户 增长图</span></a></p></li><li><p><a href='./gu/'><span>服务器/用户/命令 日活动图</span></a></p></li><li><p><span>更多可视图表待完善...</span></p></li></ul><p><span>有效数据统计始于23.04.04。先前的数据由于键值缺失，无参考意义。</span></p></div></div>
+<div id='write'  class='myapp'><h2 id='欢迎来到Kook-Valorant-Bot状态页'><span>欢迎来到 Kook-Valorant-Bot 状态页</span></h2><p><span>项目地址 Github </span><a href='https://github.com/Valorant-Shop-CN/Kook-Valorant-Bot'><span>Valorant-Shop-CN/Kook-Valorant-Bot</span></a></p>
+<div id="myapp">
+<figure><table><thead><tr><th><span>信息</span></th><th><span>数量</span></th></tr></thead><tbody><tr><td><span>已加入服务器数</span></td><td><span>{{log.guild_total}}</span></td></tr><tr><td><span>活跃服务器数</span></td><td><span>{{log.guild_active}}</span></td></tr><tr><td><span>用户总数</span></td><td><span>{{log.user_total}}</span></td></tr><tr><td><span>命令总数</span></td><td><span>{{log.cmd_total}}</span></td></tr></tbody></table></figure></div>
+<p><span>统计图均由机器人自行根据命令日志生成，每日0点更新，使用了 </span><code>pyg2plot</code><span> 库。</span></p><ul><li><p><a href='./ngu/'><span>新服务器/新用户 增长图</span></a></p></li><li><p><a href='./gu/'><span>服务器/用户/命令 日活动图</span></a></p></li><li><p><span>更多可视图表待完善...</span></p></li></ul>
+<p><span>有效数据统计始于23.04.05。先前的数据由于键值缺失，无参考意义。</span></p><ul><li><p><a href='/'><span>回到主页</span></a></p></li><li><p><a href='https://blog.musnow.top/posts/847195815/?utm_source=ahri-status'><span>回到帮助文档</span></div></div>
 </body>
+
+<script>
+	let app = new Vue({
+		el: '#myapp',
+		data: {
+			log: {
+				guild_total: 0,
+				guild_active: 0,
+				user_total: 0,
+				cmd_total: 0
+			}
+		},
+		methods: {
+			get_bot_log: function () {
+				$.ajax({
+					url: "/api/v2/bot-log",
+					type: "get",
+					context: this,
+					success: function (result, status, xhr) {
+						this.log = result;
+					}
+				})
+			}
+		}
+	});
+	app.get_bot_log();// 写在这里代表初始化页面的时候要调用一下
+</script>
+
+
 </html>

@@ -11,26 +11,27 @@ from PIL import Image, UnidentifiedImageError  # 用于合成图片
 #用来存放roll的频道/服务器/回应用户的dict
 from ..utils.file.Files import VipShopBgDict, VipRollDcit, VipUserDict, VipAuthLog,_log
 from ..utils.log import BotLog
-from ..utils.Gtime import getTime
+from ..utils.Gtime import get_time
 from ..utils import BotVip,ShopImg
 from ..utils.KookApi import icon_cm,get_card,upd_card,get_card_msg
+from ..Admin import is_admin
 
 VIP_BG_SIZE = 4
 """vip用户背景图片数量限制"""
 
-def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Channel):
-    """- bot 主机器人
-    - bot_upimg 用来上传图片的机器人
-    - master_id 机器人主人用户id
+def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,cm_send_test:Channel):
+    """
+    - bot 主机器人
+    - bot_upd_img 用来上传图片的机器人
     - debug_ch 用于发送debug信息的文字频道
     - cm_send_test 用于发送图片测试的文字频道
     """
     # 新建vip的uuid，第一个参数是天数，第二个参数是数量
     @bot.command(name="vip-a")
     async def get_vip_uuid(msg: Message, day: int = 30, num: int = 10):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
-            if msg.author_id == master_id:
+            if is_admin(msg.author_id):
                 text = await BotVip.create_vip_uuid(num, day)
                 cm = CardMessage()
                 c = Card(Module.Header(f"已生成新的uuid   数量:{num}  天数:{day}"),
@@ -40,16 +41,14 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
                 cm.append(c)
                 await msg.reply(cm)
                 _log.info("vip-a | create_vip_uuid reply successful!")
-            else:
-                await msg.reply("您没有权限操作此命令！")
         except Exception as result:
-            await BotLog.BaseException_Handler("vip-a", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("vip-a", traceback.format_exc(), msg)
 
 
     # 兑换vip
     @bot.command(name="vip-u", aliases=['兑换'])
     async def buy_vip_uuid(msg: Message, uuid: str = 'err', *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if uuid == 'err':
             await msg.reply(f"只有输入vip的兑换码才可以操作哦！uuid: `{uuid}`")
             return
@@ -57,13 +56,13 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             #把bot传过去是为了让阿狸在有人成兑换激活码之后发送消息到log频道
             ret = await BotVip.using_vip_uuid(msg, uuid, bot, debug_ch)
         except Exception as result:
-            await BotLog.BaseException_Handler("vip-u", traceback.format_exc(), msg, debug_send=debug_ch)
+            await BotLog.base_exception_handler("vip-u", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
     # 看vip剩余时间
     @bot.command(name="vip-c")
     async def check_vip_timeremain(msg: Message, *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
             if not await BotVip.vip_ck(msg):
                 return
@@ -72,30 +71,29 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             ret_cm = await BotVip.vip_time_remain_cm(ret_t)
             await msg.reply(ret_cm)
         except Exception as result:
-            await BotLog.BaseException_Handler("vip-c", traceback.format_exc(), msg, debug_send=debug_ch)
+            await BotLog.base_exception_handler("vip-c", traceback.format_exc(), msg, debug_send=debug_ch)
 
 
     # 看vip用户列表
     @bot.command(name="vip-l")
     async def list_vip_user(msg: Message, *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
-            if msg.author_id == master_id:
+            if is_admin(msg.author_id):
                 text = await BotVip.fetch_vip_user()
                 cm2 = CardMessage()
                 c = Card(Module.Header(f"当前vip用户列表如下"), color='#e17f89')
                 c.append(Module.Section(Element.Text(f"```\n{text}```", Types.Text.KMD)))
                 cm2.append(c)
                 await msg.reply(cm2)
-            else:
-                await msg.reply("您没有权限操作此命令！")
+
         except Exception as result:
-            await BotLog.BaseException_Handler("vip-l", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("vip-l", traceback.format_exc(), msg)
 
 
     @bot.command(name="vip-shop")
     async def vip_shop_bg_set(msg: Message, icon: str = "err", *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if icon != 'err' and ('http' not in icon or '](' not in icon):
             await msg.reply(f"请提供正确的图片url！\n当前：`{icon}`")
             return
@@ -129,7 +127,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
                     #打开图片(测试)
                     bg_vip = Image.open(io.BytesIO(await ShopImg.img_requestor(x3)))
                 except UnidentifiedImageError as result:
-                    err_str = f"ERR! [{getTime()}] vip_shop_imgck\n```\n{result}\n```"
+                    err_str = f"ERR! [{get_time()}] vip_shop_imgck\n```\n{result}\n```"
                     _log.error(err_str)
                     await msg.reply(f"图片违规！请重新上传\n{err_str}")
                     return
@@ -145,7 +143,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upimg.client.send(cm_send_test, cm)
+            await bot_upd_img.client.send(cm_send_test, cm)
             _log.info(f"Au:{msg.author_id} | cm_send_test success")
             #然后阿狸在进行回应
             await msg.reply(cm)
@@ -154,16 +152,16 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             _log.info(f"Au:{msg.author_id} img add | {x3}")
 
         except requester.HTTPRequester.APIRequestFailed as result:
-            await BotLog.APIRequestFailed_Handler("vip_shop", traceback.format_exc(), msg, bot, cm)
+            await BotLog.api_request_failed_handler("vip_shop", traceback.format_exc(), msg, bot, cm)
             VipShopBgDict['bg'][msg.author_id]["background"].remove(x3)  #删掉里面的图片
             _log.error(f"Au:{msg.author_id} | remove({x3})")
         except Exception as result:
-            await BotLog.BaseException_Handler("vip_shop", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("vip_shop", traceback.format_exc(), msg)
 
 
     @bot.command(name="vip-shop-s")
     async def vip_shop_bg_set_s(msg: Message, num: str = "err", *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if num == 'err':
             await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
             return
@@ -183,7 +181,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
                     bg_vip = Image.open(
                         io.BytesIO(await ShopImg.img_requestor(VipShopBgDict['bg'][msg.author_id]["background"][num])))
                 except UnidentifiedImageError as result:
-                    err_str = f"ERR! [{getTime()}] vip_shop_s_imgck\n```\n{result}\n```"
+                    err_str = f"ERR! [{get_time()}] vip_shop_s_imgck\n```\n{result}\n```"
                     await msg.reply(f"图片违规！请重新上传\n{err_str}")
                     await BotVip.replace_illegal_img(msg.author_id, num)  #替换图片
                     _log.exception("Exception occur")
@@ -200,21 +198,21 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upimg.client.send(cm_send_test, cm)
+            await bot_upd_img.client.send(cm_send_test, cm)
             _log.info(f"Au:{msg.author_id} | cm_send_test success")
             #然后阿狸在进行回应
             await msg.reply(cm)
 
             _log.info(f"Au:{msg.author_id} | switch to [{VipShopBgDict['bg'][msg.author_id]['background'][0]}]")
         except requester.HTTPRequester.APIRequestFailed as result:
-            await BotLog.APIRequestFailed_Handler("vip_shop_s", traceback.format_exc(), msg, bot, cm)
+            await BotLog.api_request_failed_handler("vip_shop_s", traceback.format_exc(), msg, bot, cm)
         except Exception as result:
-            await BotLog.BaseException_Handler("vip_shop_s", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("vip_shop_s", traceback.format_exc(), msg)
 
 
     @bot.command(name="vip-shop-d")
     async def vip_shop_bg_set_d(msg: Message, num: str = "err", *arg):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         if num == 'err':
             await msg.reply(f"请提供正确的图片序号！\n当前：`{num}`")
             return
@@ -241,16 +239,16 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
 
             cm = await BotVip.get_vip_shop_bg_cm(msg)
             #先让测试bot把这个卡片发到频道，如果发出去了说明json没有问题
-            await bot_upimg.client.send(cm_send_test, cm)
+            await bot_upd_img.client.send(cm_send_test, cm)
             _log.info(f"Au:{msg.author_id} | cm_send_test success")
             #然后阿狸在进行回应
             await msg.reply(cm)
 
             _log.info(f"Au:{msg.author_id} | delete [{del_img_url}]")
         except requester.HTTPRequester.APIRequestFailed as result:
-            await BotLog.APIRequestFailed_Handler("vip_shop_d", traceback.format_exc(), msg, bot, cm)
+            await BotLog.api_request_failed_handler("vip_shop_d", traceback.format_exc(), msg, bot, cm)
         except Exception as result:
-            await BotLog.BaseException_Handler("vip_shop_d", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("vip_shop_d", traceback.format_exc(), msg)
 
 
     # 判断消息的emoji回应，并记录id
@@ -275,11 +273,9 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
     # 开启一波抽奖
     @bot.command(name='vip-r', aliases=['vip-roll'])
     async def vip_roll(msg: Message, vday: int = 7, vnum: int = 5, rday: float = 1.0):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
-            if msg.author_id != master_id:
-                await msg.reply(f"您没有权限执行本命令")
-                return
+            if not is_admin(msg.author_id): return
             # 设置开始抽奖
             global VipRollDcit
             cm = BotVip.roll_vip_start(vnum, vday, rday)
@@ -295,7 +291,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             }
             _log.info(f"card message send | C:{msg.ctx.channel.id}")
         except:
-            await BotLog.BaseException_Handler("vip-r", traceback.format_exc(), msg)
+            await BotLog.base_exception_handler("vip-r", traceback.format_exc(), msg)
 
 
     @bot.task.add_interval(seconds=80)
@@ -364,11 +360,9 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
     # 给所有vip用户添加时间，避免出现某些错误的时候浪费vip时间
     @bot.command(name='vip-ta')
     async def vip_time_add(msg: Message, vday: int = 1, *arg):
-        BotLog.logMsg(msg)
-        if msg.author_id != master_id:
-            await msg.reply(f"您没有权限执行此命令！")
-            return
+        BotLog.log_msg(msg)
         try:
+            if not is_admin(msg.author_id): return
             global VipUserDict
             # 给所有vip用户上天数
             for vip, vinfo in VipUserDict.items():
@@ -378,7 +372,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             await msg.reply(f"操作完成，已给所有vip用户增加 `{vday}` 天时长")
             _log.info(f"[vip_time_add] update VipUserDict")
         except:
-            err_str = f"ERR! [{getTime()}] vip_time_add\n```\n{traceback.format_exc()}\n```"
+            err_str = f"ERR! [{get_time()}] vip_time_add\n```\n{traceback.format_exc()}\n```"
             await msg.reply(f"{err_str}")
             _log.exception("Exception occur")
 
@@ -405,7 +399,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
                         bg_test = Image.open(io.BytesIO(await ShopImg.img_requestor(vip_bg["background"][i])))
                         i += 1
                     except UnidentifiedImageError as result:
-                        err_str = f"ERR! [{getTime()}] checking [{vip_user}] img\n```\n{result}\n"
+                        err_str = f"ERR! [{get_time()}] checking [{vip_user}] img\n```\n{result}\n"
                         #把被ban的图片替换成默认的图片，打印url便于日后排错
                         err_str += f"[UnidentifiedImageError] url={vip_bg['background'][i]}\n```"
                         c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
@@ -416,7 +410,7 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
                         vip_bg["status"] = False  #需要重新加载图片
                         _log.error(err_str)
                     except Exception as result:
-                        err_str = f"ERR! [{getTime()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
+                        err_str = f"ERR! [{get_time()}] checking[{vip_user}]img\n```\n{traceback.format_exc()}\n```"
                         _log.error(err_str)
                         c.append(Module.Section(Element.Text(err_str, Types.Text.KMD)))
                         cm0.append(c)
@@ -430,22 +424,20 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str,debug_ch:Channel,cm_send_test:Chann
             _log.info(log_str_user)
             _log.info("[BOT.TASK] check_vip_img finished!")
         except Exception as result:
-            err_str = f"ERR! [{getTime()}] check_vip_img\n```\n{traceback.format_exc()}\n```"
+            err_str = f"ERR! [{get_time()}] check_vip_img\n```\n{traceback.format_exc()}\n```"
             _log.exception("Exception occur")
             await bot.client.send(debug_ch, err_str)  # 发送消息到debug频道
 
 
-    #因为这个功能很重要，所以设置成可以用命令调用+定时任务
+    # 因为这个功能很重要，所以设置成可以用命令调用+定时任务
     @bot.task.add_cron(hour=3, minute=0, timezone="Asia/Shanghai")
     async def check_vip_img_task():
+        """检查vip自定义背景图的task"""
         await check_vip_img()
-
-
     @bot.command(name="vip-img")
     async def check_vip_img_cmd(msg: Message, *arg):
-        BotLog.logMsg(msg)
-        if msg.author_id == master_id:
-            await check_vip_img()
-            await msg.reply("背景图片diy检查完成！")
-        else:
-            return await msg.reply("您没有权限执行此命令！")
+        """检查vip自定义背景图的命令"""
+        BotLog.log_msg(msg)
+        if not is_admin(msg.author_id): return
+        await check_vip_img()
+        await msg.reply("背景图片diy检查完成！")

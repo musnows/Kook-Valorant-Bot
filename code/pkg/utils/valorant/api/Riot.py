@@ -6,7 +6,7 @@ from ..EzAuth import X_RIOT_CLIENTVERSION, X_RIOT_CLIENTVPLATFROM, RiotUserToken
 
 # https://github.com/HeyM1ke/ValorantClientAPI
 
-async def fetch_user_gameID(ru: RiotUserToken) -> dict:
+async def fetch_user_game_id(ru: RiotUserToken) -> dict:
     """获取用户游戏id和tag"""
     url = "https://pd.ap.a.pvp.net/name-service/v2/players"
     payload = json.dumps([ru.user_id])

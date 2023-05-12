@@ -7,7 +7,7 @@ from khl.card import Card, CardMessage, Module, Element, Types
 from .file.Files import config,bot,_log
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
-kook_headers = {f'Authorization': f"Bot {config['token']['bot']}"}
+kook_headers = {f'Authorization': f"Bot {config['token']['bot']['token']}"}
 
 
 #################################机器人在玩状态####################################
@@ -30,19 +30,18 @@ async def status_active_music(name: str, singer: str):
             return json.loads(await response.text())
 
 
-# 删除机器人的当前动态
 async def status_delete(d: int):
+    """删除机器人的当前动态"""
     url = kook_base_url + "/api/v3/game/delete-activity"
     params = {"data_type": d}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=params, headers=kook_headers) as response:
             return json.loads(await response.text())
 
-
-# 获取服务器用户数量用于更新（现在已经移植到了另外一个bot上）
-async def guild_userlist(Guild_ID: str = "3566823018281801"):
+async def guild_user_list(guild_id: str = "3566823018281801"):
+    """获取服务器用户数量用于更新（现在已经移植到了另外一个bot上）"""
     url = kook_base_url + "/api/v3/guild/user-list"
-    params = {"guild_id": Guild_ID}
+    params = {"guild_id": guild_id}
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params, headers=kook_headers) as response:
             ret1 = json.loads(await response.text())
@@ -50,8 +49,8 @@ async def guild_userlist(Guild_ID: str = "3566823018281801"):
             return ret1
 
 
-# 获取阿狸加入的服务器数量
 async def guild_list():
+    """获取阿狸加入的服务器数量"""
     url = kook_base_url + "/api/v3/guild/list"
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=kook_headers) as response:
@@ -60,8 +59,8 @@ async def guild_list():
             return ret1
 
 
-# 获取服务器详情
 async def guild_view(Guild_ID: str):
+    """获取服务器详情"""
     url = kook_base_url + "/api/v3/guild/view"
     params = {"guild_id": Guild_ID}
     async with aiohttp.ClientSession() as session:
@@ -71,8 +70,8 @@ async def guild_view(Guild_ID: str):
             return ret1
 
 
-# 上传图片到kook
 async def kook_create_asset(bot_token: str, bg):
+    """上传图片到kook"""
     imgByteArr = io.BytesIO()
     bg.save(imgByteArr, format='PNG')
     imgByte = imgByteArr.getvalue()
@@ -87,8 +86,8 @@ async def kook_create_asset(bot_token: str, bg):
     return res
 
 
-# 下线机器人
 async def bot_offline():
+    """下线机器人"""
     url = kook_base_url + "/api/v3/user/offline"
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=kook_headers) as response:
@@ -96,6 +95,14 @@ async def bot_offline():
             _log.debug(res)
     return res
 
+async def guild_leave(guild_id:str):
+    """离开指定服务器"""
+    url = kook_base_url + "/api/v3/guild/leave"
+    param  = {"guild_id":guild_id}
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, data=param,headers=kook_headers) as response:
+            res = json.loads(await response.text())
+    return res
 
 ##########################################icon##############################################
 

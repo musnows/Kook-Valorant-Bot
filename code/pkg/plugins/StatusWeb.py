@@ -7,6 +7,7 @@ from khl import Bot,Message
 from ..utils.file.Files import BotUserDict,_log
 from ..utils import Gtime
 from ..utils.log import BotLog
+from ..Admin import is_admin
 
 SHOW_DAYS = 31
 """显示最近多少天的数据"""
@@ -26,10 +27,9 @@ def create_web_path():
             os.makedirs(cur)  # 文件夹不存在，创建
             _log.info(f"[plugins] create web path {path}")
 
-def init(bot:Bot,master_id:str):
+def init(bot:Bot):
     """初始化之前，机器人会判断根路径是否存在，不在则创建文件夹
     - bot:Bot
-    - master_id: admin user id
     """
     create_web_path()
     
@@ -43,7 +43,7 @@ def init(bot:Bot,master_id:str):
         # 获取的是初始化时间
         if key == 'init_time':
             for g,ginfo in BotUserDict["guild"]["data"].items():
-                date = Gtime.getDateFromStamp(ginfo[key]) # 获取可读日期
+                date = Gtime.get_date_from_stamp(ginfo[key]) # 获取可读日期
                 # 插入服务器
                 flag = True
                 for i in data_list:
@@ -66,18 +66,18 @@ def init(bot:Bot,master_id:str):
                         break
                 # 没有相同日期的，才新建键值
                 if flag:
-                    data_list.append({"date":date,"category":'user','num':1,'time':Gtime.getTimeStampFromStr(uinfo[key])})
+                    data_list.append({"date":date,"category":'user','num':1,'time':Gtime.get_time_stamp_from_str(uinfo[key])})
         # 如果是used_time，需要处理每日的命令/服务器/用户数量
         elif key == 'used_time':
             for d in BotUserDict['cmd']['data']:# 命令
                 num = BotUserDict['cmd']['data'][d]
-                data_list.append({"date":d,"category":'command','num':num,'time':Gtime.getTimeStampFromStr(d)})
+                data_list.append({"date":d,"category":'command','num':num,'time':Gtime.get_time_stamp_from_str(d)})
             for d in BotUserDict['cmd']['user']:# 用户
                 num = len(BotUserDict['cmd']['user'][d]) # 长度就是用户数量
-                data_list.append({"date":d,"category":'user','num':num,'time':Gtime.getTimeStampFromStr(d)})
+                data_list.append({"date":d,"category":'user','num':num,'time':Gtime.get_time_stamp_from_str(d)})
             for d in BotUserDict['cmd']['guild']:# 服务器
                 num = len(BotUserDict['cmd']['guild'][d])
-                data_list.append({"date":d,"category":'guild','num':num,'time':Gtime.getTimeStampFromStr(d)})
+                data_list.append({"date":d,"category":'guild','num':num,'time':Gtime.get_time_stamp_from_str(d)})
         # 依照日期排序
         data_list = sorted(data_list,key=lambda kv: kv['date'])
         return data_list
@@ -165,9 +165,9 @@ def init(bot:Bot,master_id:str):
 
     @bot.command(name='upd-web',case_sensitive=False)
     async def update_web_cmd(msg:Message):
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
-            if msg.author_id !=master_id:
+            if not is_admin(msg.author_id):
                 return
             await render_ngu_web(True)
             await render_guc_web(True)

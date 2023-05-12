@@ -7,7 +7,7 @@ from ..utils.file.Files import ValBundleList,UserAuthCache, ValSkinList, ValPric
 from ..utils.valorant.api import Assets,Riot
 from ..utils.log.Logging import _log
 from ..utils.log import BotLog
-
+from ..Admin import is_admin
 
 async def update_skins(msg: Message) -> bool:
     """更新本地保存的皮肤"""
@@ -25,7 +25,7 @@ async def update_skins(msg: Message) -> bool:
         return False
 
 
-async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
+async def update_bundle_url(msg: Message, bot_upd_img: Bot) -> bool:
     """更新捆绑包，并将捆绑包的图片上传到kook"""
     try:
         global ValBundleList
@@ -37,8 +37,8 @@ async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
 
         for b in resp['data']:
             flag = 0
-            for local_B in ValBundleList:  #不在
-                if b['uuid'] == local_B['uuid']:  #相同代表存在无需更新
+            for lc_fetch_B in ValBundleList:  #不在
+                if b['uuid'] == lc_fetch_B['uuid']:  #相同代表存在无需更新
                     flag = 1  #找到了，无需更新
                     break
 
@@ -48,7 +48,7 @@ async def update_bundle_url(msg: Message, bot_upimg: Bot) -> bool:
                 bg_bundle_icon.save(imgByteArr, format='PNG')
                 imgByte = imgByteArr.getvalue()
                 _log.info(f"Uploading | {b['displayName']}")
-                bundle_img_src = await bot_upimg.client.create_asset(imgByte) # type: ignore
+                bundle_img_src = await bot_upd_img.client.create_asset(imgByte) # type: ignore
                 _log.info(f"{b['displayName']} | url: {bundle_img_src}")
                 b['displayIcon2'] = bundle_img_src  #修改url
                 ValBundleList.append(b)  #插入
@@ -102,17 +102,16 @@ async def update_agents(msg:Message) -> bool:
 
 ################################################################################################
 
-def init(bot:Bot,bot_upimg:Bot,master_id:str):
+def init(bot:Bot,bot_upd_img:Bot,):
     """
     - bot: main bot
     - bot_upming: bot for upload img
-    - master_id: bot master user_id
     """
-    async def update(msg:Message,bot_upimg:Bot):
+    async def update_data(msg:Message,bot_upd_img:Bot):
         """更新valorant相关资源"""
         if await update_skins(msg):
             await msg.reply(f"成功更新：商店皮肤")
-        if await update_bundle_url(msg, bot_upimg):
+        if await update_bundle_url(msg, bot_upd_img):
             await msg.reply(f"成功更新：捆绑包")
         if await update_agents(msg):
             await msg.reply(f"成功更新：英雄")
@@ -127,14 +126,14 @@ def init(bot:Bot,bot_upimg:Bot,master_id:str):
 
     
     @bot.command(name='update_spb', aliases=['upd'])
-    async def update_skin_price_bundle(msg: Message):
+    async def update_valorant_data_cmd(msg: Message):
         """手动更新商店物品和价格的命令"""
-        BotLog.logMsg(msg)
+        BotLog.log_msg(msg)
         try:
-            if msg.author_id == master_id:
+            if is_admin(msg.author_id):
                 await msg.reply("已收到「upd」命令，开始更新本地资源")
-                await update(msg,bot_upimg)
+                await update_data(msg,bot_upd_img)
         except Exception as result:
-            await BotLog.BaseException_Handler("update_spb",traceback.format_exc(),msg)
+            await BotLog.base_exception_handler("update_spb",traceback.format_exc(),msg)
 
     _log.info("[plugins] load ValFileUpd.py")

@@ -135,7 +135,7 @@ async def get_available_skinlist(name:str):
     Return: [{'skin': [{'displayName': skin['displayName'], 'lv_uuid': skin['levels'][0]['uuid']}], 'price': price}]
     """
     name = zhconv.convert(name, 'zh-tw')  #将名字繁体化
-    sklist = Local.fetch_skin_list_byname(name)
+    sklist = Local.lc_fetch_skin_by_name(name)
     if sklist == []:  #空list代表这个皮肤不在里面
         return []
 
@@ -143,7 +143,7 @@ async def get_available_skinlist(name:str):
     for s in sklist:
         # 查找皮肤价格
         # 因为不是所有搜到的皮肤都有价格，没有价格的皮肤就是商店不刷的
-        res_price = Local.fetch_item_price_bylist(s['lv_uuid'])
+        res_price = Local.lc_fetch_item_price(s['lv_uuid'])
         if res_price != None:  # 有可能出现返回值里面找不到这个皮肤的价格的情况，比如冠军套
             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
             data = {'skin': s, 'price': price}
@@ -155,7 +155,7 @@ async def get_available_skinlist(name:str):
 from asyncio import Lock
 Slock = Lock() # 需要加锁
 Slock_no = 0 # 计数器
-async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
+async def update_shop_cmp(best:dict,worse:dict,platform:str,resetNo = False):
     """update shop rate in leancloud
     Args: best/worse should be: {
       "user_id": "938324311",
@@ -210,11 +210,11 @@ async def update_ShopCmp(best:dict,worse:dict,platform:str,resetNo = False):
             return { "status":True,"info":"update all good"}
     except:
         _log.exception("Exception occur")
-        err = f"ERR! [update_ShopCmp]\n{traceback.format_exc()}"
+        err = f"ERR! [update_shop_cmp]\n{traceback.format_exc()}"
         return { "status":False,"info":err}
 
 # 获取昨日最好/最差用户
-async def get_ShopCmp() -> dict:
+async def get_shop_cmp() -> dict:
     """Return:{
         "status": True/False
         "best":{
@@ -251,7 +251,7 @@ async def get_ShopCmp() -> dict:
     
 
 # 获取可以购买皮肤的相关信息
-async def query_UserCmt(user_id:str):
+async def query_user_cmt(user_id:str):
     """Return
      A list containing the skin evaluated by the user,
     """
@@ -266,7 +266,7 @@ async def query_UserCmt(user_id:str):
         return []
     
 # 更新用户已评价皮肤
-async def update_UserCmt(user_id:str,skin_uuid:str):
+async def update_user_cmt(user_id:str,skin_uuid:str):
     # 初始化为只有当前皮肤uuid的list
     skinList = [ skin_uuid ]
     UserCmt = leancloud.Object.extend('UserCmt')
@@ -301,7 +301,7 @@ async def get_skinlist_rate_text(skinlist:list,user_id:str):
     `√ rate by user_id`,`+ rate by other_user`,`- no one rate`
     """
     # 获取该用户已评价的皮肤列表
-    userCmtList = await query_UserCmt(user_id)
+    userCmtList = await query_user_cmt(user_id)
     i=0
     query = leancloud.Query('UserRate')
     query.equal_to('platform', PLATFORM)
@@ -326,7 +326,7 @@ async def get_skinlist_rate_text(skinlist:list,user_id:str):
     return { "text":text,"sum":len(userCmtList)}
 
 # 获取一个皮肤的评分信息
-async def query_SkinRate(skin_uuid:str):
+async def query_skin_rate(skin_uuid:str):
     """return: {
         "status":True/False,
         "skin_uuid":objlist[0].get('skinUuid'),
@@ -349,7 +349,7 @@ async def query_SkinRate(skin_uuid:str):
     return ret
 
 # 更新数据库中的评价
-async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
+async def update_user_rate(skin_uuid:str,rate_info:dict,user_id:str):
     """Args:
     - rate_info:{
         "name": skin_name,
@@ -383,7 +383,7 @@ async def update_UserRate(skin_uuid:str,rate_info:dict,user_id:str):
 
 
 # 更新皮肤评分
-async def update_SkinRate(skin_uuid:str,skin_name:str,rating:float):
+async def update_skin_rate(skin_uuid:str,skin_name:str,rating:float):
     SkinRate = leancloud.Object.extend('SkinRate')
     query = SkinRate.query
     query.equal_to('skinUuid', skin_uuid)
@@ -402,7 +402,7 @@ async def update_SkinRate(skin_uuid:str,skin_name:str,rating:float):
 
 
 # 删除皮肤评价（违规言论）
-async def remove_UserRate(skin_uuid:str,user_id:str):
+async def remove_user_rate(skin_uuid:str,user_id:str):
     """
     - True: remove success
     - False: skin_uuid or user_id not found
@@ -458,7 +458,7 @@ def get_skinlist_md5(skinlist:list):
     return md5(md5Ret+shaRet) # 两个一起还撞车，买彩票去吧
 
 # 判断皮肤的值是否有缓存
-async def query_ShopCache(skinlist:list):
+async def query_shop_cache(skinlist:list):
     """Args: skinlist with 4 skin_uuid\n
     Info: this def only used by none vip shop img
 
@@ -480,7 +480,7 @@ async def query_ShopCache(skinlist:list):
     return ret
 
 # 缓存皮肤（先判断出来没有再操作）
-async def update_ShopCache(skinlist:list,img_url:str):
+async def update_shop_cache(skinlist:list,img_url:str):
     """md5(skinlist), cache imgurl to leancloud
     """
     md5Ret = get_skinlist_md5(skinlist)

@@ -1,6 +1,10 @@
 from time import time
-from .FileManage import FileManage
+from .FileManage import FileManage,Boolean
 from ..log.Logging import _log
+from ..Gtime import get_time
+
+StartTime = get_time()
+"""机器人启动时间 str"""
 
 # 配置相关
 config = FileManage("./config/config.json", True) 
@@ -63,10 +67,6 @@ VipRollDcit = VipUser['roll']
 """vip 抽奖记录"""
 
 # 缓存相关
-LoginForbidden:bool = False
-"""出现403错误，禁止重登"""
-NightMarketOff:bool = True
-"""夜市是否关闭？False (on,夜市开着) | True (off,夜市关闭)"""
 UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}  
 """api/bot 公用EzAuth对象缓存:
 - api  | `用户账户:riot_user_uuid`
@@ -75,7 +75,7 @@ UserAuthCache = {'api':{},'kook':{},'data':{},'acpw':{},'tfa':{}}
 - acpw | `riot_user_uuid:{'a':账户,'p':密码}`  用于bot中的账户密码存储。只存储在全局变量中，不写入磁盘
 - tfa  | `用户id:EzAuth Obj`  临时使用的缓存
 """
-login_rate_limit = {'limit': False, 'time': time()}
+LoginRateLimit = {'limit': False, 'time': time()}
 """全局的速率限制，如果触发了速率限制的err，则阻止所有用户login
 - {'limit': False, 'time': time()}
 """
@@ -94,7 +94,16 @@ ValItersEmoji = EmojiDict['val_iters_emoji']
 """
 
 # 实例化一个khl的bot，方便其他模组调用
-from khl import Bot
-bot = Bot(token=config['token']['bot'])
+from khl import Bot,Cert
+bot = Bot(token=config['token']['bot']['token'])  # websocket
 """main bot"""
+if not config['token']['bot']['ws']: # webhook
+    _log.info(f"[BOT] using webhook at port {config['token']['bot']['webhook_port']}")
+    bot = Bot(cert=Cert(token=config['token']['bot']['token'],
+                        verify_token=config['token']['bot']['verify_token'],
+                        encrypt_key=config['token']['bot']['encrypt']),
+              port=config['token']['bot']['webhook_port'])
+# 上传图片测试的机器人
+bot_upd_img = Bot(token=config['token']['img_upload_token'])
+"""用来上传图片的bot"""
 _log.info(f"Loading all files") # 走到这里代表所有文件都打开了

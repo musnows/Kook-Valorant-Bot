@@ -10,7 +10,7 @@ import requests
 import zhconv
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from .valorant.api import Local
-from .Gtime import getTime
+from .Gtime import get_time
 from .log.Logging import _log
 
 DRAW_SLEEP_TIME = 0.3
@@ -33,7 +33,7 @@ bg_main_169 = Image.open(io.BytesIO(
 bg_main_11 = Image.open(io.BytesIO(
     requests.get('https://img.kookapp.cn/assets/2022-09/m8o9eCuKHQ0rs0rs.png').content)) 
 """1-1 商店默认背景"""
-bg_window_169_WithOutLogo = Image.open(
+bg_window_169_without_logo = Image.open(
     io.BytesIO(requests.get('https://img.kookapp.cn/assets/2022-10/uFfgpWWlDy0zk0k0.png').content))
 """16-9 图片透明背景框，无水印"""
 bg_window_169 = Image.open(
@@ -304,15 +304,15 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
     - is_169: 是否为16-9的图片画图
     """
     try:
-        res_item = Local.fetch_skin_bylist(skinuuid)  # 从本地文件中查找皮肤信息
+        res_item = Local.lc_fetch_skin(skinuuid)  # 从本地文件中查找皮肤信息
         price = -1 # 价格初始化为-1，代表有错误
         try:
-            res_price = Local.fetch_item_price_bylist(skinuuid)  # 在本地文件中查找皮肤价格
+            res_price = Local.lc_fetch_item_price(skinuuid)  # 在本地文件中查找皮肤价格
             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']  # 取出价格
         except:
             _log.exception(f"Err fetch_price | skin:{skinuuid} ran:{ran} 169:{is_169}")
         # 在本地文件中查找皮肤等级
-        res_iters = Local.fetch_skin_iters_bylist(skinuuid)  
+        res_iters = Local.lc_fetch_skin_iters(skinuuid)  
         # 画单个皮肤的图片
         if is_169:
             img = sm_comp_169(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
@@ -346,7 +346,7 @@ async def get_shop_img_169(list_shop: dict, vp: int, rp: int, bg_img_src="err"):
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
-            err_str = f"ERR! [{getTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
+            err_str = f"ERR! [{get_time()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check")
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
         # 打开成功
@@ -432,7 +432,7 @@ async def get_shop_img_11(list_shop: dict, bg_img_src="err"):
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
-            err_str = f"ERR! [{getTime()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
+            err_str = f"ERR! [{get_time()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check") 
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
         # 打开成功
