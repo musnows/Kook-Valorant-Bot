@@ -15,7 +15,7 @@ from pkg.utils import ShopRate, ShopImg, Help, BotVip
 from pkg.utils.log import BotLog
 from pkg.utils.log.Logging import _log
 from pkg.utils.valorant import Reauth,AuthCache
-from pkg.utils.KookApi import icon_cm, upd_card, get_card,get_card_msg
+from pkg.utils.KookApi import icon_cm, upd_card, get_card,get_card_msg,bot_alive_card
 from pkg.utils.valorant.api import Assets,Riot,Local
 from pkg.utils.valorant.EzAuth import EzAuth, EzAuthExp
 from pkg.utils.Gtime import get_time, get_8am_time_stamp,shop_time_remain,get_time_str_from_stamp,get_date
@@ -30,8 +30,13 @@ from pkg.utils.file.Files import config,bot,bot_upd_img, ApiAuthLog,StartTime
 # 在bot一开机的时候就获取log频道作为全局变量
 debug_ch: Channel
 """发送错误信息的日志频道"""
-cm_send_test: Channel
+cm_test_ch: Channel
 """进行卡片消息发送测试的频道"""
+startup_msg = ""
+"""机器人开机发送的启动消息id。
+- 用于后续更新来创造事件激活replit的机器人，避免repl休眠；
+- 同时也可能看到机器人上一次活动是什么时候，能判断机器人有没有假死
+"""
 NOTIFY_NUM = 3 
 """非vip用户皮肤提醒栏位"""
 RATE_LIMITED_TIME = 180 
@@ -46,17 +51,20 @@ async def botmarket_ping_task():
     headers = {'uuid': 'a87ebe9c-1319-4394-9704-0ad2c70e2567'}
     async with aiohttp.ClientSession() as session:
         await session.post(api, headers=headers)
+    # 更新在线卡片
+    await bot_alive_card(startup_msg,"botmarket")
     _log.info(f"[botmarket] ping at {get_time()}")
 
 @bot.task.add_interval(minutes=5)
 async def save_file_task():
-    """每5分钟保存一次文件"""
+    """每5分钟保存一次所有数据文件"""
     try:
+        await bot_alive_card(startup_msg,"save-file")
         await save_all_file()
     except:
-        err_cur = f"ERR! [{get_time()}] [Save.File.Task]\n```\n{traceback.format_exc()}\n```"
-        _log.exception("ERR in [Save.File.Task]")
-        await bot.client.send(debug_ch, err_cur) # type: ignore
+        _log.exception("ERR in save.file.task")
+        cm = await get_card_msg(f"ERR! [{get_time()}] save.file.task\n```\n{traceback.format_exc()}\n```")
+        await bot.client.send(debug_ch, cm)
 
 
 ########################################  help  ##########################################
@@ -1388,6 +1396,7 @@ async def auto_skin_notify():
 # 早八自动执行
 @bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
 async def auto_skin_notify_task():
+    await bot_alive_card(startup_msg,"notify")
     await auto_skin_notify()
 
 # 手动执行notify task
@@ -1403,15 +1412,19 @@ async def auto_skin_notify_cmd(msg: Message, *arg):
 
 
 @bot.on_startup
-async def loading_cache(bot: Bot):
+async def bot_start_task(bot: Bot):
     """
     - 在阿狸开机的时候自动加载所有保存过的cookie
     - 注册其他命令
     """
     try:
-        global debug_ch, cm_send_test
-        cm_send_test = await bot_upd_img.client.fetch_public_channel(config['channel']["img_upload_ch"])
+        global debug_ch, cm_test_ch, startup_msg
+        cm_test_ch = await bot_upd_img.client.fetch_public_channel(config['channel']["img_upload_ch"])
         debug_ch = await bot.client.fetch_public_channel(config['channel']['debug_ch'])
+        # 获取到频道后，发送一条启动消息，并在后续更新这个消息
+        cm = await get_card_msg(f"[BOT.START] {StartTime}")
+        send_msg = await debug_ch.send(cm)
+        startup_msg = send_msg['msg_id'] # 赋值msgid
         _log.info("[BOT.TASK] fetch_public_channel success")
         # 管理员命令
         Admin.init(bot,bot_upd_img,debug_ch)
@@ -1423,7 +1436,7 @@ async def loading_cache(bot: Bot):
         Match.init(bot,debug_ch)
         GameHelper.init(bot)
         ValFileUpd.init(bot,bot_upd_img)
-        Vip.init(bot,bot_upd_img,debug_ch,cm_send_test)
+        Vip.init(bot,bot_upd_img,debug_ch,cm_test_ch,startup_msg)
         Mission.init(bot,debug_ch)
         StatusWeb.init(bot)
         _log.info("[BOT.TASK] load plugins")
@@ -1463,7 +1476,7 @@ async def loading_cache(bot: Bot):
                     continue
         # 结束任务
         _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
-        _log.info(f"[BOT.TASK] loading user cookie finished")
+        _log.info(f"[BOT.TASK] loading user cookie finish | begin loading api auth")
 
         # api缓存的用户列表
         log_str_success = "[BOT.TASK] api load cookie success  = Au:"

@@ -107,4 +107,4 @@ def init(bot:Bot):
         await dx123(msg)
 
 
-    _log.info("[plugins] load GameHelper")
+    _log.info("[plugins] load GameHelper.py")

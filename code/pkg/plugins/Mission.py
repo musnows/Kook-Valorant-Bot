@@ -101,4 +101,4 @@ def init(bot:Bot,debug_ch:Channel):
         except Exception as result:
             await BotLog.base_exception_handler("mission",traceback.format_exc(),msg)
 
-    _log.info("[plugins] load mission")
+    _log.info("[plugins] load Mission.py")

@@ -97,6 +97,9 @@ def help_develop():
     text += f"「/color-set」发送一个用于设置用户颜色的消息（只能在valorant社区使用）\n"
     text += f"「/color-set-gm 消息id」设置上色功能的监听消息（只能在valorant社区使用）\n"
     text += f"「/tlsd」关闭所有实时翻译的栏位\n"
+    text += f"「/gaming id」1-valorant, 2-LOL\n"
+    text += f"「/singing 歌名 歌手」开始听歌\n"
+    text += f"「/sleeping」停止打游戏1/听歌2"
 
     text += f"\n **Vip管理**\n" 
     text += f"「/vip-a 天数 数量」生成新的vip激活码\n"

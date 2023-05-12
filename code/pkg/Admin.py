@@ -12,7 +12,7 @@ from .utils.log import BotLog
 from .utils.valorant.Reauth import LoginForbidden,NightMarketOff
 from .utils import Gtime,KookApi,ShopRate
 # 画图缓存
-from .utils.ShopImg import weapon_icon_temp_11,weapon_icon_temp_169,skin_level_icon_temp
+from .utils.ShopImg import weapon_icon_temp_11,weapon_icon_temp_169,skin_level_icon_temp,IMG_MEMORY_CACHE
 
 master_id = config['master_id']
 """机器人开发者用户id"""
@@ -48,7 +48,7 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                     Element.Text(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}", Types.Text.KMD))))
                 await msg.reply(cm)
                 res = "webhook"
-                if config['token']['bot']['ws']: # 用的是ws才需要调用
+                if config['kook']['bot']['ws']: # 用的是ws才需要调用
                     res = await KookApi.bot_offline()  # 调用接口下线bot
                 # 打印日志
                 _log.info(f"KILL | bot-off: {res}\n")
@@ -68,11 +68,13 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             c = Card(Module.Header("当前机器人缓存情况"),Module.Context(f"记录于：{Gtime.get_time()}"),Module.Divider())
             text = "EzAuth登录缓存\n```\n"
             text+= f"bot: {len(UserAuthCache['kook'])}\napi: {len(UserAuthCache['api'])}\n```\n"
-            text+= "商店画图缓存\n```\n"
+            text+= "商店画图 内存缓存\n```\n"
             text+= f"皮肤单图  1-1：{len(weapon_icon_temp_11)}\n"
             text+= f"皮肤单图 16-9：{len(weapon_icon_temp_169)}\n"
             text+= f"皮肤等级图：   {len(skin_level_icon_temp)}\n"
             text+= "```"
+            if not IMG_MEMORY_CACHE:
+                text+= "\n当前内存缓存处于关闭状态"
             c.append(Module.Section(Element.Text(text,Types.Text.KMD)))
             cm = CardMessage(c)
             await msg.reply(cm)

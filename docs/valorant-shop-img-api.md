@@ -1,12 +1,17 @@
 ## 欢迎您使用阿狸瓦洛兰特商店Api
 
-> Api展示页 https://val.musnow.top/
->
-> Api根连接 https://val.musnow.top/api/v2/
-
 Api是一个网页链接，能够方便的被用户使用或被开发者调用，以实现特定功能。
 
-和阿狸机器人一样，**此api后台不会打印任何params参数**。只要链接不被攻击，你的账户密码只有你自己使用的时候看得到！很是安全。
+> Api展示页 https://val.musnow.top/
+>
+> ✨在线测试和调用 https://valorant-shop.apifox.cn/
+>
+> Api根连接 https://val.musnow.top/api/v2/
+>
+> Api备用连接 https://val1.musnow.top/api/v2/
+
+
+和阿狸机器人一样，**此api后台不会打印任何params参数**。只要链接不被攻击，你的账户密码只有调用者看得到！保证了隐私不泄露。
 
 > 阿狸帮助频道有一个免费的token，加入帮助频道即可领取；
 >
@@ -21,12 +26,20 @@ Api是一个网页链接，能够方便的被用户使用或被开发者调用�
 | /shop-draw  | 无需登录，提供4个皮肤uuid 返回图片url  | 正常   |
 | /tfa  | 邮箱验证接口，需和`/shop-url`接口配合使用 | 正常   |
 
+## 1.注意事项
 
-## 1.shop-img
+自定义背景图的url请使用国内可以直接访问的图床，如`阿里云OSS/路过图床/白嫖kook的图床`等。否则无法获取到图片链接的内容，api会报错；
 
-查询每日商店的链接如下，调用 `/shop-img` 接口，浏览器会直接跳转图片，适合普通用户快捷查看当日每日商店
+> * 路过图床：https://imgse.com/
+> * kook图床白嫖教程：[点我](https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png)
 
-由于该接口会直接跳转到图片，所以不支持开启了邮箱验证的用户，也不建议开发者调用
+欢迎大家向朋友宣传此Api，感谢支持！
+
+## 2.shop-img
+
+> 该接口和其他接口的最大区别在于，它是一个`一次性`接口，后台不会进行登录信息的cookie缓存，也不支持2fa用户；
+
+查询每日商店的链接如下，GET调用 `/shop-img` 接口，浏览器会直接跳转图片，适合普通用户快捷查看当日每日商店。
 
 ~~~
 https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=密码
@@ -36,7 +49,7 @@ https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=
 
 * 添加第四个参数`&img_src=图片url`，此参数用于自定义背景图
 * 添加第五个参数`&img_ratio=图片比例`，将此参数设置为`1`，代表背景图是 `1-1` 的正方形，最终的成果图也将是正方形；默认比例为 `16-9`
-* 注：如果选择 `1-1` 的返回图，则图中不会带vp和rp剩余
+* 注：如果选择 `1-1` 的返回图，则图中不会带有vp/rp信息
 
 
 若要添加自定义背景图，则链接应该如下
@@ -63,7 +76,7 @@ https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=
 
 <img src="../screenshot/val_api_img1.png" weight="300px" hight ="300px" alt="1-1-img-result">
 
-在参数中添加url参数，当其为1的时候，不会直接进行303跳转，而是返回包含图片url的json字符串。
+在参数中添加url参数，当其为0的时候，不会直接进行303跳转，而是返回包含图片url的json字符串。
 
 ~~~json
 {
@@ -73,16 +86,6 @@ https://val.musnow.top/api/v2/shop-img?token=API的密钥&account=账户&passwd=
 }
 ~~~
 
-shop-img接口和其他接口的最大区别在于，它是一个`一次性`接口，后台不会进行登录信息的缓存，也不支持2fa用户
-
-## 2.注意事项
-
-自定义背景图的url请使用国内可以直接访问的图床，如`阿里云OSS/路过图床/白嫖kook的图床`等。否则无法获取到图片链接的内容，api会报错；
-
-> * 路过图床：https://imgse.com/
-> * kook图床白嫖教程：[点我](https://img.kookapp.cn/assets/2022-12/nICYcewY8a0u00yt.png)
-
-欢迎大家向朋友宣传此Api，但请不要恶意连续多次调用
 
 ## 3.开发者接口
 
@@ -251,10 +254,10 @@ https://val.musnow.top/api/v2/tfa
 {
   "SkinsPanelLayout":{
     "SingleItemOffers":[
-       "4875e120-4d7d-aa2a-71c5-c0851c4af00d",
-       "5ac106cd-45ef-a26f-2058-f382f20c64db",
-       "c7695ce7-4fc9-1c79-64b3-8c8f9e21571c",
-       "f35f6e13-4b7b-da38-c0de-5c91fffd584b"
+        "aeb0ea2e-4f50-6b34-27b0-f2a755d27f6a",
+        "a88a4c80-4913-a111-0fba-878adddd381a",
+        "6e37a33a-416e-fcc0-ceb8-7784e18fbfe9",
+        "708abbc6-4579-4452-4293-07ba45e78979"
     ],
     "SingleItemOffersRemainingDurationInSeconds":60193
   }

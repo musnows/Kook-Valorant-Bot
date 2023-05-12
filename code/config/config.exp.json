@@ -1,5 +1,5 @@
 {
-  "token": {
+  "kook": {
     "bot": {
       "token": "bot webhook/websocket token",
       "verify_token": "webhook verify token",
@@ -17,6 +17,12 @@
     "debug_ch": "发送错误日志的频道",
     "img_upload_ch": "用来测试vip商店图片的频道"
   },
+  "cache": {
+    "shop_img":{
+      "memory":false,
+      "storage":true
+    }
+  },
   "lsky": {
     "url": "lsky图床的url（该功能未启用，可留空）",
     "token": "lsky图床的token（该功能未启用，可留空）"
@@ -28,6 +34,5 @@
     "user_name": "数据库内置用户id",
     "user_pwd": "数据库内置用户密码"
   },
-  "no": 1000,
   "platform": "kook"
 }

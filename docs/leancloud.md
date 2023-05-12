@@ -59,7 +59,7 @@
 
 建议在本地维护一个当天（8am之后）的用户最好/最差商店信息，并在次日8am更新到数据库。数据库中维护的是**昨日商店**的最高分/最低分。
 
-由于leancloud的结构化数据存储并不是[线程安全](https://docs.leancloud.cn/sdk/storage/guide/python/#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)的，为了避免多个项目同时在8am访问并更新ShopCmp，请调用 [api/shop-cmp](valorant-shop-img-api.md) 接口进行更新
+由于leancloud的结构化数据存储并不是[线程安全](https://docs.leancloud.cn/sdk/storage/guide/python/#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)的，为了避免多个项目同时在8am访问并更新ShopCmp，建议调用 [api/shop-cmp](valorant-shop-img-api.md) 接口进行更新
 
 ## 4.UserCmt
 

@@ -254,3 +254,5 @@ def init(bot:Bot):
     async def translation_off(msg: Message):
         BotLog.log_msg(msg)
         await tl_close(msg)
+
+    _log.info("[plugins] load Transalte.py")

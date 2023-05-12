@@ -4,10 +4,11 @@ import io
 from khl import ChannelPrivacyTypes
 from khl.card import Card, CardMessage, Module, Element, Types
 
-from .file.Files import config,bot,_log
+from .file.Files import config,bot,_log,StartTime
+from .Gtime import get_time
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
-kook_headers = {f'Authorization': f"Bot {config['token']['bot']['token']}"}
+kook_headers = {f'Authorization': f"Bot {config['kook']['bot']['token']}"}
 
 
 #################################机器人在玩状态####################################
@@ -31,7 +32,7 @@ async def status_active_music(name: str, singer: str):
 
 
 async def status_delete(d: int):
-    """删除机器人的当前动态"""
+    """删除机器人的当前动态 停止打游戏1/听歌2"""
     url = kook_base_url + "/api/v3/game/delete-activity"
     params = {"data_type": d}
     async with aiohttp.ClientSession() as session:
@@ -180,3 +181,13 @@ async def get_card_msg(text: str, sub_text='e', img_url='e', card_color='#fb4b57
     cm = CardMessage()
     cm.append(await get_card(text,sub_text,img_url,card_color,img_sz))
     return cm
+
+async def bot_alive_card(msg_id:str,text=""):
+    """更新机器人在线时间卡片"""
+    try:
+        cur_time = get_time()
+        cm = await get_card_msg(f"[BOT.START] {StartTime}\n[UPDATE] {cur_time} {text}")
+        await upd_card(msg_id,cm)
+        _log.info(f"update bot_alive_card at {cur_time} {text}")
+    except:
+        _log.exception(f"Err update msg:{msg_id}")
