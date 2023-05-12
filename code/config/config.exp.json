@@ -1,5 +1,5 @@
 {
-  "token": {
+  "kook": {
     "bot": {
       "token": "bot webhook/websocket token",
       "verify_token": "webhook verify token",
@@ -28,6 +28,5 @@
     "user_name": "数据库内置用户id",
     "user_pwd": "数据库内置用户密码"
   },
-  "no": 1000,
   "platform": "kook"
 }

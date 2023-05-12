@@ -14,7 +14,7 @@ from ..valorant.EzAuth import EzAuthExp,EzAuth
 
 # bot的配置文件
 from ..file.Files import config,UserAuthCache,AfdWebhook,_log
-api_bot_token = config['token']['api_bot_token']
+api_bot_token = config['kook']['api_bot_token']
 """用来给kook上传文件的bot token"""
 img_bak_169 = 'https://img.kookapp.cn/assets/2022-10/KcN5YoR5hC0zk0k0.jpg'
 """默认的16-9背景图"""

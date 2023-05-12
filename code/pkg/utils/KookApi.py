@@ -8,7 +8,7 @@ from .file.Files import config,bot,_log,StartTime
 from .Gtime import get_time
 # kook的base_url和headers
 kook_base_url = "https://www.kookapp.cn"
-kook_headers = {f'Authorization': f"Bot {config['token']['bot']['token']}"}
+kook_headers = {f'Authorization': f"Bot {config['kook']['bot']['token']}"}
 
 
 #################################机器人在玩状态####################################
