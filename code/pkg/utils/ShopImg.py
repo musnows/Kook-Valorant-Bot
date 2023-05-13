@@ -78,22 +78,24 @@ async def img_requestor(img_url:str):
         async with session.get(img_url) as r:
             return await r.read()
 
-async def get_img_ratio(img:Union[Image.Image,str]):
+async def get_img_ratio(img:Union[Image.Image,str]) -> tuple[int,Image.Image]:
     """判断图片比例是否为16-9或1-1
-    - 169
-    - 11
-    - 0 代表错误
+    - retrun: (status_code,Image)
+    - status code:
+        - 169
+        - 11
+        - 0 err
     """
     # 如果是str，认为是url则请求
     if isinstance(img,str):
-        if 'http' not in img: return 0 # 不是正确的url
+        if 'http' not in img: return (0,Image.Image()) # 不是正确的url
         img = Image.open(io.BytesIO(await img_requestor(img)))
     # 开始判断
     w, h = img.size
     _log.info(f"img_ratio | w:{w} h:{h}")
     # 长/宽 - 1 的绝对值小于0.1,认为是1-1的图片
     if abs(w/h - 1) <= 0.1:
-        return 11
+        return (11,img)
     # 走到这里认为是16-9类型的图片
     if h > w: # 高度大于宽度
         img = img.rotate(90) # 反转90度
@@ -102,9 +104,9 @@ async def get_img_ratio(img:Union[Image.Image,str]):
     # 判断是否为16-9的图片
     ratio_16_9 = 16/9
     if abs(w/h - ratio_16_9) <= 0.2:
-        return 169
+        return (169,img)
     # 其他
-    return 0
+    return (0,img)
 
 def bg_comp(bg:Image.Image, img:Image.Image, x:int, y:int):
     """往底图的指定位置粘贴单个皮肤的图片"""
@@ -365,7 +367,7 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
         skin_comp_err_handler(ran,is_169)
 
 
-async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src="err"):
+async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src:Union[str,Image.Image]="e"):
     """获取16比9的每日商店的图片 
     
     args:
@@ -377,19 +379,21 @@ async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src="err"):
      - {"status":True,"value":bg}
     """
     bg_img = bg_main_169  # 默认的带框底图
-    # 有自定义背景图，背景图缩放后保存
-    if bg_img_src != "err":
+    # 有自定义背景图，且为str，背景图缩放后保存
+    if bg_img_src != "e" and isinstance(bg_img_src,str):
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
             err_str = f"ERR! [{get_time()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check")
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
-        # 打开成功
-        bg_img = resize_standard(1280, 720, bg_img)  #缩放到720p
-        bg_img = bg_img.convert('RGBA')
-        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-        bg_img = Image.alpha_composite(bg_img, bg_window_169)  #把框粘贴到自定义背景图上
+    elif bg_img_src != "e": 
+        bg_img = bg_img_src
+    # 打开成功 或 参数本来就是Image
+    bg_img = resize_standard(1280, 720, bg_img)  # 缩放到720p
+    bg_img = bg_img.convert('RGBA')
+    # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+    bg_img = Image.alpha_composite(bg_img, bg_window_169)  # 把框粘贴到自定义背景图上
     # 两种情况都需要把背景图图片加载到bg中
     bg = copy.deepcopy(bg_img)
     # 开始画图
@@ -452,7 +456,7 @@ async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src="err"):
     return {"status": True, "value": bg}
 
 
-async def get_shop_img_11(list_shop: list, bg_img_src="err"):
+async def get_shop_img_11(list_shop: list, bg_img_src:Union[str,Image.Image]="e"):
     """ 1-1商店画图
     
     args:
@@ -465,18 +469,20 @@ async def get_shop_img_11(list_shop: list, bg_img_src="err"):
     """
     bg_img = bg_main_11
     # 有自定义背景图，背景图缩放后保存
-    if bg_img_src != "err":
+    if bg_img_src != "e" and isinstance(bg_img_src,str):
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
             err_str = f"ERR! [{get_time()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check") 
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
-        # 打开成功
-        bg_img = resize_standard(1000, 1000, bg_img)  #缩放到1000*1000 必须有，否则报错images do not match
-        bg_img = bg_img.convert('RGBA')
-        # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
-        bg_img = Image.alpha_composite(bg_img, bg_window_11)  #把框粘贴到自定义背景图上
+    elif bg_img_src !="e":
+        bg_img = bg_img_src
+    # 打开成功
+    bg_img = resize_standard(1000, 1000, bg_img)  #缩放到1000*1000 必须有，否则报错images do not match
+    bg_img = bg_img.convert('RGBA')
+    # alpha_composite才能处理透明的png。参数1是底图，参数2是需要粘贴的图片
+    bg_img = Image.alpha_composite(bg_img, bg_window_11)  #把框粘贴到自定义背景图上
     # 两种情况都需要把背景图图片加载到bg中
     bg = copy.deepcopy(bg_img)
     # 开始画图,初始化变量

@@ -30,12 +30,13 @@ async def base_img_request(params, list_shop:list, vp1=0, rp1=0):
     # 判断背景图比例
     if 'img_src' in params and 'http' in params['img_src']:
         img_src = params['img_src'] # 使用自定义背景的url
-        ret = await ShopImg.get_img_ratio(img_src)
-        _log.info(f"img_src ratio: {ret} | {img_src}")
+        img_ratio_ret = await ShopImg.get_img_ratio(img_src)
+        _log.info(f"img_src ratio: {img_ratio_ret[0]} | {img_src}")
+        img_src = img_ratio_ret[1] # 赋值为图片
         # 判断图片比例
-        if ret == 11:
+        if img_ratio_ret[0] == 11:
             isimgRatio169 = False
-        elif ret == 169:
+        elif img_ratio_ret[0] == 169:
             pass # 默认已经是True了
         else:# 其他，认为错误
             return {"code":200,"message":"img_url图片比例不符合要求，请传入16-9或1-1的图片",
