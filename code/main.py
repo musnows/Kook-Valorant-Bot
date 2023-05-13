@@ -1427,7 +1427,7 @@ async def bot_start_task(bot: Bot):
         startup_msg = send_msg['msg_id'] # 赋值msgid
         _log.info("[BOT.TASK] fetch_public_channel success")
         # 管理员命令
-        Admin.init(bot,bot_upd_img,debug_ch)
+        Admin.init(bot,bot_upd_img,debug_ch,startup_msg)
         # 注册其他命令
         Funny.init(bot,debug_ch)
         GrantRoles.init(bot)

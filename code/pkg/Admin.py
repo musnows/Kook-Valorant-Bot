@@ -23,13 +23,12 @@ def is_admin(user_id:str):
     """是管理员返回True"""
     return user_id == master_id
 
-def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
+def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,startup_msg:str = ""):
     """Admin command
     - bot: main bot
     - bot_upd_img: bot for img upload
     - debug_ch: channel obj
-    - LoginForbidden: global value from .utils.file.Files
-    - NightMarketOff: global value from .utils.file.Files
+    - startup_msg: msg_id
     """
 
     @bot.command(name='kill',case_sensitive=False)
@@ -44,8 +43,8 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             if isinstance(msg,PrivateMessage) or f"(met){cur_bot.id}(met)" in at_text:
                 # 保存所有文件
                 await save_all_file(False)
-                cm = CardMessage(Card(Module.Section(
-                    Element.Text(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}", Types.Text.KMD))))
+                await KookApi.bot_alive_card(startup_msg,"!KILL!") # 更新启动消息
+                cm = await KookApi.get_card_msg(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}")
                 await msg.reply(cm)
                 res = "webhook"
                 if config['kook']['bot']['ws']: # 用的是ws才需要调用
