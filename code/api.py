@@ -61,8 +61,8 @@ async def get_shop_img(request:web_request.Request):
         params = request.rel_url.query
         ret = await ApiHandler.login_request(request,"GET")
         if ret['code'] == 0:
-            # 如果url不在，或者值不为0，则303跳转图片
-            if 'url' not in params or str(params['url']) != '0':
+            # 如果url不在，或者值不为1，则303跳转图片
+            if 'url' not in params or str(params['url']) != '1':
                 return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
             else:
                 return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
