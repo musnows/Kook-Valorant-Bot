@@ -534,8 +534,8 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
         # 5.1.2 本地缓存路径不存在，或者缓存过期
         elif is_vip:
             play_currency = await Riot.fetch_vp_rp_dict(riotUser)  # 获取用户的vp和rp
-            # 如果没有设置背景图，那就设置为err
-            background_img = ('err' if msg.author_id not in VipShopBgDict['bg'] else
+            # 如果没有设置背景图，那就设置为空
+            background_img = ('' if msg.author_id not in VipShopBgDict['bg'] else
                               VipShopBgDict['bg'][msg.author_id]["background"][0])
             img_ret = await ShopImg.get_shop_img_169(list_shop,
                                                      vp=play_currency['vp'],
@@ -1264,7 +1264,7 @@ async def auto_skin_notify():
                         # 获取用户的vp和rp
                         play_currency = await Riot.fetch_vp_rp_dict(riotUser) 
                         # 设置用户背景图，如果在则用，否则返回err
-                        background_img = ('err' if vip not in VipShopBgDict['bg'] else
+                        background_img = ('' if vip not in VipShopBgDict['bg'] else
                                             VipShopBgDict['bg'][vip]["background"][0])
                         # 开始画图
                         img_ret = await ShopImg.get_shop_img_169(list_shop,

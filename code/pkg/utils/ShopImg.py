@@ -72,7 +72,7 @@ standard_level_icon_position = (int(350 * standard_length / 1000), int(120 * sta
 
 async def img_requestor(img_url:str):
     """图片获取器"""
-    if 'http' not in img_url:
+    if img_url and 'http' not in img_url:
         raise Exception(f"http not in img_url: {img_url}")
     async with aiohttp.ClientSession() as session:
         async with session.get(img_url) as r:
@@ -367,7 +367,7 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
         skin_comp_err_handler(ran,is_169)
 
 
-async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src:Union[str,Image.Image]="e"):
+async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src:Union[str,Image.Image]=""):
     """获取16比9的每日商店的图片 
     
     args:
@@ -379,16 +379,23 @@ async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src:Union[s
      - {"status":True,"value":bg}
     """
     bg_img = bg_main_169  # 默认的带框底图
-    # 有自定义背景图，且为str，背景图缩放后保存
-    if bg_img_src != "e" and isinstance(bg_img_src,str):
+    # 1为空用默认
+    if bg_img_src == "":
+        pass 
+    # 2有自定义背景图，且为str，请求背景图。
+    elif isinstance(bg_img_src,str) and 'http' in bg_img_src:
         try:  #打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
             err_str = f"ERR! [{get_time()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
             _log.exception("Exception in bg_img check")
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
-    elif bg_img_src != "e": 
+    # 3是图片类型直接用
+    elif isinstance(bg_img_src,Image.Image): 
         bg_img = bg_img_src
+    # 4其他情况也用默认
+    else:
+        pass
     # 打开成功 或 参数本来就是Image
     bg_img = resize_standard(1280, 720, bg_img)  # 缩放到720p
     bg_img = bg_img.convert('RGBA')
@@ -456,7 +463,7 @@ async def get_shop_img_169(list_shop: list, vp: int, rp: int, bg_img_src:Union[s
     return {"status": True, "value": bg}
 
 
-async def get_shop_img_11(list_shop: list, bg_img_src:Union[str,Image.Image]="e"):
+async def get_shop_img_11(list_shop: list, bg_img_src:Union[str,Image.Image]=""):
     """ 1-1商店画图
     
     args:
@@ -468,16 +475,23 @@ async def get_shop_img_11(list_shop: list, bg_img_src:Union[str,Image.Image]="e"
      - {"status":True,"value":bg}
     """
     bg_img = bg_main_11
-    # 有自定义背景图，背景图缩放后保存
-    if bg_img_src != "e" and isinstance(bg_img_src,str):
-        try:  #打开图片进行测试
+    # 1为空用默认
+    if bg_img_src == "":
+        pass 
+    # 2有自定义背景图，且为str，请求背景图。
+    elif isinstance(bg_img_src,str) and 'http' in bg_img_src:
+        try:  # 打开图片进行测试
             bg_img = Image.open(io.BytesIO(await img_requestor(bg_img_src)))
         except UnidentifiedImageError as result:
             err_str = f"ERR! [{get_time()}] get_shop_img_169 bg_img check\n```\n{result}\n```"
-            _log.exception("Exception in bg_img check") 
+            _log.exception("Exception in bg_img check")
             return {"status": False, "value": f"当前使用的图片无法获取！请重新上传您的背景图\n{err_str}"}
-    elif bg_img_src !="e":
+    # 3是图片类型直接用
+    elif isinstance(bg_img_src,Image.Image): 
         bg_img = bg_img_src
+    # 4其他情况也用默认
+    else:
+        pass
     # 打开成功
     bg_img = resize_standard(1000, 1000, bg_img)  #缩放到1000*1000 必须有，否则报错images do not match
     bg_img = bg_img.convert('RGBA')
