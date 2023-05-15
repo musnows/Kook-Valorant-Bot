@@ -219,9 +219,31 @@ async def aifadian_webhook(request:web_request.Request):
 
 # 机器人加入的服务器/命令总数等等信息
 from pkg.utils.log.BotLog import log_bot_list
-@routes.get('/bot-log')
+WEB_ROOT = "./web/ahri"
+async def html_response(path:str):
+    try:
+        with open(f'{WEB_ROOT}{path}','r') as f:
+            return web.Response(body=f.read(),content_type='text/html')
+    except:
+        _log.exception(f"Exception in /bot | {path}")
+        return web.Response(status=503)
+
+@routes.get('/bot')
+async def bot_log_html1(request:web_request.Request):
+    _log.info(f"request | /bot")
+    return await html_response("/index.html")
+@routes.get('/bot/gu')
+async def bot_log_html2(request:web_request.Request):
+    _log.info(f"request | /bot")
+    return await html_response("/gu/index.html")
+@routes.get('/bot/ngu')
+async def bot_log_html3(request:web_request.Request):
+    _log.info(f"request | /bot")
+    return await html_response("/ngu/index.html")
+# 机器人命令使用情况json
+@routes.get('/bot/log')
 async def bot_log_get(request:web_request.Request):
-    _log.info(f"request | /bot-log")
+    _log.info(f"request | /bot/log")
     try:
         ret_dict = await log_bot_list(log_img_draw=False) # 不画图
         ret = {
@@ -233,7 +255,7 @@ async def bot_log_get(request:web_request.Request):
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                     content_type='application/json')
     except:
-        _log.exception("Exception in /afd")
+        _log.exception("Exception in /bot/log")
         return web.Response(status=503)
 
 
