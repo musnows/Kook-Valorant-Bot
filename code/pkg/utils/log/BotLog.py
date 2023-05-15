@@ -1,7 +1,7 @@
 import json
 import traceback
 from copy import deepcopy
-from khl import Message, PrivateMessage, Bot
+from khl import Message, PrivateMessage, Bot,requester
 from khl.card import Card, CardMessage, Element, Module, Types
 from PIL import Image, ImageDraw, ImageFont
 
@@ -146,7 +146,7 @@ async def log_bot_img() -> None:
 
 
 # bot用户记录dict处理
-async def log_bot_list() -> FileManage:
+async def log_bot_list(log_img_draw=True) -> FileManage:
     global BotUserDict
     # 加入的服务器数量，api获取
     Glist = await guild_list()
@@ -171,8 +171,9 @@ async def log_bot_list() -> FileManage:
             BotUserDict['guild']['data'][gu]['name'] = Gret['data']['name']
         else:
             continue
-    # 保存图片和文件
-    await log_bot_img()
+    # 画新图片
+    if log_img_draw:
+        await log_bot_img()
     _log.info("file handling finish, return BotUserDict")
     return BotUserDict
 
@@ -197,7 +198,12 @@ async def log_bot_list_text(LogDict: dict|FileManage,bot:Bot) -> str:
             if len(text) >= 4900:
                 text+= f"字数限制，省略后续 {len(LogDict['guild']['data']) - i} 个服务器"
                 break
-        except:
+        except Exception as result:
+            # api调用错误，403是机器人不在服务器，4000是服务器不存在
+            if "guild/view' failed with" in str(result):
+                _log.warning(f"err ouccur | g:{gu} | {str(result)}")
+                continue
+            # 其他错误
             _log.exception(f"err ouccur | g:{gu}")
             continue
     return text

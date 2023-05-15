@@ -223,7 +223,7 @@ from pkg.utils.log.BotLog import log_bot_list
 async def bot_log_get(request:web_request.Request):
     _log.info(f"request | /bot-log")
     try:
-        ret_dict = await log_bot_list()
+        ret_dict = await log_bot_list(log_img_draw=False) # 不画图
         ret = {
             "guild_total":ret_dict["guild"]["guild_total"],
             "guild_active":ret_dict["guild"]["guild_active"],
