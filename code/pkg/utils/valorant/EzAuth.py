@@ -136,7 +136,7 @@ class EzAuth:
         """Authenticate using username and password.\n
         if username & password empty, using cookie reauth\n
         Return: 
-         - {"status":True,"auth":self,"2fa":self.is2fa}
+         - {"status":True,"auth":self,"2fa_status":self.is2fa}
          - {"status":False,"auth":self,"2fa_status":self.is2fa}
          - if False, using email_verify() to send verify code
         """

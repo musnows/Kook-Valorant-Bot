@@ -188,8 +188,12 @@ async def login_request(request:web_request.Request,method = "GET"):
         # 缓存
         await AuthCache.cache_auth_object('api',account,auth)
         # 没有成功，是2fa用户，需要执行/tfa
-        if not resw['status']:
+        if not resw['status'] and resw['2fa_status']:
+            _log.info(f"/login return | waiting for post /tfa")
             return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
+        else:
+            _log.info(f"/login return | unkown err")
+            return {'code': 200, 'message': "unkown err", 'info': '执行authorize函数时出现了未知错误'}
         
     except EzAuthExp.RatelimitError as result:
         _log.exception(f"Api login | RatelimitError")

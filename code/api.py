@@ -154,6 +154,7 @@ async def post_shop(request:web_request.Request):
                             content_type='application/json',status=200)
         # 画图请求，不需要检测token速率
         ret = await ApiHandler.shop_get_request(params,params['account'])
+        _log.info(f"/shop return | {ret['code']} | {ret['message']}")
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
