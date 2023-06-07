@@ -191,33 +191,32 @@ async def login_request(request:web_request.Request,method = "GET"):
         if not resw['status'] and resw['2fa_status']:
             _log.info(f"/login return | waiting for post /tfa")
             return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
-        else:
+        elif not resw['status']: # 未知错误
             _log.info(f"/login return | unkown err")
             return {'code': 200, 'message': "unkown err", 'info': '执行authorize函数时出现了未知错误'}
-        
+        else: # status为真，代表不是2fa用户，且登陆成功
+            _log.info(f"Api login | user auth success")
+            # 如果是GET方法，直接调用获取商店的操作
+            if method == "GET": # 只有 /shop-img 接口是get的
+                _log.debug(f"Api login | enter def shop_get_request")
+                return await shop_get_request(params,account)
+            # 不是GET，返回用户信息
+            return {
+                'code': 0, 
+                'message': "auth success", 
+                'info': '登录成功！',
+                "user":{
+                    "uuid": auth.user_id,
+                    "name": auth.Name,
+                    "tag": auth.Tag,
+                    "region": auth.Region
+                }
+            }
+
     except EzAuthExp.RatelimitError as result:
         _log.exception(f"Api login | RatelimitError")
         return {'code': 200, 'message': "EzAuthExp.RiotRatelimitError", 'info': 'riot登录api超速，请稍后重试'}
-
-    # 走到这里，代表不是2fa用户，且登陆成功
-    _log.info(f"Api login | user auth success")
-    # 如果是GET方法，直接调用获取商店的操作
-    if method == "GET": # /shop-img 接口是get的
-        _log.debug(f"Api login | enter def shop_get_request")
-        return await shop_get_request(params,account)
-    # 返回用户信息
-    return {
-        'code': 0, 
-        'message': "auth success", 
-        'info': '登录成功！',
-        "user":{
-            "uuid": auth.user_id,
-            "name": auth.Name,
-            "tag": auth.Tag,
-            "region": auth.Region
-        }
-    }
-
+    
 
 # 邮箱验证的post
 async def tfa_code_requeset(request:web_request.Request):
