@@ -151,7 +151,7 @@ async def check_reauth(def_name: str,
         err_str = f"Au:{kook_user_id} | aiohttp ERR!\n```\n{traceback.format_exc()}\n```\n"
         err_str = client_exceptions_handler(str(result),err_str)
         _log.error(err_str)
-        await bot.client.send(debug_ch, err_str)
+        await debug_ch.send(await KookApi.get_card_msg(err_str))
         return False
     # 用户在EzAuth初始化完毕之前调用了其他命令
     except EzAuthExp.InitNotFinishError as result:
@@ -163,5 +163,5 @@ async def check_reauth(def_name: str,
             return True
         else:
             _log.exception("Unkown Exception occur")
-            await bot.client.send(debug_ch, f"[check_reauth] Unkown ERR!\n{traceback.format_exc()}")
+            await debug_ch.send(await KookApi.get_card_msg(f"[check_reauth] Unkown ERR!\n```\n{traceback.format_exc()}\n```\n"))
             return False

@@ -1,6 +1,6 @@
 import json
 import traceback
-from aiohttp import web
+from aiohttp import web, web_request
 from pkg.utils.Gtime import get_time
 from pkg.utils.api import ApiHandler
 from pkg.utils.log.Logging import _log
@@ -11,7 +11,7 @@ routes = web.RouteTableDef()
 
 # 基础返回
 @routes.get('/')
-async def hello_world(request):  # put application's code here
+async def hello_world(request:web_request.Request):  # put application's code here
     _log.info(f"request | root-url")
     return web.Response(body=json.dumps(
         {
@@ -30,7 +30,7 @@ async def hello_world(request):  # put application's code here
 
 # 提供4个皮肤uuid，返回图片
 @routes.get('/shop-draw')
-async def get_shop_draw(request):
+async def get_shop_draw(request:web_request.Request):
     _log.info(f"request | /shop-draw")
     try:
         ret = await ApiHandler.img_draw_request(request)
@@ -55,14 +55,14 @@ async def get_shop_draw(request):
 
 # 直接跳转图片
 @routes.get('/shop-img')
-async def get_shop_img(request):
+async def get_shop_img(request:web_request.Request):
     _log.info(f"request | /shop-img")
     try:
         params = request.rel_url.query
         ret = await ApiHandler.login_request(request,"GET")
         if ret['code'] == 0:
-            # 如果url不在，或者值不为0，则303跳转图片
-            if 'url' not in params or str(params['url']) != '0':
+            # 如果url不在，或者值不为1，则303跳转图片
+            if 'url' not in params or str(params['url']) != '1':
                 return web.Response(headers={'Location': ret['message']}, status=303)  # 303是直接跳转到图片
             else:
                 return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
@@ -89,7 +89,7 @@ async def get_shop_img(request):
 
 # 登录接口
 @routes.post('/login')
-async def post_login(request):
+async def post_login(request:web_request.Request):
     _log.info(f"request | /login")
     try:
         ret = await ApiHandler.login_request(request,"POST")
@@ -113,7 +113,7 @@ async def post_login(request):
 
 # 邮箱验证登录
 @routes.post('/tfa')
-async def post_tfa_code(request):
+async def post_tfa_code(request:web_request.Request):
     _log.info(f"request | /tfa")
     try:
         ret = await ApiHandler.tfa_code_requeset(request)
@@ -136,7 +136,7 @@ async def post_tfa_code(request):
                             content_type='application/json')
     
 @routes.post('/shop')
-async def post_shop(request):
+async def post_shop(request:web_request.Request):
     _log.info(f"request | /shop")
     try:
         body = await request.content.read()
@@ -154,6 +154,7 @@ async def post_shop(request):
                             content_type='application/json',status=200)
         # 画图请求，不需要检测token速率
         ret = await ApiHandler.shop_get_request(params,params['account'])
+        _log.info(f"/shop return | {ret['code']} | {ret['message']}")
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                             content_type='application/json',status=200)
     except:
@@ -174,7 +175,7 @@ async def post_shop(request):
 
 # 用于控制db中ShopCmp的更新
 @routes.post('/shop-cmp')
-async def post_shop_cmp(request):
+async def post_shop_cmp(request:web_request.Request):
     _log.info(f"request | /shop-cmp")
     try:
         ret = await ApiHandler.shop_cmp_request(request)
@@ -201,7 +202,7 @@ async def post_shop_cmp(request):
 # 爱发电的wh
 from pkg.utils.file.Files import bot
 @routes.post('/afd')
-async def aifadian_webhook(request):
+async def aifadian_webhook(request:web_request.Request):
     _log.info(f"request | /afd")
     try:
         ret = await ApiHandler.afd_request(request, bot)
@@ -219,11 +220,33 @@ async def aifadian_webhook(request):
 
 # 机器人加入的服务器/命令总数等等信息
 from pkg.utils.log.BotLog import log_bot_list
-@routes.get('/bot-log')
-async def bot_log_get(request):
-    _log.info(f"request | /bot-log")
+WEB_ROOT = "./web/ahri"
+async def html_response(path:str):
     try:
-        ret_dict = await log_bot_list()
+        with open(f'{WEB_ROOT}{path}','r') as f:
+            return web.Response(body=f.read(),content_type='text/html')
+    except:
+        _log.exception(f"Exception in /bot | {path}")
+        return web.Response(status=503)
+
+@routes.get('/bot')
+async def bot_log_html1(request:web_request.Request):
+    _log.info(f"request | /bot")
+    return await html_response("/index.html")
+@routes.get('/bot/gu')
+async def bot_log_html2(request:web_request.Request):
+    _log.info(f"request | /bot")
+    return await html_response("/gu/index.html")
+@routes.get('/bot/ngu')
+async def bot_log_html3(request:web_request.Request):
+    _log.info(f"request | /bot")
+    return await html_response("/ngu/index.html")
+# 机器人命令使用情况json
+@routes.get('/bot/log')
+async def bot_log_get(request:web_request.Request):
+    _log.info(f"request | /bot/log")
+    try:
+        ret_dict = await log_bot_list(log_img_draw=False) # 不画图
         ret = {
             "guild_total":ret_dict["guild"]["guild_total"],
             "guild_active":ret_dict["guild"]["guild_active"],
@@ -233,7 +256,7 @@ async def bot_log_get(request):
         return web.Response(body=json.dumps(ret, indent=2, sort_keys=True, ensure_ascii=False),
                     content_type='application/json')
     except:
-        _log.exception("Exception in /afd")
+        _log.exception("Exception in /bot/log")
         return web.Response(status=503)
 
 

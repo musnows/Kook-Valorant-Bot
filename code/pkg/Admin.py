@@ -23,13 +23,12 @@ def is_admin(user_id:str):
     """是管理员返回True"""
     return user_id == master_id
 
-def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
+def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel,startup_msg:str = ""):
     """Admin command
     - bot: main bot
     - bot_upd_img: bot for img upload
     - debug_ch: channel obj
-    - LoginForbidden: global value from .utils.file.Files
-    - NightMarketOff: global value from .utils.file.Files
+    - startup_msg: msg_id
     """
 
     @bot.command(name='kill',case_sensitive=False)
@@ -44,8 +43,8 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
             if isinstance(msg,PrivateMessage) or f"(met){cur_bot.id}(met)" in at_text:
                 # 保存所有文件
                 await save_all_file(False)
-                cm = CardMessage(Card(Module.Section(
-                    Element.Text(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}", Types.Text.KMD))))
+                await KookApi.bot_alive_card(startup_msg,"!KILL!") # 更新启动消息
+                cm = await KookApi.get_card_msg(f"[KILL] 保存全局变量成功，bot下线\n当前时间：{Gtime.get_time()}")
                 await msg.reply(cm)
                 res = "webhook"
                 if config['kook']['bot']['ws']: # 用的是ws才需要调用
@@ -219,28 +218,39 @@ def init(bot:Bot,bot_upd_img:Bot,debug_ch:Channel):
                 _log.info(f"Au:{msg.author_id} | guild_leave {guild} | {ret}")
             # 没有指定，退出不活跃的服务器
             else:
+                global BotUserDict
                 cm = await KookApi.get_card_msg("收到命令，开始退出不活跃服务器",img_url=KookApi.icon_cm.rgx_card)
                 send_msg = await msg.reply(cm)
-                start_time = time.perf_counter()
-                i,good,err =0,0,0
-                guild_text = ""
-                for g,ginfo in BotUserDict['guild']['data'].items():
+                i,good,err = 0,0,0 # 初始化
+                guild_text = "" # 日志信息
+                start_time = time.perf_counter() # 开始计时
+                if 'exit' not in BotUserDict['guild']:
+                    BotUserDict['guild']['exit'] = {}
+                BotUserDictTemp = copy.deepcopy(BotUserDict) # 深拷贝
+                for g,ginfo in BotUserDictTemp['guild']['data'].items():
                     try:
+                        i += 1
                         if ginfo['cmd'] > IN_ACTIVATE_GUILD:
                             continue
                         # 走到这里是不活跃服务器
                         ret = await KookApi.guild_leave(g)
+                        # 没有错误，删除键值并打印日志
+                        BotUserDict['guild']['exit'][g] = copy.deepcopy(BotUserDictTemp['guild']['data'][g]) 
+                        del BotUserDict['guild']['data'][g] # 删除键值
                         if ret['code'] !=0: # 有错误
                             raise Exception(f"guild_leave Err | {ret}")
-                        i += 1
-                        good+=1
+                        good +=1
+                        _log.info(f"[i{i}/g{good}] exited guild {g}")
                         guild_text+= f"({g})"
-                        await asyncio.sleep(0.4)
-                        if i>=100:# 超过100个多睡一会
-                            cm = await KookApi.get_card_msg(f"已处理 [g{good}/e{err}]",guild_text[0:4800])
+                        # 超过100个多睡一会
+                        if i>=100:
+                            time_diff = format(time.perf_counter()-start_time,".2f")
+                            cm = await KookApi.get_card_msg(f"已处理 [g{good}/e{err}] 用时 {time_diff}s",guild_text[0:4800])
                             await KookApi.upd_card(send_msg['msg_id'],cm) # 更新消息
-                            await asyncio.sleep(20)
+                            await asyncio.sleep(15)
                             i = 0
+                        else:
+                            await asyncio.sleep(0.5)
                     except:
                         err+=1
                         _log.exception(f"Err while G:{g}")

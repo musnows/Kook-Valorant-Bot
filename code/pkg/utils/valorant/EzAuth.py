@@ -136,7 +136,7 @@ class EzAuth:
         """Authenticate using username and password.\n
         if username & password empty, using cookie reauth\n
         Return: 
-         - {"status":True,"auth":self,"2fa":self.is2fa}
+         - {"status":True,"auth":self,"2fa_status":self.is2fa}
          - {"status":False,"auth":self,"2fa_status":self.is2fa}
          - if False, using email_verify() to send verify code
         """
@@ -209,12 +209,13 @@ class EzAuth:
         if self.__mfa_start == 0:
             return {"status": True, "auth": self, "2fa": self.is2fa}
         # check time
-        if (time.time() - self.__mfa_start) <= TFA_TIME_LIMIT:
-            authdata = {
+        time_diff = abs(time.time() - self.__mfa_start)
+        if time_diff <= TFA_TIME_LIMIT:
+            auth_data = {
                 'type': 'multifactor',
                 'code': vcode,
             }
-            r = self.session.put(url=URLS.AUTH_URL, json=authdata)
+            r = self.session.put(url=URLS.AUTH_URL, json=auth_data)
             data = r.json()
 
             if data["type"] == "response":
@@ -226,7 +227,7 @@ class EzAuth:
             else:
                 raise EzAuthExp.MultifactorError("2fa auth_failue, unkown err")
         else:  # 2fa wait overtime
-            raise EzAuthExp.WaitOvertimeError("2fa wait overtime, wait failed")
+            raise EzAuthExp.WaitOvertimeError(f"2fa wait overtime, wait failed | {time_diff}")
 
         # get access_token from response
         if "access_token" in r.text:

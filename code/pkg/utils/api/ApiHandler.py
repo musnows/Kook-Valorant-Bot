@@ -1,8 +1,11 @@
 import json
 import time
 import traceback
+from aiohttp import web_request
 
+from khl import Bot
 from khl.card import CardMessage, Card, Module, Types, Element
+from PIL import Image
 
 from .ApiToken import check_token_rate
 from ..Gtime import get_time
@@ -22,24 +25,34 @@ img_bak_11 = 'https://img.kookapp.cn/assets/2023-01/lzRKEApuEP0rs0rs.jpg'
 """默认的1-1背景图"""
 
 # 基本画图操作
-async def base_img_request(params, list_shop, vp1=0, rp1=0):
-    # 自定义背景
+async def base_img_request(params, list_shop:list, vp1=0, rp1=0):
+    isimgRatio169 = True
+    # 判断背景图比例
     if 'img_src' in params and 'http' in params['img_src']:
-        img_src = params['img_src']
-    else:
-        img_src = img_bak_169  # 默认背景16-9
-        if 'img_ratio' in params and params['img_ratio'] == '1':
-            img_src = img_bak_11  # 默认背景1-1
-
+        img_src = params['img_src'] # 使用自定义背景的url
+        img_ratio_ret = await ShopImg.get_img_ratio(img_src)
+        _log.info(f"img_src ratio: {img_ratio_ret[0]} | {img_src}")
+        img_src = img_ratio_ret[1] # 赋值为图片
+        # 判断图片比例
+        if img_ratio_ret[0] == 11:
+            isimgRatio169 = False
+        elif img_ratio_ret[0] == 169:
+            pass # 默认已经是True了
+        else:# 其他，认为错误
+            return {"code":200,"message":"img_url图片比例不符合要求，请传入16-9或1-1的图片",
+                    "info":"img_ratio not match!",'wallet': {'vp': 0, 'rp': 0} }
+    else: # 如果没有指定背景图，那就根据img_ratio参数看画什么图片
+        isimgRatio169 = ( 'img_ratio' not in params or str(params['img_ratio']) != '1')
+        img_src = img_bak_169 if isimgRatio169 else img_bak_11
+            
     # 开始画图
     ret = { "status": False,"value":"no need to img draw"} # 初始化ret为不需要画图
     cacheRet = {"status":False,"img_url":"err" } # 是否需要上传图片(false代表需要)
     start = time.perf_counter()
-    if 'img_ratio' in params and params['img_ratio'] == '1':
-        # 是1-1的图片，检测有没有使用自定义背景图
+    # 是1-1的图片，检测有没有使用自定义背景图
+    if not isimgRatio169:
         if img_src == img_bak_11: # 没有自定义背景图
-            # 检测是否有缓存命中
-            cacheRet = await ShopRate.query_shop_cache(list_shop)
+            cacheRet = await ShopRate.query_shop_cache(list_shop) # 检测是否有缓存命中
         # 缓存命中失败(需要画图)
         if not cacheRet['status']:
             ret = await ShopImg.get_shop_img_11(list_shop, bg_img_src=img_src)
@@ -54,12 +67,11 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
     if cacheRet['status']: # 命中了
         dailyshop_img_src = cacheRet['img_url']
         _log.info(f"Api imgUrl(cache) | {dailyshop_img_src}")
-        return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功，缓存命中'}
+        return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功，缓存命中','wallet': {'vp': vp1, 'rp': rp1} }
     # 缓存没有命中，但是获取画图结果成功
-    if ret['status']:
+    elif ret['status']:
         bg = ret['value'] # 这个值是pil的结果
         img_src_ret = await kook_create_asset(api_bot_token, bg)  # 上传图片到kook
-        # img_src_ret = await lsky_upload(bg) # 上传图片到lsky
         if img_src_ret['code'] == 0: # 上传图片成功
             _log.info(f"Api | kook_create_asset success | {format(time.perf_counter() - start, '.3f')}")
             dailyshop_img_src = img_src_ret['data']['url']
@@ -67,21 +79,21 @@ async def base_img_request(params, list_shop, vp1=0, rp1=0):
             if cacheRet['img_url'] != 'err':
                 await ShopRate.update_shop_cache(skinlist=list_shop,img_url=dailyshop_img_src)
             _log.info(f"Api imgUrl | {dailyshop_img_src}")
-            return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功'}
+            return {'code': 0, 'message': dailyshop_img_src, 'info': '商店图片获取成功','wallet': {'vp': vp1, 'rp': rp1} }
         else: # 上传图片失败
-            _log.info(f"Api | kook_create_asset failed")
-            return {'code': 200, 'message': 'img upload err', 'info': '图片上传错误'}
+            _log.warning(f"Api | kook_create_asset failed")
+            return {'code': 200, 'message': 'img upload err', 'info': '图片上传错误','wallet': {'vp': 0, 'rp': 0} }
     else: # 出现图片违规或者背景图url无法获取
         err_str = ret['value']
-        _log.error(err_str)
-        return {'code': 200, 'message': 'img src err', 'info': '自定义图片获取失败'}
+        _log.error(f"{err_str} | {list_shop}")
+        return {'code': 200, 'message': 'img src err', 'info': '自定义图片获取失败','wallet': {'vp': 0, 'rp': 0} }
 
 
-# 画图接口(仅画图)
-async def img_draw_request(request):
+async def img_draw_request(request:web_request.Request):
+    """画图接口(仅画图)"""
     params = request.rel_url.query
     if "list_shop" not in params or 'token' not in params:
-        _log.error(f"params needed: token/list_shop")
+        _log.warning(f"params needed: token/list_shop")
         return {
             'code': 400,
             'message': 'params needed: token/list_shop',
@@ -109,11 +121,12 @@ async def img_draw_request(request):
     else:
         return await base_img_request(params, list_shop, int(params['vp']), int(params['rp']))
 
-# 获取商店的请求
+
 async def shop_get_request(params,account:str):
+    """获取商店的请求"""
     # 1.参数检测
     isRaw = ('raw' in params and str(params['raw']) != '0') # 用户需要原始uuid
-    isimgRatio = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例
+    # isimgRatio169 = ( 'img_ratio' not in params or str(params['img_ratio']) != '1') # 判断是否有指定图片比例为1，默认169
     # 2.获取缓存中的auth对象
     if account not in UserAuthCache["api"]:
         return { "code":200,"message":"account不在已登录用户的缓存中，请先POST调用/login接口",
@@ -126,16 +139,18 @@ async def shop_get_request(params,account:str):
     # 2.2 重新登录
     ret = await auth.reauthorize()
     if not ret:
-        return { "code":200,"message":"缓存信息失效，需要重新登录",
-                "info":"cache reauthorize failed，please /login" }
+        return { "code":200,"message":"缓存信息失效，需要重新登录","info":"cache reauthorize failed，please req /login" }
     # 3 获取每日商店
     riotUser = auth.get_riotuser_token()
     resp = await fetch_daily_shop(riotUser)  
     _log.info(f'Api | fetch_daily_shop success')
     list_shop = resp["SkinsPanelLayout"]["SingleItemOffers"]  # 商店刷出来的4把枪
-    res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
-    if isimgRatio or isRaw:
-        res_vprp = await fetch_vp_rp_dict(riotUser)  # 只有16-9的图片需获取vp和r点
+    # res_vprp = {'vp': 0, 'rp': 0}  # 先初始化为0
+    # if isimgRatio169 or isRaw:
+        # res_vprp = await fetch_vp_rp_dict(riotUser)  # 只有16-9的图片需获取vp和r点
+    
+    # 都获取vp和r点，再返回值中给出
+    res_vprp = await fetch_vp_rp_dict(riotUser)
     # 如果用户需要raw，则返回皮肤uuid和vp rp的dict
     if isRaw:
         return { "code":0,"message":"获取原始接口返回值成功","info":"get raw response success","storefront":resp,"wallet":res_vprp}
@@ -143,7 +158,7 @@ async def shop_get_request(params,account:str):
         return await base_img_request(params, list_shop, res_vprp['vp'], res_vprp['rp'])
 
 # 登录+画图
-async def login_request(request,method = "GET"):
+async def login_request(request:web_request.Request,method = "GET"):
     params = request.rel_url.query
     if method=="POST":
         body = await request.content.read()
@@ -173,35 +188,38 @@ async def login_request(request,method = "GET"):
         # 缓存
         await AuthCache.cache_auth_object('api',account,auth)
         # 没有成功，是2fa用户，需要执行/tfa
-        if not resw['status']:
+        if not resw['status'] and resw['2fa_status']:
+            _log.info(f"/login return | waiting for post /tfa")
             return {'code': 0, 'message': "need provide email verify code", 'info': '2fa用户，请使用/tfa接口提供邮箱验证码'}
-        
+        elif not resw['status']: # 未知错误
+            _log.info(f"/login return | unkown err")
+            return {'code': 200, 'message': "unkown err", 'info': '执行authorize函数时出现了未知错误'}
+        else: # status为真，代表不是2fa用户，且登陆成功
+            _log.info(f"Api login | user auth success")
+            # 如果是GET方法，直接调用获取商店的操作
+            if method == "GET": # 只有 /shop-img 接口是get的
+                _log.debug(f"Api login | enter def shop_get_request")
+                return await shop_get_request(params,account)
+            # 不是GET，返回用户信息
+            return {
+                'code': 0, 
+                'message': "auth success", 
+                'info': '登录成功！',
+                "user":{
+                    "uuid": auth.user_id,
+                    "name": auth.Name,
+                    "tag": auth.Tag,
+                    "region": auth.Region
+                }
+            }
+
     except EzAuthExp.RatelimitError as result:
         _log.exception(f"Api login | RatelimitError")
         return {'code': 200, 'message': "EzAuthExp.RiotRatelimitError", 'info': 'riot登录api超速，请稍后重试'}
-
-    # 走到这里，代表不是2fa用户，且登陆成功
-    _log.info(f"Api login | user auth success")
-    # 如果是GET方法，直接调用获取商店的操作
-    if method == "GET": # /shop-img 接口是get的
-        _log.debug(f"Api login | enter def shop_get_request")
-        return await shop_get_request(params,account)
-    # 返回用户信息
-    return {
-        'code': 0, 
-        'message': "auth success", 
-        'info': '登录成功！',
-        "user":{
-            "uuid": auth.user_id,
-            "name": auth.Name,
-            "tag": auth.Tag,
-            "region": auth.Region
-        }
-    }
-
+    
 
 # 邮箱验证的post
-async def tfa_code_requeset(request):
+async def tfa_code_requeset(request:web_request.Request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     if 'account' not in params or 'vcode' not in params or 'token' not in params:
@@ -250,7 +268,7 @@ async def tfa_code_requeset(request):
 
 # 更新leancloud
 from ..ShopRate import update_shop_cmp
-async def shop_cmp_request(request):
+async def shop_cmp_request(request:web_request.Request):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     if 'best' not in params or 'worse' not in params or 'token' not in params or 'platform' not in params:
@@ -279,7 +297,7 @@ async def shop_cmp_request(request):
 
 
 # 爱发电webhook
-async def afd_request(request, bot):
+async def afd_request(request:web_request.Request, bot:Bot):
     body = await request.content.read()
     params = json.loads(body.decode('UTF8'))
     global AfdWebhook
