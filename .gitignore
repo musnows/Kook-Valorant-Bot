@@ -6,6 +6,7 @@ caiyun.json
 */log/
 *.log
 btest.py
+ahri.db
 
 
 # python file
