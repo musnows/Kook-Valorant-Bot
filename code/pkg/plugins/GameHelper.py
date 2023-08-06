@@ -1,6 +1,8 @@
 #保存用户的游戏ID操作
 import traceback
 from khl import Message,Bot
+from khl.card import Card, CardMessage, Module, Element, Types
+
 from ..utils.file.Files import GameIdDict,ValErrDict,_log
 from ..utils.log import BotLog
 
@@ -34,21 +36,21 @@ async def myid_main(msg: Message) -> None:
 
 async def val_errcode(msg: Message, num: str = "-1") -> None:
     """查询游戏错误码"""
+    help_text = '抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)'
     if num == "-1":
-        await msg.reply(
-            '目前支持查询的错误信息有：\n```\n0-1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002,9003\n```\n注：van和val错误码都可用本命令查询'
-        )
+        help_text = '目前支持查询的错误信息有：\n```\n0-1,4-5,7-21,29,31,33,38,43-46,49-70,81,84,128,152,1067,9001,9002,9003\n```\n注：van和val错误码都可用本命令查询'
     elif num in ValErrDict:
-        await msg.reply(ValErrDict[num])
-    else:
-        await msg.reply('抱歉，本狸还不会这个呢~ 你能教教我吗？[当然!](https://f.wps.cn/w/awM5Ej4g/)')
+        help_text = ValErrDict[num]
+    # 发送卡片消息
+    cm = CardMessage(Card(Module.Section(Element.Text(help_text, Types.Text.KMD))))
+    await msg.reply(cm)
 
 
 async def dx123(msg: Message) -> None:
     """关于dx报错的解决方法"""
-    await msg.reply(
-        '报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~'
-    )
+    help_text = '报错弹窗内容为`The following component(s) are required to run this program:DirectX Runtime`\n需要下载微软官方驱动安装，官网搜索[DirectX End-User Runtime Web Installer]\n你还可以下载本狸亲测可用的DX驱动 [链接](https://pan.baidu.com/s/1145Ll8vGtByMW6OKk6Zi2Q)，暗号是1067哦！\n狸狸记得之前玩其他游戏的时候，也有遇到过这个问题呢~'
+    cm = CardMessage(Card(Module.Section(Element.Text(help_text, Types.Text.KMD))))
+    await msg.reply(cm)
 
 
 ##################################################################################
