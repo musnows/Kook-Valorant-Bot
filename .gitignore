@@ -5,6 +5,7 @@ caiyun.json
 # log file
 */log/
 *.log
+*.log.*
 btest.py
 
 
