@@ -233,7 +233,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         auth = EzAuth()
         resw = await auth.authorize(user, passwd)
         # 3.1 将对象插入缓存队列
-        await AuthCache.cache_auth_object('kook',msg.author_id,auth)
+        await AuthCache.cache_auth_object('kook',msg.author_id,auth,True)
         # 3.2 没有成功，是2fa用户，需要执行/tfa命令
         if not resw['status']:
             cm = await get_card_msg("请使用「/tfa 验证码」提供邮箱验证码","登录中断，需要提供邮箱验证码",icon_cm.whats_that)

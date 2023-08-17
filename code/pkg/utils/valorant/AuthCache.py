@@ -4,15 +4,16 @@ from ..file.Files import UserAuthCache,ApiAuthLog,_log
 
 Auth2faCache = UserAuthCache['tfa']
 
-async def cache_auth_object(platfrom:str,key:str,auth:EzAuth) -> None:
+async def cache_auth_object(platfrom:str,key:str,auth:EzAuth,is_login=False) -> None:
     """cache auth obj base on platform and key
     - platfrom: kook or api
     - key: kook_user_id or api-account
     - auth: EzAuth obj
+    - is_login: user_login
     """
     _log.debug(f"enter def | {UserAuthCache}")
     # 如果是2fa用户，且键值不在缓存里面，认为是初次登录，需要提供邮箱验证码
-    if auth.is2fa and key not in Auth2faCache:
+    if auth.is2fa and (is_login or key not in Auth2faCache):
         Auth2faCache[key] = auth # 将对象插入2fa的缓存
         return
     # 如果键值存在，认为是tfa登陆成功，删除临时键值
