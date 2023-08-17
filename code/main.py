@@ -39,7 +39,7 @@ startup_msg = ""
 """
 NOTIFY_NUM = 3 
 """非vip用户皮肤提醒栏位"""
-RATE_LIMITED_TIME = 180 
+RATE_LIMITED_TIME = 200
 """全局登录速率超速等待秒数"""
 LOGIN_LIMITED = 3
 """所有用户最多都只能登录3个riot账户"""
@@ -168,18 +168,20 @@ def is_shop_cache_latest(kook_user_id: str,riot_user_id:str) -> bool:
     return False
 
 
-# 检查全局用户登录速率
 async def check_global_login_rate():
+    """检查全局用户登录速率"""
     global LoginRateLimit
     if LoginRateLimit['limit']:
-        if (time.time() - LoginRateLimit['time']) > RATE_LIMITED_TIME:
-            LoginRateLimit['limit'] = False  #超出180s解除
-        else:  #未超出240s
-            raise EzAuthExp.RatelimitError
+        time_diff = time.time() - LoginRateLimit['time']
+        if time_diff > RATE_LIMITED_TIME:
+            LoginRateLimit['limit'] = False  # 超出180s解除
+        else:  # 未超出180s
+            raise EzAuthExp.RatelimitError(f'global raite limit | {time_diff}s left')
     return True
 
-# 缓存vip用户的信息
+
 async def cache_vip_auth(kook_user_id:str,auth:EzAuth):
+    """缓存vip用户的信息"""
     global VipShopBgDict,VipAuthLog 
     # 因为换了用户，所以需要修改状态码重新获取商店
     if kook_user_id in VipShopBgDict['bg']:
@@ -275,8 +277,11 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
     except EzAuthExp.RatelimitError as result:
         err_str = f"ERR! [{get_time()}] login Au:{msg.author_id} - {result}"
         # 更新全局速率限制
-        LoginRateLimit = {'limit': True, 'time': time.time()}
-        _log.error(err_str + " set LoginRateLimit = True")
+        if 'auth_failure, rate_limited' in str(result):
+            LoginRateLimit = {'limit': True, 'time': time.time()}
+            _log.error(err_str + " set LoginRateLimit = True")
+        else:
+            _log.warning(err_str)
         # 这里是第一个出现速率限制err的用户,更新消息提示
         cm = await get_card_msg(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
