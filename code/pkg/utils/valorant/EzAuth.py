@@ -12,8 +12,8 @@ from re import compile
 from . import EzAuthExp
 from ..log.Logging import _log
 # get latest version: https://valorant-api.com/v1/version
-RIOT_CLIENTVERSION = "RiotClient/63.0.9.4909983.4789131"
-X_RIOT_CLIENTVERSION = "release-06.05-shipping-11-843632"
+RIOT_CLIENTVERSION = "RiotClient/69.0.3.228.1352"
+X_RIOT_CLIENTVERSION = "release-07.03-shipping-10-948900"
 X_RIOT_CLIENTVPLATFROM =  "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9"
 TFA_TIME_LIMIT = 600  # 600s时间限制
 
@@ -198,7 +198,7 @@ class EzAuth:
         
         except requests.exceptions.JSONDecodeError as result:
             # 出现这个错误，一般都是连不上服务器导致返回的结果并不是json格式的，直接返回假即可
-            _log.warning(f"requests.exceptions.JSONDecodeError: {result}")
+            _log.warning(f"requests.exceptions.JSONDecodeError: {result} | {r.text}")
             return {"status": False, "auth": self, "2fa_status": self.is2fa}
 
     async def email_verfiy(self, vcode: str) -> dict:
