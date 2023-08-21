@@ -276,14 +276,18 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except EzAuthExp.RatelimitError as result:
         err_str = f"ERR! [{get_time()}] login Au:{msg.author_id} - {result}"
-        # 更新全局速率限制
+        cm = await get_card_msg(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
+        # 1.更新全局速率限制
         if 'auth_failure, rate_limited' in str(result):
             LoginRateLimit = {'limit': True, 'time': time.time()}
             _log.error(err_str + " set LoginRateLimit = True")
+        # 2.已经是全局速率限制了，也需要提示用户
+        elif 'global raite limit' in str(result):
+            _log.warning(err_str)
+            return await msg.reply(cm)
         else:
             _log.warning(err_str)
         # 这里是第一个出现速率限制err的用户,更新消息提示
-        cm = await get_card_msg(f"登录请求超速！请在{RATE_LIMITED_TIME}s后重试", "RatelimitError,try again later", icon_cm.lagging)
         await upd_card(send_msg['msg_id'], cm, channel_type=msg.channel_type)
     except client_exceptions.ClientResponseError as result:
         err_str = f"ERR! [{get_time()}] login Au:{msg.author_id}\n```\n{traceback.format_exc()}\n```\n"
