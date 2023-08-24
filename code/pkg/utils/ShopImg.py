@@ -174,7 +174,7 @@ def resize_standard(standard_x:int, standard_y:int, img:Image.Image):
     return img
 
 
-def sm_comp_169(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:str, skinuuid:str):
+def sm_comp_169(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:str, skinuuid:str,local_cache = True):
     """处理16-9图片，这个函数能够生成单个皮肤的图片，最后再一起粘贴到主图中"""
     try:
         bg = Image.new(mode='RGBA', size=(400, 240))  # 新建一个画布
@@ -221,7 +221,7 @@ def sm_comp_169(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:
         # bg.show() #测试用途，展示图片 (linux不可用)
 
         # 判断该皮肤图片的本地路径是否存在，如果不存在，则保存到本地
-        if not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
+        if local_cache and not os.path.exists(f'./log/img_temp_vip/comp/{skinuuid}.png'):
             bg.save(f'./log/img_temp_vip/comp/{skinuuid}.png')
         global weapon_icon_temp_169  #皮肤图片的抽屉，如果uuid不存在，就插入
         if IMG_MEMORY_CACHE and (skinuuid not in weapon_icon_temp_169):
@@ -232,7 +232,7 @@ def sm_comp_169(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:
         return skin_err_169
 
 
-def sm_comp_11(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:str, skinuuid:str):
+def sm_comp_11(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:str, skinuuid:str,local_cache = True):
     """1比1的单个武器图片生成"""
     try:
         bg = Image.new(mode='RGBA', size=(standard_length_sm, standard_length_sm))  # 新建一个画布
@@ -307,7 +307,7 @@ def sm_comp_11(skin_img_url:str, skin_name:str, price:str|int, skin_level_icon:s
                 font=ImageFont.truetype('./config/SourceHanSansCN-Regular.otf', 30),
                 fill=font_color)
         # bg.show() #测试用途，展示图片(linux貌似不可用)
-        if not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
+        if local_cache and not os.path.exists(f'./log/img_temp/comp/{skinuuid}.png'):
             bg.save(f'./log/img_temp/comp/{skinuuid}.png')
         global weapon_icon_temp_11  # 1-1图片的抽屉
         if IMG_MEMORY_CACHE and (skinuuid not in weapon_icon_temp_11):
@@ -349,19 +349,36 @@ def skin_uuid_to_comp(skinuuid, ran, is_169=False):
             price = res_price['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']  # 取出价格
         except:
             _log.exception(f"Err fetch_price | skin:{skinuuid} ran:{ran} 169:{is_169}")
+        # 判断武器图标是否存在，如果出现如此采用的是默认图片，尝试两种不同的武器图片
+        is_local_cache = True  # 是否要将图片存本地
+        if res_item["data"]["displayIcon"] == Local.SKIN_ICON_ERR:
+            skin_icon_list = [
+                f"https://media.valorant-api.com/weaponskinlevels/{skinuuid}/displayicon.png",
+                f"https://media.valorant-api.com/weaponskins/{skinuuid}/displayicon.png"
+            ]
+            # 循环进行请求，判断状态码，找到可以用的那个皮肤图片
+            for skin_icon_url in skin_icon_list:
+                temp_req = requests.get(skin_icon_url)
+                if(temp_req.status_code == 200):
+                    res_item["data"]["displayIcon"] = skin_icon_url
+                    break
+            # 都找不到，就只能采用错误图片，并且不保存到本地
+            is_local_cache = False
         # 在本地文件中查找皮肤等级
         res_iters = Local.lc_fetch_skin_iters(skinuuid)  
         # 画单个皮肤的图片
         if is_169:
             img = sm_comp_169(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
-                            res_iters['data']['displayIcon'], skinuuid)
-            global shop_img_temp_169  # 这里是把处理好的图片存到当前执行用户的临时库中
-            shop_img_temp_169[ran].append(img)
+                            res_iters['data']['displayIcon'], skinuuid,is_local_cache)
+            if is_local_cache:
+                global shop_img_temp_169  # 这里是把处理好的图片存到当前执行用户的临时库中
+                shop_img_temp_169[ran].append(img)
         else:
             img = sm_comp_11(res_item["data"]["displayIcon"], res_item["data"]["displayName"], price,
-                            res_iters['data']['displayIcon'], skinuuid)
-            global shop_img_temp_11  #这里是把处理好的图片存到本地
-            shop_img_temp_11[ran].append(img)
+                            res_iters['data']['displayIcon'], skinuuid,is_local_cache)
+            if is_local_cache:
+                global shop_img_temp_11  #这里是把处理好的图片存到本地
+                shop_img_temp_11[ran].append(img)
     except:
         _log.exception(f"err while drawing | skin:{skinuuid} | ran:{ran}")
         skin_comp_err_handler(ran,is_169)
