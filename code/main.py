@@ -198,7 +198,7 @@ async def cache_vip_auth(kook_user_id:str,auth:EzAuth):
 
 
 # 登录，保存用户的token
-@bot.command(name='login')
+#@bot.command(name='login')
 async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='', *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /login {apSave}")
     # 提前定义，避免报错
@@ -311,7 +311,7 @@ async def login(msg: Message, user: str = 'err', passwd: str = 'err', apSave='',
                                            help="请加入帮助频道咨询，或尝试重新执行login命令")
 
 
-@bot.command(name='tfa')
+#@bot.command(name='tfa')
 async def tfa_verify(msg: Message, tfa: str, *arg):
     _log.info(f"Au:{msg.author_id} {msg.author.username}#{msg.author.identify_num} | /tfa")
     send_msg = {'msg_id': ''}
@@ -364,7 +364,7 @@ async def tfa_verify(msg: Message, tfa: str, *arg):
 
 
 # 退出登录
-@bot.command(name='logout')
+# @bot.command(name='logout')
 async def logout(msg: Message, *arg):
     BotLog.log_msg(msg)
     try:
@@ -399,7 +399,7 @@ async def logout(msg: Message, *arg):
         await BotLog.base_exception_handler("logout", traceback.format_exc(), msg)
 
 
-@bot.command(name='login-ap')
+# @bot.command(name='login-ap')
 async def login_acpw(msg: Message, *arg):
     """获取bot使用riot的账户密码登录的记录（用户自己选择了save账户密码的）
     """
@@ -421,7 +421,7 @@ async def login_acpw(msg: Message, *arg):
         await BotLog.base_exception_handler("login-ap", traceback.format_exc(), msg)
 
 
-@bot.command(name='login-l',aliases=['login-list'],case_sensitive=False)
+# @bot.command(name='login-l',aliases=['login-list'],case_sensitive=False)
 async def login_list(msg:Message,*arg):
     """获取用户已经登录的账户
     """
@@ -456,7 +456,7 @@ async def login_list(msg:Message,*arg):
 
 
 # 获取每日商店的命令
-@bot.command(name='shop', aliases=['SHOP'])
+# @bot.command(name='shop', aliases=['SHOP'])
 async def get_daily_shop(msg: Message,index:str = "0",*arg):
     send_msg = {'msg_id':''}# 提前初始化变量
     resp = ""
@@ -617,7 +617,7 @@ async def get_daily_shop(msg: Message,index:str = "0",*arg):
 
 
 # 获取夜市
-@bot.command(name='night', aliases=['NIGHT'])
+# @bot.command(name='night', aliases=['NIGHT'])
 async def get_night_market(msg: Message,index:str="0", *arg):
     BotLog.log_msg(msg)
     if "-" in index or "." in index:
@@ -713,7 +713,7 @@ async def get_night_market(msg: Message,index:str="0", *arg):
 
 
 # 获取玩家卡面(添加point的别名)
-@bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
+# @bot.command(name='uinfo', aliases=['point', 'UINFO', 'POINT'])
 async def get_user_card(msg: Message, *arg):
     BotLog.log_msg(msg)
     if Reauth.LoginForbidden:
@@ -977,7 +977,7 @@ async def rate_skin_select(msg: Message, index: str = "err", rating: str = "err"
 
 
 # 查看昨日牛人/屌丝
-@bot.command(name="kkn")
+# @bot.command(name="kkn")
 async def shop_rate_leaderboard_cmd(msg: Message):
     BotLog.log_msg(msg)
     if check_rate_err_user(msg.author_id):
@@ -1054,7 +1054,7 @@ async def check_notify_err_user(msg: Message):
 
 
 #设置提醒（出现xx皮肤）
-@bot.command(name="notify-add", aliases=['notify-a'])
+# @bot.command(name="notify-add", aliases=['notify-a'])
 async def add_skin_notify(msg: Message, *arg):
     BotLog.log_msg(msg)
     if arg == ():
@@ -1116,7 +1116,7 @@ async def add_skin_notify(msg: Message, *arg):
 
 
 #选择皮肤（这个命令必须跟着上面的命令用）
-@bot.command(name="sts")
+# @bot.command(name="sts")
 async def select_skin_notify(msg: Message, n: str = "err", *arg):
     BotLog.log_msg(msg)
     if n == "err" or '-' in n:
@@ -1158,7 +1158,7 @@ async def select_skin_notify(msg: Message, n: str = "err", *arg):
 
 
 # 显示当前设置好了的皮肤通知
-@bot.command(name="notify-list", aliases=['notify-l'])
+# @bot.command(name="notify-list", aliases=['notify-l'])
 async def list_skin_notify(msg: Message, *arg):
     BotLog.log_msg(msg)
     try:
@@ -1178,7 +1178,7 @@ async def list_skin_notify(msg: Message, *arg):
 
 
 # 删除已有皮肤通知
-@bot.command(name="notify-del", aliases=['notify-d'])
+# @bot.command(name="notify-del", aliases=['notify-d'])
 async def delete_skin_notify(msg: Message, uuid: str = "err", *arg):
     BotLog.log_msg(msg)
     if uuid == 'err':
@@ -1399,13 +1399,13 @@ async def auto_skin_notify():
         _log.exception("Exception occur")
 
 # 早八自动执行
-@bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
+# @bot.task.add_cron(hour=8, minute=0, timezone="Asia/Shanghai")
 async def auto_skin_notify_task():
     await bot_alive_card(startup_msg,"notify")
     await auto_skin_notify()
 
 # 手动执行notify task
-@bot.command(name='notify-test', aliases=['notify-t'])
+# @bot.command(name='notify-test', aliases=['notify-t'])
 async def auto_skin_notify_cmd(msg: Message, *arg):
     BotLog.log_msg(msg)
     if Admin.is_admin(msg.author_id):
@@ -1438,81 +1438,81 @@ async def bot_start_task(bot: Bot):
         GrantRoles.init(bot)
         Translate.init(bot)
         BotStatus.init(bot)
-        Match.init(bot,debug_ch)
+        # Match.init(bot,debug_ch)
         GameHelper.init(bot)
         ValFileUpd.init(bot,bot_upd_img)
-        Vip.init(bot,bot_upd_img,debug_ch,cm_test_ch,startup_msg)
-        Mission.init(bot,debug_ch)
+        # Vip.init(bot,bot_upd_img,debug_ch,cm_test_ch,startup_msg)
+        # Mission.init(bot,debug_ch)
         StatusWeb.init(bot)
         _log.info("[BOT.TASK] load plugins")
         # 开始加载缓存
-        _log.info("[BOT.TASK] loading cookie start")
-        global UserAuthCache
-        log_str_success = "[BOT.TASK] load cookie success  = Au:"
-        log_str_failed = "[BOT.TASK] load cookie failed!  = Au:"
-        log_not_exits = "[BOT.TASK] cookie path not exists = Au:"
-        # 遍历vip的用户dict
-        TmpVipAuthLog = copy.deepcopy(VipAuthLog)
-        for user, uinfo in TmpVipAuthLog.items():
-            for ru in uinfo: # 遍历该用户已登录账户的uuid列表
-                cookie_path = f"./log/cookie/{ru}.cke"
-                # 如果路径存在，那么说明已经保存了这个vip用户的cookie
-                if os.path.exists(cookie_path):
-                    auth = EzAuth()
-                    auth.load_cookies(cookie_path)  # 加载cookie
-                    ret_bool = await auth.reauthorize(exp_print=False)  # 尝试登录
-                    # True登陆成功
-                    if ret_bool:
-                        # 只有登录成功了，再新建此键值
-                        if user not in UserAuthCache['kook']: 
-                            UserAuthCache['kook'][user] = []
-                        # 插入用户登录信息
-                        UserAuthCache['kook'][user].append(auth.user_id)
-                        UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
-                        log_str_success += f"({user},{ru})"
-                    # 重登失败
-                    else:
-                        del auth  # 删除对象
-                        VipAuthLog[user].remove(ru) # 还需要删除该vip用户对象中的已登录信息
-                        log_str_failed += f"({user},{ru})"
-                        continue
-                else:
-                    log_not_exits += f"({user},{ru})"
-                    continue
-        # 结束任务
-        _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
-        _log.info(f"[BOT.TASK] loading user cookie finish | begin loading api auth")
+        # _log.info("[BOT.TASK] loading cookie start")
+        # global UserAuthCache
+        # log_str_success = "[BOT.TASK] load cookie success  = Au:"
+        # log_str_failed = "[BOT.TASK] load cookie failed!  = Au:"
+        # log_not_exits = "[BOT.TASK] cookie path not exists = Au:"
+        # # 遍历vip的用户dict
+        # TmpVipAuthLog = copy.deepcopy(VipAuthLog)
+        # for user, uinfo in TmpVipAuthLog.items():
+        #     for ru in uinfo: # 遍历该用户已登录账户的uuid列表
+        #         cookie_path = f"./log/cookie/{ru}.cke"
+        #         # 如果路径存在，那么说明已经保存了这个vip用户的cookie
+        #         if os.path.exists(cookie_path):
+        #             auth = EzAuth()
+        #             auth.load_cookies(cookie_path)  # 加载cookie
+        #             ret_bool = await auth.reauthorize(exp_print=False)  # 尝试登录
+        #             # True登陆成功
+        #             if ret_bool:
+        #                 # 只有登录成功了，再新建此键值
+        #                 if user not in UserAuthCache['kook']: 
+        #                     UserAuthCache['kook'][user] = []
+        #                 # 插入用户登录信息
+        #                 UserAuthCache['kook'][user].append(auth.user_id)
+        #                 UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
+        #                 log_str_success += f"({user},{ru})"
+        #             # 重登失败
+        #             else:
+        #                 del auth  # 删除对象
+        #                 VipAuthLog[user].remove(ru) # 还需要删除该vip用户对象中的已登录信息
+        #                 log_str_failed += f"({user},{ru})"
+        #                 continue
+        #         else:
+        #             log_not_exits += f"({user},{ru})"
+        #             continue
+        # # 结束任务
+        # _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
+        # _log.info(f"[BOT.TASK] loading user cookie finish | begin loading api auth")
 
-        # api缓存的用户列表
-        log_str_success = "[BOT.TASK] api load cookie success  = Au:"
-        log_str_failed = "[BOT.TASK] api load cookie failed!  = Au:"
-        log_not_exits = "[BOT.TASK] api cookie path not exists = Au:"
-        # 遍历api用户列表，对应的是account:uuid
-        for acc,ru in ApiAuthLog.items():
-            cookie_path = f"./log/cookie/{ru}.cke"
-            # 如果uuid存在，代表之前vip用户里面有这个对象，直接插入
-            if ru in UserAuthCache['data']:
-                UserAuthCache['api'][acc] = ru
-                log_str_success += f"({acc},v)"
-            # 如果路径存在，那么说明已经保存了这个vip用户的cookie
-            elif os.path.exists(cookie_path):
-                auth = EzAuth()
-                auth.load_cookies(cookie_path)  #加载cookie
-                ret_bool = await auth.reauthorize(exp_print=False)  #尝试登录
-                if ret_bool:  # True登陆成功
-                    UserAuthCache['api'][acc] = auth.user_id
-                    UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
-                    log_str_success += f"({acc})"
-                else:
-                    del auth  # 删除对象
-                    log_str_failed += f"({acc})"
-                    continue
-            else:
-                log_not_exits += f"({acc})"
-                continue
-        # 结束任务
-        _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
-        _log.info(f"[BOT.TASK] loading api user cookie finished")
+        # # api缓存的用户列表
+        # log_str_success = "[BOT.TASK] api load cookie success  = Au:"
+        # log_str_failed = "[BOT.TASK] api load cookie failed!  = Au:"
+        # log_not_exits = "[BOT.TASK] api cookie path not exists = Au:"
+        # # 遍历api用户列表，对应的是account:uuid
+        # for acc,ru in ApiAuthLog.items():
+        #     cookie_path = f"./log/cookie/{ru}.cke"
+        #     # 如果uuid存在，代表之前vip用户里面有这个对象，直接插入
+        #     if ru in UserAuthCache['data']:
+        #         UserAuthCache['api'][acc] = ru
+        #         log_str_success += f"({acc},v)"
+        #     # 如果路径存在，那么说明已经保存了这个vip用户的cookie
+        #     elif os.path.exists(cookie_path):
+        #         auth = EzAuth()
+        #         auth.load_cookies(cookie_path)  #加载cookie
+        #         ret_bool = await auth.reauthorize(exp_print=False)  #尝试登录
+        #         if ret_bool:  # True登陆成功
+        #             UserAuthCache['api'][acc] = auth.user_id
+        #             UserAuthCache['data'][auth.user_id] = {"auth": auth, "2fa": False}  #将对象插入
+        #             log_str_success += f"({acc})"
+        #         else:
+        #             del auth  # 删除对象
+        #             log_str_failed += f"({acc})"
+        #             continue
+        #     else:
+        #         log_not_exits += f"({acc})"
+        #         continue
+        # # 结束任务
+        # _log.info("TASK.INFO\n\t" + log_str_success + "\n\t" + log_str_failed + "\n\t" + log_not_exits)
+        # _log.info(f"[BOT.TASK] loading api user cookie finished")
         await save_all_file() # 保存一下所有文件
 
     except:
